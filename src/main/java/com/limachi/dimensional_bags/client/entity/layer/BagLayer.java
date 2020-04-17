@@ -35,7 +35,7 @@ public class BagLayer<T extends PlayerEntity, M extends BipedModel<T>> extends L
         //for now, try to render the bag if the item bag is selected, after integration, will only render when the bag is equiped
 //        LOGGER.info("player render called");
 //        Item item = player.inventory.getCurrentItem().getItem();
-        Item item = Curios.getStack(player, Curios.BACKPACK_SLOT_ID, 0).getItem();
+        Item item = Curios.INSTANCE.getStack(player, Curios.BACKPACK_SLOT_ID, 0).getItem();
         if (item instanceof Bag)
         {
             matrix.push();

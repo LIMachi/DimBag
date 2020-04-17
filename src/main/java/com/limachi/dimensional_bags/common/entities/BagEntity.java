@@ -6,15 +6,8 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.world.World;
-import net.minecraftforge.event.entity.EntityJoinWorldEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-
-import javax.annotation.Nullable;
 
 public class BagEntity extends MobEntity {
-
-    private int bag_id;
-    private int timer;
 
     public BagEntity(EntityType<? extends MobEntity> type, World world) {
         super(type, world);
@@ -28,6 +21,7 @@ public class BagEntity extends MobEntity {
 
     @Override
     public ItemStack getPickedResult(RayTraceResult target) {
+        DimensionalBagsMod.LOGGER.info("i was called, oopsy daisy");
         return new ItemStack(Items.AIR); //no spawn egg for you my good lad/lass
     }
 
@@ -50,12 +44,4 @@ public class BagEntity extends MobEntity {
     public EntityClassification getClassification(boolean forSpawnCount) {
         return null;
     }
-
-    /*
-    @Nonnull
-    @Override
-    public <T> LazyOptional<T> getCapability(@Nonnull Capability<T> cap) {
-        return null;
-    }
-    */
 }

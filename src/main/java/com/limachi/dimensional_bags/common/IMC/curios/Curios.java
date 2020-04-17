@@ -1,7 +1,10 @@
 package com.limachi.dimensional_bags.common.IMC.curios;
 
+import com.limachi.dimensional_bags.DimensionalBagsMod;
+import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
+import net.minecraft.item.Items;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.Tuple;
 import net.minecraftforge.common.capabilities.Capability;
@@ -25,25 +28,24 @@ public class Curios {
     @CapabilityInject(ICurio.class)
     public static final Capability<ICurio> CURIO = null;
 
-    public static void registerBagSlot() {
+    public void registerBagSlot() {
         InterModComms.sendTo(CuriosAPI.MODID, CuriosAPI.IMC.REGISTER_TYPE, () -> new CurioIMCMessage(BACKPACK_SLOT_ID).setSize(1));
         InterModComms.sendTo(CuriosAPI.MODID, CuriosAPI.IMC.REGISTER_ICON, () -> new Tuple<>(BACKPACK_SLOT_ID, BACKPACK_SLOT_ICON));
     }
 
-    public static ItemStack getStack(PlayerEntity player, String slot_id, int slot_index) {
-        if (INVENTORY == null)
-            return ItemStack.EMPTY;
-        return player.getCapability(INVENTORY, null).map(iCurioItemHandler -> {
-            SortedMap<String, CurioStackHandler> map = iCurioItemHandler.getCurioMap();
-            if (map == null || map.get(slot_id) == null)
-                return ItemStack.EMPTY;
-            return map.get(slot_id).getStackInSlot(slot_index);
-        }).orElse(ItemStack.EMPTY);
+    public static ItemStack getStack(LivingEntity entity, String slot_name, int slot_index) {
+        return CuriosAPI.getCuriosHandler(entity).map(h->h.getStackInSlot(slot_name, slot_index)).orElse(new ItemStack(Items.AIR, 0));
     }
 
-    public static <T>LazyOptional<T> getCapability(Capability<T> capability) {
+    public static void setStack(LivingEntity entity, String slot_name, int slot_index, ItemStack stack) {
+        CuriosAPI.getCuriosHandler(entity).ifPresent(h->h.setStackInSlot(slot_name, slot_index, stack));
+    }
+
+    public <T>LazyOptional<T> getCapability(Capability<T> capability) {
         return capability == CURIO ? LazyOptional.of(DimBagCurioCap::new).cast() : LazyOptional.empty();
     }
 
-    public static class DimBagCurioCap implements ICurio {}
+    public static class DimBagCurioCap implements ICurio {
+
+    }
 }
