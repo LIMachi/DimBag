@@ -15,7 +15,6 @@ class SavedData extends WorldSavedData {
 
     private SavedData(String s, MinecraftServer server) {
         super(s);
-        DimensionalBagsMod.LOGGER.info("construction called for " + this);
         sServer = server;
     }
 
@@ -27,7 +26,6 @@ class SavedData extends WorldSavedData {
 
     int nextId() {
         int r = lastId++;
-        DimensionalBagsMod.LOGGER.info("current last id: " + getIdCount() + "for " + this);
         update();
         return r;
     }
@@ -41,12 +39,10 @@ class SavedData extends WorldSavedData {
     @Override
     public void read(CompoundNBT compound) {
         lastId = compound.getInt("lastId");
-        DimensionalBagsMod.LOGGER.info("**************** WSD read was called, lastId: " + lastId);
     }
 
     @Override
     public CompoundNBT write(CompoundNBT compound) {
-        DimensionalBagsMod.LOGGER.info("**************** WSD write was called, lastId: " + lastId);
         compound.putInt("lastId", lastId);
         return compound;
     }

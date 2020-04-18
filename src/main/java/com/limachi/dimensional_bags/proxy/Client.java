@@ -12,12 +12,9 @@ import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 
 import java.util.Map;
 
-import static com.limachi.dimensional_bags.DimensionalBagsMod.LOGGER;
-
 public class Client implements ICommonProxy {
 
     public void onClientSetup(FMLClientSetupEvent event) {
-        LOGGER.info("adding bag layer to player renderer");
         Map<String, PlayerRenderer> skin = Minecraft.getInstance().getRenderManager().getSkinMap();
         PlayerRenderer defaultSkin = skin.get("default");
         defaultSkin.addLayer(new BagLayer<>(defaultSkin, new BagLayerModel<>(false)));
@@ -26,7 +23,6 @@ public class Client implements ICommonProxy {
     }
 
     public void registerModels(ModelRegistryEvent event) {
-        LOGGER.info("registering models");
         RenderingRegistry.registerEntityRenderingHandler(Registries.BAG_ENTITY.get(), BagEntityRender::new);
     }
 }

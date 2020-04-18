@@ -1,6 +1,5 @@
 package com.limachi.dimensional_bags.common.blocks;
 
-import com.limachi.dimensional_bags.DimensionalBagsMod;
 import com.limachi.dimensional_bags.common.dimensions.BagDimension;
 import com.limachi.dimensional_bags.common.init.Registries;
 import com.limachi.dimensional_bags.common.tileentity.BagEyeTileEntity;
@@ -44,11 +43,9 @@ public class BagEye extends ContainerBlock {
     @Override
     @SuppressWarnings("deprecation")
     public ActionResultType onBlockActivated(BlockState state, World world, BlockPos pos, PlayerEntity player, Hand hand, BlockRayTraceResult ray) {
-        DimensionalBagsMod.LOGGER.info("clicked the eye");
         if (!world.isRemote) {
             TileEntity tile = world.getTileEntity(pos);
             if (tile instanceof BagEyeTileEntity) {
-                DimensionalBagsMod.LOGGER.info("was good");
                 int id = (pos.getX() - 8) / 1024;
                 if (player.isCrouching())
                     BagDimension.teleportBackFromRoom((ServerPlayerEntity)player, id);

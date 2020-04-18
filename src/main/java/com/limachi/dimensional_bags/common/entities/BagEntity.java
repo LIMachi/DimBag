@@ -1,6 +1,5 @@
 package com.limachi.dimensional_bags.common.entities;
 
-import com.limachi.dimensional_bags.DimensionalBagsMod;
 import net.minecraft.entity.*;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
@@ -21,27 +20,24 @@ public class BagEntity extends MobEntity {
 
     @Override
     public ItemStack getPickedResult(RayTraceResult target) {
-        DimensionalBagsMod.LOGGER.info("i was called, oopsy daisy");
         return new ItemStack(Items.AIR); //no spawn egg for you my good lad/lass
     }
 
     @Override
-    public boolean shouldRiderSit() {
-        return false;
-    }
+    public boolean canBeCollidedWith() { return true; } //if false, prevent punch :(
 
     @Override
-    public boolean canRiderInteract() {
-        return true;
-    }
+    public boolean canBePushed() { return false; } //don't seem to work, sad :(
 
     @Override
-    public boolean canBeRiddenInWater(Entity rider) {
-        return true;
-    }
+    public boolean shouldRiderSit() { return false; }
 
     @Override
-    public EntityClassification getClassification(boolean forSpawnCount) {
-        return null;
-    }
+    public boolean canRiderInteract() { return true; }
+
+    @Override
+    public boolean canBeRiddenInWater(Entity rider) { return true; }
+
+    @Override
+    public EntityClassification getClassification(boolean forSpawnCount) { return null; }
 }

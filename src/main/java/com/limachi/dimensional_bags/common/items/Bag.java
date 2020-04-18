@@ -2,7 +2,10 @@ package com.limachi.dimensional_bags.common.items;
 
 import com.limachi.dimensional_bags.DimensionalBagsMod;
 import com.limachi.dimensional_bags.common.dimensions.BagDimension;
+import com.limachi.dimensional_bags.common.entities.BagEntity;
+import com.limachi.dimensional_bags.common.init.Registries;
 import net.minecraft.client.util.ITooltipFlag;
+import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.item.Item;
@@ -25,6 +28,27 @@ public class Bag extends Item {
     }
 
     @Override
+    public boolean hasCustomEntity(ItemStack stack) {
+        return true;
+    }
+
+    @Override
+    public Entity createEntity(World world, Entity location, ItemStack stack) { //should use this only if a player or dispenser used the item (will do later)
+        Entity ent = new BagEntity(Registries.BAG_ENTITY.get(), world);
+        ent.setPosition(location.getPosX(), location.getPosY(), location.getPosZ());
+        ent.setInvulnerable(true); //make sure the entity can't be destroyed (except by player events)
+        ((BagEntity)ent).enablePersistence(); //make sure the entity can't despawn
+        int id;
+        try {
+            id = stack.getTag().getInt("ID");
+        } catch (NullPointerException e) {
+            id = -1;
+        }
+        ent.getPersistentData().putInt("ID", id);
+        return ent;
+    }
+
+    @Override
     @OnlyIn(Dist.CLIENT)
     public void addInformation(ItemStack stack, World world, List<ITextComponent> tooltip, ITooltipFlag flagIn) {
         if (world == null) return;
@@ -42,7 +66,6 @@ public class Bag extends Item {
 
     @Override
     public ActionResult<ItemStack> onItemRightClick(World world, PlayerEntity player, Hand hand) {
-        DimensionalBagsMod.LOGGER.info("activation of bag item with world status: " + world.isRemote());
         if (world.isRemote()) return super.onItemRightClick(world, player, hand);
         int id;
         try {
@@ -56,9 +79,7 @@ public class Bag extends Item {
             nbt.putInt("ID", id);
             player.getHeldItem(hand).setTag(nbt); //overkill, might destroy other nbt, but i don't give a damn
         }
-        DimensionalBagsMod.LOGGER.info("player croushing: " + player.isCrouching() + " remote world: " + world.isRemote() + " dimension type: " + world.dimension.getType());
         if (player.isCrouching() && !world.isRemote && !(world.dimension instanceof BagDimension)) {
-            DimensionalBagsMod.LOGGER.info("trying to tp to dimension");
             BagDimension.teleportToRoom((ServerPlayerEntity) player, id);
             return new ActionResult<>(ActionResultType.SUCCESS, player.getHeldItem(hand));
         }

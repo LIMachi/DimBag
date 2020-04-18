@@ -20,10 +20,10 @@ public class DimBagConfig {
 
     public static int startingRadius;
     public static int maxRadius;
-    public static int startingColumns = 9;
-    public static int maxCOlumns = 9;
-    public static int startingRows = 3;
-    public static int maxRows = 3;
+    public static int startingColumns;
+    public static int maxCOlumns;
+    public static int startingRows;
+    public static int maxRows;
 
     @SubscribeEvent
     public static void onModConfigEvent(final ModConfig.ModConfigEvent event) {
@@ -34,14 +34,10 @@ public class DimBagConfig {
     private static void bakeConfig() {
         startingRadius = Config.startingRadius.get();
         maxRadius = Config.maxRadius.get();
-//        listOfRadius = new ArrayList<>(6);
-//        listOfRows = new ArrayList<>(6);
-//        listOfColumns = new ArrayList<>(6);
-//        for (int i = 0; i < 6; ++i) {
-//            listOfRadius.add(CONFIG.bags.get(i).roomRadius.get());
-//            listOfRows.add(CONFIG.bags.get(i).rows.get());
-//            listOfColumns.add(CONFIG.bags.get(i).columns.get());
-//        }
+        startingColumns = Config.startingColumns.get();
+        maxCOlumns = Config.maxCOlumns.get();
+        startingRows = Config.startingRows.get();
+        maxRows = Config.maxRows.get();
     }
 
     static class Config {
@@ -53,40 +49,15 @@ public class DimBagConfig {
         static ForgeConfigSpec.IntValue startingRows;
         static ForgeConfigSpec.IntValue maxRows;
 
-//        static final ArrayList<Bag> bags = new ArrayList<>(6);
-//
-//        static class Bag {
-//            final ForgeConfigSpec.IntValue roomRadius;
-//            final ForgeConfigSpec.IntValue rows;
-//            final ForgeConfigSpec.IntValue columns;
-//            int tier;
-//
-//            Bag(ForgeConfigSpec.Builder builder, int tierIn) {
-//                tier = tierIn;
-//                builder.push("Bag Tier " + tier);
-//                roomRadius = builder
-//                        .comment("radius of the room inside the bag, not counting the eye and walls")
-//                        .translation(MOD_ID + ".config.bag_tier_" + tier + ".roomRadius")
-//                        .defineInRange("bag_tier_" + tier + ".roomRadius", 3 + 2 * tier, 2, 126);
-//                rows = builder
-//                        .comment("number of rows of items the bag can contain")
-//                        .translation(MOD_ID + ".config.bag_tier_" + tier + ".rows")
-//                        .defineInRange("bag_tier_" + tier + ".rows", 3 + 2 * tier, 2, 15);
-//                columns = builder
-//                        .comment("number of columns of items the bag can contain")
-//                        .translation(MOD_ID + ".config.bag_tier_" + tier + ".columns")
-//                        .defineInRange("bag_tier_" + tier + ".columns", 9 + tier, 9, 18);
-//                builder.pop();
-//            }
-//        }
-//
-//        Config(ForgeConfigSpec.Builder builder) {
-//            for (int i = 0; i < 6; ++i)
-//                bags.add(new Bag(builder, i));
-//        }
         Config(ForgeConfigSpec.Builder builder) {
             startingRadius = builder.comment("starting radius of the bag (not counting the eye and walls)").translation(MOD_ID + ".config.bag.roomRadius").defineInRange("bag.roomRadius", 3, 2, 126);
             maxRadius = builder.comment("maximum radius of the bag (not counting the eye and walls)").translation(MOD_ID + ".config.bag.roomRadiusMax").defineInRange("bag.roomRadiusMax", 31, 2, 126);
+
+            startingColumns = builder.comment("number of columns a new bag has").translation(MOD_ID + ".config.bag.columns").defineInRange("bag.columns", 9, 9, 18);
+            maxCOlumns = builder.comment("maximum radius of columns a bag can have").translation(MOD_ID + ".config.bag.columnsMax").defineInRange("bag.columnsMax", 18, 9, 18);
+
+            startingRows = builder.comment("number of rows a new bag has").translation(MOD_ID + ".config.bag.rows").defineInRange("bag.rows", 3, 1, 12);
+            maxRows = builder.comment("maximum radius of rows a bag can have").translation(MOD_ID + ".config.bag.rowsMax").defineInRange("bag.rowsMax", 12, 1, 12);
         }
     }
 }
