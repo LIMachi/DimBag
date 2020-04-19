@@ -5,6 +5,7 @@ import com.limachi.dimensional_bags.common.blocks.BagEye;
 import com.limachi.dimensional_bags.common.container.BagEyeContainer;
 import com.limachi.dimensional_bags.common.entities.BagEntity;
 import com.limachi.dimensional_bags.common.items.Bag;
+import com.limachi.dimensional_bags.common.items.RowUpgrade;
 import com.limachi.dimensional_bags.common.tileentity.BagEyeTileEntity;
 import net.minecraft.block.Block;
 import net.minecraft.block.Blocks;
@@ -35,6 +36,7 @@ public class Registries {
 
     public static final RegistryObject<Item> BAG_ITEM = ITEM_REGISTER.register("bag", Bag::new);
     public static final RegistryObject<Item> BAG_EYE_ITEM = ITEM_REGISTER.register("bag_eye", () -> new BlockItem(BAG_EYE_BLOCK.get(), new Item.Properties().group(DimensionalBagsMod.ItemGroup.instance)));
+    public static final RegistryObject<Item> UPGRADE_ROW = ITEM_REGISTER.register("row_upgrade", RowUpgrade::new);
 
     public static TileEntityType TET_BAG_EYE;
 

@@ -25,6 +25,7 @@ public class Bag extends Item {
 
     public Bag() {
         super(new Properties().group(DimensionalBagsMod.ItemGroup.instance));
+        DimensionalBagsMod.LOGGER.info("constructor called for Bag ****************");
     }
 
     @Override
@@ -47,6 +48,24 @@ public class Bag extends Item {
         ent.getPersistentData().putInt("ID", id);
         return ent;
     }
+
+    public static int getUpgrade(ItemStack item, String id) {
+        try {
+            return item.getTag().getCompound("dim_bag_upgrades").getInt(id);
+        } catch (NullPointerException e) {
+            return 0;
+        }
+    }
+
+    /*
+    public static void addUpgrade(ItemStack item, String id) {
+        try {
+            item.getTag().getCompound("dim_bag_upgrades")
+        } catch (NullPointerException e) {
+
+        }
+    }
+    */
 
     @Override
     @OnlyIn(Dist.CLIENT)

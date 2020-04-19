@@ -2,5 +2,6 @@
   "item.dim_bag.bag": "Dimensional Bag",
   "block.dim_bag.bag_eye": "The All Seeing Eye Of The Dimentional Rift",
   "itemGroup.tab_dim_bag": "Dimensional Bags",
-  "curios.identifier.backpack": "Backpack"
+  "curios.identifier.backpack": "Backpack",
+  "tooltip.upgrade.row": "Add an additional row to the bag inventory, up to a maximum of %i rows"
 }

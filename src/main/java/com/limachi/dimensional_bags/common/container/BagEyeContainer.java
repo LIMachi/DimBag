@@ -15,7 +15,7 @@ import java.util.Objects;
 
 public class BagEyeContainer extends Container {
 
-    public final BagEyeTileEntity   tileEntity;
+    public final BagEyeTileEntity tileEntity;
     private final IWorldPosCallable canIntereactWithCallable;
 
     public BagEyeContainer(final int windowId, final PlayerInventory inventory, final BagEyeTileEntity tileEntity) {

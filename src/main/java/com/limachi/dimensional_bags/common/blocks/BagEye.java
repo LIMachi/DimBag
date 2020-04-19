@@ -10,6 +10,7 @@ import net.minecraft.block.SoundType;
 import net.minecraft.block.material.Material;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
+import net.minecraft.inventory.container.INamedContainerProvider;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.ActionResultType;
 import net.minecraft.util.Hand;
@@ -47,12 +48,16 @@ public class BagEye extends ContainerBlock {
             TileEntity tile = world.getTileEntity(pos);
             if (tile instanceof BagEyeTileEntity) {
                 int id = (pos.getX() - 8) / 1024;
-                if (player.isCrouching())
-                    BagDimension.teleportBackFromRoom((ServerPlayerEntity)player, id);
-                return ActionResultType.FAIL;
+                if (player.isCrouching()) {
+                    BagDimension.teleportBackFromRoom((ServerPlayerEntity) player, id);
+                    return ActionResultType.SUCCESS;
+                }
+                INamedContainerProvider cp = this.getContainer(state, world, pos);
+                if (cp != null)
+                    player.openContainer(cp);
             }
         }
-        return ActionResultType.PASS;
+        return ActionResultType.SUCCESS;
     }
 
     @Nullable
