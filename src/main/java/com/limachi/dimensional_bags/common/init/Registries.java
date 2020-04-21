@@ -2,13 +2,12 @@ package com.limachi.dimensional_bags.common.init;
 
 import com.limachi.dimensional_bags.DimensionalBagsMod;
 import com.limachi.dimensional_bags.common.blocks.BagEye;
-import com.limachi.dimensional_bags.common.container.BagEyeContainer;
+import com.limachi.dimensional_bags.common.data.inventory.container.BagEyeContainer;
 import com.limachi.dimensional_bags.common.entities.BagEntity;
 import com.limachi.dimensional_bags.common.items.Bag;
 import com.limachi.dimensional_bags.common.items.RowUpgrade;
 import com.limachi.dimensional_bags.common.tileentity.BagEyeTileEntity;
 import net.minecraft.block.Block;
-import net.minecraft.block.Blocks;
 import net.minecraft.entity.EntityClassification;
 import net.minecraft.entity.EntityType;
 import net.minecraft.inventory.container.ContainerType;
@@ -38,9 +37,7 @@ public class Registries {
     public static final RegistryObject<Item> BAG_EYE_ITEM = ITEM_REGISTER.register("bag_eye", () -> new BlockItem(BAG_EYE_BLOCK.get(), new Item.Properties().group(DimensionalBagsMod.ItemGroup.instance)));
     public static final RegistryObject<Item> UPGRADE_ROW = ITEM_REGISTER.register("row_upgrade", RowUpgrade::new);
 
-    public static TileEntityType TET_BAG_EYE;
-
-    public static final RegistryObject<TileEntityType<BagEyeTileEntity>> BAG_EYE_TE = TILE_ENTITY_REGISTER.register("bag_eye_te", () -> TET_BAG_EYE);
+    public static final RegistryObject<TileEntityType<BagEyeTileEntity>> BAG_EYE_TE = TILE_ENTITY_REGISTER.register("bag_eye_te", () -> TileEntityType.Builder.create(BagEyeTileEntity::new, BAG_EYE_BLOCK.get()).build(null));
 
     public static final RegistryObject<ContainerType<BagEyeContainer>> BAG_CONTAINER = CONTAINER_TYPE_REGISTER.register("bag_container", () -> IForgeContainerType.create(BagEyeContainer::new));
 
@@ -51,7 +48,6 @@ public class Registries {
 
         BLOCK_REGISTER.register(meb);
         ITEM_REGISTER.register(meb);
-        TET_BAG_EYE = TileEntityType.Builder.create(BagEyeTileEntity::new, Blocks.AIR).build(null); //FIXME: dirty trick
         TILE_ENTITY_REGISTER.register(meb);
         CONTAINER_TYPE_REGISTER.register(meb);
         ENTITY_REGISTER.register(meb);

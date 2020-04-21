@@ -1,6 +1,8 @@
-package com.limachi.dimensional_bags.common.container;
+package com.limachi.dimensional_bags.common.data.inventory.container;
 
+import com.limachi.dimensional_bags.DimensionalBagsMod;
 import com.limachi.dimensional_bags.common.init.Registries;
+import com.limachi.dimensional_bags.common.init.eventSubscriberForge;
 import com.limachi.dimensional_bags.common.tileentity.BagEyeTileEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
@@ -10,17 +12,25 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.IWorldPosCallable;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.dimension.DimensionType;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
 
 import java.util.Objects;
 
 public class BagEyeContainer extends Container {
 
-    public final BagEyeTileEntity tileEntity;
+//    public final BagEyeTileEntity tileEntity;
     private final IWorldPosCallable canIntereactWithCallable;
+    private int rows;
+    private int columns;
 
     public BagEyeContainer(final int windowId, final PlayerInventory inventory, final BagEyeTileEntity tileEntity) {
         super(Registries.BAG_CONTAINER.get(), windowId);
-        this.tileEntity = tileEntity;
+//        this.tileEntity = tileEntity;
+        this.rows = tileEntity.getRows();
+        this.columns = tileEntity.getColumns();
         this.canIntereactWithCallable = IWorldPosCallable.of(tileEntity.getWorld(), tileEntity.getPos());
 
         //Main Inventory
@@ -41,21 +51,49 @@ public class BagEyeContainer extends Container {
         int startYhb = 160; //default chest hotbar first slot
         for (int column = 0; column < 9; ++column)
             this.addSlot(new Slot(inventory, column, startX + column * slotInterval, startYhb));
+        DimensionalBagsMod.LOGGER.info("used constructor 1");
     }
 
-    private static BagEyeTileEntity getTileEntity(final PlayerInventory inventory, final PacketBuffer data) {
-        Objects.requireNonNull(inventory, "inventory cannot be null");
-        Objects.requireNonNull(data, "data cannot be null");
-        final TileEntity tileAtPos = inventory.player.world.getTileEntity(data.readBlockPos());
+    public BagEyeContainer(final int windowId, final PlayerInventory inventory, final int id) {
+        this(windowId, inventory, getTileEntity(inventory, id)); //yolo, if the eye does't exist, we are screwed
+        DimensionalBagsMod.LOGGER.info("used constructor 2");
+    }
+
+    public BagEyeContainer(final int windowId, final PlayerInventory inventory, final PacketBuffer data) {
+        this(windowId, inventory, getTileEntity(inventory, data));
+        DimensionalBagsMod.LOGGER.info("used constructor 3");
+    }
+
+    public int getRows() { return this.rows; }
+    public int getColumns() { return this.columns; }
+
+    @OnlyIn(Dist.DEDICATED_SERVER)
+    private static BagEyeTileEntity getTileEntity(final PlayerInventory inventory, final int id) {
+        if (id == -1) return null;
+        BlockPos pos = new BlockPos(8 + 1024 * id, 128, 8);
+        final TileEntity tileAtPos = inventory.player.getServer().getWorld(DimensionType.byName(eventSubscriberForge.DIM_TYPE_RL)).getTileEntity(pos);
         if (tileAtPos instanceof BagEyeTileEntity) {
             return (BagEyeTileEntity)tileAtPos;
         }
         throw new IllegalStateException("Tile entity is not correct" + tileAtPos);
     }
 
+    @OnlyIn(Dist.CLIENT)
+    private static BagEyeTileEntity getTileEntity(final PlayerInventory inventory, final PacketBuffer data) {
+        Objects.requireNonNull(inventory, "inventory cannot be null");
+        Objects.requireNonNull(data, "data cannot be null");
+        final TileEntity tileAtPos = inventory.player.getServer().getWorld(DimensionType.byName(eventSubscriberForge.DIM_TYPE_RL)).getTileEntity(data.readBlockPos());
+        if (tileAtPos instanceof BagEyeTileEntity) {
+            return (BagEyeTileEntity)tileAtPos;
+        }
+        throw new IllegalStateException("Tile entity is not correct" + tileAtPos);
+    }
+
+    /*
     public BagEyeContainer(final int windowId, final PlayerInventory inventory, final PacketBuffer data) {
         this(windowId, inventory, getTileEntity(inventory, data));
     }
+    */
 
     @Override
     public boolean canInteractWith(PlayerEntity playerIn) {
@@ -69,6 +107,7 @@ public class BagEyeContainer extends Container {
         if (slot != null && slot.getHasStack()) {
             ItemStack itemStack1 = slot.getStack();
             itemStack = itemStack1.copy();
+            /*
             if (index < tileEntity.getSizeInventory()) {
                 if (!this.mergeItemStack(itemStack1, tileEntity.getSizeInventory(), this.inventorySlots.size(), true)) {
                     return ItemStack.EMPTY;
@@ -82,6 +121,7 @@ public class BagEyeContainer extends Container {
                     slot.onSlotChanged();
                 }
             }
+            */
         }
         return itemStack;
     }

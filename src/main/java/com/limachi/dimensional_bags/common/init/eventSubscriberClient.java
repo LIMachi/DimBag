@@ -1,6 +1,6 @@
 package com.limachi.dimensional_bags.common.init;
 
-import com.limachi.dimensional_bags.client.gui.BagGUI;
+import com.limachi.dimensional_bags.client.screen.BagGUI;
 import net.minecraft.client.gui.ScreenManager;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.eventbus.api.SubscribeEvent;

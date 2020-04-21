@@ -138,9 +138,9 @@ public class BagDimension extends Dimension {
 
     //need to rewrite
     public static int newRoom(ServerPlayerEntity player) {
-        int id = SavedData.get(player.getServer()).nextId();
+//        int id = SavedData.get(player.getServer()).nextId();
 //        updateRoom(id, lvl);
-        return id;
+        return 0;
     }
 
     public static void teleportToRoom(ServerPlayerEntity player, int destinationId) {

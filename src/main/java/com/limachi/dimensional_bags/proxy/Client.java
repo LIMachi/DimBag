@@ -1,6 +1,8 @@
 package com.limachi.dimensional_bags.proxy;
 
 import com.limachi.dimensional_bags.client.entity.layer.BagLayer;
+import com.limachi.dimensional_bags.client.entity.layer.BagLayer1;
+import com.limachi.dimensional_bags.client.entity.model.Bag1LayerModel;
 import com.limachi.dimensional_bags.client.entity.model.BagLayerModel;
 import com.limachi.dimensional_bags.client.entity.render.BagEntityRender;
 import com.limachi.dimensional_bags.common.init.Registries;
@@ -17,9 +19,9 @@ public class Client implements ICommonProxy {
     public void onClientSetup(FMLClientSetupEvent event) {
         Map<String, PlayerRenderer> skin = Minecraft.getInstance().getRenderManager().getSkinMap();
         PlayerRenderer defaultSkin = skin.get("default");
-        defaultSkin.addLayer(new BagLayer<>(defaultSkin, new BagLayerModel<>(false)));
+        defaultSkin.addLayer(new BagLayer1<>(defaultSkin, new Bag1LayerModel<>()));
         PlayerRenderer slimSkin = skin.get("slim");
-        slimSkin.addLayer(new BagLayer<>(slimSkin, new BagLayerModel<>(false)));
+        slimSkin.addLayer(new BagLayer1<>(slimSkin, new Bag1LayerModel<>()));
     }
 
     public void registerModels(ModelRegistryEvent event) {

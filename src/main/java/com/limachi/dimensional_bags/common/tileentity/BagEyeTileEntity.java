@@ -3,7 +3,7 @@ package com.limachi.dimensional_bags.common.tileentity;
 import com.limachi.dimensional_bags.DimensionalBagsMod;
 import com.limachi.dimensional_bags.common.blocks.BagEye;
 import com.limachi.dimensional_bags.common.config.DimBagConfig;
-import com.limachi.dimensional_bags.common.container.BagEyeContainer;
+import com.limachi.dimensional_bags.common.data.inventory.container.BagEyeContainer;
 import com.limachi.dimensional_bags.common.init.Registries;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;

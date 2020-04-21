@@ -7,31 +7,56 @@ import net.minecraft.client.renderer.model.ModelRenderer;
 import net.minecraft.entity.player.PlayerEntity;
 
 public class Bag1LayerModel<T extends PlayerEntity> extends BipedModel<T> {
-    public final ModelRenderer VoxelShapes;
+    public final ModelRenderer Body;
+    public final ModelRenderer Bag;
+//    public final ModelRenderer PlayerBody; //for reference
 
     public Bag1LayerModel() {
         super(0f);
-        textureWidth = 128;
-        textureHeight = 128;
+        //Body.setTextureOffset(28, 35).addBox(-7.0F + deltaX, -19.0F + deltaY, 3.0F + deltaZ, 3, 1, 1, 0.0F, false);
 
-        VoxelShapes = new ModelRenderer(this);
-        VoxelShapes.setRotationPoint(4.0F, 16.0F, 0.0F);
-        VoxelShapes.setTextureOffset(0, 73).addBox(4.0F, -2.0F, -5.0F, 2, 8, 10, 0.0F, false);
-        VoxelShapes.setTextureOffset(74, 13).addBox(4.0F, -8.0F, -5.0F, 2, 5, 10, 0.0F, false);
-        VoxelShapes.setTextureOffset(46, 48).addBox(2.0F, -9.0F, -6.0F, 2, 16, 12, 0.0F, false);
-        VoxelShapes.setTextureOffset(28, 28).addBox(1.0F, -10.0F, -7.0F, 1, 18, 14, 0.0F, false);
-        VoxelShapes.setTextureOffset(44, 0).addBox(-3.0F, -10.0F, -7.0F, 1, 18, 14, 0.0F, false);
-        VoxelShapes.setTextureOffset(0, 46).addBox(-2.0F, -10.0F, -7.0F, 3, 13, 14, 0.0F, false);
-        VoxelShapes.setTextureOffset(60, 62).addBox(0.0F, 6.0F, -7.0F, 1, 1, 14, 0.0F, false);
-        VoxelShapes.setTextureOffset(20, 62).addBox(-2.0F, 6.0F, -7.0F, 1, 1, 14, 0.0F, false);
-        VoxelShapes.setTextureOffset(58, 32).addBox(-2.0F, 7.0F, -7.0F, 3, 1, 14, 0.0F, false);
-        VoxelShapes.setTextureOffset(60, 0).addBox(-1.0F, 6.0F, -6.0F, 1, 1, 12, 0.0F, false);
-        VoxelShapes.setTextureOffset(26, 0).addBox(-2.0F, 3.0F, -5.0F, 3, 3, 10, 0.0F, false);
-        VoxelShapes.setTextureOffset(0, 0).addBox(-8.0F, -11.0F, -8.0F, 5, 19, 16, 0.0F, false);
+        textureWidth = 64;
+        textureHeight = 64;
+
+        Body = new ModelRenderer(this);
+        Body.setRotationPoint(0f, 0f, 0f);
+
+        Bag = new ModelRenderer(this);
+        Bag.setRotationPoint(0f, 0f, 2f);
+        Body.addChild(Bag);
+        Bag.setTextureOffset(0, 13).addBox(-4.0F, 1.0F, 4.0F, 8, 3, 1, 0.0F, false);
+        Bag.setTextureOffset(20, 17).addBox(-7.0F, 4.0F, 1.0F, 14, 1, 3, 0.0F, false);
+        Bag.setTextureOffset(0, 0).addBox(-4.0F, 4.0F, 0.0F, 8, 8, 5, 0.0F, false);
+        Bag.setTextureOffset(0, 33).addBox(-3.0F, 6.0F, 5.0F, 6, 5, 1, 0.0F, false);
+        Bag.setTextureOffset(42, 13).addBox(-2.0F, 2.0F, 6.0F, 4, 2, 1, 0.0F, false);
+        Bag.setTextureOffset(0, 11).addBox(-2.0F, 1.0F, 1.0F, 4, 3, 3, 0.0F, false);
+        Bag.setTextureOffset(42, 0).addBox(-3.0F, 1.0F, 5.0F, 6, 4, 1, 0.0F, false);
+        Bag.setTextureOffset(0, 39).addBox(4.0F, 5.0F, 1.0F, 2, 6, 3, 0.0F, false);
+        Bag.setTextureOffset(36, 36).addBox(-6.0F, 5.0F, 1.0F, 2, 6, 3, 0.0F, false);
+        Bag.setTextureOffset(32, 31).addBox(-3.0F, 12.0F, 1.0F, 6, 1, 3, 0.0F, false);
+        Bag.setTextureOffset(24, 24).addBox(-4.0F, -1.0F, 0.0F, 8, 1, 6, 0.0F, false);
+        Bag.setTextureOffset(10, 40).addBox(-2.0F, 5.0F, 5.0F, 4, 1, 1, 0.0F, false);
+        Bag.setTextureOffset(10, 40).addBox(-2.0F, 0.0F, 5.0F, 4, 1, 1, 0.0F, false);
+        Bag.setTextureOffset(36, 29).addBox(-2.0F, -2.0F, 5.0F, 1, 1, 1, 0.0F, false);
+        Bag.setTextureOffset(36, 29).addBox(-2.0F, -1.0F, 6.0F, 1, 1, 1, 0.0F, false);
+        Bag.setTextureOffset(36, 29).addBox(1.0F, -2.0F, 5.0F, 1, 1, 1, 0.0F, false);
+        Bag.setTextureOffset(0, 48).addBox(-4.0F, 2.0F, 1.0F, 8, 2, 3, 0.0F, false);
+        Bag.setTextureOffset(36, 29).addBox(1.0F, -1.0F, 6.0F, 1, 1, 1, 0.0F, false);
+        Bag.setTextureOffset(10, 46).addBox(-3.0F, 7.0F, 6.0F, 3, 1, 1, 0.0F, false);
+        Bag.setTextureOffset(10, 46).addBox(0.0F, 7.0F, 6.0F, 3, 1, 1, 0.0F, false);
+        Bag.setTextureOffset(10, 39).addBox(1.0F, 6.0F, 6.0F, 1, 3, 1, 0.0F, false);
+        Bag.setTextureOffset(10, 39).addBox(-2.0F, 6.0F, 6.0F, 1, 3, 1, 0.0F, false);
+        Bag.setTextureOffset(0, 0).addBox(-4.0F, 0.0F, 0.0F, 8, 1, 5, 0.0F, false);
+        Bag.setTextureOffset(0, 13).addBox(-4.0F, 1.0F, 0.0F, 8, 3, 1, 0.0F, false);
+
+//        PlayerBody = new ModelRenderer(this);
+//        PlayerBody.setRotationPoint(0.0F, 0.0F, 2.0F);
+//        Body.addChild(PlayerBody);
+//        PlayerBody.setTextureOffset(0, 0).addBox(-4.0F, 0.0F, -4.0F, 8, 12, 4, 0.0F, false);
     }
 
     @Override
     public void render(MatrixStack matrixStack, IVertexBuilder buffer, int packedLight, int overlay, float red, float green, float blue, float alpha) {
-        VoxelShapes.render(matrixStack, buffer, packedLight, overlay, red, green, blue, alpha);
+        Body.render(matrixStack, buffer, packedLight, overlay, red, green, blue, alpha);
     }
 }

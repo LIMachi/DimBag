@@ -1,9 +1,13 @@
 package com.limachi.dimensional_bags;
 
+import com.google.common.reflect.Reflection;
 import com.limachi.dimensional_bags.common.IMC.curios.Curios;
 import com.limachi.dimensional_bags.common.config.DimBagConfig;
+import com.limachi.dimensional_bags.common.data.DimBagData;
+import com.limachi.dimensional_bags.common.data.IdHandler;
 import com.limachi.dimensional_bags.common.entities.BagEntity;
 import com.limachi.dimensional_bags.common.init.Registries;
+import com.limachi.dimensional_bags.common.network.PacketHandler;
 import com.limachi.dimensional_bags.proxy.Client;
 import com.limachi.dimensional_bags.proxy.ICommonProxy;
 import com.limachi.dimensional_bags.proxy.Server;
@@ -39,7 +43,10 @@ public class DimensionalBagsMod
     public static DimensionalBagsMod instance;
     public static final ICommonProxy PROXY = DistExecutor.runForDist(() -> Client::new, ()-> Server::new);
 
+    public static DimBagData client_side_mirror = null; //copy of the overworld-saved data on the server, server should send packets with the necessary data to populate this copy, should be updaed upon player connecting
+
     public DimensionalBagsMod() {
+        Reflection.initialize(PacketHandler.class); //force initialization of the class statics ASAP
         final IEventBus meb = FMLJavaModLoadingContext.get().getModEventBus();
         ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, DimBagConfig.SPEC);
         Registries.registerAll();
@@ -68,10 +75,8 @@ public class DimensionalBagsMod
                 slot = 2;
             } else return;
             ItemStack new_bag = new ItemStack(Registries.BAG_ITEM.get());
-            int id = ((BagEntity)event.getTarget()).getPersistentData().getInt("ID");
-            CompoundNBT nbt = new CompoundNBT();
-            nbt.putInt("ID", id);
-            new_bag.setTag(nbt);
+            IdHandler id = new IdHandler(((BagEntity)event.getTarget()));
+            id.write(new_bag);
             if (slot != 0)
                 player.setHeldItem(slot == 1 ? Hand.MAIN_HAND : Hand.OFF_HAND, new_bag);
             else

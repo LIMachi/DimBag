@@ -1,16 +1,16 @@
 package com.limachi.dimensional_bags.common.items;
 
 import com.limachi.dimensional_bags.DimensionalBagsMod;
+import com.limachi.dimensional_bags.common.data.DimBagData;
+import com.limachi.dimensional_bags.common.data.IdHandler;
 import com.limachi.dimensional_bags.common.dimensions.BagDimension;
 import com.limachi.dimensional_bags.common.entities.BagEntity;
 import com.limachi.dimensional_bags.common.init.Registries;
 import net.minecraft.client.util.ITooltipFlag;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.ActionResultType;
 import net.minecraft.util.Hand;
@@ -25,7 +25,6 @@ public class Bag extends Item {
 
     public Bag() {
         super(new Properties().group(DimensionalBagsMod.ItemGroup.instance));
-        DimensionalBagsMod.LOGGER.info("constructor called for Bag ****************");
     }
 
     @Override
@@ -39,22 +38,18 @@ public class Bag extends Item {
         ent.setPosition(location.getPosX(), location.getPosY(), location.getPosZ());
         ent.setInvulnerable(true); //make sure the entity can't be destroyed (except by player events)
         ((BagEntity)ent).enablePersistence(); //make sure the entity can't despawn
-        int id;
-        try {
-            id = stack.getTag().getInt("ID");
-        } catch (NullPointerException e) {
-            id = -1;
-        }
-        ent.getPersistentData().putInt("ID", id);
+        IdHandler id = new IdHandler(stack);
+        id.write((BagEntity)ent);
         return ent;
     }
 
     public static int getUpgrade(ItemStack item, String id) {
-        try {
-            return item.getTag().getCompound("dim_bag_upgrades").getInt(id);
-        } catch (NullPointerException e) {
-            return 0;
-        }
+//        try {
+//            return item.getTag().getCompound("dim_bag_upgrades").getInt(id);
+//        } catch (NullPointerException e) {
+//            return 0;
+//        }
+        return 0;
     }
 
     /*
@@ -71,35 +66,23 @@ public class Bag extends Item {
     @OnlyIn(Dist.CLIENT)
     public void addInformation(ItemStack stack, World world, List<ITextComponent> tooltip, ITooltipFlag flagIn) {
         if (world == null) return;
-        int id;
-        try {
-            id = stack.getTag().getInt("ID");
-        } catch (NullPointerException e) {
-            id = -1;
-        }
-        if (id == -1)
+        IdHandler id = new IdHandler(stack);
+        if (id.getId() == 0)
             tooltip.add(new TranslationTextComponent("tooltip.bag.missing_id"));
         else
-            tooltip.add(new StringTextComponent("ID: " + id));
+            tooltip.add(new TranslationTextComponent("tooltip.bag.id", id.getId()));
     }
 
     @Override
     public ActionResult<ItemStack> onItemRightClick(World world, PlayerEntity player, Hand hand) {
         if (world.isRemote()) return super.onItemRightClick(world, player, hand);
-        int id;
-        try {
-            id = player.getHeldItem(hand).getTag().getInt("ID");
-        } catch (NullPointerException e) {
-            id = -1;
-        }
-        if (id == -1) {//first time using the bag, bind it to a new room
-            id = BagDimension.newRoom((ServerPlayerEntity) player);
-            CompoundNBT nbt = new CompoundNBT();
-            nbt.putInt("ID", id);
-            player.getHeldItem(hand).setTag(nbt); //overkill, might destroy other nbt, but i don't give a damn
+        IdHandler id = new IdHandler(player.getHeldItem(hand));
+        if (id.getId() == 0) {//first time using the bag, bind it to a new room
+            id = DimBagData.get(player.getServer()).newEye().getId();
+            id.write(player.getHeldItem(hand));
         }
         if (player.isCrouching() && !world.isRemote && !(world.dimension instanceof BagDimension)) {
-            BagDimension.teleportToRoom((ServerPlayerEntity) player, id);
+//            BagDimension.teleportToRoom((ServerPlayerEntity) player, id); //redo too
             return new ActionResult<>(ActionResultType.SUCCESS, player.getHeldItem(hand));
         }
         return super.onItemRightClick(world, player, hand);
