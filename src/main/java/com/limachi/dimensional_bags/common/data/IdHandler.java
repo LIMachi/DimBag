@@ -16,6 +16,8 @@ public class IdHandler {
 
     public IdHandler(int id) { this.id = id; }
 
+    public IdHandler(CompoundNBT nbt) { this.id = nbt.getInt(KEY); }
+
     public IdHandler(ItemStack dataHolder) {
         if (dataHolder.getItem() instanceof Bag && dataHolder.getTag() != null)
             this.id = dataHolder.getTag().getInt(KEY);
@@ -38,9 +40,9 @@ public class IdHandler {
         dataHolder.setTag(nbt);
     }
 
-    public void write(BagEntity dataHolder) {
-        dataHolder.getPersistentData().putInt(KEY, this.id);
-    }
+    public void write(BagEntity dataHolder) { dataHolder.getPersistentData().putInt(KEY, this.id); }
+
+    public void write(CompoundNBT nbt) { nbt.putInt(KEY, this.id); }
 
     public void write(BagEyeTileEntity dataHolder) {
         dataHolder.getTileData().putInt(KEY, this.id);

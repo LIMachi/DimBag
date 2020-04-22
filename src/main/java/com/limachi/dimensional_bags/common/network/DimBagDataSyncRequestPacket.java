@@ -15,7 +15,9 @@ public class DimBagDataSyncRequestPacket implements IBasePacket {
         if (t == PacketHandler.Target.SERVER) //receptionned server side
             ctx.enqueueWork(() -> {
                 DimBagData data = DimBagData.get(ctx.getSender().server);
-                PacketHandler.toClient(new DimBagDataSyncPacket(data), ctx.getSender());
+                DimBagDataSyncPacket ackPack = new DimBagDataSyncPacket(data);
+                ackPack.dirtyEyes = data.getEyes(); //make sur all eyes are loadded
+                PacketHandler.toClient(ackPack, ctx.getSender());
             });
         ctx.setPacketHandled(true);
     }

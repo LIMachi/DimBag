@@ -1,6 +1,8 @@
 package com.limachi.dimensional_bags.common.blocks;
 
-import com.limachi.dimensional_bags.common.data.inventory.container.BagEyeContainer;
+//import com.limachi.dimensional_bags.common.data.inventory.container.BagEyeContainer;
+import com.limachi.dimensional_bags.common.data.DimBagData;
+import com.limachi.dimensional_bags.common.data.inventory.container.DimBagContainer;
 import com.limachi.dimensional_bags.common.dimensions.BagDimension;
 import com.limachi.dimensional_bags.common.init.Registries;
 import com.limachi.dimensional_bags.common.tileentity.BagEyeTileEntity;
@@ -14,6 +16,7 @@ import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.inventory.container.Container;
 import net.minecraft.inventory.container.INamedContainerProvider;
+import net.minecraft.network.PacketBuffer;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.ActionResultType;
 import net.minecraft.util.Hand;
@@ -56,9 +59,10 @@ public class BagEye extends ContainerBlock {
         if (!world.isRemote) {
             TileEntity tile = world.getTileEntity(pos);
             if (tile instanceof BagEyeTileEntity) {
-                int id = (pos.getX() - 8) / 1024;
+//                int id = (pos.getX() - 8) / 1024;
+                int id = ((BagEyeTileEntity)tile).getId().getId();
                 if (player.isCrouching()) {
-                    BagDimension.teleportBackFromRoom((ServerPlayerEntity) player, id);
+//                    BagDimension.teleportBackFromRoom((ServerPlayerEntity) player, id); //no longer valid, need to be reworked
                     return ActionResultType.SUCCESS;
                 }
 //                INamedContainerProvider cp = this.getContainer(state, world, pos);
@@ -72,9 +76,10 @@ public class BagEye extends ContainerBlock {
                         @Nullable
                         @Override
                         public Container createMenu(int windowId, PlayerInventory inventory, PlayerEntity _player) {
-                            return new BagEyeContainer(windowId, inventory, (BagEyeTileEntity) tile);
+//                            return new BagEyeContainer(windowId, inventory, (BagEyeTileEntity) tile);
+                            return new DimBagContainer(windowId, inventory, id);
                         }
-                    }, pos);
+                    }, packetBuffer -> packetBuffer.writeInt(id));
                 }
             }
         }

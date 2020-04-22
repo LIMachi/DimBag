@@ -2,7 +2,7 @@ package com.limachi.dimensional_bags.common.init;
 
 import com.limachi.dimensional_bags.DimensionalBagsMod;
 import com.limachi.dimensional_bags.common.blocks.BagEye;
-import com.limachi.dimensional_bags.common.data.inventory.container.BagEyeContainer;
+import com.limachi.dimensional_bags.common.data.inventory.container.DimBagContainer;
 import com.limachi.dimensional_bags.common.entities.BagEntity;
 import com.limachi.dimensional_bags.common.items.Bag;
 import com.limachi.dimensional_bags.common.items.RowUpgrade;
@@ -39,7 +39,7 @@ public class Registries {
 
     public static final RegistryObject<TileEntityType<BagEyeTileEntity>> BAG_EYE_TE = TILE_ENTITY_REGISTER.register("bag_eye_te", () -> TileEntityType.Builder.create(BagEyeTileEntity::new, BAG_EYE_BLOCK.get()).build(null));
 
-    public static final RegistryObject<ContainerType<BagEyeContainer>> BAG_CONTAINER = CONTAINER_TYPE_REGISTER.register("bag_container", () -> IForgeContainerType.create(BagEyeContainer::new));
+    public static final RegistryObject<ContainerType<DimBagContainer>> BAG_CONTAINER = CONTAINER_TYPE_REGISTER.register("bag_container", () -> IForgeContainerType.create(DimBagContainer::new));
 
     public static final RegistryObject<EntityType<BagEntity>> BAG_ENTITY = ENTITY_REGISTER.register("bag_entity", () -> EntityType.Builder.<BagEntity>create(BagEntity::new, EntityClassification.MISC).size(0.5f, 1f).build(new ResourceLocation(MOD_ID, "bag_entity").toString()));
 

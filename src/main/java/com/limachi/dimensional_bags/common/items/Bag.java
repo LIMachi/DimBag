@@ -9,6 +9,7 @@ import com.limachi.dimensional_bags.common.init.Registries;
 import net.minecraft.client.util.ITooltipFlag;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.ActionResult;
@@ -75,14 +76,14 @@ public class Bag extends Item {
 
     @Override
     public ActionResult<ItemStack> onItemRightClick(World world, PlayerEntity player, Hand hand) {
-        if (world.isRemote()) return super.onItemRightClick(world, player, hand);
+        if (world.isRemote()) return super.onItemRightClick(world, player, hand); //non non non, logic is server side
         IdHandler id = new IdHandler(player.getHeldItem(hand));
         if (id.getId() == 0) {//first time using the bag, bind it to a new room
-            id = DimBagData.get(player.getServer()).newEye().getId();
+            id = DimBagData.get(player.getServer()).newEye(player).getId();
             id.write(player.getHeldItem(hand));
         }
         if (player.isCrouching() && !world.isRemote && !(world.dimension instanceof BagDimension)) {
-//            BagDimension.teleportToRoom((ServerPlayerEntity) player, id); //redo too
+            BagDimension.teleportToRoom((ServerPlayerEntity) player, id.getId()); //redo too
             return new ActionResult<>(ActionResultType.SUCCESS, player.getHeldItem(hand));
         }
         return super.onItemRightClick(world, player, hand);

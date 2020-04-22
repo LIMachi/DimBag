@@ -1,9 +1,11 @@
 package com.limachi.dimensional_bags.common.dimensions;
 
 import com.limachi.dimensional_bags.common.blocks.BagEye;
+import com.limachi.dimensional_bags.common.init.eventSubscriberForge;
 import com.limachi.dimensional_bags.common.tileentity.BagEyeTileEntity;
 import mcp.MethodsReturnNonnullByDefault;
 import net.minecraft.block.BlockState;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.tileentity.TileEntity;
@@ -28,16 +30,20 @@ import static com.limachi.dimensional_bags.common.init.eventSubscriberForge.DIM_
 
 public class BagDimension extends Dimension {
 
-    public static DimensionType sType;
+//    public static DimensionType sType;
 
     public BagDimension(World worldIn, DimensionType type) {
         super(worldIn, type, 0.0f);
-        sType = type;
+//        sType = type;
     }
 
     public BagDimension(World worldIn, DimensionType type, float low_light) {
         super(worldIn, type, low_light);
-        sType = type;
+//        sType = type;
+    }
+
+    public static ServerWorld get(MinecraftServer server) {
+        return server.getWorld(DimensionType.byName(eventSubscriberForge.DIM_TYPE_RL));
     }
 
     @Override
@@ -90,10 +96,13 @@ public class BagDimension extends Dimension {
         return false;
     }
 
-    public static void teleportPlayer(ServerPlayerEntity player, DimensionType destType, BlockPos destPos) {
-        ServerWorld world = player.getServer().getWorld(destType);
-        world.getChunk(destPos);
-        player.teleport(world, destPos.getX(), destPos.getY(), destPos.getZ(), player.rotationYaw, player.rotationPitch);
+    public static void teleportPlayer(ServerPlayerEntity player, DimensionType destType, BlockPos destPos) { //should be a fast travel
+        if (player.world.isRemote() || player == null || !player.isAlive()) return ;
+//        player.dimension = destType;
+        player.teleport(player.server.getWorld(destType), destPos.getX(), destPos.getY(), destPos.getZ(), player.rotationYaw, player.rotationPitch);
+        //ServerWorld world = player.getServer().getWorld(destType);
+        //world.getChunk(destPos);
+        //player.teleport(world, destPos.getX(), destPos.getY(), destPos.getZ(), player.rotationYaw, player.rotationPitch);
     }
 
     @Nullable
@@ -147,14 +156,14 @@ public class BagDimension extends Dimension {
         ServerWorld world = player.getServer().getWorld(DimensionType.byName(DIM_TYPE_RL));
         BagEyeTileEntity te = getRoomEye(player.server, destinationId);
         if (te == null) return;
-        te.newPTB(player); //store the current position and dimension of the player in the eye of the room
+//        te.newPTB(player); //store the current position and dimension of the player in the eye of the room
         teleportPlayer(player, DimensionType.byName(DIM_TYPE_RL), new BlockPos(destinationId * 1024 + 8, 130, 8));
     }
 
     public static void teleportBackFromRoom(ServerPlayerEntity player, int currentRoomID) {
         BagEyeTileEntity te = getRoomEye(player.server, currentRoomID);
         if (te == null) return; //no luck there, use vanilla command and think about the sin of destroying the eye
-        BagEyeTileEntity.PlayerTPBack PTB = te.getPTBForPlayer(player);
-        teleportPlayer(player, PTB.type, PTB.pos);
+//        BagEyeTileEntity.PlayerTPBack PTB = te.getPTBForPlayer(player);
+//        teleportPlayer(player, PTB.type, PTB.pos);
     }
 }

@@ -3,7 +3,9 @@ package com.limachi.dimensional_bags.common.tileentity;
 import com.limachi.dimensional_bags.DimensionalBagsMod;
 import com.limachi.dimensional_bags.common.blocks.BagEye;
 import com.limachi.dimensional_bags.common.config.DimBagConfig;
-import com.limachi.dimensional_bags.common.data.inventory.container.BagEyeContainer;
+import com.limachi.dimensional_bags.common.data.DimBagData;
+import com.limachi.dimensional_bags.common.data.IdHandler;
+import com.limachi.dimensional_bags.common.data.inventory.container.DimBagContainer;
 import com.limachi.dimensional_bags.common.init.Registries;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
@@ -16,6 +18,7 @@ import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.tileentity.ITickableTileEntity;
 import net.minecraft.tileentity.LockableLootTileEntity;
 import net.minecraft.tileentity.TileEntity;
+import net.minecraft.tileentity.TileEntityType;
 import net.minecraft.util.Direction;
 import net.minecraft.util.NonNullList;
 import net.minecraft.util.SoundCategory;
@@ -35,8 +38,43 @@ import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.UUID;
 
-public class BagEyeTileEntity extends LockableLootTileEntity implements ITickableTileEntity {
+public class BagEyeTileEntity extends TileEntity implements ITickableTileEntity {
 
+    private int id = 0;
+    private boolean initialized = false;
+
+    public BagEyeTileEntity() {
+        super(Registries.BAG_EYE_TE.get());
+    }
+
+    @Override
+    public void tick() {
+        if (!this.initialized)
+            this.init();
+    }
+
+    public IdHandler getId() { return new IdHandler(this.id); }
+
+    private void init() {
+        if ((this.pos.getX() - 8) % 1024 == 0 && this.pos.getY() == 128 && this.pos.getZ() == 8)
+            this.id = (this.pos.getX() - 8) / 1024 + 1;
+        this.initialized = true;
+    }
+
+    @Override
+    public CompoundNBT write(CompoundNBT compound) {
+        super.write(compound);
+        new IdHandler(this.id).write(compound);
+        return compound;
+    }
+
+    @Override
+    public void read(CompoundNBT compound) {
+        super.read(compound);
+        new IdHandler(compound).write(this);
+    }
+
+    /*
     public int tick = 0;
     private boolean initialized = false;
     private int lvl = 0;
@@ -165,38 +203,19 @@ public class BagEyeTileEntity extends LockableLootTileEntity implements ITickabl
     }
 
     @Override
-    protected Container createMenu(int id, PlayerInventory player) {
-        return new BagEyeContainer(id, player, this);
+    protected Container createMenu(int windowId, PlayerInventory player) {
+        return new DimBagContainer(windowId, player, DimBagData.get(player.player.getServer()).getEyeData(id), );
     }
 
     @Override
     public CompoundNBT write(CompoundNBT compound) {
         super.write(compound);
-        compound.putInt("lvl", lvl);
-        compound.putInt("tick", tick);
-        compound.putInt("PTB_len", PTB.size());
-        for (int i = 0; i < PTB.size(); ++i)
-            PTB.get(i).write(compound, i);
-        if (!this.checkLootAndWrite(compound)) {
-            ItemStackHelper.saveAllItems(compound, this.content);
-        }
         return compound;
     }
 
     @Override
     public void read(CompoundNBT compound) {
         super.read(compound);
-        lvl = compound.getInt("lvl");
-        tick = compound.getInt("tick");
-        PTB = new ArrayList<>();
-        int l = compound.getInt("PTB_len");
-        for (int i = 0; i < l; ++i)
-            PTB.add(new PlayerTPBack().read(compound, i));
-        initialized = true;
-        this.content = NonNullList.withSize(this.getSizeInventory(), ItemStack.EMPTY);
-        if (!this.checkLootAndRead(compound)) {
-            ItemStackHelper.loadAllItems(compound, this.content);
-        }
     }
 
     private void playSound(SoundEvent sound) {
@@ -291,4 +310,5 @@ public class BagEyeTileEntity extends LockableLootTileEntity implements ITickabl
             itemHandler.invalidate();
         }
     }
+    */
 }

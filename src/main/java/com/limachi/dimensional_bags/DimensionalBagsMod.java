@@ -14,7 +14,6 @@ import com.limachi.dimensional_bags.proxy.Server;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
-import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.util.Hand;
 import net.minecraftforge.client.event.ModelRegistryEvent;
 import net.minecraftforge.common.MinecraftForge;
@@ -43,7 +42,7 @@ public class DimensionalBagsMod
     public static DimensionalBagsMod instance;
     public static final ICommonProxy PROXY = DistExecutor.runForDist(() -> Client::new, ()-> Server::new);
 
-    public static DimBagData client_side_mirror = null; //copy of the overworld-saved data on the server, server should send packets with the necessary data to populate this copy, should be updaed upon player connecting
+    public DimBagData client_side_mirror = null; //copy of the overworld-saved data on the server, server should send packets with the necessary data to populate this copy, should be updaed upon player connecting
 
     public DimensionalBagsMod() {
         Reflection.initialize(PacketHandler.class); //force initialization of the class statics ASAP
@@ -63,7 +62,7 @@ public class DimensionalBagsMod
     @SubscribeEvent
     public void onAttackEntity(AttackEntityEvent event) {
         if (!event.getPlayer().getEntityWorld().isRemote() && event.getTarget() instanceof BagEntity) { //detect that a bag was punched by a player, will try to give the player back the bag (in curios or hand, otherwise prevent the punch)
-            LOGGER.info("bag is attacked!");
+            LOGGER.info("bag is attacked by " + event.getPlayer().getUniqueID());
             event.setCanceled(true);
             PlayerEntity player = event.getPlayer();
             int slot;

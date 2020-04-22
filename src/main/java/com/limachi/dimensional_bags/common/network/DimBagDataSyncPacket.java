@@ -14,34 +14,31 @@ import static com.limachi.dimensional_bags.DimensionalBagsMod.MOD_ID;
 public class DimBagDataSyncPacket implements IBasePacket {
 
     public int lastId;
-    public ArrayList<EyeData> eyes;
+    public ArrayList<EyeData> dirtyEyes;
 
     public DimBagDataSyncPacket() {}
 
     public DimBagDataSyncPacket(DimBagData data) { //prepare a new message based on modifications found
         this.lastId = data.getLastId();
-        this.eyes = data.dirtyEyes();
+        this.dirtyEyes = data.dirtyEyes();
     }
 
     public static DimBagDataSyncPacket fromBytes(PacketBuffer buff) { //called to decode a message
         DimBagDataSyncPacket out = new DimBagDataSyncPacket();
         out.lastId = buff.readInt();
         int c = buff.readInt();
-        out.eyes = new ArrayList<EyeData>();
-        for (int i = 0; i < c; ++i) {
-            EyeData td = new EyeData(0); //id will be overwrite by the readBytes method
-            td.readBytes(buff);
-            out.eyes.add(td);
-        }
+        out.dirtyEyes = new ArrayList<EyeData>();
+        for (int i = 0; i < c; ++i)
+            out.dirtyEyes.add(new EyeData(buff)); //those eye aren't attached to the dataManager (DimBagData)
         return out;
     }
 
     @Override
     public void toBytes(PacketBuffer buff) { //called to encode a message
         buff.writeInt(this.lastId);
-        buff.writeInt(this.eyes.size());
-        for (int i = 0; i < this.eyes.size(); ++i)
-            this.eyes.get(i).toBytes(buff);
+        buff.writeInt(this.dirtyEyes.size());
+        for (int i = 0; i < this.dirtyEyes.size(); ++i)
+            this.dirtyEyes.get(i).toBytes(buff);
     }
 
     static void enqueue(DimBagDataSyncPacket pack, Supplier<NetworkEvent.Context> ctxs) {
@@ -49,9 +46,9 @@ public class DimBagDataSyncPacket implements IBasePacket {
         PacketHandler.Target t = PacketHandler.target(ctx);
         if (t == PacketHandler.Target.CLIENT) //receptionned client side
             ctx.enqueueWork(() -> {
-                if (DimensionalBagsMod.client_side_mirror == null)
-                    DimensionalBagsMod.client_side_mirror = new DimBagData(MOD_ID, DimBagData.Side.CLIENT);
-                DimensionalBagsMod.client_side_mirror.loadChangesFromPacket(pack);
+                if (DimensionalBagsMod.instance.client_side_mirror == null)
+                    DimensionalBagsMod.instance.client_side_mirror = new DimBagData(MOD_ID, DimBagData.Side.CLIENT);
+                DimensionalBagsMod.instance.client_side_mirror.loadChangesFromPacket(pack);
             });
         if (t == PacketHandler.Target.SERVER) //receptionned server side
             ctx.enqueueWork(() -> {
