@@ -40,6 +40,7 @@ public class BagEye extends ContainerBlock {
     }
 
     @Override
+    @SuppressWarnings("deprecation")
     public boolean hasTileEntity() { return true; } //I think I forgot that
 
     @Nullable
@@ -49,6 +50,7 @@ public class BagEye extends ContainerBlock {
     }
 
     @Override
+    @SuppressWarnings("deprecation")
     public BlockRenderType getRenderType(BlockState state) {
         return BlockRenderType.MODEL;
     }
@@ -68,7 +70,7 @@ public class BagEye extends ContainerBlock {
 //                INamedContainerProvider cp = this.getContainer(state, world, pos);
 //                if (cp != null)
 //                    player.openContainer(cp);
-                {
+                /*{
                     NetworkHooks.openGui((ServerPlayerEntity) player, new INamedContainerProvider() {
                         @Override
                         public ITextComponent getDisplayName() { return new TranslationTextComponent(getTranslationKey()); }
@@ -80,7 +82,7 @@ public class BagEye extends ContainerBlock {
                             return new DimBagContainer(windowId, inventory, id);
                         }
                     }, packetBuffer -> packetBuffer.writeInt(id));
-                }
+                }*/
             }
         }
         return ActionResultType.SUCCESS;

@@ -1,11 +1,9 @@
 package com.limachi.dimensional_bags.common.data;
 
 import com.limachi.dimensional_bags.DimensionalBagsMod;
-import com.limachi.dimensional_bags.common.blocks.BagEye;
 import com.limachi.dimensional_bags.common.dimensions.BagDimension;
 import com.limachi.dimensional_bags.common.init.Registries;
 import com.limachi.dimensional_bags.common.network.DimBagDataSyncPacket;
-import com.limachi.dimensional_bags.common.network.DimBagDataSyncRequestPacket;
 import com.limachi.dimensional_bags.common.network.PacketHandler;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.nbt.CompoundNBT;
@@ -20,32 +18,19 @@ import java.util.ArrayList;
 
 import static com.limachi.dimensional_bags.DimensionalBagsMod.MOD_ID;
 
-//the big problem with this is that client can't get the data directly, might have to do an entire packet system for the client to get the world data from the server
-public class DimBagData extends WorldSavedData { //since this mod used shared data on multiple levels, it has been decided that only id are stored in items/entities/tileentities and the actual data is obtained through the world shared data
-
-    public enum Side {
-        CLIENT,
-        SERVER
-    }
+public class DimBagData extends WorldSavedData {
 
     private int lastId;
     private ArrayList<EyeData> eyes;
 
-    public Side side;
-
     public ArrayList<EyeData> getEyes() { return this.eyes; }
 
-    public DimBagData(String s, Side side) { super(s); lastId = 0; eyes = new ArrayList<>(); this.side = side; DimensionalBagsMod.LOGGER.warn("new DimBagData? I hope this is a new world");}
+    public DimBagData(String s) { super(s); lastId = 0; eyes = new ArrayList<>(); DimensionalBagsMod.LOGGER.warn("new DimBagData? I hope this is a new world");}
 
     static public DimBagData get(MinecraftServer server) {
-        if (server != null)
-            return server.getWorld(DimensionType.OVERWORLD).getSavedData().getOrCreate(() -> new DimBagData(MOD_ID, Side.SERVER), MOD_ID); //use overworld as default storage for data as it is the world that is guaranteed to exist (if I used the dim_bag_rift dimension, it would only work once the world is loaded)
-        if (DimensionalBagsMod.instance.client_side_mirror == null)
-        {
-            PacketHandler.toServer(new DimBagDataSyncRequestPacket());
-            while (DimensionalBagsMod.instance.client_side_mirror == null); //if the packet is handled by this thread, no luck, we're stuck
-        }
-        return DimensionalBagsMod.instance.client_side_mirror;
+        if (server == null) //if this happens, it means a client used this method, which is bad
+            return null;
+        return server.getWorld(DimensionType.OVERWORLD).getSavedData().getOrCreate(() -> new DimBagData(MOD_ID), MOD_ID); //use overworld as default storage for data as it is the world that is guaranteed to exist (if I used the dim_bag_rift dimension, it would only work once the world is loaded)
     }
 
     public ArrayList<EyeData> dirtyEyes() {
@@ -87,11 +72,7 @@ public class DimBagData extends WorldSavedData { //since this mod used shared da
     public void update(boolean sync_to_server) {
         this.markDirty();
         DimBagDataSyncPacket pack = new DimBagDataSyncPacket(this);
-        DimensionalBagsMod.LOGGER.info("update data for " + this.side);
-        if (this.side == Side.SERVER)
-            PacketHandler.toClients(pack);
-        else if (sync_to_server)
-            PacketHandler.toServer(pack);
+        PacketHandler.toClients(pack);
         for (int i = 0; i < this.eyes.size(); ++i) //unset dirty flag for eyes
             this.eyes.get(i).dirty = false;
     }

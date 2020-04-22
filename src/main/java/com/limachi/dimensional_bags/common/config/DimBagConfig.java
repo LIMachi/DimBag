@@ -53,11 +53,11 @@ public class DimBagConfig {
             startingRadius = builder.comment("starting radius of the bag (not counting the eye and walls)").translation(MOD_ID + ".config.bag.roomRadius").defineInRange("bag.roomRadius", 3, 2, 126);
             maxRadius = builder.comment("maximum radius of the bag (not counting the eye and walls)").translation(MOD_ID + ".config.bag.roomRadiusMax").defineInRange("bag.roomRadiusMax", 31, 2, 126);
 
-            startingColumns = builder.comment("number of columns a new bag has").translation(MOD_ID + ".config.bag.columns").defineInRange("bag.columns", 9, 9, 18);
-            maxCOlumns = builder.comment("maximum radius of columns a bag can have").translation(MOD_ID + ".config.bag.columnsMax").defineInRange("bag.columnsMax", 18, 9, 18);
+            startingColumns = builder.comment("number of columns a new bag has").translation(MOD_ID + ".config.bag.columns").defineInRange("bag.columns", 9, 1, 35);
+            maxCOlumns = builder.comment("maximum radius of columns a bag can have").translation(MOD_ID + ".config.bag.columnsMax").defineInRange("bag.columnsMax", 18, 1, 35);
 
-            startingRows = builder.comment("number of rows a new bag has").translation(MOD_ID + ".config.bag.rows").defineInRange("bag.rows", 3, 1, 12);
-            maxRows = builder.comment("maximum radius of rows a bag can have").translation(MOD_ID + ".config.bag.rowsMax").defineInRange("bag.rowsMax", 12, 1, 12);
+            startingRows = builder.comment("number of rows a new bag has").translation(MOD_ID + ".config.bag.rows").defineInRange("bag.rows", 3, 1, 14);
+            maxRows = builder.comment("maximum radius of rows a bag can have").translation(MOD_ID + ".config.bag.rowsMax").defineInRange("bag.rowsMax", 9, 1, 14);
         }
     }
 }

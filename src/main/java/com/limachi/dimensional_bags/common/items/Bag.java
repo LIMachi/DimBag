@@ -2,12 +2,11 @@ package com.limachi.dimensional_bags.common.items;
 
 import com.limachi.dimensional_bags.DimensionalBagsMod;
 import com.limachi.dimensional_bags.common.data.DimBagData;
+import com.limachi.dimensional_bags.common.data.EyeData;
 import com.limachi.dimensional_bags.common.data.IdHandler;
 import com.limachi.dimensional_bags.common.dimensions.BagDimension;
-import com.limachi.dimensional_bags.common.entities.BagEntity;
-import com.limachi.dimensional_bags.common.init.Registries;
+import com.limachi.dimensional_bags.common.network.Network;
 import net.minecraft.client.util.ITooltipFlag;
-import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.item.Item;
@@ -28,6 +27,7 @@ public class Bag extends Item {
         super(new Properties().group(DimensionalBagsMod.ItemGroup.instance));
     }
 
+    /* disable for now, need to concentrate on the communication between server and client
     @Override
     public boolean hasCustomEntity(ItemStack stack) {
         return true;
@@ -43,6 +43,7 @@ public class Bag extends Item {
         id.write((BagEntity)ent);
         return ent;
     }
+    */
 
     public static int getUpgrade(ItemStack item, String id) {
 //        try {
@@ -82,10 +83,12 @@ public class Bag extends Item {
             id = DimBagData.get(player.getServer()).newEye(player).getId();
             id.write(player.getHeldItem(hand));
         }
+        EyeData eye = DimBagData.get(player.getServer()).getEyeData(id.getId());
         if (player.isCrouching() && !world.isRemote && !(world.dimension instanceof BagDimension)) {
             BagDimension.teleportToRoom((ServerPlayerEntity) player, id.getId()); //redo too
             return new ActionResult<>(ActionResultType.SUCCESS, player.getHeldItem(hand));
         }
+        Network.openGUIEye((ServerPlayerEntity) player, eye, this.getTranslationKey());
         return super.onItemRightClick(world, player, hand);
     }
 }

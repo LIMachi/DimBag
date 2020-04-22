@@ -1,0 +1,5 @@
+Rework the client side of the mod:
+    protect most methods against access by clients
+    create a client method that ask for the opening of a an inventory with eye id (the server should then use a OpenGUI packet, the content of the eye will be added as nbt packet)
+    modifications of the bag client side is handled by slots (if i understand if right) that are sync with the server
+    no longer have data stored on the mod instance

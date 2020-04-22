@@ -93,7 +93,7 @@ public class EyeData implements IInventory { //all information about an eye (acc
         }
     }
 
-    public void toBytes(PacketBuffer buff) { //exact order matters
+    public PacketBuffer toBytes(PacketBuffer buff) { //exact order matters
         buff.writeInt(this.id);
         buff.writeUniqueId(this.owner);
         buff.writeInt(this.rows);
@@ -101,6 +101,7 @@ public class EyeData implements IInventory { //all information about an eye (acc
         buff.writeInt(this.radius);
         for (int i = 0; i < this.rows * this.columns; ++i)
             buff.writeItemStack(this.items[i]);
+        return buff;
     }
 
     public void readBytes(PacketBuffer buff) { //exact order matters
@@ -170,7 +171,7 @@ public class EyeData implements IInventory { //all information about an eye (acc
     @Override
     public void setInventorySlotContents(int index, ItemStack stack) {
         synchronized (this) {
-            this.items[index] = ItemStack.EMPTY;
+            this.items[index] = stack;
             this.markDirty();
         }
     }
@@ -183,7 +184,7 @@ public class EyeData implements IInventory { //all information about an eye (acc
     @Override
     public void markDirty() {
         DimensionalBagsMod.LOGGER.info("eye " + this.id + " is now dirty"); //send the game in an infinite loop... oops; should rework the data sync
-        if (this.dataManager != null && this.dataManager.side == DimBagData.Side.SERVER) {
+        if (this.dataManager != null) {
             this.dirty = true;
             this.dataManager.update(true);
         }

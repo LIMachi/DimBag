@@ -21,30 +21,33 @@ public class DimBagContainer extends Container {
         this.addSlots(inventory);
     }
 
+    /*
     public DimBagContainer(int windowId, PlayerInventory inventory, int eyeId) {
         this(windowId, inventory, DimBagData.get(inventory.player.getServer()).getEyeData(eyeId));
     }
+    */
 
     public DimBagContainer(int windowId, PlayerInventory inventory, PacketBuffer buff) {
-        this(windowId, inventory, buff.readInt());
+        this(windowId, inventory, new EyeData(buff));
     }
 
     public int getRows() { return this.data.getRows(); }
     public int getColumns() { return this.data.getColumns(); }
 
     private void addSlots(PlayerInventory inventory) {
-        int dx = BagGUI.PART_SIZE_X;
-        int dy = BagGUI.PART_SIZE_Y * 2;
+        int sx = BagGUI.calculateShiftLeft(data.getColumns());
+        int sy = BagGUI.calculateYSize(data.getRows());
+        int dx = BagGUI.PART_SIZE_X + 1 + (sx < 0 ? -sx * BagGUI.SLOT_SIZE_X : 0);
+        int dy = BagGUI.PART_SIZE_Y * 2 + 1;
         for (int y = 0; y < this.data.getRows(); ++y)
             for (int x = 0; x < this.data.getColumns(); ++x)
-                this.addSlot(new Slot(this.data, x + y * this.data.getColumns(), dx + BagGUI.SLOT_SIZE_X * x, dy + BagGUI.SLOT_SIZE_Y * y));
-        int sx = (int) Math.floor(((double) this.data.getColumns() - (double) BagGUI.PLAYER_INVENTORY_COLUMNS) / 2.0d);
-        dx = BagGUI.PART_SIZE_X + sx * BagGUI.SLOT_SIZE_X;
-        dy = BagGUI.PART_SIZE_Y * 3 + BagGUI.SLOT_SIZE_Y * this.data.getRows();
+                this.addSlot(new Slot(this.data, x + y * data.getColumns(), dx + BagGUI.SLOT_SIZE_X * x, dy + BagGUI.SLOT_SIZE_Y * y));
+        dx = BagGUI.PART_SIZE_X + 1 + (sx > 0 ? sx * BagGUI.SLOT_SIZE_X : 0);
+        dy = sy - BagGUI.PLAYER_INVENTORY_Y + BagGUI.PLAYER_INVENTORY_FIRST_SLOT_Y + 1;
         for (int y = 0; y < 3; ++y)
             for (int x = 0; x < 9; ++x)
                 this.addSlot(new Slot(inventory, x + y * 9 + 9, dx + BagGUI.SLOT_SIZE_X * x, dy + BagGUI.SLOT_SIZE_Y * y));
-        dy += 58;
+        dy = sy - BagGUI.PLAYER_INVENTORY_Y + BagGUI.PLAYER_BELT_FIRST_SLOT_Y + 1;
         for (int x = 0; x < 9; ++x)
             this.addSlot(new Slot(inventory, x, dx + BagGUI.SLOT_SIZE_X * x, dy));
     }

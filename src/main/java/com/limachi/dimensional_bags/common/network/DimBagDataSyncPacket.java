@@ -47,7 +47,7 @@ public class DimBagDataSyncPacket implements IBasePacket {
         if (t == PacketHandler.Target.CLIENT) //receptionned client side
             ctx.enqueueWork(() -> {
                 if (DimensionalBagsMod.instance.client_side_mirror == null)
-                    DimensionalBagsMod.instance.client_side_mirror = new DimBagData(MOD_ID, DimBagData.Side.CLIENT);
+                    DimensionalBagsMod.instance.client_side_mirror = new DimBagData(MOD_ID);
                 DimensionalBagsMod.instance.client_side_mirror.loadChangesFromPacket(pack);
             });
         if (t == PacketHandler.Target.SERVER) //receptionned server side
