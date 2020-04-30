@@ -4,6 +4,7 @@ import com.google.common.collect.Sets;
 import com.limachi.dimensional_bags.common.data.EyeData;
 import com.limachi.dimensional_bags.common.data.container.slot.BaseSlot;
 import com.limachi.dimensional_bags.common.data.container.slot.UpgradeConsumerSlot;
+import com.limachi.dimensional_bags.common.data.inventory.BaseInventory;
 import com.limachi.dimensional_bags.common.references.GUIs;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
@@ -20,13 +21,16 @@ public class BaseContainer extends Container {
 
     protected final EyeData data;
 
+    protected final int size;
+
     private int dragEvent; //overwrite of Container private/protected variables
     private int dragMode = -1; //overwrite of Container private/protected variables
     private final Set<Slot> dragSlots = Sets.newHashSet(); //overwrite of Container private/protected variables
 
-    protected BaseContainer(@Nullable ContainerType<?> type, int id, EyeData data) {
+    protected BaseContainer(@Nullable ContainerType<?> type, int id, EyeData data, int size) {
         super(type, id);
         this.data = data;
+        this.size = size;
     }
 
     protected void addPlayerSlotsContainer(PlayerInventory inventory, int sx, int sy) {
@@ -149,7 +153,11 @@ public class BaseContainer extends Container {
 //                        slotStack.grow(l2); changed to a slot method for better tracking
                         ItemStack cpy = slotStack.copy();
                         cpy.grow(l2);
-                        slot.inventory.setInventorySlotContents(slotId, cpy); //should fix tracking issuese
+                        /*
+                        if (slot.inventory instanceof BaseInventory)
+                            slot.inventory.setInventorySlotContents(slotId, cpy); //should fix tracking issuese
+                        else*/
+                            slot.putStack(cpy);
                     } else if (heldStack.getCount() <= slot.getItemStackLimit(heldStack) && input && output) { //swap stacks (need all IO rights)
                         slot.putStack(heldStack);
                         player.inventory.setItemStack(slotStack);
@@ -181,8 +189,9 @@ public class BaseContainer extends Container {
 
     @Override
     public ItemStack slotClick(int slotId, int dragType, ClickType clickTypeIn, PlayerEntity player) {
-        if (slotId < 0 || slotId >= this.getInventory().size()) //not my index? not my concern
-            return ItemStack.EMPTY;
+        if (slotId != -999) //special slot id, usually used for dropping items
+            if (slotId < 0 || slotId >= this.getInventory().size()) //not my index? not my concern
+                return ItemStack.EMPTY;
         ItemStack itemstack = ItemStack.EMPTY;
 //        PlayerInventory playerinventory = player.inventory;
         if (clickTypeIn == ClickType.QUICK_CRAFT) {
@@ -381,12 +390,12 @@ public class BaseContainer extends Container {
             }
         } else if (clickTypeIn == ClickType.THROW && player.inventory.getItemStack().isEmpty() && slotId >= 0) {
             Slot slot2 = this.inventorySlots.get(slotId);
-            if (slot2 != null && slot2.getHasStack() && slot2.canTakeStack(player)) {
+            if (slot2 != null && slot2.getHasStack() && slot2.canTakeStack(player) && BaseSlot.getOuputRights(slot2)) {
                 ItemStack itemstack4 = slot2.decrStackSize(dragType == 0 ? 1 : slot2.getStack().getCount());
                 slot2.onTake(player, itemstack4);
                 player.dropItem(itemstack4, true);
             }
-        } else if (clickTypeIn == ClickType.PICKUP_ALL && slotId >= 0) {
+        } else if (clickTypeIn == ClickType.PICKUP_ALL && slotId >= 0) { //almost sure this is the double click detection
             Slot slot = this.inventorySlots.get(slotId);
             ItemStack itemstack1 = player.inventory.getItemStack();
             if (!itemstack1.isEmpty() && (slot == null || !slot.getHasStack() || !slot.canTakeStack(player))) {
@@ -396,6 +405,7 @@ public class BaseContainer extends Container {
                 for(int k = 0; k < 2; ++k) {
                     for(int l = i; l >= 0 && l < this.inventorySlots.size() && itemstack1.getCount() < itemstack1.getMaxStackSize(); l += j) {
                         Slot slot1 = this.inventorySlots.get(l);
+                        if (!BaseSlot.getOuputRights(slot1)) continue;
                         if (slot1.getHasStack() && canAddItemToSlot(slot1, itemstack1, true) && slot1.canTakeStack(player) && this.canMergeSlot(itemstack1, slot1)) {
                             ItemStack itemstack2 = slot1.getStack();
                             if (k != 0 || itemstack2.getCount() != itemstack2.getMaxStackSize()) {
@@ -421,29 +431,100 @@ public class BaseContainer extends Container {
 
     @Override
     public ItemStack transferStackInSlot(PlayerEntity player, int index) {
-        ItemStack itemstack = ItemStack.EMPTY;
+        ItemStack copy = ItemStack.EMPTY;
         Slot slot = inventorySlots.get(index);
+        boolean state = false;
 
-        if (slot != null && slot.getHasStack() && !(slot instanceof UpgradeConsumerSlot)) {
-            ItemStack slotStack = slot.getStack();
-            itemstack = slotStack.copy();
-
-            int size = this.data.getRows() * this.data.getColumns();
-
-            if (index < size) {
-                if (!mergeItemStack(slotStack, size, inventorySlots.size(), true)) {
-                    return ItemStack.EMPTY;
-                }
-            } else if (!mergeItemStack(slotStack, 0, size, false)) {
-                return ItemStack.EMPTY;
+        if (slot != null && slot.getHasStack() && BaseSlot.getOuputRights(slot)) {
+            copy = slot.getStack().copy();
+            if (index < size) { //from the container (to any slot, hotbar tried first, then inventory)
+                state = mergeItemStack(copy, inventorySlots.size() - 9, inventorySlots.size(), false);
+                if (!state)
+                    state = mergeItemStack(copy, size, inventorySlots.size() - 9, false);
+            } else if (index >= inventorySlots.size() - 9) { //hotbar (to container first, or to inventory)
+                state = mergeItemStack(copy, 0, inventorySlots.size() - 9, false); //one call to mergeItemStack is enough, thanks to the slots order
+            } else { //player inventory (to container first, or to hotbar)
+                state = mergeItemStack(copy, 0, size, false);
+                if (!state)
+                    state = mergeItemStack(copy, inventorySlots.size() - 9, inventorySlots.size(), false);
             }
-            if (slotStack.getCount() == 0) {
-                slot.putStack(ItemStack.EMPTY);
-            } else {
-                slot.onSlotChanged();
+            /*
+            if (slot.inventory instanceof BaseInventory)
+                slot.inventory.setInventorySlotContents(index, copy);
+            else*/
+                slot.putStack(copy);
+        }
+        return /*state ? copy :*/ ItemStack.EMPTY;
+    }
+
+    @Override //overide of merge stack to respect IO rules and send proper updates to slots, original code is from vanilla Container#mergeItemStack
+    protected boolean mergeItemStack(ItemStack stack, int startIndex, int endIndex, boolean reverseDirection) {
+        boolean flag = false;
+        int i = reverseDirection ? endIndex - 1 : startIndex;
+
+        if (stack.isStackable()) {
+            while(!stack.isEmpty()) {
+                if (reverseDirection) {
+                    if (i < startIndex) {
+                        break;
+                    }
+                } else if (i >= endIndex) {
+                    break;
+                }
+
+                Slot slot = this.inventorySlots.get(i);
+                ItemStack itemstack = slot.getStack();
+                if (!itemstack.isEmpty() && BaseSlot.getInputRights(slot) && areItemsAndTagsEqual(stack, itemstack)) { //valid slot for merge (same item, and accept items)
+                    int j = itemstack.getCount() + stack.getCount();
+                    int maxSize = Math.min(slot.getSlotStackLimit(), stack.getMaxStackSize());
+                    if (j <= maxSize) {
+                        stack.setCount(0);
+                        itemstack.setCount(j);
+                        slot.onSlotChanged();
+                        flag = true;
+                    } else if (itemstack.getCount() < maxSize) {
+                        stack.shrink(maxSize - itemstack.getCount());
+                        itemstack.setCount(maxSize);
+                        slot.onSlotChanged();
+                        flag = true;
+                    }
+                }
+
+                if (reverseDirection) {
+                    --i;
+                } else {
+                    ++i;
+                }
             }
         }
-        return itemstack;
+
+        if (!stack.isEmpty()) { //still items to process
+            i = reverseDirection ? endIndex - 1 : startIndex;
+            while (reverseDirection ? (i >= startIndex) : (i < endIndex)) {
+
+                Slot slot1 = this.inventorySlots.get(i);
+                ItemStack itemstack1 = slot1.getStack();
+                if (itemstack1.isEmpty() && BaseSlot.getInputRights(slot1) && slot1.isItemValid(stack)) { //valid slot if empty, can input and accept item
+                    if (stack.getCount() > slot1.getSlotStackLimit()) {
+                        slot1.putStack(stack.split(slot1.getSlotStackLimit()));
+                    } else {
+                        slot1.putStack(stack.split(stack.getCount()));
+                    }
+
+                    slot1.onSlotChanged();
+                    flag = true;
+                    break;
+                }
+
+                if (reverseDirection) {
+                    --i;
+                } else {
+                    ++i;
+                }
+            }
+        }
+
+        return flag;
     }
 
     /*

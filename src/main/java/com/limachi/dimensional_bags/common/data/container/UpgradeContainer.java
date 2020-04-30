@@ -12,22 +12,15 @@ import static com.limachi.dimensional_bags.common.references.GUIs.UpgradeScreen.
 public class UpgradeContainer extends BaseContainer {
 
     public UpgradeContainer(int windowId, PlayerInventory inventory, EyeData data) {
-        super(Registries.UPGRADE_CONTAINER.get(), windowId, data);
-        this.addPlayerSlotsContainer(inventory, 0, PLAYER_INVENTORY_PART_Y);
+        super(Registries.UPGRADE_CONTAINER.get(), windowId, data, data.upgrades.getSizeInventory());
         for (int y = 0; y < 2; ++y)
             for (int x = 0; x < 9; ++x)
                 if (x + y * 9 < data.upgrades.getSizeInventory())
                     this.addSlot(new UpgradeConsumerSlot(data.upgrades, x + y * 9, FIRST_SLOT_X + x * SLOT_SIZE_X + 1, FIRST_SLOT_Y + y * SLOT_SIZE_X + 1, this.data));
+        this.addPlayerSlotsContainer(inventory, 0, PLAYER_INVENTORY_PART_Y);
     }
 
     public UpgradeContainer(int windowId, PlayerInventory inventory, PacketBuffer buff) {
         this(windowId, inventory, new EyeData(buff));
     }
-
-    /*
-    @Override
-    public ItemStack transferStackInSlot(PlayerEntity player, int index) {
-        return ItemStack.EMPTY; //disable shift click behavior while in this container
-    }
-    */
 }
