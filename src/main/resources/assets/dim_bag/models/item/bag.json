@@ -1,6 +1,6 @@
 {
   "parent": "item/generated",
   "textures": {
-    "layer0": "dim_bag:placeholderdimensionalbags"
+    "layer0": "dim_bag:items/bag"
   }
 }

@@ -1,25 +1,18 @@
 package com.limachi.dimensional_bags;
 
 import com.google.common.reflect.Reflection;
-import com.limachi.dimensional_bags.common.IMC.curios.Curios;
+import com.limachi.dimensional_bags.compat.Curios;
 import com.limachi.dimensional_bags.common.config.DimBagConfig;
 import com.limachi.dimensional_bags.common.data.DimBagData;
-import com.limachi.dimensional_bags.common.data.IdHandler;
-import com.limachi.dimensional_bags.common.entities.BagEntity;
 import com.limachi.dimensional_bags.common.init.Registries;
 import com.limachi.dimensional_bags.common.network.PacketHandler;
 import com.limachi.dimensional_bags.proxy.Client;
 import com.limachi.dimensional_bags.proxy.ICommonProxy;
 import com.limachi.dimensional_bags.proxy.Server;
-import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
-import net.minecraft.util.Hand;
 import net.minecraftforge.client.event.ModelRegistryEvent;
 import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.event.entity.player.AttackEntityEvent;
 import net.minecraftforge.eventbus.api.IEventBus;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.fml.ModList;
 import net.minecraftforge.fml.ModLoadingContext;
@@ -47,7 +40,7 @@ public class DimensionalBagsMod
     public DimensionalBagsMod() {
         Reflection.initialize(PacketHandler.class); //force initialization of the class statics ASAP
         final IEventBus meb = FMLJavaModLoadingContext.get().getModEventBus();
-        ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, DimBagConfig.SPEC);
+        ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, DimBagConfig.getSpec());
         Registries.registerAll();
         instance = this;
         MinecraftForge.EVENT_BUS.register(this);
@@ -58,31 +51,6 @@ public class DimensionalBagsMod
     }
 
     public void registerModels(ModelRegistryEvent event) { PROXY.registerModels(event); }
-
-    @SubscribeEvent
-    public void onAttackEntity(AttackEntityEvent event) {
-        if (!event.getPlayer().getEntityWorld().isRemote() && event.getTarget() instanceof BagEntity) { //detect that a bag was punched by a player, will try to give the player back the bag (in curios or hand, otherwise prevent the punch)
-            LOGGER.info("bag is attacked by " + event.getPlayer().getUniqueID());
-            event.setCanceled(true);
-            PlayerEntity player = event.getPlayer();
-            int slot;
-            if (Curios.INSTANCE.getStack(player, Curios.BACKPACK_SLOT_ID, 0).getItem() == Items.AIR) {
-                slot = 0;
-            } else if (player.getHeldItemMainhand().getItem() == Items.AIR) {
-                slot = 1;
-            } else if (player.getHeldItemOffhand().getItem() == Items.AIR) {
-                slot = 2;
-            } else return;
-            ItemStack new_bag = new ItemStack(Registries.BAG_ITEM.get());
-            IdHandler id = new IdHandler(((BagEntity)event.getTarget()));
-            id.write(new_bag);
-            if (slot != 0)
-                player.setHeldItem(slot == 1 ? Hand.MAIN_HAND : Hand.OFF_HAND, new_bag);
-            else
-                Curios.INSTANCE.setStack(player, Curios.BACKPACK_SLOT_ID, 0, new_bag);
-            event.getTarget().remove();
-        }
-    }
 
     public void onCommonSetup(FMLCommonSetupEvent event) {}
 

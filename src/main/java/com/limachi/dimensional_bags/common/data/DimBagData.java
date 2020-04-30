@@ -6,6 +6,7 @@ import com.limachi.dimensional_bags.common.init.Registries;
 import com.limachi.dimensional_bags.common.network.DimBagDataSyncPacket;
 import com.limachi.dimensional_bags.common.network.PacketHandler;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.server.MinecraftServer;
@@ -49,7 +50,7 @@ public class DimBagData extends WorldSavedData {
         if (r - 1 >= this.eyes.size())
             for (int i = 0; i <= r; ++i) //I'm not overkille, I promise :p
                 this.eyes.add(new EyeData(this));
-        eyes.set(r - 1, new EyeData(this, player, r));
+        eyes.set(r - 1, new EyeData(this, (ServerPlayerEntity) player, r));
         this.update(true);
         return (eyes.get(r - 1));
     }
@@ -71,10 +72,11 @@ public class DimBagData extends WorldSavedData {
 
     public void update(boolean sync_to_server) {
         this.markDirty();
-        DimBagDataSyncPacket pack = new DimBagDataSyncPacket(this);
-        PacketHandler.toClients(pack);
-        for (int i = 0; i < this.eyes.size(); ++i) //unset dirty flag for eyes
+        for (int i = 0; i < this.eyes.size(); ++i) { //unset dirty flag for eyes
             this.eyes.get(i).dirty = false;
+//            this.eyes.get(i).items.unsetDirtyFlag();
+            this.eyes.get(i).upgrades.unsetDirtyFlag();
+        }
     }
 
     @Override

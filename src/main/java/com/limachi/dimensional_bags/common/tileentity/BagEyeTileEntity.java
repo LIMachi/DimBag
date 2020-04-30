@@ -1,44 +1,19 @@
 package com.limachi.dimensional_bags.common.tileentity;
 
-import com.limachi.dimensional_bags.DimensionalBagsMod;
-import com.limachi.dimensional_bags.common.blocks.BagEye;
-import com.limachi.dimensional_bags.common.config.DimBagConfig;
 import com.limachi.dimensional_bags.common.data.DimBagData;
+import com.limachi.dimensional_bags.common.data.EyeData;
 import com.limachi.dimensional_bags.common.data.IdHandler;
-import com.limachi.dimensional_bags.common.data.inventory.container.DimBagContainer;
 import com.limachi.dimensional_bags.common.init.Registries;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.entity.player.PlayerInventory;
-import net.minecraft.inventory.ItemStackHelper;
-import net.minecraft.inventory.container.Container;
+import net.minecraft.inventory.ISidedInventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.tileentity.ITickableTileEntity;
-import net.minecraft.tileentity.LockableLootTileEntity;
 import net.minecraft.tileentity.TileEntity;
-import net.minecraft.tileentity.TileEntityType;
 import net.minecraft.util.Direction;
-import net.minecraft.util.NonNullList;
-import net.minecraft.util.SoundCategory;
-import net.minecraft.util.SoundEvent;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.text.ITextComponent;
-import net.minecraft.util.text.TranslationTextComponent;
-import net.minecraft.world.IBlockReader;
-import net.minecraft.world.dimension.DimensionType;
-import net.minecraftforge.common.capabilities.Capability;
-import net.minecraftforge.common.util.LazyOptional;
-import net.minecraftforge.items.CapabilityItemHandler;
-import net.minecraftforge.items.IItemHandlerModifiable;
-import net.minecraftforge.items.wrapper.InvWrapper;
+import javax.annotation.Nullable;
 
-import javax.annotation.Nonnull;
-import java.util.ArrayList;
-import java.util.UUID;
-
-public class BagEyeTileEntity extends TileEntity implements ITickableTileEntity {
+public class BagEyeTileEntity extends TileEntity implements ITickableTileEntity, ISidedInventory {
 
     private int id = 0;
     private boolean initialized = false;
@@ -58,6 +33,8 @@ public class BagEyeTileEntity extends TileEntity implements ITickableTileEntity 
     private void init() {
         if ((this.pos.getX() - 8) % 1024 == 0 && this.pos.getY() == 128 && this.pos.getZ() == 8)
             this.id = (this.pos.getX() - 8) / 1024 + 1;
+        else
+            this.id = 0;
         this.initialized = true;
     }
 
@@ -74,241 +51,74 @@ public class BagEyeTileEntity extends TileEntity implements ITickableTileEntity 
         new IdHandler(compound).write(this);
     }
 
-    /*
-    public int tick = 0;
-    private boolean initialized = false;
-    private int lvl = 0;
-    private NonNullList<ItemStack> content = NonNullList.create();
-    protected int numPlayerUsing = 0;
-    private IItemHandlerModifiable items = createHandler();
-    private LazyOptional<IItemHandlerModifiable> itemHandler = LazyOptional.of(() -> items);
-
-    public class PlayerTPBack {
-        public DimensionType type;
-        public BlockPos pos;
-        public UUID UID;
-
-        public PlayerTPBack() {}
-
-        public PlayerTPBack(PlayerEntity player) {
-            type = player.dimension;
-            pos = player.getPosition();
-            UID = player.getUniqueID();
-        }
-
-        public CompoundNBT write(CompoundNBT compound, int index) {
-            compound.putUniqueId("PTB_" + index + "_UID", UID);
-            compound.putInt("PTB_" + index + "_X", pos.getX());
-            compound.putInt("PTB_" + index + "_Y", pos.getY());
-            compound.putInt("PTB_" + index + "_Z", pos.getZ());
-            compound.putInt("PTB_" + index + "_DIM", type.getId());
-            return compound;
-        }
-
-        public PlayerTPBack read(CompoundNBT compound, int index) {
-            UID = compound.getUniqueId("PTB_" + index + "_UID");
-            int x = compound.getInt("PTB_" + index + "_X");
-            int y = compound.getInt("PTB_" + index + "_Y");
-            int z = compound.getInt("PTB_" + index + "_Z");
-            pos = new BlockPos(x, y, z);
-            type = DimensionType.getById(compound.getInt("PTB_" + index + "_DIM"));
-            return this;
-        }
+    protected EyeData getEyeData() {
+        if (this.world == null || this.world.isRemote() || this.id == 0) return null;
+        return DimBagData.get(this.world.getServer()).getEyeData(this.id);
     }
-
-    private ArrayList<PlayerTPBack> PTB = new ArrayList<>();
-
-    public void newPTB(PlayerEntity player) {
-        for (int i = 0; i < PTB.size(); ++i)
-            if (PTB.get(i).UID == player.getUniqueID()) {
-                //if there is already a PBT assigned to the player, just overide it
-                PTB.set(i, new PlayerTPBack(player));
-                return;
-            }
-        PTB.add(new PlayerTPBack(player));
-    }
-
-    public PlayerTPBack getPTBForPlayer(PlayerEntity player) {
-        for (int i = 0; i < PTB.size(); ++i)
-            if (PTB.get(i).UID == player.getUniqueID())
-                return PTB.get(i);
-        // if no TP back can be found, just send the player to the overworld (should not apen if the player entered and tried to exit the dimension as intended)
-        PlayerTPBack t = new PlayerTPBack();
-        t.UID = player.getUniqueID();
-        t.pos = player.getServer().getWorld(DimensionType.OVERWORLD).getSpawnPoint();
-        t.type = DimensionType.OVERWORLD;
-        return t;
-    }
-
-    public BagEyeTileEntity() { super(Registries.BAG_EYE_TE.get()); }
-    public int getRows() { return 3; } //FIXME
-    public int getColumns() { return 9; } //FIXME
-    public int getVolume() { return DimBagConfig.startingRadius; } //FIXME
-    public int getLvl() { return this.lvl; }
-    public void setLvl(int lvlIn) { if (lvlIn >= 0 && lvlIn <= 5) this.lvl = lvlIn; }
 
     @Override
     public int getSizeInventory() {
-        return getColumns() * getRows();
+        EyeData data = this.getEyeData();
+        if (data == null) return 0;
+        return data.items.getSizeInventory();
     }
 
     @Override
-    public NonNullList<ItemStack> getItems() {
-        return this.content;
+    public boolean isEmpty() {
+        EyeData data = this.getEyeData();
+        if (data == null) return true;
+        return data.items.isEmpty();
     }
 
     @Override
-    protected void setItems(NonNullList<ItemStack> itemsIn) {
-        this.content = itemsIn; //dangerous if invalid size
+    public ItemStack getStackInSlot(int index) {
+        EyeData data = this.getEyeData();
+        if (data == null) return ItemStack.EMPTY;
+        return data.items.getStackInSlot(index);
     }
 
     @Override
-    public ITextComponent getDefaultName() {
-        return new TranslationTextComponent("container.bag_eye");
-    }
-
-    private void init() {
-        initialized = true;
-        tick = 0;
-        if (lvl == 0)
-            lvl = 1;
-        for (int i = 0; i < getSizeInventory(); ++i) {
-            content.add(ItemStack.EMPTY);
-        }
-    }
-
-    public void upgrade() {
-        if (lvl >= 6)
-            return;
-        int prevSize = getSizeInventory();
-        ++lvl;
-        int newSize = getSizeInventory();
-        for (int i = prevSize; i < newSize; ++i) {
-            content.add(ItemStack.EMPTY);
-        }
-
+    public ItemStack decrStackSize(int index, int count) {
+        EyeData data = this.getEyeData();
+        if (data == null) return ItemStack.EMPTY;
+        return data.items.decrStackSize(index, count);
     }
 
     @Override
-    public void tick() {
-        if (!initialized) init();
-        tick++;
-        if (tick % 40 == 0)
-            execute();
-    }
-
-    private void execute() {
-        //do something
-        DimensionalBagsMod.LOGGER.info("ticking: " + this.pos.getX() + " " + this.pos.getY() + " " + this.pos.getZ() + " tick = " + tick);
+    public ItemStack removeStackFromSlot(int index) {
+        EyeData data = this.getEyeData();
+        if (data == null) return ItemStack.EMPTY;
+        return data.items.removeStackFromSlot(index);
     }
 
     @Override
-    protected Container createMenu(int windowId, PlayerInventory player) {
-        return new DimBagContainer(windowId, player, DimBagData.get(player.player.getServer()).getEyeData(id), );
+    public void setInventorySlotContents(int index, ItemStack stack) {
+        EyeData data = this.getEyeData();
+        if (data == null) return;
+        data.items.setInventorySlotContents(index, stack);
     }
 
     @Override
-    public CompoundNBT write(CompoundNBT compound) {
-        super.write(compound);
-        return compound;
+    public boolean isUsableByPlayer(PlayerEntity player) { return true; }
+
+    @Override
+    public void clear() {}
+
+    @Override
+    public int[] getSlotsForFace(Direction side) { //FIXME: for now, just return all the slots
+        int[] ret = new int[this.getSizeInventory()];
+        for (int i = 0; i < ret.length; ++i)
+            ret[i] = i;
+        return ret;
     }
 
     @Override
-    public void read(CompoundNBT compound) {
-        super.read(compound);
-    }
-
-    private void playSound(SoundEvent sound) {
-        double x = (double) this.pos.getX() + 0.5d;
-        double y = (double) this.pos.getY() + 0.5d;
-        double z = (double) this.pos.getZ() + 0.5d;
-
-        this.world.playSound((PlayerEntity) null, x, y, z, sound, SoundCategory.BLOCKS, 0.5f, this.world.rand.nextFloat() * 0.1f + 0.9f);
+    public boolean canInsertItem(int index, ItemStack itemStackIn, @Nullable Direction direction) {
+        return true; //FIXME: missing logic
     }
 
     @Override
-    public boolean receiveClientEvent(int id, int type) {
-        if (id == 1) {
-            this.numPlayerUsing = type;
-            return true;
-        }
-        return super.receiveClientEvent(id, type);
+    public boolean canExtractItem(int index, ItemStack stack, Direction direction) {
+        return true; //FIXME: missing logic
     }
-
-    @Override
-    public void openInventory(PlayerEntity player) {
-        if (!player.isSpectator()) {
-            if (this.numPlayerUsing < 0) {
-                this.numPlayerUsing = 0;
-            }
-            ++this.numPlayerUsing;
-            this.onOpenOrClose();
-        }
-    }
-
-    @Override
-    public void closeInventory(PlayerEntity player) {
-        if (!player.isSpectator()) {
-            --this.numPlayerUsing;
-            this.onOpenOrClose();
-        }
-    }
-
-    protected void onOpenOrClose() {
-        Block block = this.getBlockState().getBlock();
-        if (block instanceof BagEye) {
-            this.world.addBlockEvent(this.pos, block, 1, this.numPlayerUsing);
-            this.world.notifyNeighbors(this.pos, block);
-        }
-    }
-
-    public static int getPlayersUsing(IBlockReader reader, BlockPos pos) {
-        BlockState blockState = reader.getBlockState(pos);
-
-        if (blockState.hasTileEntity()) {
-            TileEntity tileEntity = reader.getTileEntity(pos);
-            if (tileEntity instanceof BagEyeTileEntity) {
-                return ((BagEyeTileEntity) tileEntity).numPlayerUsing;
-            }
-        }
-        return 0;
-    }
-
-    public static void swapContens(BagEyeTileEntity te1, BagEyeTileEntity te2) {
-        if (te1.lvl != te2.lvl)
-            return;
-        NonNullList<ItemStack> list = te1.getItems();
-        te1.setItems(te2.getItems());
-        te2.setItems(list);
-    }
-
-    @Override
-    public void updateContainingBlockInfo() {
-        super.updateContainingBlockInfo();
-        if (this.itemHandler != null) {
-            this.itemHandler.invalidate();
-            this.itemHandler = null;
-        }
-    }
-
-    @Override
-    public <T> LazyOptional<T> getCapability(@Nonnull Capability<T> cap, @Nonnull Direction side) {
-        if (cap == CapabilityItemHandler.ITEM_HANDLER_CAPABILITY) {
-            return itemHandler.cast();
-        }
-        return super.getCapability(cap, side);
-    }
-
-    private IItemHandlerModifiable createHandler() {
-        return new InvWrapper(this);
-    }
-
-    @Override
-    public void remove() {
-        super.remove();
-        if (itemHandler != null) {
-            itemHandler.invalidate();
-        }
-    }
-    */
 }

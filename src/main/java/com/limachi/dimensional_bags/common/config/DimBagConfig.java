@@ -1,5 +1,6 @@
 package com.limachi.dimensional_bags.common.config;
 
+import com.limachi.dimensional_bags.common.upgradesManager.UpgradeManager;
 import net.minecraftforge.common.ForgeConfigSpec;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -10,20 +11,27 @@ import static com.limachi.dimensional_bags.DimensionalBagsMod.MOD_ID;
 
 @Mod.EventBusSubscriber(modid = MOD_ID, bus = Mod.EventBusSubscriber.Bus.MOD)
 public class DimBagConfig {
-    public static final Config CONFIG;
-    public static final ForgeConfigSpec SPEC;
+    public static final int ROWS_ID = 0;
+    public static final int COLUMNS_ID = 1;
+    public static final int RADIUS_ID = 2;
+
+    /*
+    public static final UpgradeConfig upgrades[] = { //exact order of the config maters and should be maintained for compatibility of futur versions of the mod
+            new UpgradeConfig("rows", true, 3, 9, 1, 14),
+            new UpgradeConfig("columns", true, 9, 18, 1, 35),
+            new UpgradeConfig("radius", true, 3, 31, 2, 126), //note: the actual maximum of an itemstack should be 127, so we are barely sage to manipulate up to 126 items
+    };
+    */
+
+    private static final Config CONFIG;
+    private static final ForgeConfigSpec SPEC;
     static {
         final Pair<Config, ForgeConfigSpec> specPair = new ForgeConfigSpec.Builder().configure(Config::new);
         SPEC = specPair.getRight();
         CONFIG = specPair.getLeft();
     }
 
-    public static int startingRadius;
-    public static int maxRadius;
-    public static int startingColumns;
-    public static int maxCOlumns;
-    public static int startingRows;
-    public static int maxRows;
+    public static final ForgeConfigSpec getSpec() { return SPEC; }
 
     @SubscribeEvent
     public static void onModConfigEvent(final ModConfig.ModConfigEvent event) {
@@ -31,33 +39,61 @@ public class DimBagConfig {
             bakeConfig();
     }
 
+    /*
+    public static class UpgradeConfig {
+        public int start;
+        public int limit;
+        public String id;
+
+        private boolean canConfig;
+        private final String cId;
+        private int min;
+        private int max;
+        private ForgeConfigSpec.IntValue cStart;
+        private ForgeConfigSpec.IntValue cLimit;
+
+        UpgradeConfig(String id, boolean canConfig, int start, int limit, int min, int max) {
+            this.id = id;
+            this.cId = MOD_ID + ".config.upgrade." + id;
+            this.canConfig = canConfig;
+            this.start = start;
+            this.min = min;
+            this.limit = limit;
+            this.max = max;
+        }
+
+        protected UpgradeConfig(String id, boolean canConfig) { this(id, canConfig, 0, 1, 0, 1); }
+
+        void builConfig(ForgeConfigSpec.Builder builder) {
+            if (this.canConfig) {
+                this.cStart = builder.comment("initial amount of '" + this.id + "' upgradesManager").translation(this.cId + ".start").defineInRange(this.cId + ".start", this.start, this.min, this.max);
+                this.cLimit = builder.comment("maximum amount of '" + this.id + "' upgradesManager").translation(this.cId + ".limit").defineInRange(this.cId + ".limit", this.limit, this.min, this.max);
+            }
+        }
+
+        void bake() {
+            if (this.canConfig) {
+                this.start = this.cStart.get();
+                this.limit = this.cLimit.get();
+            }
+        }
+    }*/
+
     private static void bakeConfig() {
-        startingRadius = Config.startingRadius.get();
-        maxRadius = Config.maxRadius.get();
-        startingColumns = Config.startingColumns.get();
-        maxCOlumns = Config.maxCOlumns.get();
-        startingRows = Config.startingRows.get();
-        maxRows = Config.maxRows.get();
+        UpgradeManager.bakeConfig();
+        /*
+        for (int i = 0; i < upgrades.length; ++i)
+            upgrades[i].bake();
+            */
     }
 
-    static class Config {
-
-        static ForgeConfigSpec.IntValue startingRadius;
-        static ForgeConfigSpec.IntValue maxRadius;
-        static ForgeConfigSpec.IntValue startingColumns;
-        static ForgeConfigSpec.IntValue maxCOlumns;
-        static ForgeConfigSpec.IntValue startingRows;
-        static ForgeConfigSpec.IntValue maxRows;
-
+    private static class Config {
         Config(ForgeConfigSpec.Builder builder) {
-            startingRadius = builder.comment("starting radius of the bag (not counting the eye and walls)").translation(MOD_ID + ".config.bag.roomRadius").defineInRange("bag.roomRadius", 3, 2, 126);
-            maxRadius = builder.comment("maximum radius of the bag (not counting the eye and walls)").translation(MOD_ID + ".config.bag.roomRadiusMax").defineInRange("bag.roomRadiusMax", 31, 2, 126);
-
-            startingColumns = builder.comment("number of columns a new bag has").translation(MOD_ID + ".config.bag.columns").defineInRange("bag.columns", 9, 1, 35);
-            maxCOlumns = builder.comment("maximum radius of columns a bag can have").translation(MOD_ID + ".config.bag.columnsMax").defineInRange("bag.columnsMax", 18, 1, 35);
-
-            startingRows = builder.comment("number of rows a new bag has").translation(MOD_ID + ".config.bag.rows").defineInRange("bag.rows", 3, 1, 14);
-            maxRows = builder.comment("maximum radius of rows a bag can have").translation(MOD_ID + ".config.bag.rowsMax").defineInRange("bag.rowsMax", 9, 1, 14);
+            UpgradeManager.buildConfig(builder);
+            /*
+            for (int i = 0; i < upgrades.length; ++i)
+                upgrades[i].builConfig(builder);
+            */
         }
     }
 }

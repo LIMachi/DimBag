@@ -1,4 +1,4 @@
-package com.limachi.dimensional_bags.common.data.inventory.container.slot;
+package com.limachi.dimensional_bags.common.data.container.slot;
 
 import com.limachi.dimensional_bags.common.network.DimBagDataSlotChanged;
 import net.minecraftforge.items.IItemHandler;

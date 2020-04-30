@@ -1,6 +1,8 @@
 package com.limachi.dimensional_bags.common.init;
 
+import com.limachi.dimensional_bags.client.screen.ActionsGUI;
 import com.limachi.dimensional_bags.client.screen.BagGUI;
+import com.limachi.dimensional_bags.client.screen.UpgradeGUI;
 import net.minecraft.client.gui.ScreenManager;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -15,5 +17,7 @@ public class eventSubscriberClient {
     @SubscribeEvent
     public static void clientSetup(FMLClientSetupEvent event) {
         ScreenManager.registerFactory(Registries.BAG_CONTAINER.get(), BagGUI::new);
+        ScreenManager.registerFactory(Registries.UPGRADE_CONTAINER.get(), UpgradeGUI::new);
+        ScreenManager.registerFactory(Registries.SC_ACTIONS.get(), ActionsGUI::new);
     }
 }

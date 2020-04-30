@@ -9,8 +9,6 @@ import net.minecraftforge.fml.network.NetworkRegistry;
 import net.minecraftforge.fml.network.PacketDistributor;
 import net.minecraftforge.fml.network.simple.SimpleChannel;
 
-import java.util.function.Supplier;
-
 import static com.limachi.dimensional_bags.DimensionalBagsMod.MOD_ID;
 
 public class PacketHandler {

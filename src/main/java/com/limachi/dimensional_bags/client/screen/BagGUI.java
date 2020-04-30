@@ -1,63 +1,29 @@
 package com.limachi.dimensional_bags.client.screen;
 
 import com.google.common.primitives.Ints;
-import com.limachi.dimensional_bags.common.data.inventory.container.DimBagContainer;
+import com.limachi.dimensional_bags.common.data.container.DimBagContainer;
+import com.limachi.dimensional_bags.common.references.GUIs;
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.gui.screen.inventory.ContainerScreen;
-import net.minecraft.client.renderer.BufferBuilder;
-import net.minecraft.client.renderer.Tessellator;
-import net.minecraft.client.renderer.WorldVertexBufferUploader;
 import net.minecraft.client.renderer.texture.TextureManager;
-import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.entity.player.PlayerInventory;
-import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.text.ITextComponent;
 
-import static com.limachi.dimensional_bags.DimensionalBagsMod.MOD_ID;
+import static com.limachi.dimensional_bags.common.references.GUIs.ScreenParts.*;
 
 public class BagGUI extends ContainerScreen<DimBagContainer> { //addapt the size of the gui depending on size of the eye
-
-    public static final int PLAYER_INVENTORY_COLUMNS = 9;
-    public static final int PLAYER_INVENTORY_X = 174;
-    public static final int PLAYER_INVENTORY_Y = 90;
-    public static final int PLAYER_INVENTORY_FIRST_SLOT_Y = 7;
-    public static final int PLAYER_BELT_FIRST_SLOT_Y = 65;
-    public static final int SLOT_SIZE_X = 18;
-    public static final int SLOT_SIZE_Y = 18;
-    public static final int PART_SIZE_X = 6; //expected to be a third of a slot
-    public static final int PART_SIZE_Y = 6; //expected to be a third of a slot
-
-    private static final ResourceLocation PLAYER_INVENTORY = new ResourceLocation(MOD_ID, "textures/screens/player_inventory_basic.png");
-    private static final ResourceLocation SLOT = new ResourceLocation(MOD_ID, "textures/screens/parts/slot.png");
-    private static final ResourceLocation LEFT = new ResourceLocation(MOD_ID, "textures/screens/parts/left.png");
-    private static final ResourceLocation RIGHT = new ResourceLocation(MOD_ID, "textures/screens/parts/right.png");
-    private static final ResourceLocation UPPER = new ResourceLocation(MOD_ID, "textures/screens/parts/upper.png");
-    private static final ResourceLocation LOWER = new ResourceLocation(MOD_ID, "textures/screens/parts/lower.png");
-    private static final ResourceLocation UPPER_RIGHT = new ResourceLocation(MOD_ID, "textures/screens/parts/upper_right.png");
-    private static final ResourceLocation UPPER_LEFT = new ResourceLocation(MOD_ID, "textures/screens/parts/upper_left.png");
-    private static final ResourceLocation LOWER_LEFT = new ResourceLocation(MOD_ID, "textures/screens/parts/lower_left.png");
-    private static final ResourceLocation LOWER_RIGHT = new ResourceLocation(MOD_ID, "textures/screens/parts/lower_right.png");
-    private static final ResourceLocation FILLER = new ResourceLocation(MOD_ID, "textures/screens/parts/filler.png");
-    private static final ResourceLocation EXPANDER_LEFT = new ResourceLocation(MOD_ID, "textures/screens/parts/expander_left.png");
-    private static final ResourceLocation EXPANDER_RIGHT = new ResourceLocation(MOD_ID, "textures/screens/parts/expander_right.png");
-    private static final ResourceLocation THINNER_LEFT = new ResourceLocation(MOD_ID, "textures/screens/parts/thinner_left.png");
-    private static final ResourceLocation THINNER_RIGHT = new ResourceLocation(MOD_ID, "textures/screens/parts/thinner_right.png");
-
     private int rows;
     private int columns;
     private int columns_shift_left;
     private int columns_shift_right;
-
-    public static int calculateYSize(int rows) { return PLAYER_INVENTORY_Y + rows * SLOT_SIZE_Y + PART_SIZE_Y * 3; }
-    public static int calculateShiftLeft(int columns) { return (int)Math.floor(((double)columns - (double)PLAYER_INVENTORY_COLUMNS) / 2.0d); }
 
     public BagGUI(DimBagContainer container, PlayerInventory inv, ITextComponent titleIn) {
         super(container, inv, titleIn);
         this.rows = container.getRows();
         this.columns = container.getColumns();
         this.xSize = PLAYER_INVENTORY_X + (Ints.max(this.columns - PLAYER_INVENTORY_COLUMNS, 0)) * SLOT_SIZE_X; //total size of the gui x axis
-        this.ySize = calculateYSize(this.rows);
-        this.columns_shift_left = calculateShiftLeft(this.columns);
+        this.ySize = GUIs.BagScreen.calculateYSize(this.rows);
+        this.columns_shift_left = GUIs.BagScreen.calculateShiftLeft(this.columns);
         this.columns_shift_right = this.columns - this.columns_shift_left - PLAYER_INVENTORY_COLUMNS; //how many exta columns on the right of the gui
     }
 

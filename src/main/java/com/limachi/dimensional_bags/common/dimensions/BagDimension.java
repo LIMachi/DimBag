@@ -1,14 +1,22 @@
 package com.limachi.dimensional_bags.common.dimensions;
 
 import com.limachi.dimensional_bags.common.blocks.BagEye;
+import com.limachi.dimensional_bags.common.data.DimBagData;
+import com.limachi.dimensional_bags.common.data.EyeData;
+import com.limachi.dimensional_bags.common.data.IdHandler;
 import com.limachi.dimensional_bags.common.init.eventSubscriberForge;
+import com.limachi.dimensional_bags.common.items.Bag;
 import com.limachi.dimensional_bags.common.tileentity.BagEyeTileEntity;
+import com.limachi.dimensional_bags.compat.Curios;
 import mcp.MethodsReturnNonnullByDefault;
 import net.minecraft.block.BlockState;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
+import net.minecraft.item.ItemStack;
+import net.minecraft.item.Items;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.tileentity.TileEntity;
+import net.minecraft.util.Hand;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.util.math.Vec3d;
@@ -30,16 +38,12 @@ import static com.limachi.dimensional_bags.common.init.eventSubscriberForge.DIM_
 
 public class BagDimension extends Dimension {
 
-//    public static DimensionType sType;
-
     public BagDimension(World worldIn, DimensionType type) {
         super(worldIn, type, 0.0f);
-//        sType = type;
     }
 
     public BagDimension(World worldIn, DimensionType type, float low_light) {
         super(worldIn, type, low_light);
-//        sType = type;
     }
 
     public static ServerWorld get(MinecraftServer server) {
@@ -98,8 +102,15 @@ public class BagDimension extends Dimension {
 
     public static void teleportPlayer(ServerPlayerEntity player, DimensionType destType, BlockPos destPos) { //should be a fast travel
         if (player.world.isRemote() || player == null || !player.isAlive()) return ;
-//        player.dimension = destType;
-        player.teleport(player.server.getWorld(destType), destPos.getX(), destPos.getY(), destPos.getZ(), player.rotationYaw, player.rotationPitch);
+        ServerWorld dim = player.getServer().getWorld(destType);
+        dim.getChunk(destPos);
+        player.dimension = destType;
+        double x = destPos.getX() + 0.5d;
+        double y = destPos.getY() + 0.5d;
+        double z = destPos.getZ() + 0.5d;
+        player.teleport(player.server.getWorld(destType), x, y, z, player.rotationYaw, player.rotationPitch);
+        player.setLocationAndAngles(x, y, z, player.rotationYaw, player.rotationPitch);
+        player.setPositionAndUpdate(x, y, z);
         //ServerWorld world = player.getServer().getWorld(destType);
         //world.getChunk(destPos);
         //player.teleport(world, destPos.getX(), destPos.getY(), destPos.getZ(), player.rotationYaw, player.rotationPitch);
@@ -153,17 +164,11 @@ public class BagDimension extends Dimension {
     }
 
     public static void teleportToRoom(ServerPlayerEntity player, int destinationId) {
-        ServerWorld world = player.getServer().getWorld(DimensionType.byName(DIM_TYPE_RL));
-        BagEyeTileEntity te = getRoomEye(player.server, destinationId);
-        if (te == null) return;
-//        te.newPTB(player); //store the current position and dimension of the player in the eye of the room
-        teleportPlayer(player, DimensionType.byName(DIM_TYPE_RL), new BlockPos(destinationId * 1024 + 8, 130, 8));
+        teleportPlayer(player, DimensionType.byName(DIM_TYPE_RL), new BlockPos((destinationId - 1) * 1024 + 8, 129, 8));
     }
 
     public static void teleportBackFromRoom(ServerPlayerEntity player, int currentRoomID) {
-        BagEyeTileEntity te = getRoomEye(player.server, currentRoomID);
-        if (te == null) return; //no luck there, use vanilla command and think about the sin of destroying the eye
-//        BagEyeTileEntity.PlayerTPBack PTB = te.getPTBForPlayer(player);
-//        teleportPlayer(player, PTB.type, PTB.pos);
+        EyeData data = DimBagData.get(player.server).getEyeData(currentRoomID);
+        teleportPlayer(player, data.getDimension(), data.getPosition());
     }
 }

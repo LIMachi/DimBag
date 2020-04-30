@@ -1,4 +1,4 @@
-package com.limachi.dimensional_bags.common.data.inventory.container.slot;
+package com.limachi.dimensional_bags.common.data.container.slot;
 
 import com.limachi.dimensional_bags.common.items.Bag;
 import net.minecraft.item.ItemStack;

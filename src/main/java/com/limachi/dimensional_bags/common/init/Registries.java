@@ -2,11 +2,13 @@ package com.limachi.dimensional_bags.common.init;
 
 import com.limachi.dimensional_bags.DimensionalBagsMod;
 import com.limachi.dimensional_bags.common.blocks.BagEye;
-import com.limachi.dimensional_bags.common.data.inventory.container.DimBagContainer;
+import com.limachi.dimensional_bags.common.data.container.DimBagContainer;
+import com.limachi.dimensional_bags.common.data.container.SCActions;
+import com.limachi.dimensional_bags.common.data.container.UpgradeContainer;
 import com.limachi.dimensional_bags.common.entities.BagEntity;
 import com.limachi.dimensional_bags.common.items.Bag;
-import com.limachi.dimensional_bags.common.items.RowUpgrade;
 import com.limachi.dimensional_bags.common.tileentity.BagEyeTileEntity;
+import com.limachi.dimensional_bags.common.upgradesManager.UpgradeManager;
 import net.minecraft.block.Block;
 import net.minecraft.entity.EntityClassification;
 import net.minecraft.entity.EntityType;
@@ -35,17 +37,20 @@ public class Registries {
 
     public static final RegistryObject<Item> BAG_ITEM = ITEM_REGISTER.register("bag", Bag::new);
     public static final RegistryObject<Item> BAG_EYE_ITEM = ITEM_REGISTER.register("bag_eye", () -> new BlockItem(BAG_EYE_BLOCK.get(), new Item.Properties().group(DimensionalBagsMod.ItemGroup.instance)));
-    public static final RegistryObject<Item> UPGRADE_ROW = ITEM_REGISTER.register("row_upgrade", RowUpgrade::new);
 
     public static final RegistryObject<TileEntityType<BagEyeTileEntity>> BAG_EYE_TE = TILE_ENTITY_REGISTER.register("bag_eye_te", () -> TileEntityType.Builder.create(BagEyeTileEntity::new, BAG_EYE_BLOCK.get()).build(null));
 
     public static final RegistryObject<ContainerType<DimBagContainer>> BAG_CONTAINER = CONTAINER_TYPE_REGISTER.register("bag_container", () -> IForgeContainerType.create(DimBagContainer::new));
+    public static final RegistryObject<ContainerType<UpgradeContainer>> UPGRADE_CONTAINER = CONTAINER_TYPE_REGISTER.register("upgrade_container", () -> IForgeContainerType.create(UpgradeContainer::new));
+
+    public static final RegistryObject<ContainerType<SCActions>> SC_ACTIONS = CONTAINER_TYPE_REGISTER.register("sc_actions", () -> IForgeContainerType.create(SCActions::new));
 
     public static final RegistryObject<EntityType<BagEntity>> BAG_ENTITY = ENTITY_REGISTER.register("bag_entity", () -> EntityType.Builder.<BagEntity>create(BagEntity::new, EntityClassification.MISC).size(0.5f, 1f).build(new ResourceLocation(MOD_ID, "bag_entity").toString()));
 
     public static void registerAll() {
         IEventBus meb = FMLJavaModLoadingContext.get().getModEventBus();
 
+        UpgradeManager.register(ITEM_REGISTER); //register all upgradesManager items
         BLOCK_REGISTER.register(meb);
         ITEM_REGISTER.register(meb);
         TILE_ENTITY_REGISTER.register(meb);

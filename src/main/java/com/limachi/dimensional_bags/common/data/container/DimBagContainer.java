@@ -1,15 +1,17 @@
-package com.limachi.dimensional_bags.common.data.inventory.container;
+package com.limachi.dimensional_bags.common.data.container;
 
-import com.limachi.dimensional_bags.client.screen.BagGUI;
-import com.limachi.dimensional_bags.common.data.DimBagData;
 import com.limachi.dimensional_bags.common.data.EyeData;
+import com.limachi.dimensional_bags.common.data.container.slot.UpgradeConsumerSlot;
 import com.limachi.dimensional_bags.common.init.Registries;
+import com.limachi.dimensional_bags.common.references.GUIs;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.inventory.container.Container;
 import net.minecraft.inventory.container.Slot;
 import net.minecraft.item.ItemStack;
 import net.minecraft.network.PacketBuffer;
+
+import static com.limachi.dimensional_bags.common.references.GUIs.ScreenParts.*;
 
 public class DimBagContainer extends Container {
 
@@ -21,12 +23,6 @@ public class DimBagContainer extends Container {
         this.addSlots(inventory);
     }
 
-    /*
-    public DimBagContainer(int windowId, PlayerInventory inventory, int eyeId) {
-        this(windowId, inventory, DimBagData.get(inventory.player.getServer()).getEyeData(eyeId));
-    }
-    */
-
     public DimBagContainer(int windowId, PlayerInventory inventory, PacketBuffer buff) {
         this(windowId, inventory, new EyeData(buff));
     }
@@ -35,21 +31,21 @@ public class DimBagContainer extends Container {
     public int getColumns() { return this.data.getColumns(); }
 
     private void addSlots(PlayerInventory inventory) {
-        int sx = BagGUI.calculateShiftLeft(data.getColumns());
-        int sy = BagGUI.calculateYSize(data.getRows());
-        int dx = BagGUI.PART_SIZE_X + 1 + (sx < 0 ? -sx * BagGUI.SLOT_SIZE_X : 0);
-        int dy = BagGUI.PART_SIZE_Y * 2 + 1;
+        int sx = GUIs.BagScreen.calculateShiftLeft(data.getColumns());
+        int sy = GUIs.BagScreen.calculateYSize(data.getRows());
+        int dx = PART_SIZE_X + 1 + (sx < 0 ? -sx * SLOT_SIZE_X : 0);
+        int dy = PART_SIZE_Y * 2 + 1;
         for (int y = 0; y < this.data.getRows(); ++y)
             for (int x = 0; x < this.data.getColumns(); ++x)
-                this.addSlot(new Slot(this.data, x + y * data.getColumns(), dx + BagGUI.SLOT_SIZE_X * x, dy + BagGUI.SLOT_SIZE_Y * y));
-        dx = BagGUI.PART_SIZE_X + 1 + (sx > 0 ? sx * BagGUI.SLOT_SIZE_X : 0);
-        dy = sy - BagGUI.PLAYER_INVENTORY_Y + BagGUI.PLAYER_INVENTORY_FIRST_SLOT_Y + 1;
+                this.addSlot(new Slot(this.data.items, x + y * data.getColumns(), dx + SLOT_SIZE_X * x, dy + SLOT_SIZE_Y * y));
+        dx = PART_SIZE_X + 1 + (sx > 0 ? sx * SLOT_SIZE_X : 0);
+        dy = sy - PLAYER_INVENTORY_Y + PLAYER_INVENTORY_FIRST_SLOT_Y + 1;
         for (int y = 0; y < 3; ++y)
             for (int x = 0; x < 9; ++x)
-                this.addSlot(new Slot(inventory, x + y * 9 + 9, dx + BagGUI.SLOT_SIZE_X * x, dy + BagGUI.SLOT_SIZE_Y * y));
-        dy = sy - BagGUI.PLAYER_INVENTORY_Y + BagGUI.PLAYER_BELT_FIRST_SLOT_Y + 1;
+                this.addSlot(new Slot(inventory, x + y * 9 + 9, dx + SLOT_SIZE_X * x, dy + SLOT_SIZE_Y * y));
+        dy = sy - PLAYER_INVENTORY_Y + PLAYER_BELT_FIRST_SLOT_Y + 1;
         for (int x = 0; x < 9; ++x)
-            this.addSlot(new Slot(inventory, x, dx + BagGUI.SLOT_SIZE_X * x, dy));
+            this.addSlot(new Slot(inventory, x, dx + SLOT_SIZE_X * x, dy));
     }
 
     @Override
@@ -62,7 +58,7 @@ public class DimBagContainer extends Container {
         ItemStack itemstack = ItemStack.EMPTY;
         Slot slot = inventorySlots.get(index);
 
-        if (slot != null && slot.getHasStack()) {
+        if (slot != null && slot.getHasStack() && !(slot instanceof UpgradeConsumerSlot)) {
             ItemStack slotStack = slot.getStack();
             itemstack = slotStack.copy();
 
@@ -87,6 +83,6 @@ public class DimBagContainer extends Container {
     @Override
     public void onContainerClosed(PlayerEntity player) {
         super.onContainerClosed(player);
-        this.data.closeInventory(player);
+        this.data.items.closeInventory(player);
     }
 }

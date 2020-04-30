@@ -1,9 +1,7 @@
 package com.limachi.dimensional_bags.client.entity.layer;
 
-import com.limachi.dimensional_bags.client.entity.model.BagEntityModel;
 import com.limachi.dimensional_bags.client.entity.model.BagLayerModel;
-import com.limachi.dimensional_bags.client.entity.render.BagEntityRender;
-import com.limachi.dimensional_bags.common.IMC.curios.Curios;
+import com.limachi.dimensional_bags.compat.Curios;
 import com.limachi.dimensional_bags.common.items.Bag;
 import com.mojang.blaze3d.matrix.MatrixStack;
 import com.mojang.blaze3d.vertex.IVertexBuilder;

@@ -1,8 +1,6 @@
-package com.limachi.dimensional_bags.common.IMC.curios;
+package com.limachi.dimensional_bags.compat;
 
-import com.limachi.dimensional_bags.DimensionalBagsMod;
 import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.util.ResourceLocation;
@@ -15,9 +13,6 @@ import top.theillusivec4.curios.api.CuriosAPI;
 import top.theillusivec4.curios.api.capability.ICurio;
 import top.theillusivec4.curios.api.capability.ICurioItemHandler;
 import top.theillusivec4.curios.api.imc.CurioIMCMessage;
-import top.theillusivec4.curios.api.inventory.CurioStackHandler;
-
-import java.util.SortedMap;
 
 public class Curios {
     public static final Curios INSTANCE = new Curios();
