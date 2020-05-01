@@ -1,6 +1,7 @@
 package com.limachi.dimensional_bags.common.data.inventory;
 
 import com.limachi.dimensional_bags.DimensionalBagsMod;
+import com.limachi.dimensional_bags.common.data.container.BaseContainer;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundNBT;
@@ -8,25 +9,50 @@ import net.minecraft.nbt.ListNBT;
 import net.minecraft.network.PacketBuffer;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 public abstract class BaseInventory implements IInventory {
 
+//    @Nullable
+//    private BaseContainer parent;
     private boolean dirty;
+    protected int rows;
+    protected int columns;
     protected int inUse;
     protected ItemStack[] items = null; //maximum stack size: byte (so 127 signed)
 
-    public BaseInventory(int size) {
+    public BaseInventory(int size, int rows, int columns/*, BaseContainer parent*/) {
         this.resetItems(size);
         this.inUse = 0;
+        this.rows = rows;
+        this.columns = columns;
+//        this.parent = parent;
     }
 
-    public void expandInventory(int inc) {
-        ItemStack[] tmp = new ItemStack[this.items.length + inc];
-        for (int i = 0; i < this.items.length; ++i)
-            tmp[i] = this.items[i];
-        for (int i = this.items.length; i < this.items.length + inc; ++i)
+//    public BaseContainer getParent() { return this.parent; }
+//    public void setParent(BaseContainer container) { this.parent = container; }
+
+    public int getRows() { return this.rows; }
+    public int getColumns() { return this.columns; }
+
+    @Override
+    public int getSizeInventory() { return this.items.length; }
+
+    public void resizeInventory(int size, int rows, int columns) { //now keep the row and column order of items, can remove items
+        ItemStack[] tmp = new ItemStack[size];
+        for (int y = 0; y < rows; ++y)
+            for (int x = 0; x < columns; ++x)
+                if (x + y * columns < size)
+                    tmp[x + y * columns] = (x < this.columns && y < this.rows && x + y * this.columns < this.items.length) ? this.items[x + y * this.columns] : ItemStack.EMPTY;
+        for (int i = rows * columns; i < size; ++i)
             tmp[i] = ItemStack.EMPTY;
+        this.inUse = 0;
         this.items = tmp;
+        this.rows = rows;
+        this.columns = columns;
+        for (ItemStack stack : this.items)
+            if (!stack.isEmpty())
+                ++this.inUse;
         this.markDirty();
     }
 
@@ -44,9 +70,12 @@ public abstract class BaseInventory implements IInventory {
     }
 
     public PacketBuffer toBytes(PacketBuffer buff) {
+        DimensionalBagsMod.LOGGER.info("preparing inventory packet");
         if (this.items.length == 0)
             DimensionalBagsMod.LOGGER.warn("Inventory with size 0!");
         buff.writeInt(this.items.length);
+        buff.writeInt(this.rows);
+        buff.writeInt(this.columns);
         buff.writeInt(this.inUse);
         for (int i = 0; i < this.items.length; ++i)
             if (!this.items[i].isEmpty()) {
@@ -57,7 +86,10 @@ public abstract class BaseInventory implements IInventory {
     }
 
     public void readBytes(PacketBuffer buff) {
+        DimensionalBagsMod.LOGGER.info("got inventory packet");
         this.resetItems(buff.readInt());
+        this.rows = buff.readInt();
+        this.columns = buff.readInt();
         this.inUse = buff.readInt();
         for (int i = 0; i < this.inUse; ++i) {
             int index = buff.readInt();
@@ -67,6 +99,8 @@ public abstract class BaseInventory implements IInventory {
 
     public CompoundNBT write(CompoundNBT nbt) {
         nbt.putInt("ItemStackListSize", this.items.length);
+        nbt.putInt("ItemStackListRows", this.rows);
+        nbt.putInt("ItemStackListColumns", this.columns);
         nbt.putInt("ItemStackListInUse", this.inUse);
         ListNBT list = new ListNBT();
         for (int i = 0; i < this.items.length; ++i)
@@ -82,6 +116,8 @@ public abstract class BaseInventory implements IInventory {
 
     public void read(CompoundNBT nbt) {
         this.inUse = nbt.getInt("ItemStackListInUse");
+        this.rows = nbt.getInt("ItemStackListRows");
+        this.columns = nbt.getInt("ItemStackListColumns");
         ListNBT list = nbt.getList("ItemStackListData", 10); //10 = compounbt
         int nSize = nbt.getInt("ItemStackListSize");
         this.items = new ItemStack[nSize];
@@ -93,9 +129,6 @@ public abstract class BaseInventory implements IInventory {
             this.items[index] = ItemStack.read(stack);
         }
     }
-
-    @Override
-    public int getSizeInventory() { return this.items.length; }
 
     @Override
     public boolean isEmpty() { return this.inUse != 0; }

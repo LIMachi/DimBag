@@ -9,7 +9,10 @@ public class ColumnUpgrade extends Upgrade {
 
     @Override
     protected void applyUpgrade(int countBefore, int countAfter, EyeData data) {
-        if (countAfter > countBefore)
-            data.items.expandInventory(data.getRows() * (countAfter - countBefore));
+        if (countAfter > countBefore) {
+//            int delta = countAfter - countBefore;
+            int size = data.getRows() * countAfter;
+            data.items.resizeInventory(size, data.getRows(), countAfter);
+        }
     }
 }

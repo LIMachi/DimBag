@@ -278,6 +278,7 @@ public class EyeData /*implements IInventory*/ { //all information about an eye 
     */
 
     public PacketBuffer toBytes(PacketBuffer buff) {
+        DimensionalBagsMod.LOGGER.info("preparing eye packet");
         buff.writeInt(this.id);
         buff.writeUniqueId(this.owner);
         buff.writeInt(this.position.getX());
@@ -294,6 +295,7 @@ public class EyeData /*implements IInventory*/ { //all information about an eye 
     }
 
     public void readBytes(PacketBuffer buff) {
+        DimensionalBagsMod.LOGGER.info("got eye packet");
         this.id = buff.readInt();
         this.owner = buff.readUniqueId();
         int x = buff.readInt();

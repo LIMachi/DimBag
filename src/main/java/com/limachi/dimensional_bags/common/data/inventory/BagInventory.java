@@ -1,15 +1,15 @@
 package com.limachi.dimensional_bags.common.data.inventory;
 
 import com.limachi.dimensional_bags.common.data.EyeData;
+import com.limachi.dimensional_bags.common.data.container.BaseContainer;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.ItemStack;
 
 public class BagInventory extends BaseInventory {
 
     EyeData data;
 
     public BagInventory(EyeData data) {
-        super(data.getRows() * data.getColumns());
+        super(data.getRows() * data.getColumns(), data.getRows(), data.getColumns()/*, null*/);
         this.data = data;
     }
 
@@ -21,7 +21,8 @@ public class BagInventory extends BaseInventory {
 
     @Override
     public boolean isUsableByPlayer(PlayerEntity player) {
-        return !data.upgrades.isDirty(); //close if another player is changing the upgrades?
+        //return !data.upgrades.isDirty(); //close if another player is changing the upgrades?
+        return true;
     }
 
     @Override

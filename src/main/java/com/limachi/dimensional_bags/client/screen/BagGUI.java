@@ -19,12 +19,8 @@ public class BagGUI extends ContainerScreen<DimBagContainer> { //addapt the size
 
     public BagGUI(DimBagContainer container, PlayerInventory inv, ITextComponent titleIn) {
         super(container, inv, titleIn);
-        this.rows = container.getRows();
-        this.columns = container.getColumns();
-        this.xSize = PLAYER_INVENTORY_X + (Ints.max(this.columns - PLAYER_INVENTORY_COLUMNS, 0)) * SLOT_SIZE_X; //total size of the gui x axis
-        this.ySize = GUIs.BagScreen.calculateYSize(this.rows);
-        this.columns_shift_left = GUIs.BagScreen.calculateShiftLeft(this.columns);
-        this.columns_shift_right = this.columns - this.columns_shift_left - PLAYER_INVENTORY_COLUMNS; //how many exta columns on the right of the gui
+        this.rows = container.inventory.getRows();
+        this.columns = container.inventory.getColumns();
     }
 
     public void render_top(TextureManager tm) { //render the top part + a space for the name of the inventory
@@ -143,6 +139,17 @@ public class BagGUI extends ContainerScreen<DimBagContainer> { //addapt the size
 
     @Override
     public void render(final int mouseX, final int mouseY, final float partialTicks) {
+        if (this.rows != container.inventory.getRows() || this.columns != container.inventory.getColumns()) {
+            container.playerInv.player.closeScreen(); //FIXME: temporary fix to close the container if the inventory changed (if I was mad, I'd call the reorganisation of slots there)
+//            container.reAddSlots(); //experimental, high danger
+//            this.rows = container.inventory.getRows();
+//            this.columns = container.inventory.getColumns();
+            return;
+        }
+        this.xSize = PLAYER_INVENTORY_X + (Ints.max(this.columns - PLAYER_INVENTORY_COLUMNS, 0)) * SLOT_SIZE_X; //total size of the gui x axis
+        this.ySize = GUIs.BagScreen.calculateYSize(this.rows);
+        this.columns_shift_left = GUIs.BagScreen.calculateShiftLeft(this.columns);
+        this.columns_shift_right = this.columns - this.columns_shift_left - PLAYER_INVENTORY_COLUMNS; //how many exta columns on the right of the gui
         this.guiLeft = (this.width - this.xSize) / 2; //start of the gui in the x axis (this.width is the size of the screens on the x axis)
         this.guiTop = (this.height - this.ySize) / 2; //start of the gui in the y axis (this.height is the size of the screens on the y axis)
         this.renderBackground();

@@ -1,9 +1,9 @@
 package com.limachi.dimensional_bags.common.data.container;
 
 import com.google.common.collect.Sets;
+import com.limachi.dimensional_bags.DimensionalBagsMod;
 import com.limachi.dimensional_bags.common.data.EyeData;
 import com.limachi.dimensional_bags.common.data.container.slot.BaseSlot;
-import com.limachi.dimensional_bags.common.data.container.slot.UpgradeConsumerSlot;
 import com.limachi.dimensional_bags.common.data.inventory.BaseInventory;
 import com.limachi.dimensional_bags.common.references.GUIs;
 import net.minecraft.entity.player.PlayerEntity;
@@ -13,26 +13,75 @@ import net.minecraft.inventory.container.Container;
 import net.minecraft.inventory.container.ContainerType;
 import net.minecraft.inventory.container.Slot;
 import net.minecraft.item.ItemStack;
+import net.minecraft.util.IIntArray;
+import net.minecraft.world.dimension.DimensionType;
 
 import javax.annotation.Nullable;
 import java.util.Set;
 
-public class BaseContainer extends Container {
+import static com.limachi.dimensional_bags.common.references.GUIs.ScreenParts.SLOT_SIZE_X;
+import static com.limachi.dimensional_bags.common.references.GUIs.ScreenParts.SLOT_SIZE_Y;
 
-    protected final EyeData data;
+public abstract class BaseContainer extends Container {
 
-    protected final int size;
+    public final BaseInventory inventory;
+    public final PlayerInventory playerInv;
 
     private int dragEvent; //overwrite of Container private/protected variables
     private int dragMode = -1; //overwrite of Container private/protected variables
     private final Set<Slot> dragSlots = Sets.newHashSet(); //overwrite of Container private/protected variables
 
-    protected BaseContainer(@Nullable ContainerType<?> type, int id, EyeData data, int size) {
+    protected BaseContainer(@Nullable ContainerType<?> type, int id, PlayerInventory playerInv, BaseInventory inventoryIn) {
         super(type, id);
-        this.data = data;
-        this.size = size;
+        this.playerInv = playerInv;
+        this.inventory = inventoryIn;
+        trackIntArray(new IIntArray() { //tracker/updater for the size of the container (total, rows, columns)
+            @Override
+            public int get(int index) {
+                switch (index) {
+                    case 0: return inventory.getSizeInventory();
+                    case 1: return inventory.getRows();
+                    case 2: return inventory.getColumns();
+                }
+                return 0;
+            }
+
+            @Override
+            public void set(int index, int value) {
+                if (index >= 0 && index <= 2 && value != get(index)) {
+                    inventory.resizeInventory(index == 0 ? value : inventory.getSizeInventory(),
+                            index == 1 ? value : inventory.getRows(),
+                            index == 2 ? value : inventory.getColumns());
+//                    reAddSlots();
+                }
+            }
+
+            @Override
+            public int size() {
+                return 3;
+            }
+        });
     }
 
+    public abstract void reAddSlots();
+    protected abstract void addContainerSlots(int ix, int iy);
+
+    protected void addSlots(int ix, int iy, boolean p, int px, int py) {
+        this.inventorySlots.clear();
+        this.addContainerSlots(ix, iy);
+        if (p) {
+            int dx = px + GUIs.ScreenParts.PLAYER_INVENTORY_FIRST_SLOT_X + 1;
+            int dy = py + GUIs.ScreenParts.PLAYER_INVENTORY_FIRST_SLOT_Y + 1;
+            for (int y = 0; y < GUIs.ScreenParts.PLAYER_INVENTORY_ROWS; ++y)
+                for (int x = 0; x < GUIs.ScreenParts.PLAYER_INVENTORY_COLUMNS; ++x)
+                    this.addSlot(new Slot(playerInv, x + (y + 1) * GUIs.ScreenParts.PLAYER_INVENTORY_COLUMNS, dx + x * GUIs.ScreenParts.SLOT_SIZE_X, dy + y * GUIs.ScreenParts.SLOT_SIZE_Y));
+            dy = py + GUIs.ScreenParts.PLAYER_BELT_FIRST_SLOT_Y + 1;
+            for (int x = 0; x < GUIs.ScreenParts.PLAYER_INVENTORY_COLUMNS; ++x)
+                this.addSlot(new Slot(playerInv, x, dx + x * GUIs.ScreenParts.SLOT_SIZE_X, dy));
+        }
+    }
+
+    /*
     protected void addPlayerSlotsContainer(PlayerInventory inventory, int sx, int sy) {
         int dx = sx + GUIs.ScreenParts.PLAYER_INVENTORY_FIRST_SLOT_X + 1;
         int dy = sy + GUIs.ScreenParts.PLAYER_INVENTORY_FIRST_SLOT_Y + 1;
@@ -43,6 +92,7 @@ public class BaseContainer extends Container {
         for (int x = 0; x < GUIs.ScreenParts.PLAYER_INVENTORY_COLUMNS; ++x)
             this.addSlot(new Slot(inventory, x, dx + x * GUIs.ScreenParts.SLOT_SIZE_X, dy));
     }
+    */
 
     @Override
     public boolean canInteractWith(PlayerEntity playerIn) { return true; } //by default, all containers of this mod can interact with the player
@@ -437,14 +487,14 @@ public class BaseContainer extends Container {
 
         if (slot != null && slot.getHasStack() && BaseSlot.getOuputRights(slot)) {
             copy = slot.getStack().copy();
-            if (index < size) { //from the container (to any slot, hotbar tried first, then inventory)
+            if (index < this.inventory.getSizeInventory()) { //from the container (to any slot, hotbar tried first, then inventory)
                 state = mergeItemStack(copy, inventorySlots.size() - 9, inventorySlots.size(), false);
                 if (!state)
-                    state = mergeItemStack(copy, size, inventorySlots.size() - 9, false);
+                    state = mergeItemStack(copy, this.inventory.getSizeInventory(), inventorySlots.size() - 9, false);
             } else if (index >= inventorySlots.size() - 9) { //hotbar (to container first, or to inventory)
                 state = mergeItemStack(copy, 0, inventorySlots.size() - 9, false); //one call to mergeItemStack is enough, thanks to the slots order
             } else { //player inventory (to container first, or to hotbar)
-                state = mergeItemStack(copy, 0, size, false);
+                state = mergeItemStack(copy, 0, this.inventory.getSizeInventory(), false);
                 if (!state)
                     state = mergeItemStack(copy, inventorySlots.size() - 9, inventorySlots.size(), false);
             }
