@@ -8,13 +8,13 @@ import com.limachi.dimensional_bags.common.data.inventory.BaseInventory;
 import com.limachi.dimensional_bags.common.references.GUIs;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
-import net.minecraft.inventory.container.ClickType;
-import net.minecraft.inventory.container.Container;
-import net.minecraft.inventory.container.ContainerType;
-import net.minecraft.inventory.container.Slot;
+import net.minecraft.inventory.container.*;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.IIntArray;
+import net.minecraft.util.IntReferenceHolder;
+import net.minecraft.util.NonNullList;
 import net.minecraft.world.dimension.DimensionType;
+import net.minecraftforge.fml.server.ServerLifecycleHooks;
 
 import javax.annotation.Nullable;
 import java.util.Set;
@@ -27,14 +27,19 @@ public abstract class BaseContainer extends Container {
     public final BaseInventory inventory;
     public final PlayerInventory playerInv;
 
+    private final PlayerEntity player;
+
     private int dragEvent; //overwrite of Container private/protected variables
     private int dragMode = -1; //overwrite of Container private/protected variables
     private final Set<Slot> dragSlots = Sets.newHashSet(); //overwrite of Container private/protected variables
+
+//    private final NonNullList<ItemStack> inventoryItemStacks = NonNullList.create();
 
     protected BaseContainer(@Nullable ContainerType<?> type, int id, PlayerInventory playerInv, BaseInventory inventoryIn) {
         super(type, id);
         this.playerInv = playerInv;
         this.inventory = inventoryIn;
+        this.player = playerInv.player;
         trackIntArray(new IIntArray() { //tracker/updater for the size of the container (total, rows, columns)
             @Override
             public int get(int index) {
@@ -52,7 +57,10 @@ public abstract class BaseContainer extends Container {
                     inventory.resizeInventory(index == 0 ? value : inventory.getSizeInventory(),
                             index == 1 ? value : inventory.getRows(),
                             index == 2 ? value : inventory.getColumns());
-//                    reAddSlots();
+//                    if (DimensionalBagsMod.isServer(playerInv.player.world)) {
+//                        DimensionalBagsMod.LOGGER.info("Inventory size changed, rebuilding slots server side");
+//                        reAddSlots();
+//                    }
                 }
             }
 
@@ -68,6 +76,7 @@ public abstract class BaseContainer extends Container {
 
     protected void addSlots(int ix, int iy, boolean p, int px, int py) {
         this.inventorySlots.clear();
+//        this.inventoryItemStacks.clear();
         this.addContainerSlots(ix, iy);
         if (p) {
             int dx = px + GUIs.ScreenParts.PLAYER_INVENTORY_FIRST_SLOT_X + 1;
@@ -576,6 +585,46 @@ public abstract class BaseContainer extends Container {
 
         return flag;
     }
+
+    /*
+    @Override
+    public Slot addSlot(Slot slotIn) {
+        slotIn.slotNumber = this.inventorySlots.size();
+        this.inventorySlots.add(slotIn);
+        this.inventoryItemStacks.add(ItemStack.EMPTY);
+        return slotIn;
+    }*/
+/*
+    @Override
+    public void detectAndSendChanges() {
+//        ServerLifecycleHooks.getCurrentServer()
+//        DimensionalBagsMod.LOGGER.info("container tick");
+        for(int i = 0; i < this.inventorySlots.size(); ++i) {
+            ItemStack itemstack = this.inventorySlots.get(i).getStack();
+            ItemStack itemstack1 = this.inventoryItemStacks.get(i);
+            if (!ItemStack.areItemStacksEqual(itemstack1, itemstack)) {
+                boolean clientStackChanged = !itemstack1.equals(itemstack, true);
+                itemstack1 = itemstack.copy();
+                this.inventoryItemStacks.set(i, itemstack1);
+
+                if (clientStackChanged)
+                    for(IContainerListener icontainerlistener : this.listeners) {
+                        icontainerlistener.sendSlotContents(this, i, itemstack1);
+                    }
+            }
+        }
+
+        for(int j = 0; j < this.trackedIntReferences.size(); ++j) {
+            IntReferenceHolder intreferenceholder = this.trackedIntReferences.get(j);
+            if (intreferenceholder.isDirty()) {
+                for(IContainerListener icontainerlistener1 : this.listeners) {
+                    icontainerlistener1.sendWindowProperty(this, j, intreferenceholder.get());
+                }
+            }
+        }
+//        super.detectAndSendChanges();
+    }
+    */
 
     /*
     @Override

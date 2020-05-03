@@ -68,6 +68,7 @@ public class Bag extends Item {
     public ActionResult<ItemStack> onItemRightClick(World world, PlayerEntity player, Hand hand) { //detect right click event and convert it to my mod event
         if (world.isRemote() || !(player instanceof ServerPlayerEntity)) return new ActionResult<>(ActionResultType.FAIL, player.getHeldItem(hand)); //make sure this event will only be fired server side
         BagEvent event = new BagEvent(false, player.isCrouching(), hand == Hand.OFF_HAND, new IdHandler(player.getHeldItem(hand)).getId(), (ServerPlayerEntity) player);
+        DimensionalBagsMod.LOGGER.info("posting right click event");
         MinecraftForge.EVENT_BUS.post(event);
         if (event.isCanceled())
             return new ActionResult<>(ActionResultType.FAIL, player.getHeldItem(hand));

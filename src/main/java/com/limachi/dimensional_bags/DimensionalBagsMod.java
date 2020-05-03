@@ -10,20 +10,27 @@ import com.limachi.dimensional_bags.proxy.Client;
 import com.limachi.dimensional_bags.proxy.ICommonProxy;
 import com.limachi.dimensional_bags.proxy.Server;
 import net.minecraft.item.ItemStack;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.world.World;
 import net.minecraftforge.client.event.ModelRegistryEvent;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.fml.DistExecutor;
+import net.minecraftforge.fml.LogicalSide;
 import net.minecraftforge.fml.ModList;
 import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.common.thread.EffectiveSide;
 import net.minecraftforge.fml.config.ModConfig;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.event.lifecycle.InterModEnqueueEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
+import net.minecraftforge.fml.server.ServerLifecycleHooks;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
+import javax.annotation.Nullable;
 
 import static com.limachi.dimensional_bags.common.init.Registries.BAG_ITEM;
 
@@ -35,7 +42,7 @@ public class DimensionalBagsMod
     public static DimensionalBagsMod instance;
     public static final ICommonProxy PROXY = DistExecutor.runForDist(() -> Client::new, ()-> Server::new);
 
-    public DimBagData client_side_mirror = null; //copy of the overworld-saved data on the server, server should send packets with the necessary data to populate this copy, should be updaed upon player connecting
+    //public DimBagData client_side_mirror = null; //copy of the overworld-saved data on the server, server should send packets with the necessary data to populate this copy, should be updaed upon player connecting
 
     public DimensionalBagsMod() {
         Reflection.initialize(PacketHandler.class); //force initialization of the class statics ASAP
@@ -75,5 +82,25 @@ public class DimensionalBagsMod
         public ItemStack createIcon() {
             return new ItemStack(BAG_ITEM.get());
         }
+    }
+
+    /**
+    helper function to test if the code is being run on the server logical side
+    TODO: rewrite all logical side tests using this function
+     */
+    public static boolean isServer(@Nullable World world) {
+        if (world != null)
+            return !world.isRemote();
+        return EffectiveSide.get() == LogicalSide.SERVER;
+    }
+
+    /**
+    helper function to get a handle to the current joined server
+    TODO: test the access by client
+     */
+    public static MinecraftServer getServer(@Nullable World world) {
+        if (world != null && world.getServer() != null)
+            return world.getServer();
+        return ServerLifecycleHooks.getCurrentServer();
     }
 }

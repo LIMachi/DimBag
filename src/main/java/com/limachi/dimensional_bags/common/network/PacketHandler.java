@@ -1,5 +1,8 @@
 package com.limachi.dimensional_bags.common.network;
 
+import com.limachi.dimensional_bags.common.network.packets.DimBagDataSyncPacket;
+import com.limachi.dimensional_bags.common.network.packets.DimBagDataSyncRequestPacket;
+import com.limachi.dimensional_bags.common.network.packets.InventoryResize;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.fml.LogicalSide;
@@ -33,6 +36,7 @@ public class PacketHandler {
     static {
         HANDLER.registerMessage(0, DimBagDataSyncPacket.class, DimBagDataSyncPacket::toBytes, DimBagDataSyncPacket::fromBytes, DimBagDataSyncPacket::enqueue);
         HANDLER.registerMessage(1, DimBagDataSyncRequestPacket.class, DimBagDataSyncRequestPacket::toBytes, DimBagDataSyncRequestPacket::fromBytes, DimBagDataSyncRequestPacket::enqueue);
+        HANDLER.registerMessage(2, InventoryResize.class, InventoryResize::toBytes, InventoryResize::fromBytes, InventoryResize::enqueue);
     }
 
     public static <T> void toServer(T msg) { HANDLER.sendToServer(msg); }

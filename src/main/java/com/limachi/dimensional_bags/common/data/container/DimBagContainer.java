@@ -12,9 +12,11 @@ import static com.limachi.dimensional_bags.common.references.GUIs.ScreenParts.*;
 
 public class DimBagContainer extends BaseContainer {
 
-    public DimBagContainer(int windowId, PlayerInventory inventory, EyeData data) {
+    public DimBagContainer(int windowId, PlayerInventory inventory, EyeData data, PlayerEntity player) {
+
         super(Registries.BAG_CONTAINER.get(), windowId, inventory, data.items);
-//        data.items.setParent(this);
+        if (player != null)
+            data.items.attachContainer(player, this);
         this.reAddSlots();
     }
 
@@ -32,11 +34,18 @@ public class DimBagContainer extends BaseContainer {
     }
 
     public DimBagContainer(int windowId, PlayerInventory inventory, PacketBuffer buff) {
-        this(windowId, inventory, new EyeData(buff));
+        this(windowId, inventory, new EyeData(buff), null);
     }
 
     @Override
     public boolean canInteractWith(PlayerEntity playerIn) { //FIXME: for now, set it to true, will have to implement logic later
         return true;
+    }
+
+    @Override
+    public void onContainerClosed(PlayerEntity playerIn) {
+        if (!playerIn.world.isRemote())
+            this.inventory.detachContainer(playerIn);
+        super.onContainerClosed(playerIn);
     }
 }

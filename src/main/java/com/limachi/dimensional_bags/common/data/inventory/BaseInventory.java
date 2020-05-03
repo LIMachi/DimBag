@@ -2,31 +2,54 @@ package com.limachi.dimensional_bags.common.data.inventory;
 
 import com.limachi.dimensional_bags.DimensionalBagsMod;
 import com.limachi.dimensional_bags.common.data.container.BaseContainer;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.nbt.ListNBT;
 import net.minecraft.network.PacketBuffer;
+import net.minecraft.util.NonNullList;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
 
 public abstract class BaseInventory implements IInventory {
 
-//    @Nullable
-//    private BaseContainer parent;
     private boolean dirty;
     protected int rows;
     protected int columns;
     protected int inUse;
     protected ItemStack[] items = null; //maximum stack size: byte (so 127 signed)
+    protected final Map<UUID, BaseContainer> attachedContainers = new HashMap<>();
 
-    public BaseInventory(int size, int rows, int columns/*, BaseContainer parent*/) {
+    public BaseInventory(int size, int rows, int columns) {
         this.resetItems(size);
         this.inUse = 0;
         this.rows = rows;
         this.columns = columns;
-//        this.parent = parent;
+    }
+
+    public void attachContainer(PlayerEntity player, BaseContainer container) {
+        UUID pu = player.getUniqueID();
+        if (attachedContainers.containsKey(pu)) return;
+        attachedContainers.put(pu, container);
+    }
+
+    public void detachContainer(PlayerEntity player) {
+        attachedContainers.remove(player.getUniqueID());
+    }
+
+    public boolean hasOtherContainers(PlayerEntity player) {
+        UUID id = player.getUniqueID();
+        for (Map.Entry<UUID, BaseContainer> e : attachedContainers.entrySet()) {
+            if (e.getKey() == id) continue;
+            return true;
+        }
+        return false;
     }
 
 //    public BaseContainer getParent() { return this.parent; }
@@ -37,6 +60,8 @@ public abstract class BaseInventory implements IInventory {
 
     @Override
     public int getSizeInventory() { return this.items.length; }
+
+    public int getSizeState() { return (this.rows << 8) | (this.columns << 16) | this.items.length; } //store the size in a single int (expect the rows and columns to fit in a byte so from 0-255)
 
     public void resizeInventory(int size, int rows, int columns) { //now keep the row and column order of items, can remove items
         ItemStack[] tmp = new ItemStack[size];
@@ -53,6 +78,13 @@ public abstract class BaseInventory implements IInventory {
         for (ItemStack stack : this.items)
             if (!stack.isEmpty())
                 ++this.inUse;
+            /*
+        for (Map.Entry<UUID, BaseContainer> e : attachedContainers.entrySet()) {
+            BaseContainer container = e.getValue();
+            container.reAddSlots();
+            container.detectAndSendChanges();
+        }
+        */
         this.markDirty();
     }
 

@@ -73,7 +73,7 @@ public class EyeData /*implements IInventory*/ { //all information about an eye 
     public EyeData(DimBagData dataManager) { this(dataManager, null, 0); }
 
     public EyeData(PacketBuffer buff) {
-        this((DimBagData)null); //dangerous, dataManager should be attached asap
+        this((DimBagData)null); //dangerous, dataManager should be attached asap //or not, since this is suposed to be client side
         this.readBytes(buff);
     }
 

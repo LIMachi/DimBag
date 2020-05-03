@@ -1,6 +1,7 @@
 package com.limachi.dimensional_bags.client.screen;
 
 import com.google.common.primitives.Ints;
+import com.limachi.dimensional_bags.DimensionalBagsMod;
 import com.limachi.dimensional_bags.common.data.container.DimBagContainer;
 import com.limachi.dimensional_bags.common.references.GUIs;
 import com.mojang.blaze3d.systems.RenderSystem;
@@ -17,10 +18,22 @@ public class BagGUI extends ContainerScreen<DimBagContainer> { //addapt the size
     private int columns_shift_left;
     private int columns_shift_right;
 
+    private int container_status;
+
     public BagGUI(DimBagContainer container, PlayerInventory inv, ITextComponent titleIn) {
         super(container, inv, titleIn);
         this.rows = container.inventory.getRows();
         this.columns = container.inventory.getColumns();
+    }
+
+    @Override
+    public void tick() {
+        if (container_status != container.inventory.getSizeState()) {
+            DimensionalBagsMod.LOGGER.info("Inventory size changed, rebuilding slots client side");
+            container.reAddSlots();
+            container_status = container.inventory.getSizeState();
+        }
+        super.tick();
     }
 
     public void render_top(TextureManager tm) { //render the top part + a space for the name of the inventory
@@ -139,13 +152,8 @@ public class BagGUI extends ContainerScreen<DimBagContainer> { //addapt the size
 
     @Override
     public void render(final int mouseX, final int mouseY, final float partialTicks) {
-        if (this.rows != container.inventory.getRows() || this.columns != container.inventory.getColumns()) {
-            container.playerInv.player.closeScreen(); //FIXME: temporary fix to close the container if the inventory changed (if I was mad, I'd call the reorganisation of slots there)
-//            container.reAddSlots(); //experimental, high danger
-//            this.rows = container.inventory.getRows();
-//            this.columns = container.inventory.getColumns();
-            return;
-        }
+        this.rows = container.inventory.getRows();
+        this.columns = container.inventory.getColumns();
         this.xSize = PLAYER_INVENTORY_X + (Ints.max(this.columns - PLAYER_INVENTORY_COLUMNS, 0)) * SLOT_SIZE_X; //total size of the gui x axis
         this.ySize = GUIs.BagScreen.calculateYSize(this.rows);
         this.columns_shift_left = GUIs.BagScreen.calculateShiftLeft(this.columns);

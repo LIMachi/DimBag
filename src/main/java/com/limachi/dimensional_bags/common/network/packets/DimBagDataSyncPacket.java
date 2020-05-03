@@ -1,8 +1,10 @@
-package com.limachi.dimensional_bags.common.network;
+package com.limachi.dimensional_bags.common.network.packets;
 
 import com.limachi.dimensional_bags.DimensionalBagsMod;
 import com.limachi.dimensional_bags.common.data.DimBagData;
 import com.limachi.dimensional_bags.common.data.EyeData;
+import com.limachi.dimensional_bags.common.network.IBasePacket;
+import com.limachi.dimensional_bags.common.network.PacketHandler;
 import net.minecraft.network.PacketBuffer;
 import net.minecraftforge.fml.network.NetworkEvent;
 
@@ -41,14 +43,16 @@ public class DimBagDataSyncPacket implements IBasePacket {
             this.dirtyEyes.get(i).toBytes(buff);
     }
 
-    static void enqueue(DimBagDataSyncPacket pack, Supplier<NetworkEvent.Context> ctxs) {
+    public static void enqueue(DimBagDataSyncPacket pack, Supplier<NetworkEvent.Context> ctxs) {
         NetworkEvent.Context ctx = ctxs.get();
         PacketHandler.Target t = PacketHandler.target(ctx);
         if (t == PacketHandler.Target.CLIENT) //receptionned client side
             ctx.enqueueWork(() -> {
+                /*
                 if (DimensionalBagsMod.instance.client_side_mirror == null)
                     DimensionalBagsMod.instance.client_side_mirror = new DimBagData(MOD_ID);
                 DimensionalBagsMod.instance.client_side_mirror.loadChangesFromPacket(pack);
+                */
             });
         if (t == PacketHandler.Target.SERVER) //receptionned server side
             ctx.enqueueWork(() -> {

@@ -24,8 +24,8 @@ public class Network {
 
             @Nullable
             @Override
-            public Container createMenu(int windowId, PlayerInventory inventory, PlayerEntity _player) {
-                return new DimBagContainer(windowId, inventory, data);
+            public Container createMenu(int windowId, PlayerInventory inventory, PlayerEntity player) {
+                return new DimBagContainer(windowId, inventory, data, player);
             }
         }, data::toBytes);
     }
