@@ -1,31 +1,19 @@
 package com.limachi.dimensional_bags.client.screen;
 
-import com.limachi.dimensional_bags.common.config.DimBagConfig;
-import com.limachi.dimensional_bags.common.data.container.UpgradeContainer;
-import com.limachi.dimensional_bags.common.upgradesManager.UpgradeManager;
+import com.limachi.dimensional_bags.common.container.UpgradeContainer;
+import com.limachi.dimensional_bags.common.upgradeManager.UpgradeManager;
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.gui.screen.inventory.ContainerScreen;
 import net.minecraft.client.renderer.texture.TextureManager;
 import net.minecraft.entity.player.PlayerInventory;
-import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.text.ITextComponent;
 
-import static com.limachi.dimensional_bags.DimensionalBagsMod.MOD_ID;
+import static com.limachi.dimensional_bags.common.references.GUIs.ScreenParts.SLOT_SIZE_X;
+import static com.limachi.dimensional_bags.common.references.GUIs.ScreenParts.SLOT_SIZE_Y;
+import static com.limachi.dimensional_bags.common.references.GUIs.ScreenParts.UNUSED_SLOT;
+import static com.limachi.dimensional_bags.common.references.GUIs.UpgradeScreen.*;
 
 public class UpgradeGUI extends ContainerScreen<UpgradeContainer> {
-    private static final ResourceLocation BACKGROUND = new ResourceLocation(MOD_ID, "textures/screens/upgrade_screen.png");
-    private static final ResourceLocation UNUSED_SLOT = new ResourceLocation(MOD_ID, "textures/screens/parts/no_slot.png");
-    private static final int BACKGROUND_X = 174;
-    private static final int BACKGROUND_Y = 180;
-    private static final int SLOT_X = 18;
-    private static final int SLOT_Y = 18;
-    private static final int FIRST_SLOT_X = 6;
-    private static final int FIRST_SLOT_Y = 11;
-    private static final int TITLES_X = 6;
-    private static final int GUI_TITLE_Y = 3;
-    private static final int INVENTORY_TITLE_Y = 89;
-    private static final int HELP_X = 8;
-    private static final int HELP_Y = 50;
 
     public UpgradeGUI(UpgradeContainer screenContainer, PlayerInventory inv, ITextComponent titleIn) {
         super(screenContainer, inv, titleIn);
@@ -68,7 +56,7 @@ public class UpgradeGUI extends ContainerScreen<UpgradeContainer> {
                     ;
                 else {
                     tm.bindTexture(UNUSED_SLOT);
-                    this.blitGuiFull(FIRST_SLOT_X + x * SLOT_X, FIRST_SLOT_Y + y * SLOT_Y, SLOT_X, SLOT_Y);
+                    this.blitGuiFull(FIRST_SLOT_X + x * SLOT_SIZE_X, FIRST_SLOT_Y + y * SLOT_SIZE_Y, SLOT_SIZE_X, SLOT_SIZE_Y);
                 }
     }
 }

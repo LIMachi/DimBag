@@ -24,7 +24,7 @@ minecraft {
         client {
             workingDirectory project.file('run')
             property 'forge.logging.markers', 'SCAN,REGISTRIES,REGISTRYDUMP'
-            property 'forge.logging.console.level', 'debug'
+            property 'forge.logging.console.level', 'info'
             mods {
                 examplemod {
                     source sourceSets.main
@@ -35,7 +35,7 @@ minecraft {
         server {
             workingDirectory project.file('run_server')
             property 'forge.logging.markers', 'SCAN,REGISTRIES,REGISTRYDUMP'
-            property 'forge.logging.console.level', 'debug'
+            property 'forge.logging.console.level', 'info'
             mods {
                 examplemod {
                     source sourceSets.main
@@ -46,7 +46,7 @@ minecraft {
         data {
             workingDirectory project.file('run_data')
             property 'forge.logging.markers', 'SCAN,REGISTRIES,REGISTRYDUMP'
-            property 'forge.logging.console.level', 'debug'
+            property 'forge.logging.console.level', 'info'
             args '--mod', 'examplemod', '--all', '--output', file('src/generated/resources/')
             mods {
                 examplemod {

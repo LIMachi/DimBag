@@ -1,14 +1,12 @@
 package com.limachi.dimensional_bags.common.references;
 
 import net.minecraft.client.gui.screen.inventory.ContainerScreen;
-import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.inventory.container.Container;
-import net.minecraft.inventory.container.Slot;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
-import static com.limachi.dimensional_bags.DimensionalBagsMod.MOD_ID;
+import static com.limachi.dimensional_bags.DimBag.MOD_ID;
 
 public class GUIs { //common resources and size/position information for screens and containers
     public static class ScreenParts {
