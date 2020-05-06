@@ -11,4 +11,9 @@ public class RadiusUpgrade extends Upgrade {
     protected void applyUpgrade(int countBefore, int countAfter, EyeData data) {
 
     }
+
+    @Override
+    public String getDescription() {
+        return "increase the size of the current room (main room if applied to the bag directly) by 1 block in all directions";
+    }
 }

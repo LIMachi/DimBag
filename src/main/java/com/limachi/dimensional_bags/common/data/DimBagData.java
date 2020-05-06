@@ -9,6 +9,8 @@ import net.minecraft.world.dimension.DimensionType;
 import net.minecraft.world.server.ServerWorld;
 import net.minecraft.world.storage.WorldSavedData;
 
+import javax.annotation.Nullable;
+
 import static com.limachi.dimensional_bags.DimBag.MOD_ID;
 
 public class DimBagData extends WorldSavedData { //server side only, client side only has acces to copies of inventories or other data sync through packets (vanilla, forge or modded ones)
@@ -27,9 +29,13 @@ public class DimBagData extends WorldSavedData { //server side only, client side
     public ServerWorld getRiftWorld() { return this.riftWorld; }
     public ServerWorld getOverWorld() { return this.overWorld; }
 
-    static public DimBagData get(MinecraftServer server) {
+    static public DimBagData get(@Nullable MinecraftServer server) {
+        if (server == null)
+            server = DimBag.getServer(null);
         return server.getWorld(DimensionType.OVERWORLD).getSavedData().getOrCreate(DimBagData::new, MOD_ID);
     }
+
+    public int getLastId() { return lastId; }
 
     public EyeData newEye(ServerPlayerEntity player) {
         int id = ++this.lastId;

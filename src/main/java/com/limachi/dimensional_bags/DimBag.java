@@ -1,5 +1,6 @@
 package com.limachi.dimensional_bags;
 
+import com.limachi.dimensional_bags.common.Config;
 import com.limachi.dimensional_bags.common.Registries;
 import net.minecraft.item.ItemGroup;
 import net.minecraft.item.ItemStack;
@@ -8,8 +9,10 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.World;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.fml.LogicalSide;
+import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.thread.EffectiveSide;
+import net.minecraftforge.fml.config.ModConfig;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.fml.server.ServerLifecycleHooks;
 import org.apache.logging.log4j.LogManager;
@@ -32,6 +35,7 @@ public class DimBag {
     public DimBag() {
         INSTANCE = this;
         IEventBus eventBus = FMLJavaModLoadingContext.get().getModEventBus();
+        ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, Config.getSpec());
         Registries.registerAll(eventBus);
     }
 

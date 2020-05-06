@@ -40,7 +40,16 @@ public class UpgradeGUI extends ContainerScreen<UpgradeContainer> {
         this.font.drawString(this.title.getFormattedText(), TITLES_X, GUI_TITLE_Y, 4210752);
         this.font.drawString(this.playerInventory.getDisplayName().getFormattedText(), TITLES_X, INVENTORY_TITLE_Y, 4210752);
 
-        this.font.drawString("Description: ", HELP_X, HELP_Y, 4210752);
+        int slot = -1;
+        for (int y = 0; y < 2; ++y)
+            for (int x = 0; x < 9; ++x) {
+                int lx = FIRST_SLOT_X + x * SLOT_SIZE_X + this.guiLeft;
+                int ly = FIRST_SLOT_Y + y * SLOT_SIZE_Y + this.guiTop;
+                int p = x + y * 9;
+                if (p < UpgradeManager.upgradesCount() && mouseX > lx && mouseX < lx + SLOT_SIZE_X && mouseY > ly && mouseY < ly + SLOT_SIZE_Y)
+                    slot = p;
+            }
+        this.font.drawSplitString(/*"Description: " + */(slot != -1 ? UpgradeManager.getDescription(slot) : ""), HELP_X, HELP_Y, BACKGROUND_X - HELP_X * 2, 4210752);
     }
 
     @Override

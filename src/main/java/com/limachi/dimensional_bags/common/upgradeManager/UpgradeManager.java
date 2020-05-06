@@ -22,6 +22,7 @@ public class UpgradeManager {
 
     public static int getLimit(int id) { return id < 0 || id >= upgrades.length ? 0 : upgrades[id].getLimit(); }
     public static int getStart(int id) { return id < 0 || id >= upgrades.length ? 0 : upgrades[id].getStart(); }
+    public static String getDescription(int id) { return id < 0 || id >= upgrades.length ? "" : upgrades[id].getDescription(); }
 
     public static BaseItemStackAccessor defaultStackAccessor(int id) {
         if (id < 0 || id >= upgrades.length) return new BaseItemStackAccessor();

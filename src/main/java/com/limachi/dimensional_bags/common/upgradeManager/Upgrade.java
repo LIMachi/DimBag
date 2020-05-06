@@ -39,7 +39,7 @@ public abstract class Upgrade { //contain all information for config, item, upgr
 
     public class UpgradeItem extends Item {
         public UpgradeItem(int stackLimit) {
-            super(new Item.Properties().group(DimBag.ITEM_GROUP).maxStackSize(stackLimit));
+            super(new Item.Properties().group(DimBag.ITEM_GROUP).maxStackSize(max));
         }
     }
 
@@ -62,4 +62,6 @@ public abstract class Upgrade { //contain all information for config, item, upgr
     }
 
     protected abstract void applyUpgrade(int countBefore, int countAfter, EyeData data); //must accept a countBefore of 0 for first call
+
+    public abstract String getDescription();
 }

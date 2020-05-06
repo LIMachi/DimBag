@@ -14,4 +14,9 @@ public class RowUpgrade extends Upgrade {
             data.getInventory().resizeInventory(size, countAfter, data.getColumns());
         }
     }
+
+    @Override
+    public String getDescription() {
+        return "add an extra row to your bag inventory, increasing it's storage capacity";
+    }
 }

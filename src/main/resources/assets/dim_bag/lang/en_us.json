@@ -5,6 +5,6 @@
   "curios.identifier.backpack": "Backpack",
   "tooltip.upgrade.row": "Add an additional row to the bag inventory, up to a maximum of %d rows",
   "tooltip.upgrade.column": "Add an additional column to the bag inventory, up to a maximum of %d columns",
-  "tooltip.bag.missing_id": "Unlinked bag, please right click it once to create a new link",
-  "tooltip.bag.id": "Bag id: %d"
+  "tooltip.bag.missing_id": "Unlinked bag",
+  "tooltip.bag.id": "Bag id: %d, Owner: %s"
 }

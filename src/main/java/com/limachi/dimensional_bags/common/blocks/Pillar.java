@@ -3,11 +3,9 @@ package com.limachi.dimensional_bags.common.blocks;
 import com.limachi.dimensional_bags.DimBag;
 import com.limachi.dimensional_bags.common.Registries;
 import com.limachi.dimensional_bags.common.data.EyeData;
+import com.limachi.dimensional_bags.common.inventory.PlayerInventoryWrapper;
 import com.limachi.dimensional_bags.common.network.Network;
-import net.minecraft.block.BlockRenderType;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.ContainerBlock;
-import net.minecraft.block.SoundType;
+import net.minecraft.block.*;
 import net.minecraft.block.material.Material;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
@@ -21,29 +19,29 @@ import net.minecraft.world.World;
 
 import javax.annotation.Nullable;
 
-public class TheEye extends ContainerBlock {
+public class Pillar extends ContainerBlock {
 
-    public TheEye() {
-        super(Properties.create(Material.REDSTONE_LIGHT).hardnessAndResistance(-1f, 3600000f).sound(SoundType.GLASS));
+    public Pillar() {
+        super(Block.Properties.create(Material.ROCK).hardnessAndResistance(2f, 3600000f).sound(SoundType.STONE));
     }
 
     @Nullable
     @Override
-    public TileEntity createNewTileEntity(IBlockReader worldIn) { return Registries.BAG_EYE_TE.get().create(); }
+    public TileEntity createNewTileEntity(IBlockReader worldIn) { return Registries.PILLAR_TE.get().create(); }
 
     @Override
     public BlockRenderType getRenderType(BlockState state) { return BlockRenderType.MODEL; }
 
+    /*
     @Override
     public ActionResultType onBlockActivated(BlockState state, World world, BlockPos pos, PlayerEntity player, Hand hand, BlockRayTraceResult ray) {
         if (!DimBag.isServer(world)) return super.onBlockActivated(state, world, pos, player, hand, ray);
-        EyeData data = EyeData.getEyeData(world, pos, true);
+        EyeData data = EyeData.getEyeData(world, pos, false);
         if (data == null)
             return ActionResultType.FAIL;
-        if (player.isCrouching())
-            data.tpBack(player);
-        else
-            Network.openEyeInventory((ServerPlayerEntity) player, data.getInventory());
+        if (data.getUserPlayer() != null)
+            Network.openEyeInventory((ServerPlayerEntity) player, new PlayerInventoryWrapper(data.getUserPlayer().inventory, 1, 1)); //FIXME: do not function, at all, should look at InvWrapper
         return ActionResultType.SUCCESS;
     }
+    */
 }

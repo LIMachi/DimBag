@@ -3,8 +3,8 @@ package com.limachi.dimensional_bags.common.network;
 import com.limachi.dimensional_bags.common.container.BagContainer;
 import com.limachi.dimensional_bags.common.container.UpgradeContainer;
 import com.limachi.dimensional_bags.common.data.EyeData;
-import com.limachi.dimensional_bags.common.inventory.BagInventory;
-import com.limachi.dimensional_bags.common.inventory.UpgradeInventory;
+import com.limachi.dimensional_bags.common.inventory.BaseInventory;
+import com.limachi.dimensional_bags.common.inventory.IBaseInventory;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.entity.player.ServerPlayerEntity;
@@ -16,7 +16,7 @@ import net.minecraftforge.fml.network.NetworkHooks;
 import javax.annotation.Nullable;
 
 public class Network {
-    public static void openEyeInventory(ServerPlayerEntity player, BagInventory eyeInventory) {
+    public static void openEyeInventory(ServerPlayerEntity player, BaseInventory eyeInventory) {
         NetworkHooks.openGui(player, new INamedContainerProvider() {
             @Override
             public ITextComponent getDisplayName() {
@@ -30,6 +30,23 @@ public class Network {
             }
         }, eyeInventory::toBytes);
     }
+
+    /*
+    public static void openWrappedInventory(ServerPlayerEntity player, IBaseInventory inv) {
+        NetworkHooks.openGui(player, new INamedContainerProvider() {
+            @Override
+            public ITextComponent getDisplayName() {
+                return inv.getDisplayName();
+            }
+
+            @Nullable
+            @Override
+            public Container createMenu(int windowId, PlayerInventory inventory, PlayerEntity player) {
+                return new BagContainer(windowId, (ServerPlayerEntity) player, inv);
+            }
+        }, inv::toBytes);
+    }
+    */
 
     public static void openEyeUpgrades(ServerPlayerEntity player, EyeData data) {
         NetworkHooks.openGui(player, new INamedContainerProvider() {

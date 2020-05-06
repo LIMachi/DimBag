@@ -1,10 +1,6 @@
 package com.limachi.dimensional_bags.common.references;
 
-import net.minecraft.client.gui.screen.inventory.ContainerScreen;
-import net.minecraft.inventory.container.Container;
 import net.minecraft.util.ResourceLocation;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
 import static com.limachi.dimensional_bags.DimBag.MOD_ID;
 
@@ -18,7 +14,7 @@ public class GUIs { //common resources and size/position information for screens
         public static final int PLAYER_INVENTORY_FIRST_SLOT_Y = 7;
         public static final int PLAYER_BELT_FIRST_SLOT_Y = 65;
 
-        public static final ResourceLocation PLAYER_INVENTORY = new ResourceLocation(MOD_ID, "textures/screens/player_inventory_basic.png");
+        public static final ResourceLocation PLAYER_INVENTORY = new ResourceLocation(MOD_ID, "textures/screens/parts/player_inventory_basic.png");
 
         public static final int SLOT_SIZE_X = 18;
         public static final int SLOT_SIZE_Y = 18;
@@ -51,21 +47,32 @@ public class GUIs { //common resources and size/position information for screens
 
     public static class UpgradeScreen {
         public static final int BACKGROUND_X = 174;
-        public static final int BACKGROUND_Y = 180;
+        public static final int BACKGROUND_Y = 186;
         public static final int FIRST_SLOT_X = 6;
-        public static final int FIRST_SLOT_Y = 11;
+        public static final int FIRST_SLOT_Y = 13;
         public static final int TITLES_X = 6;
         public static final int GUI_TITLE_Y = 4;
-        public static final int INVENTORY_TITLE_Y = 90;
-        public static final int HELP_X = 8;
-        public static final int HELP_Y = 50;
-        public static final int PLAYER_INVENTORY_PART_Y = 90;
+        public static final int INVENTORY_TITLE_Y = 94;
+        public static final int HELP_X = 9;
+        public static final int HELP_Y = 54;
+        public static final int PLAYER_INVENTORY_PART_Y = 96;
 
         public static final ResourceLocation BACKGROUND = new ResourceLocation(MOD_ID, "textures/screens/upgrade_screen.png");
     }
 
-    @OnlyIn(Dist.CLIENT)
-    public static void addPlayerSlotsScreen(ContainerScreen<? extends Container> gui, int x, int y) {
+    public static class PlayerInterface {
+        public static final int BACKGROUND_X = 174;
+        public static final int BACKGROUND_Y = 204;
+        public static final int PLAYER_INVENTORY_PART_Y = 114;
+        public static final int SPECIAL_SLOTS_Y = 13;
+        public static final int ARMOR_SLOTS_X = 6;
+        public static final int OFF_HAND_SLOT_X = 82;
+        public static final int MAIN_INVENTORY_Y = 35;
+        public static final int MAIN_INVENTORY_X = 6;
+        public static final int TITLES_X = 6;
+        public static final int GUI_TITLE_Y = 5;
+        public static final int INVENTORY_TITLE_Y = 113;
 
+        public static final ResourceLocation BACKGROUND = new ResourceLocation(MOD_ID, "textures/screens/player_interface.png");
     }
 }
