@@ -3,8 +3,9 @@ package com.limachi.dimensional_bags.common.blocks;
 import com.limachi.dimensional_bags.DimBag;
 import com.limachi.dimensional_bags.common.Registries;
 import com.limachi.dimensional_bags.common.data.EyeData;
-import com.limachi.dimensional_bags.common.inventory.PlayerInventoryWrapper;
+import com.limachi.dimensional_bags.common.inventory.PlayerInvWrapper;
 import com.limachi.dimensional_bags.common.network.Network;
+import com.limachi.dimensional_bags.common.tileentities.PillarTileEntity;
 import net.minecraft.block.*;
 import net.minecraft.block.material.Material;
 import net.minecraft.entity.player.PlayerEntity;
@@ -32,16 +33,14 @@ public class Pillar extends ContainerBlock {
     @Override
     public BlockRenderType getRenderType(BlockState state) { return BlockRenderType.MODEL; }
 
-    /*
     @Override
     public ActionResultType onBlockActivated(BlockState state, World world, BlockPos pos, PlayerEntity player, Hand hand, BlockRayTraceResult ray) {
         if (!DimBag.isServer(world)) return super.onBlockActivated(state, world, pos, player, hand, ray);
-        EyeData data = EyeData.getEyeData(world, pos, false);
-        if (data == null)
-            return ActionResultType.FAIL;
-        if (data.getUserPlayer() != null)
-            Network.openEyeInventory((ServerPlayerEntity) player, new PlayerInventoryWrapper(data.getUserPlayer().inventory, 1, 1)); //FIXME: do not function, at all, should look at InvWrapper
+        TileEntity te = world.getTileEntity(pos);
+        if (!(te instanceof PillarTileEntity)) return super.onBlockActivated(state, world, pos, player, hand, ray);
+        PlayerInvWrapper inv = ((PillarTileEntity)te).getWrapper();
+        if (inv != null)
+            Network.openWrappedPlayerInventory((ServerPlayerEntity) player, inv, te);
         return ActionResultType.SUCCESS;
     }
-    */
 }

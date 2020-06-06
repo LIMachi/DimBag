@@ -20,6 +20,9 @@ public class GUIs { //common resources and size/position information for screens
         public static final int SLOT_SIZE_Y = 18;
 
         public static final ResourceLocation SLOT = new ResourceLocation(MOD_ID, "textures/screens/parts/slot.png");
+        public static final ResourceLocation INPUT_SLOT = new ResourceLocation(MOD_ID, "textures/screens/parts/input_slot.png");
+        public static final ResourceLocation OUTPUT_SLOT = new ResourceLocation(MOD_ID, "textures/screens/parts/output_slot.png");
+        public static final ResourceLocation LOCKED_SLOT = new ResourceLocation(MOD_ID, "textures/screens/parts/locked_slot.png");
         public static final ResourceLocation UNUSED_SLOT = new ResourceLocation(MOD_ID, "textures/screens/parts/no_slot.png");
 
         public static final int PART_SIZE_X = 6;
@@ -67,11 +70,13 @@ public class GUIs { //common resources and size/position information for screens
         public static final int SPECIAL_SLOTS_Y = 13;
         public static final int ARMOR_SLOTS_X = 6;
         public static final int OFF_HAND_SLOT_X = 82;
+        public static final int BELT_Y = 93;
+        public static final int BELT_X = 6;
         public static final int MAIN_INVENTORY_Y = 35;
         public static final int MAIN_INVENTORY_X = 6;
         public static final int TITLES_X = 6;
-        public static final int GUI_TITLE_Y = 5;
-        public static final int INVENTORY_TITLE_Y = 113;
+        public static final int GUI_TITLE_Y = 4;
+        public static final int INVENTORY_TITLE_Y = 112;
 
         public static final ResourceLocation BACKGROUND = new ResourceLocation(MOD_ID, "textures/screens/player_interface.png");
     }

@@ -12,11 +12,7 @@ public class ColumnUpgrade extends Upgrade {
         if (countAfter > countBefore) {
             int size = data.getRows() * countAfter;
             data.getInventory().resizeInventory(size, data.getRows(), countAfter);
+            data.markDirty();
         }
-    }
-
-    @Override
-    public String getDescription() {
-        return "add an extra column to your bag inventory, increasing it's storage capacity";
     }
 }

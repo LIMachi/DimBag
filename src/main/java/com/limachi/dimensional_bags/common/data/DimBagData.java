@@ -12,6 +12,7 @@ import net.minecraft.world.storage.WorldSavedData;
 import javax.annotation.Nullable;
 
 import static com.limachi.dimensional_bags.DimBag.MOD_ID;
+import static com.limachi.dimensional_bags.common.upgradeManager.UpgradeManager.RADIUS;
 
 public class DimBagData extends WorldSavedData { //server side only, client side only has acces to copies of inventories or other data sync through packets (vanilla, forge or modded ones)
     private int lastId;
@@ -40,6 +41,7 @@ public class DimBagData extends WorldSavedData { //server side only, client side
     public EyeData newEye(ServerPlayerEntity player) {
         int id = ++this.lastId;
         EyeData data = new EyeData(player, id);
+        BagRiftDimension.buildRoom(BagRiftDimension.getWorld(player.server), EyeData.getEyePos(data.getId()), data.getupgrades().getStackInSlot(RADIUS).getCount(), 0);
         data.markDirty();
         overWorld.getSavedData().set(data);
         this.markDirty();

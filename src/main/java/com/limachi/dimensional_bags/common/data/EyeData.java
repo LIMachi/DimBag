@@ -1,21 +1,35 @@
 package com.limachi.dimensional_bags.common.data;
 
 import com.limachi.dimensional_bags.DimBag;
-import com.limachi.dimensional_bags.common.EventManager;
+import com.limachi.dimensional_bags.common.container.BagContainer;
 import com.limachi.dimensional_bags.common.dimension.BagRiftDimension;
 import com.limachi.dimensional_bags.common.inventory.BagInventory;
+import com.limachi.dimensional_bags.common.inventory.PlayerInvWrapper;
 import com.limachi.dimensional_bags.common.inventory.UpgradeInventory;
+import com.limachi.dimensional_bags.common.inventory.Wrapper;
+import com.limachi.dimensional_bags.common.upgradeManager.UpgradeManager;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.entity.player.ServerPlayerEntity;
+import net.minecraft.inventory.Inventory;
+import net.minecraft.inventory.container.Container;
+import net.minecraft.inventory.container.ContainerType;
+import net.minecraft.inventory.container.INamedContainerProvider;
 import net.minecraft.nbt.CompoundNBT;
+import net.minecraft.nbt.ListNBT;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.util.NonNullList;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.text.ITextComponent;
 import net.minecraft.world.World;
 import net.minecraft.world.dimension.DimensionType;
 import net.minecraft.world.storage.WorldSavedData;
+import net.minecraftforge.fml.network.NetworkHooks;
 
 import javax.annotation.Nullable;
 import java.lang.ref.WeakReference;
+import java.util.List;
 import java.util.UUID;
 
 import static com.limachi.dimensional_bags.DimBag.MOD_ID;
@@ -29,15 +43,56 @@ public class EyeData extends WorldSavedData { //TODO: make EyeData a WorldSavedD
     private String ownerName;
     private WeakReference<ServerPlayerEntity> owner; //cache for the player referenced by uuid
     private WeakReference<Entity> entity; //cache for the entity that currently hold the bag (can be the bag itself, in entity or itementity form)
+    private List<WeakReference<ServerPlayerEntity>> listeners; //list of player currently accessing a gui of the eye/bag
+//    private Wrapper.IORights ioRights[];
     private DimensionType tpDimension;
     private BlockPos tpPosition;
     private BagInventory inventory;
-    private UpgradeInventory upgrades;
+//    private UpgradeInventory upgrades;
+    private Wrapper upgrades;
     private final DimBagData globalData;
+
+    public List<ServerPlayerEntity> collectListeners(ContainerType type) { //get all the players currently using this kind of container
+        List<ServerPlayerEntity> out = NonNullList.create();
+        for (WeakReference<ServerPlayerEntity> ref : listeners) {
+            ServerPlayerEntity player = ref.get();
+            if (player == null)
+                listeners.remove(ref);
+            else if (player.openContainer.getType() == type)
+                out.add(player);
+        }
+        return out;
+    }
+
+    public void addListener(ServerPlayerEntity player) {
+        if (player == null) return;
+        for (WeakReference<ServerPlayerEntity> ref : listeners) {
+            if (ref.get() == null)
+                listeners.remove(ref);
+            if (ref.get() == player)
+                return;
+        }
+        listeners.add(new WeakReference<>(player));
+    }
+
+    public void removeListener(ServerPlayerEntity player) {
+        if (player == null) return;
+        for (WeakReference<ServerPlayerEntity> ref : listeners) {
+            if (ref.get() == null)
+                listeners.remove(ref);
+            if (ref.get() == player) {
+                listeners.remove(ref);
+                return;
+            }
+        }
+    }
 
     public EyeData(@Nullable ServerPlayerEntity player, int id) {
         super(MOD_ID + "_eye_" + id);
         this.globalData = DimBagData.get(DimBag.getServer(player != null ? player.world : null));
+//        this.ioRights = new Wrapper.IORights[41];
+//        for (int i = 0; i < 41; ++i)
+//            this.ioRights[i] = new Wrapper.IORights();
         this.id = id;
         if (player != null) {
             this.ownerUUID = player.getUniqueID();
@@ -60,7 +115,7 @@ public class EyeData extends WorldSavedData { //TODO: make EyeData a WorldSavedD
         return server.getWorld(DimensionType.OVERWORLD).getSavedData().get(() -> new EyeData(null, id), MOD_ID + "_eye_" + id);
     }
 
-    public static BlockPos getEyePos(int id) { return new BlockPos(8 + ((id - 1) << 10), 128, 8); } //each eye is 1024 blocks appart, so for the maximum size of a room (radius 126, 255 blocks diameter), there is at least 32 chunks (32*16=512 blocks) between each room
+    public static BlockPos getEyePos(int id) { return new BlockPos(8 + ((id - 1) << 10), 128, 8); } //each eye is 1024 blocks appart, so for the maximum size of a room (radius 127, 255 blocks diameter), there is at least 32 chunks (32*16=512 blocks) between each room
 
     public static EyeData getEyeData(World world, BlockPos pos, boolean eye) {
         if (world.isRemote || world.dimension.getType() != BagRiftDimension.getDimensionType()) return null;
@@ -78,6 +133,35 @@ public class EyeData extends WorldSavedData { //TODO: make EyeData a WorldSavedD
                 return data;
         }
         return null;
+    }
+
+    public /*PlayerInvWrapper*/PlayerInventory getPlayerInventory() {
+        Entity try1 = entity.get();
+        if (try1 instanceof ServerPlayerEntity) {
+//            userInventory.resyncPlayerInventory(((ServerPlayerEntity) try1).inventory);
+            return /*new PlayerInvWrapper(*/((ServerPlayerEntity) try1).inventory/*, ioRights)*/;
+        }
+        ServerPlayerEntity try2 = getOwnerPlayer();
+        if (try2 != null) {
+//            userInventory.resyncPlayerInventory(try2.inventory);
+            return /*new PlayerInvWrapper(*/try2.inventory/*, ioRights)*/;
+        }
+        return null;
+    }
+
+    public void openInvetoryGUI(ServerPlayerEntity player) {
+        NetworkHooks.openGui(player, new INamedContainerProvider() {
+            @Override
+            public ITextComponent getDisplayName() {
+                return inventory.getDisplayName();
+            }
+
+            @Nullable
+            @Override
+            public Container createMenu(int windowId, PlayerInventory playerInventory, PlayerEntity playerEntity) {
+                return new BagContainer(windowId, player, inventory);
+            }
+        }, inventory::toBytes); //should change the call to toBytes
     }
 
     public int getRows() {
@@ -121,7 +205,7 @@ public class EyeData extends WorldSavedData { //TODO: make EyeData a WorldSavedD
     }
 
     public final BagInventory getInventory() { return this.inventory; }
-    public final UpgradeInventory getupgrades() { return this.upgrades; }
+    public final Wrapper getupgrades() { return this.upgrades; }
 
     public void tpBack(Entity entity) { //teleport an entity to the location targeted by the bag
         BagRiftDimension.teleportEntity(entity, tpDimension, tpPosition);
@@ -148,6 +232,10 @@ public class EyeData extends WorldSavedData { //TODO: make EyeData a WorldSavedD
         nbt.putInt("Z", this.tpPosition.getZ());
         nbt.put("Inventory", this.inventory.write(new CompoundNBT()));
         nbt.put("Upgrades", this.upgrades.write(new CompoundNBT()));
+//        ListNBT list = new ListNBT();
+//        for (Wrapper.IORights right : ioRights)
+//            list.add(right.write(new CompoundNBT()));
+//        nbt.put("PlayerInterfaceIORights", list);
         return nbt;
     }
 
@@ -162,5 +250,8 @@ public class EyeData extends WorldSavedData { //TODO: make EyeData a WorldSavedD
         this.tpPosition = new BlockPos(nbt.getInt("X"), nbt.getInt("Y"), nbt.getInt("Z"));
         this.inventory.read(nbt.getCompound("Inventory"));
         this.upgrades.read(nbt.getCompound("Upgrades"));
+//        ListNBT list = nbt.getList("PlayerInterfaceIORights", 10);
+//        for (int i = 0; i < 41; ++i)
+//            ioRights[i].read(list.getCompound(i));
     }
 }

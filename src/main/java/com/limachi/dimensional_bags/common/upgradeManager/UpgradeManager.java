@@ -2,6 +2,7 @@ package com.limachi.dimensional_bags.common.upgradeManager;
 
 import com.limachi.dimensional_bags.common.data.EyeData;
 import com.limachi.dimensional_bags.common.inventory.BaseItemStackAccessor;
+import com.limachi.dimensional_bags.common.inventory.Wrapper;
 import com.limachi.dimensional_bags.common.upgradeManager.upgrades.*;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
@@ -24,9 +25,14 @@ public class UpgradeManager {
     public static int getStart(int id) { return id < 0 || id >= upgrades.length ? 0 : upgrades[id].getStart(); }
     public static String getDescription(int id) { return id < 0 || id >= upgrades.length ? "" : upgrades[id].getDescription(); }
 
-    public static BaseItemStackAccessor defaultStackAccessor(int id) {
-        if (id < 0 || id >= upgrades.length) return new BaseItemStackAccessor();
-        return new BaseItemStackAccessor(new ItemStack(upgrades[id].getItem(), upgrades[id].getStart()), true, false, upgrades[id].getStart(), upgrades[id].getLimit());
+    public static ItemStack defaultStack(int id) {
+        if (id < 0 || id >= upgrades.length) return ItemStack.EMPTY;
+        return new ItemStack(upgrades[id].getItem(), upgrades[id].getStart());
+    }
+
+    public static Wrapper.IORights defaultRights(int id) {
+        if (id < 0 || id >= upgrades.length) return new Wrapper.IORights();
+        return new Wrapper.IORights(Wrapper.IORights.CANINPUT, (byte)upgrades[id].getStart(), (byte)upgrades[id].getLimit());
     }
 
     public static void bakeConfig() {

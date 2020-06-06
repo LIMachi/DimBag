@@ -6,5 +6,9 @@
   "tooltip.upgrade.row": "Add an additional row to the bag inventory, up to a maximum of %d rows",
   "tooltip.upgrade.column": "Add an additional column to the bag inventory, up to a maximum of %d columns",
   "tooltip.bag.missing_id": "Unlinked bag",
-  "tooltip.bag.id": "Bag id: %d, Owner: %s"
+  "tooltip.bag.id": "Bag id: %d, Owner: %s",
+  "inventory.player_interface.name": "Player Inventory: %s",
+  "inventory.upgrades.row.description": "add an extra row to your bag inventory, increasing it's storage capacity",
+  "inventory.upgrades.column.description": "add an extra column to your bag inventory, increasing it's storage capacity",
+  "inventory.upgrades.radius.description": "increase the size of the current room (main room if applied to the bag directly) by 1 block in all directions"
 }

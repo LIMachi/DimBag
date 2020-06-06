@@ -2,15 +2,18 @@ package com.limachi.dimensional_bags.common.network;
 
 import com.limachi.dimensional_bags.common.container.BagContainer;
 import com.limachi.dimensional_bags.common.container.UpgradeContainer;
+import com.limachi.dimensional_bags.common.container.WrappedPlayerInventoryContainer;
 import com.limachi.dimensional_bags.common.data.EyeData;
 import com.limachi.dimensional_bags.common.inventory.BaseInventory;
-import com.limachi.dimensional_bags.common.inventory.IBaseInventory;
+import com.limachi.dimensional_bags.common.inventory.PlayerInvWrapper;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.inventory.container.Container;
 import net.minecraft.inventory.container.INamedContainerProvider;
+import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.text.ITextComponent;
+import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraftforge.fml.network.NetworkHooks;
 
 import javax.annotation.Nullable;
@@ -31,28 +34,28 @@ public class Network {
         }, eyeInventory::toBytes);
     }
 
-    /*
-    public static void openWrappedInventory(ServerPlayerEntity player, IBaseInventory inv) {
+    public static void openWrappedPlayerInventory(ServerPlayerEntity player, PlayerInvWrapper inv, TileEntity te) {
         NetworkHooks.openGui(player, new INamedContainerProvider() {
             @Override
             public ITextComponent getDisplayName() {
-                return inv.getDisplayName();
+                return new TranslationTextComponent("inventory.player_interface.name");
             }
 
             @Nullable
             @Override
-            public Container createMenu(int windowId, PlayerInventory inventory, PlayerEntity player) {
-                return new BagContainer(windowId, (ServerPlayerEntity) player, inv);
-            }
-        }, inv::toBytes);
+            public Container createMenu(int windowId, PlayerInventory playerInv, PlayerEntity player) {
+                return WrappedPlayerInventoryContainer.createServer(windowId, playerInv, inv, te);
+            }}, (buffer) -> {
+                buffer.writeBoolean(inv.matchInventory(player.inventory));
+                inv.sizeAndRightsToBuffer(buffer);
+        });
     }
-    */
 
     public static void openEyeUpgrades(ServerPlayerEntity player, EyeData data) {
         NetworkHooks.openGui(player, new INamedContainerProvider() {
             @Override
             public ITextComponent getDisplayName() {
-                return data.getupgrades().getDisplayName();
+                return new TranslationTextComponent("inventory.upgrades.name");
             }
 
             @Nullable
@@ -60,6 +63,6 @@ public class Network {
             public Container createMenu(int windowId, PlayerInventory inventory, PlayerEntity player) {
                 return new UpgradeContainer(windowId, (ServerPlayerEntity) player, data);
             }
-        }, data.getupgrades()::toBytes);
+        }, data.getupgrades()::sizeAndRightsToBuffer);
     }
 }

@@ -1,13 +1,19 @@
 package com.limachi.dimensional_bags;
 
+import com.google.common.reflect.Reflection;
 import com.limachi.dimensional_bags.common.Config;
 import com.limachi.dimensional_bags.common.Registries;
+import com.limachi.dimensional_bags.common.network.PacketHandler;
+import net.minecraft.client.Minecraft;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemGroup;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.World;
+import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.eventbus.api.IEventBus;
+import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.fml.LogicalSide;
 import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
@@ -33,6 +39,7 @@ public class DimBag {
     };
 
     public DimBag() {
+        Reflection.initialize(PacketHandler.class);
         INSTANCE = this;
         IEventBus eventBus = FMLJavaModLoadingContext.get().getModEventBus();
         ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, Config.getSpec());
@@ -43,6 +50,10 @@ public class DimBag {
         if (world != null)
             return !world.isRemote();
         return EffectiveSide.get() == LogicalSide.SERVER;
+    }
+
+    public static PlayerEntity getPlayer() { //get the local client, if available
+        return DistExecutor.callWhenOn(Dist.CLIENT, ()->()->Minecraft.getInstance().player);
     }
 
     public static MinecraftServer getServer(@Nullable World world) {

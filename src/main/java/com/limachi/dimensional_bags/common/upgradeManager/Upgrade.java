@@ -3,6 +3,7 @@ import com.limachi.dimensional_bags.DimBag;
 import com.limachi.dimensional_bags.common.data.EyeData;
 import net.minecraft.item.Item;
 import net.minecraft.item.Items;
+import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraftforge.common.ForgeConfigSpec;
 import net.minecraftforge.fml.RegistryObject;
 import net.minecraftforge.registries.DeferredRegister;
@@ -13,6 +14,7 @@ public abstract class Upgrade { //contain all information for config, item, upgr
     private final String sId;
     private int start;
     private int limit;
+    private final TranslationTextComponent description;
 
     int getStart() { return this.start; }
     int getLimit() { return this.limit; }
@@ -30,12 +32,15 @@ public abstract class Upgrade { //contain all information for config, item, upgr
     protected Upgrade(String id, boolean canConfig, int start, int limit, int min, int max) {
         this.sId = "upgrade_" + id;
         this.cId = MOD_ID + ".config.upgrade." + id;
+        this.description = new TranslationTextComponent("inventory.upgrades." + id + ".description");
         this.canConfig = canConfig;
         this.start = start;
         this.min = min;
         this.limit = limit;
         this.max = max;
     }
+
+    public String getDescription() { return this.description.getFormattedText(); }
 
     public class UpgradeItem extends Item {
         public UpgradeItem(int stackLimit) {
@@ -62,6 +67,4 @@ public abstract class Upgrade { //contain all information for config, item, upgr
     }
 
     protected abstract void applyUpgrade(int countBefore, int countAfter, EyeData data); //must accept a countBefore of 0 for first call
-
-    public abstract String getDescription();
 }

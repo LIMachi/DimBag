@@ -1,6 +1,5 @@
 package com.limachi.dimensional_bags.common.items.entity;
 
-import com.limachi.dimensional_bags.DimBag;
 import com.limachi.dimensional_bags.common.Registries;
 import com.limachi.dimensional_bags.common.data.EyeData;
 import com.limachi.dimensional_bags.common.items.Bag;
@@ -26,16 +25,16 @@ public class BagEntityItem extends ItemEntity {
     }
 
     @Override
-    public IPacket<?> createSpawnPacket() {
-        return NetworkHooks.getEntitySpawningPacket(this);
-    }
+    public IPacket<?> createSpawnPacket() { return NetworkHooks.getEntitySpawningPacket(this); }
 
     @Override
     public void tick() {
-        int id = Bag.getId(getItem());
-        if (id != 0) {
-            EyeData data = EyeData.get(getServer(), id);
-            data.setUser(this);
+        if (!world.isRemote()) {
+            int id = Bag.getId(getItem());
+            if (id != 0) {
+                EyeData data = EyeData.get(getServer(), id);
+                data.setUser(this);
+            }
         }
         super.tick();
     }
