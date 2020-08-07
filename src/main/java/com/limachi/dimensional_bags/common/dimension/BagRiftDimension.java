@@ -103,6 +103,8 @@ public class BagRiftDimension extends Dimension {
     public static void teleportEntity(Entity entity, DimensionType destType, BlockPos destPos) {
         if (!DimBag.isServer(entity.world)) return;
         ServerWorld world = entity.getServer().getWorld(destType);
+        int destId = EyeData.getEyeId(world, destPos);
+        if (destId != 0 && EyeData.getEyeId(entity.world, entity.getPosition()) == destId) return; //invalidate the teleport if the entity is already in the destination room
         world.getChunk(destPos); //charge the chunk before teleport
         entity.changeDimension(destType, new ITeleporter() { //vanilla entity teleporter between dimensions, repositionement of entity must be done after this call since it will divide by 8 the position of the entity (vanilla nether portal)
             @Override

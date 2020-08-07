@@ -135,6 +135,13 @@ public class EyeData extends WorldSavedData { //TODO: make EyeData a WorldSavedD
         return null;
     }
 
+    public static int getEyeId(World world, BlockPos pos) {
+        EyeData data = getEyeData(world, pos, false);
+        if (data == null)
+            return 0;
+        return data.getId();
+    }
+
     public /*PlayerInvWrapper*/PlayerInventory getPlayerInventory() {
         Entity try1 = entity.get();
         if (try1 instanceof ServerPlayerEntity) {

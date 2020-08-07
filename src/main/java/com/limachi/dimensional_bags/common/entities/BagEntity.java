@@ -81,6 +81,8 @@ public class BagEntity extends MobEntity {
         if ((tick & 7) == 0) {
             EyeData data = EyeData.get(this.world.getServer(), getId());
             if (data != null)
+                LOGGER.info("Hi my name is. What? My name is. Who? My name is " + data.getId());
+            if (data != null && data.getId() != EyeData.getEyeId(this.world, this.getPosition())) //only update the position if the bag isn't in itself
                 data.updateBagPosition(this.getPosition(), this.dimension);
         }
         ++tick;

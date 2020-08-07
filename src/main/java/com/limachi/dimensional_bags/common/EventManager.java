@@ -27,7 +27,8 @@ public class EventManager {
         if (event.phase == TickEvent.Phase.END || event.side.isClient()) return;
         if ((tick = ((tick + 1) & 7)) == 0) { //determine how often i run the logic, for now, once every 8 ticks (every 0.4s)
             MinecraftServer server = DimBag.getServer(null);
-            int l = DimBagData.get(server).getLastId() + 1;
+            DimBagData dbd = DimBagData.get(server);
+            int l = dbd.getLastId() + 1;
             for (int i = 1; i < l; ++i) {
                 EyeData data = EyeData.get(server, i);
                 Entity user = data.getUser();
@@ -54,6 +55,11 @@ public class EventManager {
                         DimBag.LOGGER.info("that bag is on fire (" + data.getId() + ")");
                     if (user.isInLava())
                         DimBag.LOGGER.info("Everybody's lava jumpin'! (" + data.getId() + ")");
+                    DimBag.LOGGER.info("Ima load this chunk: (" + user.getEntityWorld().getDimension().getType().getId() + ") " + user.getPosition().getX() + ", " + user.getPosition().getZ() + " (" + data.getId() + ")");
+                    dbd.loadChunk(server, user.getEntityWorld().getDimension().getType().getId(), user.getPosition().getX(), user.getPosition().getZ(), data.getId());
+                } else { //did not find a user, usually meaning the bag item/entity isn't loaded or the entity using it isn't loaded
+                    DimBag.LOGGER.info("that bag is MIA (" + data.getId() + ")");
+                    dbd.unloadChunk(server, data.getId());
                 }
             }
         }

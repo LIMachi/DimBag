@@ -18,6 +18,7 @@ public class DimBagData extends WorldSavedData { //server side only, client side
     private int lastId;
     private final ServerWorld riftWorld;
     private final ServerWorld overWorld;
+    private final Chunkloadder chunkloadder;
 
     DimBagData() {
         super(MOD_ID);
@@ -25,6 +26,7 @@ public class DimBagData extends WorldSavedData { //server side only, client side
         MinecraftServer server = DimBag.getServer(null);
         this.riftWorld = server.getWorld(BagRiftDimension.getDimensionType());
         this.overWorld = server.getWorld(DimensionType.OVERWORLD);
+        this.chunkloadder = new Chunkloadder();
     }
 
     public ServerWorld getRiftWorld() { return this.riftWorld; }
@@ -48,16 +50,28 @@ public class DimBagData extends WorldSavedData { //server side only, client side
         return data;
     }
 
+    public void loadChunk(MinecraftServer server, int dimId, int x, int z, int by) {
+        this.chunkloadder.loadChunk(server.getWorld(DimensionType.getById(dimId)), x, z, by);
+        this.markDirty();
+    }
+
+    public void unloadChunk(MinecraftServer server, int by) {
+        this.chunkloadder.unloadChunk(server, by);
+        this.markDirty();
+    }
+
     @Override
     public void read(CompoundNBT compound) {
         DimBag.LOGGER.info("Loadding global data");
         this.lastId = compound.getInt("lastId");
+        this.chunkloadder.read(compound);
     }
 
     @Override
     public CompoundNBT write(CompoundNBT compound) {
         DimBag.LOGGER.info("Updating global data");
         compound.putInt("lastId", lastId);
+        this.chunkloadder.write(compound);
         return compound;
     }
 }
