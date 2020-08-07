@@ -7,7 +7,9 @@ import com.limachi.dimensional_bags.common.upgradeManager.UpgradeManager;
 import mcp.MethodsReturnNonnullByDefault;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
+import net.minecraft.block.pattern.BlockPattern;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.ResourceLocation;
@@ -20,17 +22,16 @@ import net.minecraft.world.biome.provider.SingleBiomeProviderSettings;
 import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.dimension.Dimension;
 import net.minecraft.world.dimension.DimensionType;
-import net.minecraft.world.gen.ChunkGenerator;
-import net.minecraft.world.gen.ChunkGeneratorType;
-import net.minecraft.world.gen.FlatChunkGenerator;
-import net.minecraft.world.gen.FlatGenerationSettings;
+import net.minecraft.world.gen.*;
 import net.minecraft.world.server.ServerWorld;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.common.ModDimension;
+import net.minecraftforge.common.util.ITeleporter;
 
 import javax.annotation.Nullable;
 import java.util.function.BiFunction;
+import java.util.function.Function;
 
 import static com.limachi.dimensional_bags.DimBag.MOD_ID;
 
@@ -103,7 +104,12 @@ public class BagRiftDimension extends Dimension {
         if (!DimBag.isServer(entity.world)) return;
         ServerWorld world = entity.getServer().getWorld(destType);
         world.getChunk(destPos); //charge the chunk before teleport
-        entity.changeDimension(destType); //change the dimension of the entity FIXME: vanilla teleporter for nether teleport, flawed, need to be rewritten for the mod
+        entity.changeDimension(destType, new ITeleporter() { //vanilla entity teleporter between dimensions, repositionement of entity must be done after this call since it will divide by 8 the position of the entity (vanilla nether portal)
+            @Override
+            public Entity placeEntity(Entity entity, ServerWorld currentWorld, ServerWorld destWorld, float yaw, Function<Boolean, Entity> repositionEntity) {
+                return repositionEntity.apply(false); //just run the default teleporter (the nether one) and prevent the spawn of a nether portal
+            }
+        });
         double x = destPos.getX() + 0.5d;
         double y = destPos.getY() + 0.5d;
         double z = destPos.getZ() + 0.5d;

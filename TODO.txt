@@ -1,6 +1,6 @@
 -Fix stack size acceptance in the upgrade gui (replace the hold guis with the new inv wrapper, redo upgrades system), PARTIALLY DONE
 -Try to accelerate the change of the size of the rooms (for now, limit the max size of the rooms), and fix lightning issues
--Redo teleporter to prevent sound and portal generation (also, try to fix the teleport in the same dimension breaking)
+-Redo teleporter to prevent sound and portal generation (also, try to fix the teleport in the same dimension breaking), MOSTLY DONE, sounds are still there but portals should not spawn anymore
 -Implement the tunnel block, rework the application of upgrades to take into account the room they are applied to (the bag is a reference to the main room)
 
 -common buttons: applicable to all gui, allow switching of guis
