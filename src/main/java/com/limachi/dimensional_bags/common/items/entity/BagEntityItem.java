@@ -3,6 +3,7 @@ package com.limachi.dimensional_bags.common.items.entity;
 import com.limachi.dimensional_bags.common.Registries;
 import com.limachi.dimensional_bags.common.data.EyeData;
 import com.limachi.dimensional_bags.common.items.Bag;
+import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.item.ItemEntity;
 import net.minecraft.item.ItemStack;
@@ -22,6 +23,10 @@ public class BagEntityItem extends ItemEntity {
         setInvulnerable(true);
         lifespan = Integer.MAX_VALUE;
         setPickupDelay(10);
+    }
+
+    public void onItemPickup(Entity entityIn, int quantity) {
+
     }
 
     @Override

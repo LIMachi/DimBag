@@ -14,6 +14,7 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.Hand;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.item.ItemEvent;
+import net.minecraftforge.event.entity.living.LivingEquipmentChangeEvent;
 import net.minecraftforge.event.entity.player.AttackEntityEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -62,6 +63,18 @@ public class EventManager {
                     dbd.unloadChunk(server, data.getId());
                 }
             }
+        }
+    }
+
+    @SubscribeEvent
+    public static void onLivingEquipmentChange(LivingEquipmentChangeEvent event) { //used to track non-player entity holding a bag
+        //DimBag.LOGGER.info("InventoryChangeEvent: " + event.getEntity() + " slot: " + event.getSlot() + ", " + event.getFrom() + " -> " + event.getTo());
+        if (event.getEntity() instanceof ServerPlayerEntity) return; //tracking of the bag for players is done by the item ticking in their inventory
+        if (event.getTo().getItem() instanceof Bag) { //this entity equiped a bag
+            int id = Bag.getId(event.getTo());
+            if (id == 0) return;
+            EyeData data = EyeData.get(null, id);
+            data.setUser(event.getEntity());
         }
     }
 

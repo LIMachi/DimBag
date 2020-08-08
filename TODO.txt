@@ -2,10 +2,10 @@
 -Try to accelerate the change of the size of the rooms (for now, limit the max size of the rooms), and fix lightning issues (it is possible that the lightnin issue is vanilla and not fixable)
 -Redo teleporter to prevent sound and portal generation (also, try to fix the teleport in the same dimension breaking), MOSTLY DONE, sounds are still there but portals should not spawn anymore, also teleporting from inside the bag should be reworked as a mechanic, for now we should prevent this behavior if the bag is in a room of the same id, but we could let the bag work in other situations
 -Implement the tunnel block, rework the application of upgrades to take into account the room they are applied to (the bag is a reference to the main room)
--Track non-player entity holding bags (zombie, fox, skeleton?, drowned, husk)
--Implement a random teleport of nearby enemy/whitelisted entity if the filter upgrade isn't applied
+-Track non-player entity holding bags (zombie, fox, skeleton?, drowned, husk) DONE: detect bag pickup by non player entities
+-Implement a random teleport of nearby enemy/whitelisted entity if the filter upgrade isn't applied (for the bag entity, not the item entity)
 -Work on craft (very high chance that most craft will be vanilla json files)
--Add chunk loading, PARTIALLY DONE: work on bag itemEntity and player holding a bag, should also work for the bag entity itself and other entities holding bags (and might require an upgrade for the inside of the bag to be loaded)
+-Add chunk loading, DONE: work on bag itemEntity, player holding a bag, entities holding a bag and the bag entity itself (might require an upgrade for the inside of the bag to be loaded)
 
 -common buttons: applicable to all gui, allow switching of guis
 -new blocks for the dimension
