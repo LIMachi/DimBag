@@ -1,4 +1,5 @@
 -Fix stack size acceptance in the upgrade gui (replace the hold guis with the new inv wrapper, redo upgrades system), PARTIALLY DONE
+-Fix stack shift click in whitelisted/blacklisted slot (player interface <-> armor)
 -Try to accelerate the change of the size of the rooms (for now, limit the max size of the rooms), and fix lightning issues (it is possible that the lightnin issue is vanilla and not fixable)
 -Redo teleporter to prevent sound and portal generation (also, try to fix the teleport in the same dimension breaking), MOSTLY DONE, sounds are still there but portals should not spawn anymore, also teleporting from inside the bag should be reworked as a mechanic, for now we should prevent this behavior if the bag is in a room of the same id, but we could let the bag work in other situations
 -Implement the tunnel block, rework the application of upgrades to take into account the room they are applied to (the bag is a reference to the main room)

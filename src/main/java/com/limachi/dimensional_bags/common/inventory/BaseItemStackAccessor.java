@@ -6,21 +6,25 @@ import net.minecraft.network.PacketBuffer;
 
 public class BaseItemStackAccessor {
     public ItemStack stack;
-    public boolean canInput = true;
-    public boolean canOutput = true;
-    public byte maxStackSize = 64;
-    public byte minStackSize = 0;
+    public boolean canInput;
+    public boolean canOutput;
+    public byte maxStackSize;
+    public byte minStackSize;
 
     public BaseItemStackAccessor() {
         this.stack = ItemStack.EMPTY.copy();
+        this.canInput = true;
+        this.canOutput = true;
+        this.maxStackSize = 64;
+        this.minStackSize = 0;
     }
 
     public BaseItemStackAccessor(ItemStack stack, boolean canInput, boolean canOutput, int minStackSize, int maxStackSize) {
         this.stack = stack;
         this.canInput = canInput;
         this.canOutput = canOutput;
-        this.minStackSize = (byte)minStackSize;
         this.maxStackSize = (byte)maxStackSize;
+        this.minStackSize = (byte)minStackSize;
     }
 
     public boolean shouldSync() {

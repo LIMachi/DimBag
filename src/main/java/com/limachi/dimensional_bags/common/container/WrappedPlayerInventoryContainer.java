@@ -73,11 +73,11 @@ public class WrappedPlayerInventoryContainer extends Container {
         addSlot(new InvWrapperSlot(targetInventory, 40, OFF_HAND_SLOT_X + 1, SPECIAL_SLOTS_Y + 1));
         trackIntArray(new IIntArray() { //sync the IORights
             @Override
-            public int get(int i) { return targetInventory.getRights(i).toInt(); }
+            public int get(int i) { return targetInventory.getRights(i / 3).toInt(i % 3); }
             @Override
-            public void set(int i, int val) { targetInventory.setRights(i, new Wrapper.IORights(val)); }
+            public void set(int i, int val) { targetInventory.setRights(i / 3, i % 3, val); }
             @Override
-            public int size() { return 41; }
+            public int size() { return 41 * 3; }
         });
         if (isClient)
             localUserName = "Unavailable ";
@@ -91,20 +91,19 @@ public class WrappedPlayerInventoryContainer extends Container {
             @Override
             public int get(int i) {
                 final char[] chars = localUserName.toCharArray();
-                return ((int)chars[i * 2]) | (((int)chars[i * 2 + 1]) << 16);
+                return (chars[i]);
             }
 
             @Override
             public void set(int i, int var) {
                 final char[] chars = localUserName.toCharArray();
-                chars[i * 2] = (char)(var & 0xFFFF);
-                chars[i * 2 + 1] = (char)((var >> 16) & 0xFFFF);
+                chars[i] = (char)var;
                 localUserName = new String(chars);
             }
 
             @Override
             public int size() {
-                return 6;
+                return 12;
             }
         });
     }

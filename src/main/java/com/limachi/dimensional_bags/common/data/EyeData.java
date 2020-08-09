@@ -112,6 +112,8 @@ public class EyeData extends WorldSavedData { //TODO: make EyeData a WorldSavedD
     public static EyeData get(@Nullable MinecraftServer server, int id) { //this getter does not create the eye, call DimBagData#newEye instead
         if (server == null)
             server = DimBag.getServer(null); //overkill security
+        if (server == null)
+            return null; //overkill security
         return server.getWorld(DimensionType.OVERWORLD).getSavedData().get(() -> new EyeData(null, id), MOD_ID + "_eye_" + id);
     }
 

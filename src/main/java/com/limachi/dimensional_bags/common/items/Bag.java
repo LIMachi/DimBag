@@ -105,7 +105,7 @@ public class Bag extends Item {
         if (!context.getItem().hasTag()) return ActionResultType.PASS; //missing tag
         int id = context.getItem().getTag().getInt(Bag.ID_KEY);
         if (id == 0) return ActionResultType.PASS; //invalid id
-        EyeData data = EyeData.get(context.getWorld().getServer(), id); //request the bag data
+//        EyeData data = EyeData.get(context.getWorld().getServer(), id); //request the bag data
         BagEntity.spawn(context.getWorld(), context.getPos().up(1), id, context.getItem()); //spawn the bag entity and attach the bag item to it
         context.getPlayer().setHeldItem(context.getHand(), ItemStack.EMPTY); //remove the bag from the player inventory
         return ActionResultType.SUCCESS;

@@ -50,7 +50,7 @@ public class Wrapper implements IItemHandlerModifiable { //rewrite of InvWrapper
             this.flags = flags;
             this.minStack = minStack;
             this.maxStack = maxStack;
-            blacklist = NonNullList.from(ItemStack.EMPTY, items);
+            this.blacklist = NonNullList.from(ItemStack.EMPTY, items);
         }
 
         public IORights(PacketBuffer buff) {
@@ -70,7 +70,23 @@ public class Wrapper implements IItemHandlerModifiable { //rewrite of InvWrapper
             blacklist = NonNullList.create();
         }
 
-        public int toInt() { return ((int)flags) | (((int)minStack) << 8) | (((int)maxStack) << 16); }
+//        public int toInt() { return ((int)flags) | (((int)minStack) << 8) | (((int)maxStack) << 16); }
+        public int toInt(int field) {
+            switch (field) {
+                case 0: return flags;
+                case 1: return minStack;
+                case 2: return maxStack;
+                default: return 0;
+            }
+        }
+
+        public void setField(int field, int data) {
+            switch (field) {
+                case 0: flags = (byte)data; return;
+                case 1: minStack = (byte)data; return;
+                case 2: maxStack = (byte)data;
+            }
+        }
 
         public static boolean nbtDamageTag(byte flags, ItemStack tested, ItemStack against) {
             if ((flags & WITHOUTDAMAGE) == 0) {
@@ -238,6 +254,11 @@ public class Wrapper implements IItemHandlerModifiable { //rewrite of InvWrapper
         IO[slot] = rights;
         if (dirt != null)
             dirt.markDirty();
+    }
+
+    public void setRights(int slot, int field, int data) {
+        if (slot < 0 || slot >= IO.length) return;
+        IO[slot].setField(field, data);
     }
 
     public IORights getRights(int slot) {
