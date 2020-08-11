@@ -3,13 +3,10 @@ package com.limachi.dimensional_bags.common.dimension;
 import com.limachi.dimensional_bags.DimBag;
 import com.limachi.dimensional_bags.common.Registries;
 import com.limachi.dimensional_bags.common.data.EyeData;
-import com.limachi.dimensional_bags.common.upgradeManager.UpgradeManager;
 import mcp.MethodsReturnNonnullByDefault;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
-import net.minecraft.block.pattern.BlockPattern;
 import net.minecraft.entity.Entity;
-import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.ResourceLocation;
@@ -104,7 +101,7 @@ public class BagRiftDimension extends Dimension {
         if (!DimBag.isServer(entity.world)) return;
         ServerWorld world = entity.getServer().getWorld(destType);
         int destId = EyeData.getEyeId(world, destPos);
-        if (destId != 0 && EyeData.getEyeId(entity.world, entity.getPosition()) == destId) return; //invalidate the teleport if the entity is already in the destination room
+//        if (destId != 0 && EyeData.getEyeId(entity.world, entity.getPosition()) == destId) return; //invalidate the teleport if the entity is already in the destination room
         world.getChunk(destPos); //charge the chunk before teleport
         entity.changeDimension(destType, new ITeleporter() { //vanilla entity teleporter between dimensions, repositionement of entity must be done after this call since it will divide by 8 the position of the entity (vanilla nether portal)
             @Override
@@ -128,10 +125,10 @@ public class BagRiftDimension extends Dimension {
     }
 
     public static void buildRoom(World world, BlockPos center, int radius, int prevRad) { //build a new main room or expand it by tearing down walls a adding new ones further TODO: add code to keep doors and covers on walls
-        BlockState wall = Blocks.BEDROCK.getDefaultState(); //FIXME: use my own block instead of bedrock
+        BlockState wall = Registries.WALL_BLOCK.get().getDefaultState();
         BlockState eye = Registries.BAG_EYE_BLOCK.get().getDefaultState();
         BlockState air = Blocks.AIR.getDefaultState();
-        BlockState tunnel = Blocks.OBSIDIAN.getDefaultState(); //FIXME: use my own block for the portals
+        BlockState tunnel = Registries.TUNNEL_BLOCK.get().getDefaultState();
         int dx = center.getX();
         int dy = center.getY();
         int dz = center.getZ();

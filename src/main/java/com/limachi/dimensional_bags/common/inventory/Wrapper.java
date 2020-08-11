@@ -70,7 +70,6 @@ public class Wrapper implements IItemHandlerModifiable { //rewrite of InvWrapper
             blacklist = NonNullList.create();
         }
 
-//        public int toInt() { return ((int)flags) | (((int)minStack) << 8) | (((int)maxStack) << 16); }
         public int toInt(int field) {
             switch (field) {
                 case 0: return flags;

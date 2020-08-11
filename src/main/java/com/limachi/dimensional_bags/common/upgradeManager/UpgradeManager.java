@@ -1,7 +1,6 @@
 package com.limachi.dimensional_bags.common.upgradeManager;
 
 import com.limachi.dimensional_bags.common.data.EyeData;
-import com.limachi.dimensional_bags.common.inventory.BaseItemStackAccessor;
 import com.limachi.dimensional_bags.common.inventory.Wrapper;
 import com.limachi.dimensional_bags.common.upgradeManager.upgrades.*;
 import net.minecraft.item.Item;

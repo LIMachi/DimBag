@@ -224,6 +224,10 @@ public class EyeData extends WorldSavedData { //TODO: make EyeData a WorldSavedD
         BagRiftDimension.teleportEntity(entity, BagRiftDimension.getDimensionType(), new BlockPos(1024 * (id - 1) + 8, 129, 8));
     }
 
+    public void tpTunnel(Entity entity, BlockPos portalPos) { //teleport an entity to the next room, the position of the portal determine the destination
+
+    }
+
     public void updateBagPosition(BlockPos newPos, DimensionType newDim) {
         this.tpPosition = newPos;
         this.tpDimension = newDim;

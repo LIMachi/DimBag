@@ -3,11 +3,14 @@ package com.limachi.dimensional_bags.common;
 import com.limachi.dimensional_bags.DimBag;
 import com.limachi.dimensional_bags.common.blocks.Pillar;
 import com.limachi.dimensional_bags.common.blocks.TheEye;
+import com.limachi.dimensional_bags.common.blocks.Tunnel;
+import com.limachi.dimensional_bags.common.blocks.Wall;
 import com.limachi.dimensional_bags.common.container.BagContainer;
 import com.limachi.dimensional_bags.common.container.UpgradeContainer;
 import com.limachi.dimensional_bags.common.container.WrappedPlayerInventoryContainer;
 import com.limachi.dimensional_bags.common.entities.BagEntity;
 import com.limachi.dimensional_bags.common.items.Bag;
+import com.limachi.dimensional_bags.common.items.TunnelPlacer;
 import com.limachi.dimensional_bags.common.items.entity.BagEntityItem;
 import com.limachi.dimensional_bags.common.tileentities.PillarTileEntity;
 import com.limachi.dimensional_bags.common.tileentities.TheEyeTileEntity;
@@ -37,8 +40,11 @@ public class Registries {
 
     public static final RegistryObject<Block> BAG_EYE_BLOCK = BLOCK_REGISTER.register("bag_eye", TheEye::new);
     public static final RegistryObject<Block> PILLAR_BLOCK = BLOCK_REGISTER.register("pillar", Pillar::new);
+    public static final RegistryObject<Block> TUNNEL_BLOCK = BLOCK_REGISTER.register("tunnel", Tunnel::new);
+    public static final RegistryObject<Block> WALL_BLOCK = BLOCK_REGISTER.register("wall", Wall::new);
 
     public static final RegistryObject<Item> BAG_ITEM = ITEM_REGISTER.register("bag", Bag::new);
+    public static final RegistryObject<Item> TUNNEL_ITEM = ITEM_REGISTER.register("tunnel_placer", TunnelPlacer::new);
 
     public static RegistryObject<EntityType<BagEntityItem>> BAG_ITEM_ENTITY = ENTITY_REGISTER
             .register("bag_item", () -> EntityType.Builder.<BagEntityItem>create(BagEntityItem::new, EntityClassification.MISC)

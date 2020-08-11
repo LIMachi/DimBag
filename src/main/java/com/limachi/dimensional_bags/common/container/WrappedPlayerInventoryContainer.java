@@ -2,10 +2,8 @@ package com.limachi.dimensional_bags.common.container;
 
 import com.limachi.dimensional_bags.common.Registries;
 import com.limachi.dimensional_bags.common.container.slot.InvWrapperSlot;
-import com.limachi.dimensional_bags.common.data.EyeData;
 import com.limachi.dimensional_bags.common.inventory.PlayerInvWrapper;
 import com.limachi.dimensional_bags.common.inventory.Wrapper;
-import net.java.games.input.Keyboard;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.inventory.container.*;
 import net.minecraft.entity.player.PlayerInventory;
@@ -14,14 +12,11 @@ import net.minecraft.network.PacketBuffer;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.IIntArray;
 import net.minecraftforge.fml.common.ObfuscationReflectionHelper;
-import net.minecraftforge.items.SlotItemHandler;
 import java.lang.reflect.Field;
 import java.util.List;
 
 import javax.annotation.Nullable;
 
-import static com.limachi.dimensional_bags.common.inventory.Wrapper.IORights.CANINPUT;
-import static com.limachi.dimensional_bags.common.inventory.Wrapper.IORights.WITHOUTORE;
 import static com.limachi.dimensional_bags.common.references.GUIs.ScreenParts.*;
 import static com.limachi.dimensional_bags.common.references.GUIs.PlayerInterface.*;
 
@@ -30,7 +25,6 @@ public class WrappedPlayerInventoryContainer extends Container {
     private final PlayerInvWrapper targetInventory;
     private final PlayerInventory playerInventory;
     private final boolean isClient;
-//    private final TileEntity te;
     private String localUserName;
 
     protected static Field field = ObfuscationReflectionHelper.findField(Container.class, "field_75149_d");
@@ -58,7 +52,6 @@ public class WrappedPlayerInventoryContainer extends Container {
     private WrappedPlayerInventoryContainer(@Nullable ContainerType<? extends WrappedPlayerInventoryContainer> type, int windowId, PlayerInventory playerInventory, PlayerInvWrapper targetInventory, boolean isClient, TileEntity te) {
         super(type, windowId);
         try { this.listenersR = (List<IContainerListener>) field.get(this); } catch (Throwable e) {}
-//        this.te = te;
         this.isClient = isClient;
         this.targetInventory = targetInventory;
         this.playerInventory = playerInventory;
@@ -82,7 +75,6 @@ public class WrappedPlayerInventoryContainer extends Container {
         if (isClient)
             localUserName = "Unavailable ";
         else {
-//            localUserName = data.getUser().getName().getFormattedText();
             localUserName = targetInventory.getPlayerInventory().player.getName().getFormattedText();
             if (localUserName.length() != 12)
                 localUserName = String.format("%1$-12s", localUserName);
@@ -112,10 +104,7 @@ public class WrappedPlayerInventoryContainer extends Container {
 
     @Override
     public void detectAndSendChanges() {
-//        if (!isClient && data != null && targetInventory != data.getPlayerInventory())
-//            Network.openWrappedPlayerInventory((ServerPlayerEntity) playerInventory.player, new Wrapper(data.getPlayerInventory()), data);
-//        else
-            super.detectAndSendChanges();
+        super.detectAndSendChanges();
     }
 
     public void changeRights(int slot, Wrapper.IORights rights) {

@@ -1,10 +1,12 @@
 package com.limachi.dimensional_bags.common;
 
 import com.limachi.dimensional_bags.DimBag;
+import com.limachi.dimensional_bags.common.blocks.Tunnel;
 import com.limachi.dimensional_bags.common.data.DimBagData;
 import com.limachi.dimensional_bags.common.data.EyeData;
 import com.limachi.dimensional_bags.common.entities.BagEntity;
 import com.limachi.dimensional_bags.common.items.Bag;
+import net.minecraft.block.BlockState;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
@@ -16,6 +18,7 @@ import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.item.ItemEvent;
 import net.minecraftforge.event.entity.living.LivingEquipmentChangeEvent;
 import net.minecraftforge.event.entity.player.AttackEntityEvent;
+import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
@@ -98,6 +101,16 @@ public class EventManager {
             event.getTarget().remove();
         }
     }
+
+    /*
+    @SubscribeEvent
+    public static void onRightClickBlock(PlayerInteractEvent.RightClickBlock event) {
+        BlockState bs = event.getPlayer().getEntityWorld().getBlockState(event.getPos());
+        if (bs == Registries.TUNNEL_BLOCK.get().getDefaultState()) { //trying to use a tunnel (
+
+        }
+    }
+    */
 
     @SubscribeEvent
     public static void onItemEntity(ItemEvent event) {
