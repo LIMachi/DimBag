@@ -43,7 +43,7 @@ public class TheEye extends ContainerBlock {
         if (player.isCrouching())
             data.tpBack(player);
         else
-            Network.openEyeInventory((ServerPlayerEntity) player, data.getInventory());
+            Network.openEyeInventory((ServerPlayerEntity) player, data);
         return ActionResultType.SUCCESS;
     }
 }

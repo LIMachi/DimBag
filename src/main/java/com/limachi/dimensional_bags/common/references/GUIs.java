@@ -45,7 +45,7 @@ public class GUIs { //common resources and size/position information for screens
 
     public static class BagScreen {
         public static int calculateYSize(int rows) { return ScreenParts.PLAYER_INVENTORY_Y + rows * ScreenParts.SLOT_SIZE_Y + ScreenParts.PART_SIZE_Y * 3; }
-        public static int calculateShiftLeft(int columns) { return (int)Math.floor(((double)columns - (double) ScreenParts.PLAYER_INVENTORY_COLUMNS) / 2.0d); }
+        public static int calculateShiftLeft(int columns) { return (int)Math.ceil(((double)columns - (double) ScreenParts.PLAYER_INVENTORY_COLUMNS) / 2.0d); }
     }
 
     public static class UpgradeScreen {

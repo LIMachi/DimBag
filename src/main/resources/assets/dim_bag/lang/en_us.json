@@ -1,6 +1,11 @@
 {
   "item.dim_bag.bag": "Dimensional Bag",
+  "item.dim_bag.upgrade_row": "DimBag™ upgrade: Row",
+  "item.dim_bag.upgrade_column": "DimBag™ upgrade: Column",
+  "item.dim_bag.upgrade_radius": "DimBag™ upgrade: Radius",
+  "item.dim_bag.tunnel_placer": "Tunnel Placer",
   "block.dim_bag.bag_eye": "The All Seeing Eye Of The Dimentional Rift",
+  "block.dim_bag.pillar": "Pillar",
   "itemGroup.tab_dim_bag": "Dimensional Bags",
   "curios.identifier.backpack": "Backpack",
   "tooltip.upgrade.row": "Add an additional row to the bag inventory, up to a maximum of %d rows",

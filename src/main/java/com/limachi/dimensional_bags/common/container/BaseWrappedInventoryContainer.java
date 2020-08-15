@@ -20,6 +20,10 @@ public class BaseWrappedInventoryContainer extends Container {
     protected Wrapper openInv;
     protected boolean client;
 
+    public BaseWrappedInventoryContainer(ContainerType<? extends BaseWrappedInventoryContainer> type, int windowId) { //common constructor
+        super(type, windowId);
+    }
+
     public BaseWrappedInventoryContainer(ContainerType<? extends BaseWrappedInventoryContainer> type, int windowId, PlayerInventory playerInv, PacketBuffer extraData) { //client side/registry constructor
         super(type, windowId);
         this.playerInv = new PlayerInvWrapper(playerInv);
@@ -32,6 +36,28 @@ public class BaseWrappedInventoryContainer extends Container {
         this.playerInv = new PlayerInvWrapper(player.inventory);
         this.openInv = openInv;
         this.client = false;
+    }
+
+    public Wrapper.IORights getRights(int slot) {
+        if (slot < 36 || slot >= inventorySlots.size()) return new Wrapper.IORights();
+        return openInv.getRights(slot - 36);
+    }
+
+    public void changeRights(int slot, Wrapper.IORights rights) {
+        openInv.setRights(slot, rights);
+        /*
+        if (!isClient)
+            targetInventory.markDirty();
+        */
+        /*
+        if (!isClient) {
+            data.markDirty();
+            SlotIORightsChanged pack = new SlotIORightsChanged(slot, rights);
+            for (IContainerListener listener : listenersR)
+                if (listener instanceof PlayerEntity)
+                    PacketHandler.toClient(pack, (ServerPlayerEntity) listener);
+        }
+        */
     }
 
     protected void addPlayerSlots(int px, int py) {

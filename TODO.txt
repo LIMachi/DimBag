@@ -8,6 +8,10 @@
 -Work on craft (very high chance that most craft will be vanilla json files)
 -Add chunk loading, DONE: work on bag itemEntity, player holding a bag, entities holding a bag and the bag entity itself (might require an upgrade for the inside of the bag to be loaded)
 -Port to 1.16.2 (will need to rewrite the dimension, vanilla data pack will do part of the job)
+-working on IO rights for the bag content itself, not only the player inventory
+-fix gui problem (some size in columns break the rendering)
+-fix interaction if the player as an item in hand while targeting the eye/bag
+-upgrade: sprinkler: use water to prevent burning, solidify lava, damage "fire" mobs, water farmland
 
 -common buttons: applicable to all gui, allow switching of guis
 -new blocks for the dimension

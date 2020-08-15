@@ -10,8 +10,9 @@ public class RowUpgrade extends Upgrade {
     @Override
     protected void applyUpgrade(int countBefore, int countAfter, EyeData data) {
         if (countAfter > countBefore) {
-            int size = data.getColumns() * countAfter;
-            data.getInventory().resizeInventory(size, countAfter, data.getColumns());
+            int columns = data.getColumns();
+            int size = columns * countAfter;
+            data.getInventory().resizeInventory(size, countAfter, columns, data.getRows(), columns);
             data.markDirty();
         }
     }

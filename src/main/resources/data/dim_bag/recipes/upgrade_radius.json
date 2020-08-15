@@ -1,0 +1,23 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "#P#",
+    "PDP",
+    "#P#"
+  ],
+  "key": {
+    "#": {
+      "item": "minecraft:ender_pearl"
+    },
+    "P": {
+      "item": "minecraft:piston"
+    },
+    "D": {
+      "item": "minecraft:diamond_block"
+    }
+  },
+  "result": {
+    "item": "dim_bag:upgrade_radius",
+    "count": 1
+  }
+}

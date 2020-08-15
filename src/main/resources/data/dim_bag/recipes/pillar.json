@@ -1,0 +1,29 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "#P#",
+    "QEQ",
+    "QSQ"
+  ],
+  "key": {
+    "#": {
+      "item": "minecraft:quartz_stairs"
+    },
+    "P": {
+      "item": "minecraft:piston"
+    },
+    "Q": {
+      "item": "minecraft:quartz_pillar"
+    },
+    "E": {
+      "item": "minecraft:ender_chest"
+    },
+    "S": {
+      "item": "minecraft:sticky_piston"
+    }
+  },
+  "result": {
+    "item": "dim_bag:pillar",
+    "count": 1
+  }
+}

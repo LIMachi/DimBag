@@ -1,0 +1,23 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "#/#",
+    "/E/",
+    "#/#"
+  ],
+  "key": {
+    "#": {
+      "item": "minecraft:end_stone"
+    },
+    "/": {
+      "item": "minecraft:end_rod"
+    },
+    "E": {
+      "item": "minecraft:end_crystal"
+    }
+  },
+  "result": {
+    "item": "dim_bag:tunnel_placer",
+    "count": 1
+  }
+}

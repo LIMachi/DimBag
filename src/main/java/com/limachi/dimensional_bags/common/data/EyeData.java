@@ -22,6 +22,7 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.NonNullList;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.ITextComponent;
+import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraft.world.World;
 import net.minecraft.world.dimension.DimensionType;
 import net.minecraft.world.storage.WorldSavedData;
@@ -90,9 +91,6 @@ public class EyeData extends WorldSavedData { //TODO: make EyeData a WorldSavedD
     public EyeData(@Nullable ServerPlayerEntity player, int id) {
         super(MOD_ID + "_eye_" + id);
         this.globalData = DimBagData.get(DimBag.getServer(player != null ? player.world : null));
-//        this.ioRights = new Wrapper.IORights[41];
-//        for (int i = 0; i < 41; ++i)
-//            this.ioRights[i] = new Wrapper.IORights();
         this.id = id;
         if (player != null) {
             this.ownerUUID = player.getUniqueID();
@@ -104,7 +102,7 @@ public class EyeData extends WorldSavedData { //TODO: make EyeData a WorldSavedD
         this.owner = new WeakReference<>(player);
         this.entity = new WeakReference<>(player);
         this.tpDimension = DimensionType.OVERWORLD;
-        this.tpPosition = globalData.getOverWorld().getSpawnPoint(); //default position for tp the spawn, until the actual position is updated by the item/entity version of the bag
+        this.tpPosition = globalData.getOverWorld().getSpawnPoint(); //default position for tp the spawn, until the actual position is updated by the item/entity version of the bag (or the holder of the bag)
         this.upgrades = new UpgradeInventory(this);
         this.inventory = new BagInventory(this);
     }
@@ -118,6 +116,10 @@ public class EyeData extends WorldSavedData { //TODO: make EyeData a WorldSavedD
     }
 
     public static BlockPos getEyePos(int id) { return new BlockPos(8 + ((id - 1) << 10), 128, 8); } //each eye is 1024 blocks appart, so for the maximum size of a room (radius 127, 255 blocks diameter), there is at least 32 chunks (32*16=512 blocks) between each room
+
+    public BlockPos getEyePos() {
+        return getEyePos(this.id);
+    }
 
     public static EyeData getEyeData(World world, BlockPos pos, boolean eye) {
         if (world.isRemote || world.dimension.getType() != BagRiftDimension.getDimensionType()) return null;
@@ -158,20 +160,22 @@ public class EyeData extends WorldSavedData { //TODO: make EyeData a WorldSavedD
         return null;
     }
 
+    /*
     public void openInvetoryGUI(ServerPlayerEntity player) {
         NetworkHooks.openGui(player, new INamedContainerProvider() {
             @Override
             public ITextComponent getDisplayName() {
-                return inventory.getDisplayName();
+                return new TranslationTextComponent("inventory.bag.name");
             }
 
             @Nullable
             @Override
             public Container createMenu(int windowId, PlayerInventory playerInventory, PlayerEntity playerEntity) {
-                return new BagContainer(windowId, player, inventory);
+                return new BagContainer(windowId, player, this);
             }
         }, inventory::toBytes); //should change the call to toBytes
     }
+    */
 
     public int getRows() {
         return this.upgrades.getStackInSlot(ROWS).getCount();

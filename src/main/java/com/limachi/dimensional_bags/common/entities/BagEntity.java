@@ -44,6 +44,11 @@ public class BagEntity extends MobEntity {
     }
 
     @Override
+    public boolean isImmuneToExplosions() {
+        return true;
+    }
+
+    @Override
     protected boolean canTriggerWalking() { return false; } //prevent walking (meh)
 
     @Override
@@ -80,8 +85,8 @@ public class BagEntity extends MobEntity {
         if (this.world.isRemote()) return; //do nothing client side
         if ((tick & 7) == 0) {
             EyeData data = EyeData.get(this.world.getServer(), getId());
-            if (data != null)
-                LOGGER.info("Hi my name is. What? My name is. Who? My name is " + data.getId());
+//            if (data != null)
+//                LOGGER.info("Hi my name is. What? My name is. Who? My name is " + data.getId());
             if (data != null && data.getId() != EyeData.getEyeId(this.world, this.getPosition())) //only update the position if the bag isn't in itself
                 data.updateBagPosition(this.getPosition(), this.dimension);
             if (data != null)
@@ -103,7 +108,7 @@ public class BagEntity extends MobEntity {
         if (player.isCrouching())
             BagRiftDimension.teleportEntity(player, BagRiftDimension.getDimensionType(), new BlockPos(1024 * (id - 1) + 8, 129, 8));
         else
-            Network.openEyeInventory((ServerPlayerEntity)player, EyeData.get(world.getServer(), id).getInventory());
+            Network.openEyeInventory((ServerPlayerEntity)player, EyeData.get(world.getServer(), id));
         return true;
     }
 }

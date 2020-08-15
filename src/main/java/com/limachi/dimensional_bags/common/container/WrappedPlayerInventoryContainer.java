@@ -64,14 +64,7 @@ public class WrappedPlayerInventoryContainer extends Container {
         for (int x = 0; x < 4; ++x)
             addSlot(new InvWrapperSlot(targetInventory, 36 + x, ARMOR_SLOTS_X + 1 + x * SLOT_SIZE_X, SPECIAL_SLOTS_Y + 1));
         addSlot(new InvWrapperSlot(targetInventory, 40, OFF_HAND_SLOT_X + 1, SPECIAL_SLOTS_Y + 1));
-        trackIntArray(new IIntArray() { //sync the IORights
-            @Override
-            public int get(int i) { return targetInventory.getRights(i / 3).toInt(i % 3); }
-            @Override
-            public void set(int i, int val) { targetInventory.setRights(i / 3, i % 3, val); }
-            @Override
-            public int size() { return 41 * 3; }
-        });
+        trackIntArray(targetInventory.rightsAsIntArray());
         if (isClient)
             localUserName = "Unavailable ";
         else {

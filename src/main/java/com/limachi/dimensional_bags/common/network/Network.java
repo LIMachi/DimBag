@@ -4,7 +4,6 @@ import com.limachi.dimensional_bags.common.container.BagContainer;
 import com.limachi.dimensional_bags.common.container.UpgradeContainer;
 import com.limachi.dimensional_bags.common.container.WrappedPlayerInventoryContainer;
 import com.limachi.dimensional_bags.common.data.EyeData;
-import com.limachi.dimensional_bags.common.inventory.BaseInventory;
 import com.limachi.dimensional_bags.common.inventory.PlayerInvWrapper;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
@@ -19,19 +18,23 @@ import net.minecraftforge.fml.network.NetworkHooks;
 import javax.annotation.Nullable;
 
 public class Network {
-    public static void openEyeInventory(ServerPlayerEntity player, BaseInventory eyeInventory) {
+    public static void openEyeInventory(ServerPlayerEntity player, EyeData data) {
         NetworkHooks.openGui(player, new INamedContainerProvider() {
             @Override
             public ITextComponent getDisplayName() {
-                return eyeInventory.getDisplayName();
+                return new TranslationTextComponent("inventory.bag.name");
             }
 
             @Nullable
             @Override
             public Container createMenu(int windowId, PlayerInventory inventory, PlayerEntity player) {
-                return new BagContainer(windowId, (ServerPlayerEntity) player, eyeInventory);
+                return BagContainer.CreateServer(windowId, inventory, data);
             }
-        }, eyeInventory::toBytes);
+        }, (buffer) -> {
+            buffer.writeInt(data.getRows());
+            buffer.writeInt(data.getColumns());
+            data.getInventory().sizeAndRightsToBuffer(buffer);
+        });
     }
 
     public static void openWrappedPlayerInventory(ServerPlayerEntity player, PlayerInvWrapper inv, TileEntity te) {

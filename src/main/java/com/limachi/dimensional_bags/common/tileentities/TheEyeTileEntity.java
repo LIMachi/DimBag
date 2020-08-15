@@ -2,7 +2,7 @@ package com.limachi.dimensional_bags.common.tileentities;
 
 import com.limachi.dimensional_bags.common.Registries;
 import com.limachi.dimensional_bags.common.data.EyeData;
-import com.limachi.dimensional_bags.common.inventory.BaseInventory;
+import com.limachi.dimensional_bags.common.inventory.Wrapper;
 import net.minecraft.tileentity.ITickableTileEntity;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.Direction;
@@ -12,7 +12,7 @@ import net.minecraftforge.items.CapabilityItemHandler;
 
 public class TheEyeTileEntity extends TileEntity implements ITickableTileEntity {
 
-    private LazyOptional<BaseInventory> invPtr = LazyOptional.empty();
+    private LazyOptional<Wrapper> invPtr = LazyOptional.empty();
     private EyeData data;
     private boolean initialized;
 

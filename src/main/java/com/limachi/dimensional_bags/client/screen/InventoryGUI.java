@@ -2,6 +2,7 @@ package com.limachi.dimensional_bags.client.screen;
 
 import com.google.common.primitives.Ints;
 import com.limachi.dimensional_bags.common.container.BagContainer;
+import com.limachi.dimensional_bags.common.inventory.Wrapper;
 import com.limachi.dimensional_bags.common.references.GUIs;
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.gui.screen.inventory.ContainerScreen;
@@ -9,6 +10,8 @@ import net.minecraft.client.renderer.texture.TextureManager;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.util.text.ITextComponent;
 
+import static com.limachi.dimensional_bags.common.inventory.Wrapper.IORights.CANINPUT;
+import static com.limachi.dimensional_bags.common.inventory.Wrapper.IORights.CANOUTPUT;
 import static com.limachi.dimensional_bags.common.references.GUIs.ScreenParts.*;
 
 public class InventoryGUI extends ContainerScreen<BagContainer> {
@@ -46,6 +49,15 @@ public class InventoryGUI extends ContainerScreen<BagContainer> {
         this.blitGuiFull(x1, PART_SIZE_Y, PART_SIZE_X, PART_SIZE_Y);
     }
 
+    protected void drawAccessRectangle(TextureManager tm, int x, int y, Wrapper.IORights rights) {
+        int flags = rights.flags & (CANINPUT | CANOUTPUT);
+        if (flags == (CANINPUT | CANOUTPUT)) tm.bindTexture(SLOT);
+        if (flags == CANINPUT) tm.bindTexture(INPUT_SLOT);
+        if (flags == CANOUTPUT) tm.bindTexture(OUTPUT_SLOT);
+        if (flags == 0) tm.bindTexture(LOCKED_SLOT);
+        this.blitGuiFull(x, y, SLOT_SIZE_X, SLOT_SIZE_Y);
+    }
+
     public void render_rows(TextureManager tm) { //render all rows, including right and left border
         int x = this.columns_shift_left < 0 ? -this.columns_shift_left * SLOT_SIZE_X : 0;
         int x1 = this.xSize + (this.columns_shift_right < 0 ? this.columns_shift_right * SLOT_SIZE_X : 0) - PART_SIZE_X;
@@ -59,7 +71,7 @@ public class InventoryGUI extends ContainerScreen<BagContainer> {
         tm.bindTexture(SLOT);
         for (int i = 0; i < this.columns; ++i)
             for (int y = 0; y < this.rows; ++y)
-                this.blitGuiFull(x + i * SLOT_SIZE_X + PART_SIZE_X, sy + y * SLOT_SIZE_Y, SLOT_SIZE_X, SLOT_SIZE_Y);
+                drawAccessRectangle(tm, x + i * SLOT_SIZE_X + PART_SIZE_X, sy + y * SLOT_SIZE_Y, container.getRights(i + 36));
     }
 
     public void render_expander(TextureManager tm) { //render the part between the container inventory and the player inventory
@@ -83,7 +95,7 @@ public class InventoryGUI extends ContainerScreen<BagContainer> {
         tm.bindTexture(LOWER);
         for (int i = 1; i < this.columns_shift_right * 3; ++i)
             this.blitGuiFull(x + i * PART_SIZE_X, y, PART_SIZE_X, PART_SIZE_Y);
-        tm.bindTexture(LOWER_RIGHT);
+        tm.bindTexture(this.columns_shift_right == 0 ? RIGHT : LOWER_RIGHT);
         this.blitGuiFull(this.xSize - PART_SIZE_X, y, PART_SIZE_X, PART_SIZE_Y);
     }
 

@@ -25,6 +25,11 @@ public class BagEntityItem extends ItemEntity {
         setPickupDelay(10);
     }
 
+    @Override
+    public boolean isImmuneToExplosions() {
+        return true;
+    }
+
     public void onItemPickup(Entity entityIn, int quantity) {
 
     }

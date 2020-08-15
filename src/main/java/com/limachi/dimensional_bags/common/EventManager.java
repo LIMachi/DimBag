@@ -4,33 +4,63 @@ import com.limachi.dimensional_bags.DimBag;
 import com.limachi.dimensional_bags.common.blocks.Tunnel;
 import com.limachi.dimensional_bags.common.data.DimBagData;
 import com.limachi.dimensional_bags.common.data.EyeData;
+import com.limachi.dimensional_bags.common.dimension.BagRiftDimension;
 import com.limachi.dimensional_bags.common.entities.BagEntity;
 import com.limachi.dimensional_bags.common.items.Bag;
+import javafx.util.Pair;
+import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
+import net.minecraft.block.Blocks;
+import net.minecraft.block.FlowingFluidBlock;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
+import net.minecraft.fluid.Fluid;
+import net.minecraft.fluid.Fluids;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
+import net.minecraft.particles.ParticleTypes;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.Hand;
+import net.minecraft.world.World;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.item.ItemEvent;
 import net.minecraftforge.event.entity.living.LivingEquipmentChangeEvent;
 import net.minecraftforge.event.entity.player.AttackEntityEvent;
-import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.Supplier;
 
 @Mod.EventBusSubscriber
 public class EventManager {
     public static int tick = 0;
+    public static List<Pair<Integer, Supplier<Boolean>>> DelayedTasks = new ArrayList<>();
+
+    private static void runDelayedTasks() {
+        DelayedTasks.removeIf(x -> {
+            if (x.getKey() == tick) {
+                x.getValue().get();
+                return true;
+            }
+            return false;
+        });
+    }
+
+    private static void addDelayedTask(int tick, Supplier<Boolean> func) {
+        DelayedTasks.add(new Pair<>(tick, func));
+    }
 
     @SubscribeEvent
     public static void onServerTick(TickEvent.ServerTickEvent event) {
         if (event.phase == TickEvent.Phase.END || event.side.isClient()) return;
-        if ((tick = ((tick + 1) & 7)) == 0) { //determine how often i run the logic, for now, once every 8 ticks (every 0.4s)
+        ++tick;
+        runDelayedTasks();
+        if ((tick & 7) == 0) { //determine how often i run the logic, for now, once every 8 ticks (every 0.4s)
             MinecraftServer server = DimBag.getServer(null);
+            World dbworld = BagRiftDimension.getWorld(server); //note: massive lag, should always have a chunk loaded to prevent loading/unloading of the world if there is no player in it
             DimBagData dbd = DimBagData.get(server);
             int l = dbd.getLastId() + 1;
             for (int i = 1; i < l; ++i) {
@@ -53,8 +83,19 @@ public class EventManager {
                 }
                 //here do updates on bags that need the user, like testing if the user is in water
                 if (user != null) {
-                    if (user.isInWater())
+                    if (user.isInWater() && (tick & 63) == 0) {
                         DimBag.LOGGER.info("that bag is swiming! (" + data.getId() + ")");
+                        BlockState water = Blocks.WATER.getDefaultState();
+                        if (dbworld.getBlockState(data.getEyePos().down()) == Blocks.AIR.getDefaultState()) {
+                            dbworld.setBlockState(data.getEyePos().down(), water);
+                            addDelayedTask(tick + 20, () -> {
+                                World world = BagRiftDimension.getWorld(DimBag.getServer(null));
+                                if (world.getBlockState(data.getEyePos().down()) == water)
+                                    world.setBlockState(data.getEyePos().down(), Blocks.AIR.getDefaultState());
+                                return true;
+                            });
+                        }
+                    }
                     if (user.isBurning())
                         DimBag.LOGGER.info("that bag is on fire (" + data.getId() + ")");
                     if (user.isInLava())
@@ -62,7 +103,7 @@ public class EventManager {
                     DimBag.LOGGER.info("Ima load this chunk: (" + user.getEntityWorld().getDimension().getType().getId() + ") " + user.getPosition().getX() + ", " + user.getPosition().getZ() + " (" + data.getId() + ")");
                     dbd.loadChunk(server, user.getEntityWorld().getDimension().getType().getId(), user.getPosition().getX(), user.getPosition().getZ(), data.getId());
                 } else { //did not find a user, usually meaning the bag item/entity isn't loaded or the entity using it isn't loaded
-                    DimBag.LOGGER.info("that bag is MIA (" + data.getId() + ")");
+//                    DimBag.LOGGER.info("that bag is MIA (" + data.getId() + ")");
                     dbd.unloadChunk(server, data.getId());
                 }
             }

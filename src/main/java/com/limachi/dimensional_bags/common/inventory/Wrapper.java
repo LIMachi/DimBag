@@ -10,6 +10,7 @@ import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.nbt.ListNBT;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.tags.ItemTags;
+import net.minecraft.util.IIntArray;
 import net.minecraft.util.NonNullList;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.items.IItemHandlerModifiable;
@@ -241,6 +242,27 @@ public class Wrapper implements IItemHandlerModifiable { //rewrite of InvWrapper
         return out;
     }
 
+    public void resizeInventory(int newSize, int newRows, int newColumns, int prevRows, int prevColumns) { //note: this will NOT really resize the wrapped/targeted inventory, but create a new one instead
+        IInventory newInv = new Inventory(newSize);
+        IORights[] newRights = new IORights[newSize];
+        for (int y = 0; y < newRows; ++y)
+            for (int x = 0; x < newColumns; ++x)
+                if (x + y * newColumns < newSize && x < prevColumns && y < prevRows && x + y * prevColumns < inv.getSizeInventory()) {
+                    newInv.setInventorySlotContents(x + y * newColumns, this.inv.getStackInSlot(x + y * prevColumns));
+                    newRights[x + y * newColumns] = this.IO[x + y * prevColumns];
+                } else {
+                    newInv.setInventorySlotContents(x + y * newColumns, ItemStack.EMPTY);
+                    newRights[x + y * newColumns] = new IORights();
+                }
+        for (int i = newRows * newColumns; i < newSize; ++i) {
+            newInv.setInventorySlotContents(i, ItemStack.EMPTY);
+            newRights[i] = new IORights();
+        }
+        this.IO = newRights;
+        this.inv = newInv;
+        this.dirt.markDirty();
+    }
+
     public PacketBuffer sizeAndRightsToBuffer(PacketBuffer buff) {
         buff.writeInt(IO.length);
         for (IORights r : IO)
@@ -263,6 +285,17 @@ public class Wrapper implements IItemHandlerModifiable { //rewrite of InvWrapper
     public IORights getRights(int slot) {
         if (slot < 0 || slot >= IO.length) return new IORights();
         return IO[slot];
+    }
+
+    public IIntArray rightsAsIntArray() { //return a minecraft int array, used by containers, to sync rights between clients and server while the container is open
+        return new IIntArray() {
+            @Override
+            public int get(int i) { return getRights(i / 3).toInt(i % 3); }
+            @Override
+            public void set(int i, int val) { setRights(i / 3, i % 3, val); }
+            @Override
+            public int size() { return IO.length * 3; }
+        };
     }
 
     public boolean matchInventory(IInventory inv) { return this.inv == inv; }

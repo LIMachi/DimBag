@@ -114,7 +114,7 @@ public class Bag extends Item {
         if (!DimBag.isServer(world) || (id = getId(player.getHeldItem(hand))) == 0) return super.onItemRightClick(world, player, hand);
         EyeData data = EyeData.get(world.getServer(), id);
         if (!player.isCrouching())
-            Network.openEyeInventory((ServerPlayerEntity) player, data.getInventory());
+            Network.openEyeInventory((ServerPlayerEntity) player, data);
         else
             Network.openEyeUpgrades((ServerPlayerEntity) player, data);
         return new ActionResult<>(ActionResultType.SUCCESS, player.getHeldItem(hand));

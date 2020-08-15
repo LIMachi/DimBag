@@ -57,7 +57,7 @@ public class Registries {
     public static final RegistryObject<TileEntityType<TheEyeTileEntity>> BAG_EYE_TE = TILE_ENTITY_REGISTER.register("bag_eye", () -> TileEntityType.Builder.create(TheEyeTileEntity::new, BAG_EYE_BLOCK.get()).build(null));
     public static final RegistryObject<TileEntityType<PillarTileEntity>> PILLAR_TE = TILE_ENTITY_REGISTER.register("pillar", () -> TileEntityType.Builder.create(PillarTileEntity::new, PILLAR_BLOCK.get()).build(null));
 
-    public static final RegistryObject<ContainerType<BagContainer>> BAG_CONTAINER = CONTAINER_TYPE_REGISTER.register("inventory", () -> IForgeContainerType.create(BagContainer::new));
+    public static final RegistryObject<ContainerType<BagContainer>> BAG_CONTAINER = CONTAINER_TYPE_REGISTER.register("inventory", () -> IForgeContainerType.create(BagContainer::CreateClient));
     public static final RegistryObject<ContainerType<UpgradeContainer>> UPGRADE_CONTAINER = CONTAINER_TYPE_REGISTER.register("upgrades", () -> IForgeContainerType.create(UpgradeContainer::new));
     public static final RegistryObject<ContainerType<WrappedPlayerInventoryContainer>> PLAYER_CONTAINER = CONTAINER_TYPE_REGISTER.register("player", () -> IForgeContainerType.create(WrappedPlayerInventoryContainer::createClient));
 
