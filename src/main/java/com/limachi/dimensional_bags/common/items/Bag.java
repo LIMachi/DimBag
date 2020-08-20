@@ -20,6 +20,7 @@ import net.minecraft.util.ActionResultType;
 import net.minecraft.util.Hand;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TranslationTextComponent;
+import net.minecraft.world.DimensionType;
 import net.minecraft.world.World;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
@@ -72,7 +73,7 @@ public class Bag extends Item {
                 data = DimBagData.get(worldIn.getServer()).newEye((ServerPlayerEntity) entityIn);
                 CompoundNBT nbt = stack.hasTag() ? stack.getTag() : new CompoundNBT();
                 nbt.putInt(ID_KEY, data.getId());
-                nbt.putString(OWNER_KEY, entityIn.getName().getFormattedText());
+                nbt.putString(OWNER_KEY, entityIn.getName().getString());
                 stack.setTag(nbt);
             } else
                 data = EyeData.get(worldIn.getServer(), id);
@@ -93,7 +94,7 @@ public class Bag extends Item {
 
     @Override
     public ActionResultType onItemUse(ItemUseContext context) {
-        if (context.getPlayer() == null || !context.getPlayer().isCrouching()) return ActionResultType.PASS; //only test a player croushing
+        if (!DimBag.isServer(context.getWorld()) || context.getPlayer() == null || !context.getPlayer().isCrouching()) return ActionResultType.PASS; //only test a player croushing
         int x = Math.abs(context.getPos().getX() - context.getPlayer().getPosition().getX());
         int y = Math.abs(context.getPos().getY() - context.getPlayer().getPosition().getY());
         int z = Math.abs(context.getPos().getZ() - context.getPlayer().getPosition().getZ());

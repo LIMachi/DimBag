@@ -68,7 +68,7 @@ public class WrappedPlayerInventoryContainer extends Container {
         if (isClient)
             localUserName = "Unavailable ";
         else {
-            localUserName = targetInventory.getPlayerInventory().player.getName().getFormattedText();
+            localUserName = targetInventory.getPlayerInventory().player.getName().getString();
             if (localUserName.length() != 12)
                 localUserName = String.format("%1$-12s", localUserName);
         }

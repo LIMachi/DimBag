@@ -12,6 +12,7 @@
 -fix gui problem (some size in columns break the rendering)
 -fix interaction if the player as an item in hand while targeting the eye/bag
 -upgrade: sprinkler: use water to prevent burning, solidify lava, damage "fire" mobs, water farmland
+-upgrade: slot upgrade. not only you upgrade the bag volume by row/column but also by slot (because at the start the upgrades are weak and the more row/column you use, the more slots they add, which is unfair for the first upgrades)
 
 -common buttons: applicable to all gui, allow switching of guis
 -new blocks for the dimension

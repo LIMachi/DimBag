@@ -1,32 +1,23 @@
 package com.limachi.dimensional_bags.common.data;
 
 import com.limachi.dimensional_bags.DimBag;
-import com.limachi.dimensional_bags.common.container.BagContainer;
-import com.limachi.dimensional_bags.common.dimension.BagRiftDimension;
+import com.limachi.dimensional_bags.common.WorldUtils;
 import com.limachi.dimensional_bags.common.inventory.BagInventory;
-import com.limachi.dimensional_bags.common.inventory.PlayerInvWrapper;
 import com.limachi.dimensional_bags.common.inventory.UpgradeInventory;
 import com.limachi.dimensional_bags.common.inventory.Wrapper;
-import com.limachi.dimensional_bags.common.upgradeManager.UpgradeManager;
 import net.minecraft.entity.Entity;
-import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraft.inventory.Inventory;
-import net.minecraft.inventory.container.Container;
 import net.minecraft.inventory.container.ContainerType;
-import net.minecraft.inventory.container.INamedContainerProvider;
 import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.nbt.ListNBT;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.NonNullList;
+import net.minecraft.util.RegistryKey;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.text.ITextComponent;
-import net.minecraft.util.text.TranslationTextComponent;
+import net.minecraft.world.DimensionType;
 import net.minecraft.world.World;
-import net.minecraft.world.dimension.DimensionType;
+import net.minecraft.world.server.ServerWorld;
 import net.minecraft.world.storage.WorldSavedData;
-import net.minecraftforge.fml.network.NetworkHooks;
 
 import javax.annotation.Nullable;
 import java.lang.ref.WeakReference;
@@ -45,11 +36,9 @@ public class EyeData extends WorldSavedData { //TODO: make EyeData a WorldSavedD
     private WeakReference<ServerPlayerEntity> owner; //cache for the player referenced by uuid
     private WeakReference<Entity> entity; //cache for the entity that currently hold the bag (can be the bag itself, in entity or itementity form)
     private List<WeakReference<ServerPlayerEntity>> listeners; //list of player currently accessing a gui of the eye/bag
-//    private Wrapper.IORights ioRights[];
-    private DimensionType tpDimension;
+    private RegistryKey<World> tpDimension;
     private BlockPos tpPosition;
     private BagInventory inventory;
-//    private UpgradeInventory upgrades;
     private Wrapper upgrades;
     private final DimBagData globalData;
 
@@ -94,15 +83,17 @@ public class EyeData extends WorldSavedData { //TODO: make EyeData a WorldSavedD
         this.id = id;
         if (player != null) {
             this.ownerUUID = player.getUniqueID();
-            this.ownerName = player.getName().getFormattedText();
+            this.ownerName = player.getName().getString();
         } else {
             this.ownerUUID = new UUID(0, 0); //null UUID
             this.ownerName = "Invalid Player";
         }
         this.owner = new WeakReference<>(player);
         this.entity = new WeakReference<>(player);
-        this.tpDimension = DimensionType.OVERWORLD;
-        this.tpPosition = globalData.getOverWorld().getSpawnPoint(); //default position for tp the spawn, until the actual position is updated by the item/entity version of the bag (or the holder of the bag)
+        this.tpDimension = WorldUtils.DimOverworldKey;
+        this.tpPosition = WorldUtils.getOverWorld().func_241135_u_(); //TODO: replace mapping, should be the call to get the default spawn
+//        this.tpDimension = player.getServer().getWorld(DimensionType.OVERWORLD)//DimensionType.OVERWORLD//DimensionType.OVERWORLD;
+//        this.tpPosition = globalData.getOverWorld(); //default position for tp the spawn, until the actual position is updated by the item/entity version of the bag (or the holder of the bag)
         this.upgrades = new UpgradeInventory(this);
         this.inventory = new BagInventory(this);
     }
@@ -112,7 +103,7 @@ public class EyeData extends WorldSavedData { //TODO: make EyeData a WorldSavedD
             server = DimBag.getServer(null); //overkill security
         if (server == null)
             return null; //overkill security
-        return server.getWorld(DimensionType.OVERWORLD).getSavedData().get(() -> new EyeData(null, id), MOD_ID + "_eye_" + id);
+        return server.getWorld(World.field_234918_g_).getSavedData().get(() -> new EyeData(null, id), MOD_ID + "_eye_" + id);
     }
 
     public static BlockPos getEyePos(int id) { return new BlockPos(8 + ((id - 1) << 10), 128, 8); } //each eye is 1024 blocks appart, so for the maximum size of a room (radius 127, 255 blocks diameter), there is at least 32 chunks (32*16=512 blocks) between each room
@@ -122,7 +113,7 @@ public class EyeData extends WorldSavedData { //TODO: make EyeData a WorldSavedD
     }
 
     public static EyeData getEyeData(World world, BlockPos pos, boolean eye) {
-        if (world.isRemote || world.dimension.getType() != BagRiftDimension.getDimensionType()) return null;
+        if (world.isRemote || WorldUtils.worldRKFromWorld((ServerWorld)world) != WorldUtils.DimBagRiftKey) return null;
         int x = pos.getX() - 8; //since all rooms are offset by 8 blocks (so the center of a room is approximately the center of a chunk), we offset back X and Z by 8
         int z = pos.getZ() - 8;
         if (eye) {
@@ -221,20 +212,20 @@ public class EyeData extends WorldSavedData { //TODO: make EyeData a WorldSavedD
     public final Wrapper getupgrades() { return this.upgrades; }
 
     public void tpBack(Entity entity) { //teleport an entity to the location targeted by the bag
-        BagRiftDimension.teleportEntity(entity, tpDimension, tpPosition);
+        WorldUtils.teleportEntity(entity, tpDimension, tpPosition);
     }
 
     public void tpIn(Entity entity) { //teleport an entity to the eye of the bag
-        BagRiftDimension.teleportEntity(entity, BagRiftDimension.getDimensionType(), new BlockPos(1024 * (id - 1) + 8, 129, 8));
+        WorldUtils.teleportEntity(entity, WorldUtils.DimBagRiftKey, new BlockPos(1024 * (id - 1) + 8, 129, 8));
     }
 
     public void tpTunnel(Entity entity, BlockPos portalPos) { //teleport an entity to the next room, the position of the portal determine the destination
 
     }
 
-    public void updateBagPosition(BlockPos newPos, DimensionType newDim) {
+    public void updateBagPosition(BlockPos newPos, ServerWorld newDim) {
         this.tpPosition = newPos;
-        this.tpDimension = newDim;
+        this.tpDimension = WorldUtils.worldRKFromWorld(newDim);
     }
 
     @Override
@@ -243,16 +234,12 @@ public class EyeData extends WorldSavedData { //TODO: make EyeData a WorldSavedD
         nbt.putInt("Id", this.id);
         nbt.putUniqueId("Owner", this.ownerUUID);
         nbt.putString("OwnerName", this.ownerName);
-        nbt.putInt("Dim", this.tpDimension.getId());
+        nbt.putString("Dim", WorldUtils.worldRKToString(this.tpDimension));
         nbt.putInt("X", this.tpPosition.getX());
         nbt.putInt("Y", this.tpPosition.getY());
         nbt.putInt("Z", this.tpPosition.getZ());
         nbt.put("Inventory", this.inventory.write(new CompoundNBT()));
         nbt.put("Upgrades", this.upgrades.write(new CompoundNBT()));
-//        ListNBT list = new ListNBT();
-//        for (Wrapper.IORights right : ioRights)
-//            list.add(right.write(new CompoundNBT()));
-//        nbt.put("PlayerInterfaceIORights", list);
         return nbt;
     }
 
@@ -263,12 +250,9 @@ public class EyeData extends WorldSavedData { //TODO: make EyeData a WorldSavedD
         this.ownerUUID = nbt.getUniqueId("Owner");
         this.ownerName = nbt.getString("OwnerName");
         this.owner = new WeakReference<>(DimBag.getServer(null).getPlayerList().getPlayerByUUID(this.ownerUUID));
-        this.tpDimension = DimensionType.getById(nbt.getInt("Dim"));
+        this.tpDimension = WorldUtils.stringToWorldRK(nbt.getString("Dim"));
         this.tpPosition = new BlockPos(nbt.getInt("X"), nbt.getInt("Y"), nbt.getInt("Z"));
         this.inventory.read(nbt.getCompound("Inventory"));
         this.upgrades.read(nbt.getCompound("Upgrades"));
-//        ListNBT list = nbt.getList("PlayerInterfaceIORights", 10);
-//        for (int i = 0; i < 41; ++i)
-//            ioRights[i].read(list.getCompound(i));
     }
 }

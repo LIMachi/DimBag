@@ -5,6 +5,7 @@ import com.limachi.dimensional_bags.common.data.EyeData;
 import com.limachi.dimensional_bags.common.data.IMarkDirty;
 import com.limachi.dimensional_bags.common.inventory.PlayerInvWrapper;
 import com.limachi.dimensional_bags.common.inventory.Wrapper;
+import net.minecraft.block.BlockState;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.nbt.ListNBT;
@@ -43,7 +44,7 @@ public class PillarTileEntity extends TileEntity implements ITickableTileEntity,
     }
 
     @Override
-    public void read(CompoundNBT compound) {
+    public void read(BlockState state, CompoundNBT compound) {
         ListNBT list = compound.getList("IORights", 10);
         if (list.size() != 41)
             for (int i = 0; i < 41; ++i) {
@@ -53,7 +54,7 @@ public class PillarTileEntity extends TileEntity implements ITickableTileEntity,
         else
             for (int i = 0; i < 41; ++i)
                 rights[i].read(list.getCompound(i));
-        super.read(compound);
+        super.read(state, compound);
     }
 
     @Override

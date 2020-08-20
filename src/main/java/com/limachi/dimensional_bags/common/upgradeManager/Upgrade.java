@@ -40,7 +40,7 @@ public abstract class Upgrade { //contain all information for config, item, upgr
         this.max = max;
     }
 
-    public String getDescription() { return this.description.getFormattedText(); }
+    public String getDescription() { return this.description./*getFormattedText()*/getString(); }
 
     public class UpgradeItem extends Item {
         public UpgradeItem(int stackLimit) {

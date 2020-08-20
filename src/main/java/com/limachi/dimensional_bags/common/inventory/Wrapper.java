@@ -102,7 +102,7 @@ public class Wrapper implements IItemHandlerModifiable { //rewrite of InvWrapper
             if ((flags & WITHOUTORE) == 0) {
                 boolean contained = false;
                 for (ResourceLocation tag : tested.getItem().getTags())
-                    if (ItemTags.getCollection().getOrCreate(tag).contains(against.getItem())) {
+                    if (ItemTags.getCollection().get(tag).contains(against.getItem())) {
                         contained = true;
                         break;
                     }

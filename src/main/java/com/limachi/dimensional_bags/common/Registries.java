@@ -32,11 +32,11 @@ import net.minecraftforge.registries.ForgeRegistries;
 import static com.limachi.dimensional_bags.DimBag.MOD_ID;
 
 public class Registries {
-    public static final DeferredRegister<Block> BLOCK_REGISTER = new DeferredRegister<>(ForgeRegistries.BLOCKS, MOD_ID);
-    public static final DeferredRegister<Item> ITEM_REGISTER = new DeferredRegister<>(ForgeRegistries.ITEMS, MOD_ID);
-    public static final DeferredRegister<net.minecraft.tileentity.TileEntityType<?>> TILE_ENTITY_REGISTER = new DeferredRegister<>(ForgeRegistries.TILE_ENTITIES, MOD_ID);
-    public static final DeferredRegister<ContainerType<?>> CONTAINER_TYPE_REGISTER = new DeferredRegister<>(ForgeRegistries.CONTAINERS, MOD_ID);
-    public static final DeferredRegister<EntityType<?>> ENTITY_REGISTER = new DeferredRegister<>(ForgeRegistries.ENTITIES, MOD_ID);
+    public static final DeferredRegister<Block> BLOCK_REGISTER = DeferredRegister.create(ForgeRegistries.BLOCKS, MOD_ID);
+    public static final DeferredRegister<Item> ITEM_REGISTER = DeferredRegister.create(ForgeRegistries.ITEMS, MOD_ID);
+    public static final DeferredRegister<net.minecraft.tileentity.TileEntityType<?>> TILE_ENTITY_REGISTER = DeferredRegister.create(ForgeRegistries.TILE_ENTITIES, MOD_ID);
+    public static final DeferredRegister<ContainerType<?>> CONTAINER_TYPE_REGISTER = DeferredRegister.create(ForgeRegistries.CONTAINERS, MOD_ID);
+    public static final DeferredRegister<EntityType<?>> ENTITY_REGISTER = DeferredRegister.create(ForgeRegistries.ENTITIES, MOD_ID);
 
     public static final RegistryObject<Block> BAG_EYE_BLOCK = BLOCK_REGISTER.register("bag_eye", TheEye::new);
     public static final RegistryObject<Block> PILLAR_BLOCK = BLOCK_REGISTER.register("pillar", Pillar::new);
