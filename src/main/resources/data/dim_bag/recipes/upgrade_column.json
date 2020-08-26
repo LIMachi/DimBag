@@ -1,16 +1,13 @@
 {
   "type": "minecraft:crafting_shaped",
   "pattern": [
-    "# #",
-    "#C#",
-    "# #"
+    "#",
+    "#",
+    "#"
   ],
   "key": {
     "#": {
-      "item": "minecraft:iron_nugget"
-    },
-    "C": {
-      "item": "minecraft:chest"
+      "item": "dim_bag:upgrade_slot"
     }
   },
   "result": {

@@ -39,7 +39,7 @@ public class PlayerInterfaceGUI extends ContainerScreen<WrappedPlayerInventoryCo
 
     @Override
     protected void drawGuiContainerForegroundLayer(MatrixStack matrixStack, int mouseX, int mouseY) {
-        super.drawGuiContainerForegroundLayer(matrixStack, mouseX, mouseY);
+//        super.drawGuiContainerForegroundLayer(matrixStack, mouseX, mouseY);
         this.font.drawString(matrixStack, new TranslationTextComponent("inventory.player_interface.name", container.getLocalUserName())/*.getFormattedText()*/.getString(), TITLES_X, GUI_TITLE_Y, 4210752);
         this.font.drawString(matrixStack, this.playerInventory.getDisplayName()/*.getFormattedText()*/.getString(), TITLES_X, INVENTORY_TITLE_Y, 4210752);
     }

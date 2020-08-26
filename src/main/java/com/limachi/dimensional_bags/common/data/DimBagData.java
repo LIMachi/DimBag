@@ -35,7 +35,7 @@ public class DimBagData extends WorldSavedData { //server side only, client side
     public EyeData newEye(ServerPlayerEntity player) {
         int id = ++this.lastId;
         EyeData data = new EyeData(player, id);
-        WorldUtils.buildRoom(WorldUtils.getRiftWorld(), EyeData.getEyePos(data.getId()), data.getupgrades().getStackInSlot(RADIUS).getCount(), 0);
+        WorldUtils.buildRoom(WorldUtils.getRiftWorld(), EyeData.getEyePos(data.getId()), data.getRadius(), 0);
         data.markDirty();
         WorldUtils.getOverWorld().getSavedData().set(data);
         this.markDirty();

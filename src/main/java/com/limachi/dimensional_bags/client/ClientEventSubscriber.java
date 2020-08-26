@@ -23,7 +23,7 @@ public class ClientEventSubscriber {
     public static void clientSetup(FMLClientSetupEvent event) {
         ScreenManager.registerFactory(Registries.BAG_CONTAINER.get(), InventoryGUI::new);
         ScreenManager.registerFactory(Registries.PLAYER_CONTAINER.get(), PlayerInterfaceGUI::new);
-        ScreenManager.registerFactory(Registries.UPGRADE_CONTAINER.get(), UpgradeGUI::new);
+//        ScreenManager.registerFactory(Registries.UPGRADE_CONTAINER.get(), UpgradeGUI::new);
         RenderingRegistry.registerEntityRenderingHandler(Registries.BAG_ITEM_ENTITY.get(), EntityItemRenderer::new);
     }
 

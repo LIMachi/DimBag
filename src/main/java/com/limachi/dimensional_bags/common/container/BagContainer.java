@@ -63,7 +63,7 @@ public class BagContainer extends BaseWrappedInventoryContainer {
 
     @Override
     public void detectAndSendChanges() {
-        if (!client && (data.getColumns() != columns || data.getRows() != rows)) //size changed, should reopen the gui client side (via openGUI server side) to sync the new size/item position
+        if (!client && data != null && (data.getColumns() != columns || data.getRows() != rows)) //size changed, should reopen the gui client side (via openGUI server side) to sync the new size/item position
             Network.openEyeInventory((ServerPlayerEntity) playerInv.getPlayerInventory().player, data);
         else
             super.detectAndSendChanges();

@@ -247,12 +247,14 @@ public class Wrapper implements IItemHandlerModifiable { //rewrite of InvWrapper
         IORights[] newRights = new IORights[newSize];
         for (int y = 0; y < newRows; ++y)
             for (int x = 0; x < newColumns; ++x)
-                if (x + y * newColumns < newSize && x < prevColumns && y < prevRows && x + y * prevColumns < inv.getSizeInventory()) {
-                    newInv.setInventorySlotContents(x + y * newColumns, this.inv.getStackInSlot(x + y * prevColumns));
-                    newRights[x + y * newColumns] = this.IO[x + y * prevColumns];
-                } else {
-                    newInv.setInventorySlotContents(x + y * newColumns, ItemStack.EMPTY);
-                    newRights[x + y * newColumns] = new IORights();
+                if (x + y * newColumns < newSize) {
+                    if (x < prevColumns && y < prevRows && x + y * prevColumns < inv.getSizeInventory()) {
+                        newInv.setInventorySlotContents(x + y * newColumns, this.inv.getStackInSlot(x + y * prevColumns));
+                        newRights[x + y * newColumns] = this.IO[x + y * prevColumns];
+                    } else {
+                        newInv.setInventorySlotContents(x + y * newColumns, ItemStack.EMPTY);
+                        newRights[x + y * newColumns] = new IORights();
+                    }
                 }
         for (int i = newRows * newColumns; i < newSize; ++i) {
             newInv.setInventorySlotContents(i, ItemStack.EMPTY);

@@ -1,7 +1,8 @@
 {
   "type": "minecraft:crafting_shaped",
   "pattern": [
-    "###"
+    "##",
+    "##"
   ],
   "key": {
     "#": {
@@ -9,7 +10,7 @@
     }
   },
   "result": {
-    "item": "dim_bag:upgrade_row",
+    "item": "dim_bag:upgrade_slot_x4",
     "count": 1
   }
 }

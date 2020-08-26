@@ -8,9 +8,11 @@ import com.limachi.dimensional_bags.common.items.Bag;
 import javafx.util.Pair;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
+import net.minecraft.block.FlowingFluidBlock;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
+import net.minecraft.fluid.Fluids;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.server.MinecraftServer;
@@ -78,22 +80,17 @@ public class EventManager {
                 if (user != null) {
                     if (user.isInWater() && (tick & 63) == 0) {
                         DimBag.LOGGER.info("that bag is swiming! (" + data.getId() + ")");
-                        BlockState water = Blocks.WATER.getDefaultState();
+                        BlockState water = Blocks.WATER.getDefaultState().with(FlowingFluidBlock.LEVEL, 1);
                         if (dbworld.getBlockState(data.getEyePos().down()) == Blocks.AIR.getDefaultState()) {
-                            dbworld.setBlockState(data.getEyePos().down(), water);
-                            addDelayedTask(tick + 20, () -> {
-                                World world = WorldUtils.getRiftWorld();
-                                if (world.getBlockState(data.getEyePos().down()) == water)
-                                    world.setBlockState(data.getEyePos().down(), Blocks.AIR.getDefaultState());
-                                return true;
-                            });
+                            dbworld.setBlockState(data.getEyePos().down(), water, 11);
+                            dbworld.setBlockState(data.getEyePos().down().east(), water, 11);
                         }
                     }
                     if (user.isBurning())
                         DimBag.LOGGER.info("that bag is on fire (" + data.getId() + ")");
                     if (user.isInLava())
                         DimBag.LOGGER.info("Everybody's lava jumpin'! (" + data.getId() + ")");
-                    DimBag.LOGGER.info("Ima load this chunk: (" + WorldUtils.worldRKToString(WorldUtils.worldRKFromWorld(user.getEntityWorld())) + ") " + user.getPosition().getX() + ", " + user.getPosition().getZ() + " (" + data.getId() + ")");
+//                    DimBag.LOGGER.info("Ima load this chunk: (" + WorldUtils.worldRKToString(WorldUtils.worldRKFromWorld(user.getEntityWorld())) + ") " + user.getPosition().getX() + ", " + user.getPosition().getZ() + " (" + data.getId() + ")");
                     dbd.loadChunk(server, WorldUtils.worldRKFromWorld(user.getEntityWorld()), user.getPosition().getX(), user.getPosition().getZ(), data.getId());
                 } else { //did not find a user, usually meaning the bag item/entity isn't loaded or the entity using it isn't loaded
 //                    DimBag.LOGGER.info("that bag is MIA (" + data.getId() + ")");
@@ -121,17 +118,12 @@ public class EventManager {
             DimBag.LOGGER.info("bag is attacked by " + event.getPlayer().getUniqueID());
             event.setCanceled(true);
             PlayerEntity player = event.getPlayer();
-            Hand hand;
-            if (player.getHeldItemMainhand().getItem() == Items.AIR) {
-                hand = Hand.MAIN_HAND;
-            } else if (player.getHeldItemOffhand().getItem() == Items.AIR) {
-                hand = Hand.OFF_HAND;
-            } else return;
             ItemStack new_bag = ItemStack.read(event.getTarget().getPersistentData().getCompound(BagEntity.ITEM_KEY));
             if (new_bag == ItemStack.EMPTY) {
                 new_bag = Bag.stackWithId(((BagEntity)event.getEntity()).getId());
             }
-            player.setHeldItem(hand, new_bag);
+            if (!player.addItemStackToInventory(new_bag))
+                return;
             event.getTarget().remove();
         }
     }

@@ -24,7 +24,7 @@ public class InvWrapperUpgradeSlot extends InvWrapperSlot {
             ItemStack stack = getStack();
             int newStackSize = stack.getCount();
             if (newStackSize != prevStackSize) {
-                UpgradeManager.applyUpgrade(UpgradeManager.getIdByStack(stack), prevStackSize, newStackSize, data);
+//                UpgradeManager.applyUpgrade(UpgradeManager.getIdByStack(stack), prevStackSize, newStackSize, data);
                 this.prevStackSize = newStackSize;
             }
         }

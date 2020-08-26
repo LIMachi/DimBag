@@ -44,6 +44,7 @@ public class Tunnel extends Block {
         }
         if (player.isCrouching()) {//shift-left-click, remove the tunnel (replace it by a wall) and give back the tunnel placer (item)
             worldIn.setBlockState(pos, Registries.WALL_BLOCK.get().getDefaultState());
+            EyeData.tunnel(worldIn, pos, player, false, true);
             player.addItemStackToInventory(new ItemStack(Registries.TUNNEL_ITEM.get()));
         }
     }

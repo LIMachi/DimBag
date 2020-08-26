@@ -1,9 +1,11 @@
 package com.limachi.dimensional_bags.common;
 
-//import net.minecraftforge.common.ModDimension;
 import com.limachi.dimensional_bags.common.entities.BagEntity;
+import com.limachi.dimensional_bags.common.recipes.RecipeList;
+import com.limachi.dimensional_bags.common.upgradeManager.UpgradeManager;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.ai.attributes.GlobalEntityTypeAttributes;
+import net.minecraft.item.crafting.IRecipeSerializer;
 import net.minecraftforge.event.RegistryEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -28,5 +30,11 @@ public class ModEventSubscriber {
     @SubscribeEvent
     public static void registerEntity(RegistryEvent.Register<EntityType<?>> event) {
         GlobalEntityTypeAttributes.put(BAG_ENTITY.get(), BagEntity.getAttributeMap().create());
+    }
+
+    @SubscribeEvent
+    public static void registerRecipeSerializer(RegistryEvent.Register<IRecipeSerializer<?>> event) {
+        UpgradeManager.registerRecipes(event.getRegistry());
+        RecipeList.registerRecipes(event.getRegistry());
     }
 }

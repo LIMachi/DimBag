@@ -13,7 +13,7 @@ import static com.limachi.dimensional_bags.common.references.GUIs.UpgradeScreen.
 import static com.limachi.dimensional_bags.common.references.GUIs.UpgradeScreen.FIRST_SLOT_Y;
 import static com.limachi.dimensional_bags.common.references.GUIs.UpgradeScreen.PLAYER_INVENTORY_PART_Y;
 
-public class UpgradeContainer extends BaseWrappedInventoryContainer {
+public class UpgradeContainer /*extends BaseWrappedInventoryContainer*/ {/*
 
     private EyeData data;
 
@@ -38,4 +38,4 @@ public class UpgradeContainer extends BaseWrappedInventoryContainer {
                 if (x + y * 9 < openInv.getSlots())
                         this.addSlot(new InvWrapperUpgradeSlot(openInv, x + y * 9, sx + SLOT_SIZE_X * x, sy + SLOT_SIZE_Y * y, data));
     }
-}
+*/}

@@ -1,7 +1,6 @@
 package com.limachi.dimensional_bags.common.items;
 
 import com.limachi.dimensional_bags.DimBag;
-import com.limachi.dimensional_bags.common.EventManager;
 import com.limachi.dimensional_bags.common.data.DimBagData;
 import com.limachi.dimensional_bags.common.data.EyeData;
 import com.limachi.dimensional_bags.common.entities.BagEntity;
@@ -11,7 +10,6 @@ import net.minecraft.client.util.ITooltipFlag;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.ItemUseContext;
 import net.minecraft.nbt.CompoundNBT;
@@ -20,7 +18,6 @@ import net.minecraft.util.ActionResultType;
 import net.minecraft.util.Hand;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TranslationTextComponent;
-import net.minecraft.world.DimensionType;
 import net.minecraft.world.World;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
@@ -28,7 +25,7 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 import javax.annotation.Nullable;
 import java.util.List;
 
-public class Bag extends Item {
+public class Bag extends DimBagCommonItem {
 
     public static final String ID_KEY = "dim_bag_eye_id";
     public static final String OWNER_KEY = "dim_bag_eye_owner";
@@ -90,6 +87,7 @@ public class Bag extends Item {
             tooltip.add(new TranslationTextComponent("tooltip.bag.missing_id"));
         else
             tooltip.add(new TranslationTextComponent("tooltip.bag.id", id, getOwner(stack)));
+        super.addInformation(stack, world, tooltip, flagIn);
     }
 
     @Override
@@ -114,10 +112,10 @@ public class Bag extends Item {
         int id;
         if (!DimBag.isServer(world) || (id = getId(player.getHeldItem(hand))) == 0) return super.onItemRightClick(world, player, hand);
         EyeData data = EyeData.get(world.getServer(), id);
-        if (!player.isCrouching())
+//        if (!player.isCrouching())
             Network.openEyeInventory((ServerPlayerEntity) player, data);
-        else
-            Network.openEyeUpgrades((ServerPlayerEntity) player, data);
+//        else
+//            Network.openEyeUpgrades((ServerPlayerEntity) player, data);
         return new ActionResult<>(ActionResultType.SUCCESS, player.getHeldItem(hand));
     }
 }

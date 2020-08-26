@@ -94,7 +94,7 @@ public class BagEntity extends MobEntity {
             EyeData data = EyeData.get(this.world.getServer(), getId());
 //            if (data != null)
 //                LOGGER.info("Hi my name is. What? My name is. Who? My name is " + data.getId());
-            if (data != null && data.getId() != EyeData.getEyeId(this.world, this.getPosition())) //only update the position if the bag isn't in itself
+            if (data != null && data != EyeData.getEyeData(this.world, this.getPosition(), false)) //only update the position if the bag isn't in itself
                 data.updateBagPosition(this.getPosition(), (ServerWorld)this.world);
             if (data != null)
                 data.setUser(this);
@@ -117,5 +117,10 @@ public class BagEntity extends MobEntity {
         else
             Network.openEyeInventory((ServerPlayerEntity)player, EyeData.get(world.getServer(), id));
         return ActionResultType.SUCCESS;
+    }
+
+    @Override
+    protected void collideWithEntity(Entity entityIn) {
+
     }
 }

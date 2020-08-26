@@ -85,7 +85,7 @@ public class Chunkloadder {
         ListNBT cl = compound.getList("ChunkLoaded", 10);
         for (int i = 0; i < cl.size(); ++i) {
             CompoundNBT e = (CompoundNBT)cl.get(i);
-            map.put(e.getInt("Id"), new CLEntry(e.getString("DimReg"), e.getInt("X"), e.getInt("Y")));
+            map.put(e.getInt("Id"), new CLEntry(e.getString("Dim"), e.getInt("X"), e.getInt("Y")));
         }
         reloadAll();
     }

@@ -58,13 +58,13 @@ public class Registries {
     public static final RegistryObject<TileEntityType<PillarTileEntity>> PILLAR_TE = TILE_ENTITY_REGISTER.register("pillar", () -> TileEntityType.Builder.create(PillarTileEntity::new, PILLAR_BLOCK.get()).build(null));
 
     public static final RegistryObject<ContainerType<BagContainer>> BAG_CONTAINER = CONTAINER_TYPE_REGISTER.register("inventory", () -> IForgeContainerType.create(BagContainer::CreateClient));
-    public static final RegistryObject<ContainerType<UpgradeContainer>> UPGRADE_CONTAINER = CONTAINER_TYPE_REGISTER.register("upgrades", () -> IForgeContainerType.create(UpgradeContainer::new));
+//    public static final RegistryObject<ContainerType<UpgradeContainer>> UPGRADE_CONTAINER = CONTAINER_TYPE_REGISTER.register("upgrades", () -> IForgeContainerType.create(UpgradeContainer::new));
     public static final RegistryObject<ContainerType<WrappedPlayerInventoryContainer>> PLAYER_CONTAINER = CONTAINER_TYPE_REGISTER.register("player", () -> IForgeContainerType.create(WrappedPlayerInventoryContainer::createClient));
 
     public static final RegistryObject<EntityType<BagEntity>> BAG_ENTITY = ENTITY_REGISTER.register("bag_entity", () -> EntityType.Builder.<BagEntity>create(BagEntity::new, EntityClassification.MISC).size(0.5f, 1f).build(new ResourceLocation(MOD_ID, "bag_entity").toString()));
 
     public static void registerAll(IEventBus bus) {
-        UpgradeManager.register(ITEM_REGISTER);
+        UpgradeManager.registerItems(ITEM_REGISTER);
         BLOCK_REGISTER.register(bus);
         ITEM_REGISTER.register(bus);
         TILE_ENTITY_REGISTER.register(bus);

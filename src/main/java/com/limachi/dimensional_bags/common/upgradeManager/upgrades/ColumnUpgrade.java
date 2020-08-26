@@ -5,15 +5,15 @@ import com.limachi.dimensional_bags.common.upgradeManager.Upgrade;
 
 public class ColumnUpgrade extends Upgrade {
 
-    public ColumnUpgrade() { super("column", true, 9, 18, 1, 35); }
+    public ColumnUpgrade() { super("column", true, 9, 12, 1, 18); }
 
     @Override
-    protected void applyUpgrade(int countBefore, int countAfter, EyeData data) {
-        if (countAfter > countBefore) {
-            int rows = data.getRows();
-            int size = rows * countAfter;
-            data.getInventory().resizeInventory(size, rows, countAfter, rows, data.getColumns());
-            data.markDirty();
-        }
+    protected void applyUpgrade(EyeData data) {
+        int rows = data.getRows();
+        int columns = data.getColumns();
+        int size = data.getInventory().getSlots();
+        data.getInventory().resizeInventory(size + 3, rows, columns + 1, rows, columns);
+        data.setColumns(columns + 1);
+        data.markDirty();
     }
 }

@@ -167,7 +167,7 @@ public class InventoryGUI extends ContainerScreen<BagContainer> {
 
     @Override
     protected void drawGuiContainerForegroundLayer(MatrixStack matrixStack, int mouseX, int mouseY) {
-        super.drawGuiContainerForegroundLayer(matrixStack, mouseX, mouseY);
+//        super.drawGuiContainerForegroundLayer(matrixStack, mouseX, mouseY);
         if (this.columns < 9)
             this.font.drawString(matrixStack, /*this.title.getFormattedText()*/title.getString(), PLAYER_INVENTORY_X / 2, this.ySize - PLAYER_INVENTORY_Y - PART_SIZE_Y / 2, 4210752);
         else

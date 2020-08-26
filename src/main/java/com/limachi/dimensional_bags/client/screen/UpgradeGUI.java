@@ -14,7 +14,7 @@ import static com.limachi.dimensional_bags.common.references.GUIs.ScreenParts.SL
 import static com.limachi.dimensional_bags.common.references.GUIs.ScreenParts.UNUSED_SLOT;
 import static com.limachi.dimensional_bags.common.references.GUIs.UpgradeScreen.*;
 
-public class UpgradeGUI extends ContainerScreen<UpgradeContainer> {
+public class UpgradeGUI /*extends ContainerScreen<UpgradeContainer>*/ {/*
 
     public UpgradeGUI(UpgradeContainer screenContainer, PlayerInventory inv, ITextComponent titleIn) {
         super(screenContainer, inv, titleIn);
@@ -38,9 +38,9 @@ public class UpgradeGUI extends ContainerScreen<UpgradeContainer> {
 
     @Override
     protected void drawGuiContainerForegroundLayer(MatrixStack matrixStack, int mouseX, int mouseY) {
-        super.drawGuiContainerForegroundLayer(matrixStack, mouseX, mouseY);
-        this.font.drawString(matrixStack, this.title/*.getFormattedText()*/.getString(), TITLES_X, GUI_TITLE_Y, 4210752);
-        this.font.drawString(matrixStack, this.playerInventory.getDisplayName()/*.getFormattedText()*/.getString(), TITLES_X, INVENTORY_TITLE_Y, 4210752);
+//        super.drawGuiContainerForegroundLayer(matrixStack, mouseX, mouseY);
+        this.font.drawString(matrixStack, this.title.getString(), TITLES_X, GUI_TITLE_Y, 4210752);
+        this.font.drawString(matrixStack, this.playerInventory.getDisplayName().getString(), TITLES_X, INVENTORY_TITLE_Y, 4210752);
 
         int slot = -1;
         for (int y = 0; y < 2; ++y)
@@ -51,7 +51,7 @@ public class UpgradeGUI extends ContainerScreen<UpgradeContainer> {
                 if (p < UpgradeManager.upgradesCount() && mouseX > lx && mouseX < lx + SLOT_SIZE_X && mouseY > ly && mouseY < ly + SLOT_SIZE_Y)
                     slot = p;
             }
-//        this.font.drawSplitString(/*"Description: " + */(slot != -1 ? UpgradeManager.getDescription(slot) : ""), HELP_X, HELP_Y, BACKGROUND_X - HELP_X * 2, 4210752);
+//        this.font.drawSplitString("Description: " + (slot != -1 ? UpgradeManager.getDescription(slot) : ""), HELP_X, HELP_Y, BACKGROUND_X - HELP_X * 2, 4210752);
     }
 
     @Override
@@ -70,4 +70,4 @@ public class UpgradeGUI extends ContainerScreen<UpgradeContainer> {
                     this.blitGuiFull(matrixStack, FIRST_SLOT_X + x * SLOT_SIZE_X, FIRST_SLOT_Y + y * SLOT_SIZE_Y, SLOT_SIZE_X, SLOT_SIZE_Y);
                 }
     }
-}
+*/}

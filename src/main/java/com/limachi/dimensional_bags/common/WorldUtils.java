@@ -1,21 +1,26 @@
 package com.limachi.dimensional_bags.common;
 
 import com.limachi.dimensional_bags.DimBag;
-import com.limachi.dimensional_bags.common.data.EyeData;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
+import net.minecraft.entity.CreatureEntity;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
+import net.minecraft.network.play.server.SPlayerPositionLookPacket;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.RegistryKey;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.ChunkPos;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.registry.Registry;
 import net.minecraft.world.World;
 import net.minecraft.world.server.ServerWorld;
-import net.minecraftforge.common.util.ITeleporter;
+import net.minecraft.world.server.TicketType;
 
-import java.util.function.Function;
+import java.util.EnumSet;
+import java.util.Set;
 
 public class WorldUtils { //TODO: remove bloat once MCP/Forge mappings are better/more stable
 
@@ -41,26 +46,53 @@ public class WorldUtils { //TODO: remove bloat once MCP/Forge mappings are bette
         return reg.func_240901_a_().toString();
     }
 
-    public static void teleportEntity(Entity entity, RegistryKey<World> destType, BlockPos destPos) {
-        if (!DimBag.isServer(entity.world)) return;
-        ServerWorld world = entity.getServer().getWorld(destType);
-        int destId = EyeData.getEyeId(world, destPos);
-//        if (destId != 0 && EyeData.getEyeId(entity.world, entity.getPosition()) == destId) return; //invalidate the teleport if the entity is already in the destination room
-        world.getChunk(destPos); //charge the chunk before teleport
-        entity.changeDimension(/*destType*/world, new ITeleporter() { //vanilla entity teleporter between dimensions, repositionement of entity must be done after this call since it will divide by 8 the position of the entity (vanilla nether portal)
-            @Override
-            public Entity placeEntity(Entity entity, ServerWorld currentWorld, ServerWorld destWorld, float yaw, Function<Boolean, Entity> repositionEntity) {
-                return repositionEntity.apply(false); //just run the default teleporter (the nether one) and prevent the spawn of a nether portal
+    private static void teleport(Entity entityIn, ServerWorld worldIn, double x, double y, double z, float yaw, float pitch) { //modified version of TeleportCommand.java: 123: TeleportCommand#teleport(CommandSource source, Entity entityIn, ServerWorld worldIn, double x, double y, double z, Set<SPlayerPositionLookPacket.Flags> relativeList, float yaw, float pitch, @Nullable TeleportCommand.Facing facing) throws CommandSyntaxException
+        Set<SPlayerPositionLookPacket.Flags> set = EnumSet.noneOf(SPlayerPositionLookPacket.Flags.class);
+        set.add(SPlayerPositionLookPacket.Flags.X_ROT);
+        set.add(SPlayerPositionLookPacket.Flags.Y_ROT);
+        if (entityIn instanceof ServerPlayerEntity) {
+            ChunkPos chunkpos = new ChunkPos(new BlockPos(x, y, z));
+            worldIn.getChunkProvider().registerTicket(TicketType.POST_TELEPORT, chunkpos, 1, entityIn.getEntityId());
+            entityIn.stopRiding();
+            if (((ServerPlayerEntity)entityIn).isSleeping())
+                ((ServerPlayerEntity)entityIn).stopSleepInBed(true, true);
+            if (worldIn == entityIn.world)
+                ((ServerPlayerEntity)entityIn).connection.setPlayerLocation(x, y, z, yaw, pitch, set);
+            else
+                ((ServerPlayerEntity)entityIn).teleport(worldIn, x, y, z, yaw, pitch);
+            entityIn.setRotationYawHead(yaw);
+        } else {
+            float f1 = MathHelper.wrapDegrees(yaw);
+            float f = MathHelper.wrapDegrees(pitch);
+            f = MathHelper.clamp(f, -90.0F, 90.0F);
+            if (worldIn == entityIn.world) {
+                entityIn.setLocationAndAngles(x, y, z, f1, f);
+                entityIn.setRotationYawHead(f1);
+            } else {
+                entityIn.detach();
+                Entity entity = entityIn;
+                entityIn = entityIn.getType().create(worldIn);
+                if (entityIn == null)
+                    return;
+                entityIn.copyDataFromOld(entity);
+                entityIn.setLocationAndAngles(x, y, z, f1, f);
+                entityIn.setRotationYawHead(f1);
+                worldIn.addFromAnotherDimension(entityIn);
             }
-        });
-        double x = destPos.getX() + 0.5d;
-        double y = destPos.getY() + 0.5d;
-        double z = destPos.getZ() + 0.5d;
-        if (entity instanceof ServerPlayerEntity) { //player specific way of teleporting
-            ((ServerPlayerEntity)entity).connection.setPlayerLocation(x, y, z, entity.rotationYaw, entity.rotationPitch);
-            ((ServerPlayerEntity)entity).connection.captureCurrentPosition();
-        } else //other entities way of teleporting
-            entity.setLocationAndAngles(x, y, z, entity.rotationYaw, entity.rotationPitch);
+        }
+        if (!(entityIn instanceof LivingEntity) || !((LivingEntity)entityIn).isElytraFlying()) {
+            entityIn.setMotion(entityIn.getMotion().mul(1.0D, 0.0D, 1.0D));
+            entityIn.setOnGround(true);
+        }
+        if (entityIn instanceof CreatureEntity) {
+            ((CreatureEntity)entityIn).getNavigator().clearPath();
+        }
+    }
+
+    public static void teleportEntity(Entity entity, RegistryKey<World> destType, BlockPos destPos) {
+        if (entity.world.isRemote()) return;
+        ServerWorld world = entity.getServer().getWorld(destType);
+        teleport(entity, world, destPos.getX() + 0.5, destPos.getY(), destPos.getZ() + 0.5, entity.rotationYaw, entity.rotationPitch);
     }
 
     public static void buildRoom(World world, BlockPos center, int radius, int prevRad) { //build a new main room or expand it by tearing down walls a adding new ones further TODO: add code to keep doors and covers on walls

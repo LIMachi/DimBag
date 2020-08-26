@@ -54,6 +54,7 @@ public class Network {
         });
     }
 
+    /*
     public static void openEyeUpgrades(ServerPlayerEntity player, EyeData data) {
         NetworkHooks.openGui(player, new INamedContainerProvider() {
             @Override
@@ -68,4 +69,5 @@ public class Network {
             }
         }, data.getupgrades()::sizeAndRightsToBuffer);
     }
+    */
 }
