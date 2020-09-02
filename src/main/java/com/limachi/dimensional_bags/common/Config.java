@@ -1,6 +1,6 @@
 package com.limachi.dimensional_bags.common;
 
-import com.limachi.dimensional_bags.common.upgradeManager.UpgradeManager;
+import com.limachi.dimensional_bags.common.managers.UpgradeManager;
 import net.minecraftforge.common.ForgeConfigSpec;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;

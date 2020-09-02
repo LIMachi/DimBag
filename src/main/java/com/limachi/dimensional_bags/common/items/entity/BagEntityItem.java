@@ -8,6 +8,7 @@ import net.minecraft.entity.EntityType;
 import net.minecraft.entity.item.ItemEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.network.IPacket;
+import net.minecraft.util.DamageSource;
 import net.minecraft.world.World;
 import net.minecraftforge.fml.network.NetworkHooks;
 
@@ -40,6 +41,8 @@ public class BagEntityItem extends ItemEntity {
     @Override
     public void tick() {
         if (!world.isRemote()) {
+            if (getPosition().getY() < 1)
+                setPosition(getPosX(), 1, getPosZ());
             int id = Bag.getId(getItem());
             if (id != 0) {
                 EyeData data = EyeData.get(getServer(), id);
@@ -47,5 +50,9 @@ public class BagEntityItem extends ItemEntity {
             }
         }
         super.tick();
+    }
+
+    public boolean attackEntityFrom(DamageSource source, float amount) {
+        return false;
     }
 }

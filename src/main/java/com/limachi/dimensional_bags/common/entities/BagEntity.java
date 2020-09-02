@@ -14,6 +14,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.util.ActionResultType;
+import net.minecraft.util.DamageSource;
 import net.minecraft.util.Hand;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.RayTraceResult;
@@ -48,6 +49,10 @@ public class BagEntity extends MobEntity {
         out.setCustomNameVisible(true);
         world.addEntity(out);
         return out;
+    }
+
+    public boolean attackEntityFrom(DamageSource source, float amount) {
+        return false;
     }
 
     @Override

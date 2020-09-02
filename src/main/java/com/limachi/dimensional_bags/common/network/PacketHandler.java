@@ -1,5 +1,7 @@
 package com.limachi.dimensional_bags.common.network;
 
+import com.limachi.dimensional_bags.common.network.packets.ChangeModeRequest;
+import com.limachi.dimensional_bags.common.network.packets.OpenGuiRequest;
 import com.limachi.dimensional_bags.common.network.packets.SlotIORightsChanged;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.util.ResourceLocation;
@@ -34,6 +36,8 @@ public class PacketHandler {
 
     static {
         HANDLER.registerMessage(index++, SlotIORightsChanged.class, SlotIORightsChanged::toBytes, SlotIORightsChanged::fromBytes, SlotIORightsChanged::enqueue);
+        HANDLER.registerMessage(index++, ChangeModeRequest.class, ChangeModeRequest::toBytes, ChangeModeRequest::fromBytes, ChangeModeRequest::enqueue);
+        HANDLER.registerMessage(index++, OpenGuiRequest.class, OpenGuiRequest::toBytes, OpenGuiRequest::fromBytes, OpenGuiRequest::enqueue);
     }
 
     public static <T> void toServer(T msg) { HANDLER.sendToServer(msg); }

@@ -2,7 +2,7 @@ package com.limachi.dimensional_bags.common.items;
 
 import com.limachi.dimensional_bags.DimBag;
 import com.limachi.dimensional_bags.common.data.EyeData;
-import com.limachi.dimensional_bags.common.upgradeManager.UpgradeManager;
+import com.limachi.dimensional_bags.common.managers.UpgradeManager;
 import net.minecraft.client.util.ITooltipFlag;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
@@ -25,9 +25,7 @@ public class DimBagCommonItem extends Item {
     public static final String onTickCommands = "pending";
     public static final String onCreateCommands = "crafting";
 
-    public DimBagCommonItem(Properties properties) {
-        super(properties.group(DimBag.ITEM_GROUP));
-    }
+    public DimBagCommonItem(Properties properties) { super(properties.group(DimBag.ITEM_GROUP)); }
 
     public static String[] getStringList(ItemStack stack, String key) {
         if (!stack.hasTag())
@@ -69,9 +67,10 @@ public class DimBagCommonItem extends Item {
         if (worldIn.isRemote()) return;
         if (s.startsWith("upgrade.") && stack.getItem() instanceof Bag) {
             EyeData data = EyeData.get(worldIn.getServer(), Bag.getId(stack));
-            Integer id = UpgradeManager.getIdByName(s.substring(8));
-            if (id != null)
-                UpgradeManager.applyUpgrade(id, data);
+//            Integer id = UpgradeManager.getIdByName(s.substring(8));
+//            if (id != null)
+//                UpgradeManager.applyUpgrade(id, data);
+            UpgradeManager.getUpgrade(s.substring(8)).upgradeCrafted(data, stack, worldIn, entityIn);
         }
         if (s.startsWith("add.") && entityIn instanceof ServerPlayerEntity) {
             int qty = 0;

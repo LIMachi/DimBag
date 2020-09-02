@@ -1,6 +1,6 @@
 {
   "parent": "item/generated",
   "textures": {
-    "layer0": "dim_bag:items/bag"
+    "layer0": "dim_bag:item/bag"
   }
 }

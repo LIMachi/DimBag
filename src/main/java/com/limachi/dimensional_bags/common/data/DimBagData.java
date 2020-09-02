@@ -12,7 +12,6 @@ import net.minecraft.world.storage.WorldSavedData;
 import javax.annotation.Nullable;
 
 import static com.limachi.dimensional_bags.DimBag.MOD_ID;
-import static com.limachi.dimensional_bags.common.upgradeManager.UpgradeManager.RADIUS;
 
 public class DimBagData extends WorldSavedData { //server side only, client side only has acces to copies of inventories or other data sync through packets (vanilla, forge or modded ones)
     private int lastId;

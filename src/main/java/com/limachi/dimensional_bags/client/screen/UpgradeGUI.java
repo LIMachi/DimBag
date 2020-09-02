@@ -1,19 +1,5 @@
 package com.limachi.dimensional_bags.client.screen;
 
-import com.limachi.dimensional_bags.common.container.UpgradeContainer;
-import com.limachi.dimensional_bags.common.upgradeManager.UpgradeManager;
-import com.mojang.blaze3d.matrix.MatrixStack;
-import com.mojang.blaze3d.systems.RenderSystem;
-import net.minecraft.client.gui.screen.inventory.ContainerScreen;
-import net.minecraft.client.renderer.texture.TextureManager;
-import net.minecraft.entity.player.PlayerInventory;
-import net.minecraft.util.text.ITextComponent;
-
-import static com.limachi.dimensional_bags.common.references.GUIs.ScreenParts.SLOT_SIZE_X;
-import static com.limachi.dimensional_bags.common.references.GUIs.ScreenParts.SLOT_SIZE_Y;
-import static com.limachi.dimensional_bags.common.references.GUIs.ScreenParts.UNUSED_SLOT;
-import static com.limachi.dimensional_bags.common.references.GUIs.UpgradeScreen.*;
-
 public class UpgradeGUI /*extends ContainerScreen<UpgradeContainer>*/ {/*
 
     public UpgradeGUI(UpgradeContainer screenContainer, PlayerInventory inv, ITextComponent titleIn) {

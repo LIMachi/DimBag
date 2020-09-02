@@ -9,6 +9,7 @@
   "item.dim_bag.tunnel_placer": "Tunnel Placer",
   "block.dim_bag.bag_eye": "The All Seeing Eye Of The Dimentional Rift",
   "block.dim_bag.pillar": "Pillar",
+  "block.dim_bag.cloud": "Cloud",
   "itemGroup.tab_dim_bag": "Dimensional Bags",
   "curios.identifier.backpack": "Backpack",
   "tooltip.upgrade.slot.craft_result": "Will produce between 9 and 27 slots",
@@ -19,5 +20,11 @@
   "inventory.player_interface.name": "Player Inventory: %s",
   "inventory.upgrades.row.description": "add an extra row to your bag inventory, increasing it's storage capacity",
   "inventory.upgrades.column.description": "add an extra column to your bag inventory, increasing it's storage capacity",
-  "inventory.upgrades.radius.description": "increase the size of the current room (main room if applied to the bag directly) by 1 block in all directions"
+  "inventory.upgrades.radius.description": "increase the size of the current room (main room if applied to the bag directly) by 1 block in all directions",
+  "tooltip.bag.upgrade_count": "%s -> %d/%d",
+  "tooltip.bag.usable_slots": "Usable slots: %d/%d",
+  "tooltip.shift_for_info": "use [SHIFT] for more information",
+  "tooltip.bag.mode": "Selected mode: %s",
+  "notification.bag.changed_mode": "Switched mode to: %s",
+  "bag.mode.Default": "Default"
 }

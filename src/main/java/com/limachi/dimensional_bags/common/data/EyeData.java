@@ -4,7 +4,8 @@ import com.limachi.dimensional_bags.DimBag;
 import com.limachi.dimensional_bags.common.Registries;
 import com.limachi.dimensional_bags.common.WorldUtils;
 import com.limachi.dimensional_bags.common.inventory.BagInventory;
-import com.limachi.dimensional_bags.common.upgradeManager.UpgradeManager;
+import com.limachi.dimensional_bags.common.managers.ModeManager;
+import com.limachi.dimensional_bags.common.managers.UpgradeManager;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.entity.player.ServerPlayerEntity;
@@ -24,7 +25,6 @@ import java.lang.ref.WeakReference;
 import java.util.*;
 
 import static com.limachi.dimensional_bags.DimBag.MOD_ID;
-import static com.limachi.dimensional_bags.common.upgradeManager.UpgradeManager.*;
 
 public class EyeData extends WorldSavedData { //TODO: make EyeData a WorldSavedData (and change DimBagData to only hold global data, like id's), and no longer use the manager, the eye will manage itself (the get function will take an id in adition to the additional server), no longer use the DimensionSavedDataManager#getOrCreate, make the getter use get and return an error if not present, use the setter to create a new eye
     private int id;
@@ -37,9 +37,12 @@ public class EyeData extends WorldSavedData { //TODO: make EyeData a WorldSavedD
     private BlockPos tpPosition;
     private BagInventory inventory;
     private final DimBagData globalData;
-    private int[] upgrades;
     private Map<BlockPos, Integer> subRoomsToId; //maps virtual room coordinates (x,y,z) to real coordinates (+/-z), room 0,0,0 is the main/center room
     private ArrayList<BlockPos> idToSubRooms; //inverse of the above map
+    private CompoundNBT upgradesNBT; //private storage of the upgrades
+    private ModeManager modeManager;
+
+    public ModeManager modeManager() { return modeManager; }
 
     public int roomCount() { return idToSubRooms.size(); }
 
@@ -112,9 +115,9 @@ public class EyeData extends WorldSavedData { //TODO: make EyeData a WorldSavedD
         this.entity = new WeakReference<>(player);
         this.tpDimension = WorldUtils.DimOverworldKey;
         this.tpPosition = WorldUtils.getOverWorld().func_241135_u_(); //TODO: replace mapping, should be the call to get the default spawn
-        this.upgrades = new int[UpgradeManager.upgradesCount()];
-        for (int i = 0; i < UpgradeManager.upgradesCount(); ++i)
-            this.upgrades[i] = UpgradeManager.getStart(i);
+        this.upgradesNBT = new CompoundNBT();
+        this.modeManager = new ModeManager(this);
+        UpgradeManager.startingUpgrades(this);
         this.inventory = new BagInventory(this);
         this.subRoomsToId = new HashMap<>();
         this.subRoomsToId.put(new BlockPos(0, 0, 0), 0);
@@ -174,21 +177,26 @@ public class EyeData extends WorldSavedData { //TODO: make EyeData a WorldSavedD
         return null;
     }
 
-    public EyeData setRows(int rows) { this.upgrades[ROWS] = rows; return this; }
-    public int getRows() { return this.upgrades[ROWS]; }
+//    public EyeData setRows(int rows) { this.upgrades[ROWS] = rows; return this; }
+    public int getRows() { return UpgradeManager.getUpgrade("upgrade_row").getCount(this); }
 
-    public EyeData setColumns(int columns) { this.upgrades[COLUMNS] = columns; return this; }
-    public int getColumns() { return this.upgrades[COLUMNS]; }
+//    public EyeData setColumns(int columns) { this.upgrades[COLUMNS] = columns; return this; }
+    public int getColumns() { return UpgradeManager.getUpgrade("upgrade_column").getCount(this); }
 
-    public int getRadius() { return this.upgrades[RADIUS]; }
-    public EyeData setRadius(int radius) { this.upgrades[RADIUS] = radius; return this; }
+    public int getRadius() { return UpgradeManager.getUpgrade("upgrade_radius").getCount(this); }
+//    public EyeData setRadius(int radius) { this.upgrades[RADIUS] = radius; return this; }
 
+    public CompoundNBT getUpgradesNBT() { return this.upgradesNBT; }
+    public Set<String> getUpgrades() { return this.upgradesNBT.keySet(); }
+
+    /*
     public int getUpgrade(int id) { return id < 0 || id >= UpgradeManager.upgradesCount() ? 0 : this.upgrades[id]; }
     public EyeData setUpgrade(int id, int value) {
         if (id >= 0 && id < UpgradeManager.upgradesCount())
             this.upgrades[id] = value;
         return this;
     }
+     */
 
     public final int getId() { return this.id; }
 
@@ -218,6 +226,10 @@ public class EyeData extends WorldSavedData { //TODO: make EyeData a WorldSavedD
 
     public void setUser(Entity user) {
         entity = new WeakReference<>(user);
+    }
+
+    public boolean shouldCreateCloudInVoid() {
+        return true; //FIXME: use and upgrade instead
     }
 
     public final BagInventory getInventory() { return this.inventory; }
@@ -250,11 +262,12 @@ public class EyeData extends WorldSavedData { //TODO: make EyeData a WorldSavedD
         nbt.putInt("Y", this.tpPosition.getY());
         nbt.putInt("Z", this.tpPosition.getZ());
         nbt.put("Inventory", this.inventory.write(new CompoundNBT()));
-        nbt.putIntArray("Upgrades", upgrades);
-        ListNBT list = new ListNBT();
+        nbt.put("Modes", modeManager.write(new CompoundNBT()));
+        nbt.put("UpgradesData", this.upgradesNBT);
+        ListNBT listSubRooms = new ListNBT();
         for (BlockPos li : idToSubRooms)
-            list.add(NBTUtil.writeBlockPos(li));
-        nbt.put("SubRooms", list);
+            listSubRooms.add(NBTUtil.writeBlockPos(li));
+        nbt.put("SubRooms", listSubRooms);
         return nbt;
     }
 
@@ -268,12 +281,14 @@ public class EyeData extends WorldSavedData { //TODO: make EyeData a WorldSavedD
         this.tpDimension = WorldUtils.stringToWorldRK(nbt.getString("Dim"));
         this.tpPosition = new BlockPos(nbt.getInt("X"), nbt.getInt("Y"), nbt.getInt("Z"));
         this.inventory.read(nbt.getCompound("Inventory"));
-        this.upgrades = nbt.getIntArray("Upgrades");
-        ListNBT list = nbt.getList("SubRooms", 10);
+        this.modeManager = new ModeManager(this);
+        this.modeManager.read(nbt.getCompound("Modes"));
+        this.upgradesNBT = nbt.getCompound("UpgradesData");
+        ListNBT listSubRooms = nbt.getList("SubRooms", 10);
         this.idToSubRooms = new ArrayList<>();
         this.subRoomsToId = new HashMap<>();
-        for (int i = 0; i < list.size(); ++i) {
-            BlockPos room = NBTUtil.readBlockPos(list.getCompound(i));
+        for (int i = 0; i < listSubRooms.size(); ++i) {
+            BlockPos room = NBTUtil.readBlockPos(listSubRooms.getCompound(i));
             idToSubRooms.add(i, room);
             subRoomsToId.put(room, i);
         }

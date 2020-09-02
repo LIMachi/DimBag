@@ -2,14 +2,13 @@ package com.limachi.dimensional_bags.common;
 
 import com.limachi.dimensional_bags.common.entities.BagEntity;
 import com.limachi.dimensional_bags.common.recipes.RecipeList;
-import com.limachi.dimensional_bags.common.upgradeManager.UpgradeManager;
+import com.limachi.dimensional_bags.common.managers.UpgradeManager;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.ai.attributes.GlobalEntityTypeAttributes;
 import net.minecraft.item.crafting.IRecipeSerializer;
 import net.minecraftforge.event.RegistryEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.registries.ObjectHolder;
 
 import static com.limachi.dimensional_bags.DimBag.MOD_ID;
 import static com.limachi.dimensional_bags.common.Registries.BAG_ENTITY;

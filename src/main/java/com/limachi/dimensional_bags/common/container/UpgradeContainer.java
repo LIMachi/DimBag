@@ -1,18 +1,5 @@
 package com.limachi.dimensional_bags.common.container;
 
-import com.limachi.dimensional_bags.common.Registries;
-import com.limachi.dimensional_bags.common.container.slot.InvWrapperUpgradeSlot;
-import com.limachi.dimensional_bags.common.data.EyeData;
-import net.minecraft.entity.player.PlayerInventory;
-import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraft.network.PacketBuffer;
-
-import static com.limachi.dimensional_bags.common.references.GUIs.ScreenParts.SLOT_SIZE_X;
-import static com.limachi.dimensional_bags.common.references.GUIs.ScreenParts.SLOT_SIZE_Y;
-import static com.limachi.dimensional_bags.common.references.GUIs.UpgradeScreen.FIRST_SLOT_X;
-import static com.limachi.dimensional_bags.common.references.GUIs.UpgradeScreen.FIRST_SLOT_Y;
-import static com.limachi.dimensional_bags.common.references.GUIs.UpgradeScreen.PLAYER_INVENTORY_PART_Y;
-
 public class UpgradeContainer /*extends BaseWrappedInventoryContainer*/ {/*
 
     private EyeData data;

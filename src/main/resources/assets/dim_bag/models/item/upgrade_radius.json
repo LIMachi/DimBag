@@ -1,7 +1,7 @@
 {
   "parent": "item/generated",
   "textures": {
-    "layer0": "dim_bag:items/bag_upgrade_background",
-    "layer1": "dim_bag:items/upgrades/radius"
+    "layer0": "dim_bag:item/bag_upgrade_background",
+    "layer1": "dim_bag:item/upgrades/radius"
   }
 }
