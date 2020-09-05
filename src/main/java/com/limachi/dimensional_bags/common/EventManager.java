@@ -1,10 +1,13 @@
 package com.limachi.dimensional_bags.common;
 
 import com.limachi.dimensional_bags.DimBag;
+import com.limachi.dimensional_bags.KeyMapController;
+import com.limachi.dimensional_bags.client.ClientEventSubscriber;
 import com.limachi.dimensional_bags.common.data.DimBagData;
 import com.limachi.dimensional_bags.common.data.EyeData;
 import com.limachi.dimensional_bags.common.entities.BagEntity;
 import com.limachi.dimensional_bags.common.items.Bag;
+import com.limachi.dimensional_bags.common.items.IDimBagCommonItem;
 import com.limachi.dimensional_bags.common.items.entity.BagEntityItem;
 import javafx.util.Pair;
 import net.minecraft.block.BlockState;
@@ -13,23 +16,28 @@ import net.minecraft.block.FlowingFluidBlock;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraft.fluid.Fluids;
+import net.minecraft.inventory.EquipmentSlotType;
 import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
+import net.minecraft.item.ItemUseContext;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.util.ActionResult;
+import net.minecraft.util.ActionResultType;
 import net.minecraft.util.Direction;
 import net.minecraft.util.Hand;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.BlockRayTraceResult;
+import net.minecraft.util.math.RayTraceContext;
 import net.minecraft.world.World;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.item.ItemEvent;
 import net.minecraftforge.event.entity.living.LivingEquipmentChangeEvent;
 import net.minecraftforge.event.entity.player.AttackEntityEvent;
+import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
-import java.util.ArrayList;
-import java.util.List;
+import javax.annotation.Nullable;
+import java.util.*;
 import java.util.function.Supplier;
 
 @Mod.EventBusSubscriber
@@ -137,17 +145,56 @@ public class EventManager {
 
     @SubscribeEvent
     public static void onAttackEntity(AttackEntityEvent event) {
-        if (!event.getPlayer().getEntityWorld().isRemote() && event.getTarget() instanceof BagEntity) { //detect that a bag was punched by a player, will try to give the player back the bag (in curios or hand, otherwise prevent the punch)
-            DimBag.LOGGER.info("bag is attacked by " + event.getPlayer().getUniqueID());
-            event.setCanceled(true);
-            PlayerEntity player = event.getPlayer();
-            ItemStack new_bag = ItemStack.read(event.getTarget().getPersistentData().getCompound(BagEntity.ITEM_KEY));
-            if (new_bag == ItemStack.EMPTY) {
-                new_bag = Bag.stackWithId(((BagEntity)event.getEntity()).getId());
+        if (!event.getPlayer().getEntityWorld().isRemote()) {
+            if (event.getTarget() instanceof BagEntity) {//detect that a bag was punched by a player, will try to give the player back the bag (in curios or hand, otherwise prevent the punch)
+                DimBag.LOGGER.info("bag is attacked by " + event.getPlayer().getUniqueID());
+                event.setCanceled(true);
+                PlayerEntity player = event.getPlayer();
+                ItemStack new_bag = ItemStack.read(event.getTarget().getPersistentData().getCompound(BagEntity.ITEM_KEY));
+                if (new_bag == ItemStack.EMPTY) {
+                    new_bag = Bag.stackWithId(((BagEntity) event.getEntity()).getId());
+                }
+                if (player.isCrouching() && player.inventory.armorItemInSlot(EquipmentSlotType.CHEST.getIndex()).isEmpty())
+                    player.inventory.armorInventory.set(EquipmentSlotType.CHEST.getIndex(), new_bag);
+                else if (!player.addItemStackToInventory(new_bag))
+                    return;
+                event.getTarget().remove();
+            } else if (KeyMapController.getKey(event.getPlayer(), KeyMapController.BAG_CATION_KEY)) {
+                IDimBagCommonItem.ItemSearchResult src = IDimBagCommonItem.searchItem(event.getPlayer(), 0, Bag.class, (x)->true);
+                if (src != null) {
+                    if (((Bag)src.stack.getItem()).onLeftClickEntity(src.stack, event.getPlayer(), event.getTarget()))
+                        event.setCanceled(true);
+                }
             }
-            if (!player.addItemStackToInventory(new_bag))
-                return;
-            event.getTarget().remove();
+        }
+    }
+
+    @SubscribeEvent
+    public static void onItemRightClick(PlayerInteractEvent.RightClickItem event) {
+        PlayerEntity player = event.getPlayer();
+        if (player != null) {
+            if (KeyMapController.getKey(player, KeyMapController.BAG_CATION_KEY)) {
+                IDimBagCommonItem.ItemSearchResult src = IDimBagCommonItem.searchItem(player, 0, Bag.class, (x)->true);
+                if (src != null) {
+                    ActionResult<ItemStack> res = ((Bag)src.stack.getItem()).onItemRightClick(player.world, player, src.index);
+                    if (res.getType().isSuccessOrConsume())
+                        event.setCanceled(true);
+                }
+            }
+        }
+    }
+
+    @SubscribeEvent
+    public static void onItemRightClickBlock(PlayerInteractEvent.RightClickBlock event) {
+        if (!event.getPlayer().getEntityWorld().isRemote()) {
+            if (KeyMapController.getKey(event.getPlayer(), KeyMapController.BAG_CATION_KEY)) {
+                IDimBagCommonItem.ItemSearchResult src = IDimBagCommonItem.searchItem(event.getPlayer(), 0, Bag.class, (x)->true);
+                if (src != null) {
+                    ActionResultType res = ((Bag)src.stack.getItem()).onItemUse(event.getWorld(), event.getPlayer(), src.index, Bag.rayTrace(event.getWorld(), event.getPlayer(), RayTraceContext.FluidMode.ANY));
+                    if (res.isSuccessOrConsume())
+                        event.setCanceled(true);
+                }
+            }
         }
     }
 

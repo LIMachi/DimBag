@@ -1,15 +1,17 @@
 package com.limachi.dimensional_bags.common.items;
 
+import com.limachi.dimensional_bags.DimBag;
 import com.limachi.dimensional_bags.common.Registries;
 import com.limachi.dimensional_bags.common.data.EyeData;
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.ItemUseContext;
 import net.minecraft.util.ActionResultType;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 
-public class TunnelPlacer extends DimBagCommonItem {
-    public TunnelPlacer() { super(new Properties()); }
+public class TunnelPlacer extends Item implements IDimBagCommonItem {
+    public TunnelPlacer() { super(new Properties().group(DimBag.ITEM_GROUP)); }
 
     @Override
     public ActionResultType onItemUse(ItemUseContext context) { //detect right clic on walls to transform them in tunnels, consuming 1 tunnel placer

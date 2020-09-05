@@ -1,8 +1,9 @@
 package com.limachi.dimensional_bags.common.managers;
+import com.limachi.dimensional_bags.DimBag;
 import com.limachi.dimensional_bags.common.Registries;
 import com.limachi.dimensional_bags.common.data.EyeData;
 import com.limachi.dimensional_bags.common.items.Bag;
-import com.limachi.dimensional_bags.common.items.DimBagCommonItem;
+import com.limachi.dimensional_bags.common.items.IDimBagCommonItem;
 import com.limachi.dimensional_bags.common.recipes.IRecipe;
 import com.limachi.dimensional_bags.common.recipes.Smithing;
 import net.minecraft.entity.Entity;
@@ -64,8 +65,8 @@ public abstract class Upgrade { //contain all information for config, item, upgr
 
     public String getDescription() { return this.description./*getFormattedText()*/getString(); }
 
-    public class UpgradeItem extends DimBagCommonItem {
-        public UpgradeItem(int stackLimit) { super(new Item.Properties().maxStackSize(max)); }
+    public class UpgradeItem extends Item implements IDimBagCommonItem {
+        public UpgradeItem(int stackLimit) { super(new Item.Properties().group(DimBag.ITEM_GROUP).maxStackSize(max)); }
     }
 
     void register(DeferredRegister<Item> itemRegister) { this.itemReg = itemRegister.register(this.sId, () -> new UpgradeItem(this.limit)); }
@@ -162,7 +163,7 @@ public abstract class Upgrade { //contain all information for config, item, upgr
     public IRecipe getRecipe() {
         return new Smithing(
                 new ResourceLocation(MOD_ID, sId + "_application"),
-                NonNullList.from(Ingredient.EMPTY, Ingredient.fromItems(Registries.BAG_ITEM.get()), Ingredient.fromItems(getItem())),
+                ()->NonNullList.from(Ingredient.EMPTY, Ingredient.fromItems(Registries.BAG_ITEM.get()), Ingredient.fromItems(getItem())),
                 NonNullList.create(),
                 (IInventory inv, World world) -> {
                     if (inv.getStackInSlot(0).getItem() instanceof Bag && inv.getStackInSlot(1).getItem() == getItem()) {
@@ -173,6 +174,6 @@ public abstract class Upgrade { //contain all information for config, item, upgr
                     }
                     return false;
                 },
-                (IInventory inv) -> Bag.addToStringList(inv.getStackInSlot(0).copy(), Bag.onCreateCommands, "cmd.upgrade." + sId));
+                (IInventory inv) -> IDimBagCommonItem.addToStringList(inv.getStackInSlot(0).copy(), Bag.onTickCommands, "cmd.upgrade." + sId));
     }
 }

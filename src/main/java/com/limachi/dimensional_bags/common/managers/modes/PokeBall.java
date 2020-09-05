@@ -6,12 +6,10 @@ import com.limachi.dimensional_bags.common.managers.Mode;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
-import net.minecraft.item.ItemUseContext;
-import net.minecraft.util.ActionResult;
 import net.minecraft.util.ActionResultType;
 import net.minecraft.util.Direction;
-import net.minecraft.util.Hand;
 import net.minecraft.util.math.AxisAlignedBB;
+import net.minecraft.util.math.BlockRayTraceResult;
 import net.minecraft.world.World;
 
 import java.util.List;
@@ -34,17 +32,17 @@ public class PokeBall extends Mode {
     }
 
     @Override
-    public ActionResultType onItemUse(EyeData data, ItemUseContext context) {
-        WorldUtils.teleportEntity(getFirstNonPlayerEntityNestToEye(data), WorldUtils.worldRKFromWorld(context.getWorld()), context.getPos().offset(Direction.UP));
+    public ActionResultType onItemUse(EyeData data, World world, PlayerEntity player, int slot, BlockRayTraceResult ray) {
+        WorldUtils.teleportEntity(getFirstNonPlayerEntityNestToEye(data), WorldUtils.worldRKFromWorld(world), ray.getPos().offset(Direction.UP));
         return ActionResultType.SUCCESS;
     }
 
     @Override
-    public ActionResult<ItemStack> onItemRightClick(EyeData data, World world, PlayerEntity player, Hand hand) {
+    public ActionResultType onActivateItem(EyeData data, ItemStack stack, PlayerEntity player) {
         if (!player.isCrouching()) {
             WorldUtils.teleportEntity(getFirstNonPlayerEntityNestToEye(data), WorldUtils.worldRKFromWorld(player.world), player.getPositionVec().add(0, 1, 0).add(player.getLookVec().scale(5)));
-            return new ActionResult<>(ActionResultType.SUCCESS, player.getHeldItem(hand));
+            return ActionResultType.SUCCESS;
         }
-        return new ActionResult<>(ActionResultType.PASS, player.getHeldItem(hand));
+        return ActionResultType.PASS;
     }
 }

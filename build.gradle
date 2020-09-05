@@ -27,7 +27,7 @@ minecraft {
             property 'forge.logging.markers', 'SCAN,REGISTRIES,REGISTRYDUMP'
             property 'forge.logging.console.level', 'info'
             mods {
-                examplemod {
+                dimensional_bags {
                     source sourceSets.main
                 }
             }
@@ -38,7 +38,7 @@ minecraft {
             property 'forge.logging.markers', 'SCAN,REGISTRIES,REGISTRYDUMP'
             property 'forge.logging.console.level', 'info'
             mods {
-                examplemod {
+                dimensional_bags {
                     source sourceSets.main
                 }
             }
@@ -48,9 +48,9 @@ minecraft {
             workingDirectory project.file('run_data')
             property 'forge.logging.markers', 'SCAN,REGISTRIES,REGISTRYDUMP'
             property 'forge.logging.console.level', 'info'
-            args '--mod', 'examplemod', '--all', '--output', file('src/generated/resources/')
+            args '--mod', 'dimensional_bags', '--all', '--output', file('src/generated/resources/')
             mods {
-                examplemod {
+                dimensional_bags {
                     source sourceSets.main
                 }
             }

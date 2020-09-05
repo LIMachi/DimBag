@@ -2,5 +2,10 @@
   "parent": "item/generated",
   "textures": {
     "layer0": "dim_bag:item/bag"
-  }
+  },
+  "overrides": [
+    { "predicate": { "dim_bag:bag_mode_property": 1}, "model": "dim_bag:item/bag_mode/debug" },
+    { "predicate": { "dim_bag:bag_mode_property": 2}, "model": "dim_bag:item/bag_mode/pokeball" },
+    { "predicate": { "dim_bag:bag_mode_property": 3}, "model": "dim_bag:item/bag_mode/elytra" }
+  ]
 }

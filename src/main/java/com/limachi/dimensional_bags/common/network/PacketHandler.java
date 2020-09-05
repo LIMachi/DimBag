@@ -1,8 +1,6 @@
 package com.limachi.dimensional_bags.common.network;
 
-import com.limachi.dimensional_bags.common.network.packets.ChangeModeRequest;
-import com.limachi.dimensional_bags.common.network.packets.OpenGuiRequest;
-import com.limachi.dimensional_bags.common.network.packets.SlotIORightsChanged;
+import com.limachi.dimensional_bags.common.network.packets.*;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.fml.LogicalSide;
@@ -37,7 +35,9 @@ public class PacketHandler {
     static {
         HANDLER.registerMessage(index++, SlotIORightsChanged.class, SlotIORightsChanged::toBytes, SlotIORightsChanged::fromBytes, SlotIORightsChanged::enqueue);
         HANDLER.registerMessage(index++, ChangeModeRequest.class, ChangeModeRequest::toBytes, ChangeModeRequest::fromBytes, ChangeModeRequest::enqueue);
-        HANDLER.registerMessage(index++, OpenGuiRequest.class, OpenGuiRequest::toBytes, OpenGuiRequest::fromBytes, OpenGuiRequest::enqueue);
+        HANDLER.registerMessage(index++, UseModeRequest.class, UseModeRequest::toBytes, UseModeRequest::fromBytes, UseModeRequest::enqueue);
+        HANDLER.registerMessage(index++, SyncKeyMapMsg.class, SyncKeyMapMsg::toBytes, SyncKeyMapMsg::fromBytes, SyncKeyMapMsg::enqueue);
+        HANDLER.registerMessage(index++, EmptyRightClick.class, EmptyRightClick::toBytes, EmptyRightClick::fromBytes, EmptyRightClick::enqueue);
     }
 
     public static <T> void toServer(T msg) { HANDLER.sendToServer(msg); }
