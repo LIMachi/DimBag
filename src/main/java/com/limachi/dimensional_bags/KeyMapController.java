@@ -45,6 +45,9 @@ public class KeyMapController {
 
     @OnlyIn(Dist.CLIENT)
     public static void syncKeyMap() {
+        PlayerEntity player = Minecraft.getInstance().player;
+        if (player == null)
+            return;
         boolean[] newKeyState = new boolean[KEY_BIND_COUNT];
         boolean shouldUpdate = false;
         for (int i = 0; i < KEY_BIND_COUNT; ++i) {
@@ -54,17 +57,20 @@ public class KeyMapController {
         }
         if (shouldUpdate) {
             local_key_map = newKeyState;
-            PacketHandler.toServer(new SyncKeyMapMsg(Minecraft.getInstance().player.getUniqueID(), local_key_map));
+            PacketHandler.toServer(new SyncKeyMapMsg(player.getUniqueID(), local_key_map));
         }
     }
 
     @OnlyIn(Dist.CLIENT)
     public static void syncKeyMap(int key, int scan, boolean mouse, boolean state) {
+        PlayerEntity player = Minecraft.getInstance().player;
+        if (player == null)
+            return;
         for (int i = 0; i < KEY_BIND_COUNT; ++i) {
             if (TRACKED_KEYBINDS[i].getKeyConflictContext().isActive() && mouse ? TRACKED_KEYBINDS[i].matchesMouseKey(key) : TRACKED_KEYBINDS[i].matchesKey(key, scan)) {
                 if (state != local_key_map[i]) {
                     local_key_map[i] = state;
-                    PacketHandler.toServer(new SyncKeyMapMsg(Minecraft.getInstance().player.getUniqueID(), local_key_map));
+                    PacketHandler.toServer(new SyncKeyMapMsg(player.getUniqueID(), local_key_map));
                 }
                 return;
             }

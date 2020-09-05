@@ -12,7 +12,7 @@ description=''''''
 [[dependencies.dim_bag]] #optional
     modId="forge" #mandatory
     mandatory=true #mandatory
-    versionRange="[33,)" #mandatory
+    versionRange="[33.0.37,)" #mandatory
     ordering="NONE"
     side="BOTH"
 [[dependencies.dim_bag]]

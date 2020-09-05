@@ -2,6 +2,7 @@ package com.limachi.dimensional_bags.common.inventory;
 
 import com.limachi.dimensional_bags.common.container.slot.InvWrapperSlot;
 import com.limachi.dimensional_bags.common.data.IMarkDirty;
+import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.inventory.Inventory;
 import net.minecraft.inventory.container.Slot;
@@ -320,6 +321,7 @@ public class Wrapper implements IItemHandlerModifiable { //rewrite of InvWrapper
 
         if (!stackInSlot.isEmpty())
         {
+            if (inv instanceof PlayerInventory) return stack; //FIXME: for security issues, the merging is disabled with player inventory, might implement a workaround someday
             if (stackInSlot.getCount() >= stackLimit) return stack; //limit already reached (note: since we merge stacks, there is no need to test the size of the stack already in the slot)
             if (!ItemHandlerHelper.canItemStacksStack(stack, stackInSlot)) return stack; //those stacks can't be merged
             stackLimit -= stackInSlot.getCount(); //how much can be inserted (tacking into acount the number of items already in the slot)
@@ -474,7 +476,9 @@ public class Wrapper implements IItemHandlerModifiable { //rewrite of InvWrapper
     public ItemStack getStackInSlot(int slot) { return inv.getStackInSlot(slot); }
 
     @Override
-    public void setStackInSlot(int slot, @Nonnull ItemStack stack) { inv.setInventorySlotContents(slot, stack); }
+    public void setStackInSlot(int slot, @Nonnull ItemStack stack) {
+        inv.setInventorySlotContents(slot, stack);
+    }
 
     @Override
     public int getSlotLimit(int slot) {

@@ -59,14 +59,20 @@ minecraft {
 }
 
 dependencies {
-    minecraft 'net.minecraftforge:forge:1.16.2-33.0.32'
+    minecraft 'net.minecraftforge:forge:1.16.2-33.0.37'
     runtimeOnly fg.deobf("mezz.jei:jei-1.16.2:7.1.3.19") //jei
     compileOnly fg.deobf("mezz.jei:jei-1.16.2:7.1.3.19:api") //jei
+    compileOnly fg.deobf("com.refinedmods:refinedstorage:1.9.4+56")
+    runtimeOnly fg.deobf("com.refinedmods:refinedstorage:1.9.4+56")
 }
 
 repositories {
     maven {
         url = 'http://dvs1.progwml6.com/files/maven/' //jei
+    }
+
+    maven {
+        url "https://repo.refinedmods.com"
     }
 }
 
