@@ -1,5 +1,6 @@
 package com.limachi.dimensional_bags.common.managers.modes;
 
+import com.limachi.dimensional_bags.KeyMapController;
 import com.limachi.dimensional_bags.common.data.EyeData;
 import com.limachi.dimensional_bags.common.entities.BagEntity;
 import com.limachi.dimensional_bags.common.items.Bag;
@@ -20,7 +21,7 @@ public class Default extends Mode {
 
     @Override
     public ActionResultType onItemUse(EyeData data, World world, PlayerEntity player, int slot, BlockRayTraceResult ray) { //called when the bag is right clicked on something, before the bag does anything
-        if (player == null || !player.isCrouching()) return ActionResultType.PASS; //only test a player croushing
+        if (player == null || !KeyMapController.getKey(player, KeyMapController.CROUCH_KEY)) return ActionResultType.PASS; //only test a player croushing
         int x = Math.abs(ray.getPos().getX() - player.getPosition().getX());
         int y = Math.abs(ray.getPos().getY() - player.getPosition().getY());
         int z = Math.abs(ray.getPos().getZ() - player.getPosition().getZ());
@@ -38,7 +39,7 @@ public class Default extends Mode {
 
     @Override
     public ActionResultType onActivateItem(EyeData data, ItemStack stack, PlayerEntity player) {
-        if (!player.isCrouching()) {
+        if (!KeyMapController.getKey(player, KeyMapController.CROUCH_KEY)) {
             Network.openEyeInventory((ServerPlayerEntity) player, data);
             return ActionResultType.SUCCESS;
         }

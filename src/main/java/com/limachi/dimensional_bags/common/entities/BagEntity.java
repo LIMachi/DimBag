@@ -1,6 +1,7 @@
 package com.limachi.dimensional_bags.common.entities;
 
 import com.limachi.dimensional_bags.DimBag;
+import com.limachi.dimensional_bags.KeyMapController;
 import com.limachi.dimensional_bags.common.Registries;
 import com.limachi.dimensional_bags.common.WorldUtils;
 import com.limachi.dimensional_bags.common.data.EyeData;
@@ -36,6 +37,12 @@ public class BagEntity extends MobEntity {
     public static AttributeModifierMap.MutableAttribute getAttributeMap() {
         return LivingEntity.registerAttributes().createMutableAttribute(Attributes.FOLLOW_RANGE, 16.0D);
     }
+
+    @Override
+    public void onKillCommand() {}
+
+    @Override
+    protected void outOfWorld() {}
 
     public static BagEntity spawn(World world, BlockPos position, int id, ItemStack bag) {
         BagEntity out = new BagEntity(Registries.BAG_ENTITY.get(), world);
@@ -96,9 +103,7 @@ public class BagEntity extends MobEntity {
         super.tick();
         if (this.world.isRemote()) return; //do nothing client side
         if ((tick & 7) == 0) {
-            EyeData data = EyeData.get(this.world.getServer(), getId());
-//            if (data != null)
-//                LOGGER.info("Hi my name is. What? My name is. Who? My name is " + data.getId());
+            EyeData data = EyeData.get(getId());
             if (data != null && data != EyeData.getEyeData(this.world, this.getPosition(), false)) //only update the position if the bag isn't in itself
                 data.updateBagPosition(this.getPosition(), (ServerWorld)this.world);
             if (data != null)
@@ -117,10 +122,10 @@ public class BagEntity extends MobEntity {
     protected ActionResultType/*boolean processInteract*/func_230254_b_(PlayerEntity player, Hand hand) { //TODO: update mapping
         if (player.world.isRemote()) return ActionResultType.PASS;
         if (getId() == 0) return ActionResultType.PASS;
-        if (player.isCrouching())
+        if (KeyMapController.getKey(player, KeyMapController.CROUCH_KEY))
             WorldUtils.teleportEntity(player, WorldUtils.DimBagRiftKey, new BlockPos(1024 * (id - 1) + 8, 129, 8));
         else
-            Network.openEyeInventory((ServerPlayerEntity)player, EyeData.get(world.getServer(), id));
+            Network.openEyeInventory((ServerPlayerEntity)player, EyeData.get(id));
         return ActionResultType.SUCCESS;
     }
 

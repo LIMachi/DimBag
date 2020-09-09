@@ -51,11 +51,15 @@ public class InventoryGUI extends ContainerScreen<BagContainer> {
     }
 
     protected void drawAccessRectangle(MatrixStack matrixStack, TextureManager tm, int x, int y, Wrapper.IORights rights) {
-        int flags = rights.flags & (CANINPUT | CANOUTPUT);
-        if (flags == (CANINPUT | CANOUTPUT)) tm.bindTexture(SLOT);
-        if (flags == CANINPUT) tm.bindTexture(INPUT_SLOT);
-        if (flags == CANOUTPUT) tm.bindTexture(OUTPUT_SLOT);
-        if (flags == 0) tm.bindTexture(LOCKED_SLOT);
+        if (rights != null) {
+            int flags = rights.flags & (CANINPUT | CANOUTPUT);
+            if (flags == (CANINPUT | CANOUTPUT)) tm.bindTexture(SLOT);
+            if (flags == CANINPUT) tm.bindTexture(INPUT_SLOT);
+            if (flags == CANOUTPUT) tm.bindTexture(OUTPUT_SLOT);
+            if (flags == 0) tm.bindTexture(LOCKED_SLOT);
+        }
+        else
+            tm.bindTexture(UNUSED_SLOT);
         this.blitGuiFull(matrixStack, x, y, SLOT_SIZE_X, SLOT_SIZE_Y);
     }
 
@@ -72,7 +76,7 @@ public class InventoryGUI extends ContainerScreen<BagContainer> {
         tm.bindTexture(SLOT);
         for (int i = 0; i < this.columns; ++i)
             for (int y = 0; y < this.rows; ++y)
-                drawAccessRectangle(matrixStack, tm, x + i * SLOT_SIZE_X + PART_SIZE_X, sy + y * SLOT_SIZE_Y, container.getRights(i + 36));
+                drawAccessRectangle(matrixStack, tm, x + i * SLOT_SIZE_X + PART_SIZE_X, sy + y * SLOT_SIZE_Y, i + y * this.columns < container.getInventorySize() ? container.getRights(i + y * this.columns + 36) : null);
     }
 
     public void render_expander(MatrixStack matrixStack, TextureManager tm) { //render the part between the container inventory and the player inventory

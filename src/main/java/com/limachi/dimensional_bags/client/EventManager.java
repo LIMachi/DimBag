@@ -69,7 +69,7 @@ public class EventManager {
         double scroll = event.getScrollDelta();
         long window = mc.getMainWindow().getHandle();
 
-        if (KeyMapController.getKey(null, KeyMapController.CROUSH_KEY)) {
+        if (KeyMapController.getKey(null, KeyMapController.CROUCH_KEY)) {
             if (player.inventory.mainInventory.get(player.inventory.currentItem).getItem() instanceof Bag) {
                 PacketHandler.toServer(new ChangeModeRequest(player, player.inventory.currentItem, scroll > 0));
                 event.setCanceled(true);
@@ -80,7 +80,7 @@ public class EventManager {
             }
             return;
         }
-        if (KeyMapController.getKey(null, KeyMapController.BAG_CATION_KEY)) {
+        if (KeyMapController.getKey(null, KeyMapController.BAG_ACTION_KEY)) {
             openGuiKeyUsed = true;
             int p = IDimBagCommonItem.getFirstValidItemFromPlayer(player, Bag.class, (x)->true);;
             if (p != -1) {

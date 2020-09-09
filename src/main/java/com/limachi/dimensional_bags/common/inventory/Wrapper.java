@@ -1,5 +1,6 @@
 package com.limachi.dimensional_bags.common.inventory;
 
+import com.limachi.dimensional_bags.common.EventManager;
 import com.limachi.dimensional_bags.common.container.slot.InvWrapperSlot;
 import com.limachi.dimensional_bags.common.data.IMarkDirty;
 import net.minecraft.entity.player.PlayerInventory;
@@ -19,6 +20,7 @@ import net.minecraftforge.items.ItemHandlerHelper;
 
 import javax.annotation.Nonnull;
 
+import java.awt.*;
 import java.util.List;
 
 import static com.limachi.dimensional_bags.common.inventory.Wrapper.IORights.*;
@@ -321,7 +323,7 @@ public class Wrapper implements IItemHandlerModifiable { //rewrite of InvWrapper
 
         if (!stackInSlot.isEmpty())
         {
-            if (inv instanceof PlayerInventory) return stack; //FIXME: for security issues, the merging is disabled with player inventory, might implement a workaround someday
+            if (inv instanceof PlayerInventory) return stack; //FIXME: for security issues, the merging is disabled with player inventory, might implement a workaround someday (one solution could be to dellay all acces of the inventory and at the end of the game tick resolve all access while checking mutually exclusive ones)
             if (stackInSlot.getCount() >= stackLimit) return stack; //limit already reached (note: since we merge stacks, there is no need to test the size of the stack already in the slot)
             if (!ItemHandlerHelper.canItemStacksStack(stack, stackInSlot)) return stack; //those stacks can't be merged
             stackLimit -= stackInSlot.getCount(); //how much can be inserted (tacking into acount the number of items already in the slot)

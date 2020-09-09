@@ -43,7 +43,7 @@ public class UseModeRequest {
         if (t == PacketHandler.Target.SERVER)
             ctx.enqueueWork(() -> {
                 ItemStack stack = ctx.getSender().inventory.getStackInSlot(pack.bagPos);
-                EyeData data = EyeData.get(null, Bag.getId(stack));
+                EyeData data = EyeData.get(Bag.getId(stack));
                 if (data == null) return;
                 data.modeManager().onActivateItem(stack, ctx.getSender());
             });

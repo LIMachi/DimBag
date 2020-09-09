@@ -22,8 +22,8 @@ import java.util.UUID;
 public class KeyMapController {
     public static final String KEY_CATEGORY = "Dimensional Bags";
 
-    public static final int BAG_CATION_KEY = 0;
-    public static final int CROUSH_KEY = 1;
+    public static final int BAG_ACTION_KEY = 0;
+    public static final int CROUCH_KEY = 1;
     public final static int KEY_BIND_COUNT = 2;
     public static final int NON_VANILLA_KEY_BIND_COUNT = 1;
 
@@ -67,7 +67,7 @@ public class KeyMapController {
         if (player == null)
             return;
         for (int i = 0; i < KEY_BIND_COUNT; ++i) {
-            if (TRACKED_KEYBINDS[i].getKeyConflictContext().isActive() && mouse ? TRACKED_KEYBINDS[i].matchesMouseKey(key) : TRACKED_KEYBINDS[i].matchesKey(key, scan)) {
+            if (/*TRACKED_KEYBINDS[i].getKeyConflictContext().isActive() &&*/ mouse ? TRACKED_KEYBINDS[i].matchesMouseKey(key) : TRACKED_KEYBINDS[i].matchesKey(key, scan)) {
                 if (state != local_key_map[i]) {
                     local_key_map[i] = state;
                     PacketHandler.toServer(new SyncKeyMapMsg(player.getUniqueID(), local_key_map));

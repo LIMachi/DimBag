@@ -1,20 +1,15 @@
 package com.limachi.dimensional_bags.common.managers;
 
 import com.limachi.dimensional_bags.common.data.EyeData;
-import com.limachi.dimensional_bags.common.managers.modes.Debug;
-import com.limachi.dimensional_bags.common.managers.modes.Default;
-import com.limachi.dimensional_bags.common.managers.modes.Elytra;
-import com.limachi.dimensional_bags.common.managers.modes.PokeBall;
+import com.limachi.dimensional_bags.common.managers.modes.*;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
-import net.minecraft.item.ItemUseContext;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.nbt.ListNBT;
 import net.minecraft.nbt.StringNBT;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.ActionResultType;
-import net.minecraft.util.Hand;
 import net.minecraft.util.math.BlockRayTraceResult;
 import net.minecraft.world.World;
 
@@ -25,7 +20,8 @@ public class ModeManager {
         new Default(),
         new Debug(),
         new PokeBall(),
-        new Elytra()
+        new Elytra(),
+        new Tank()
     };
 
     public static int getModeIndex(String name) {
@@ -56,7 +52,8 @@ public class ModeManager {
     }
 
     public void installMode(String name) {
-        installedModes.add(name);
+        if (!installedModes.contains(name))
+            installedModes.add(name);
     }
 
     public String getSelectedMode() { return selectedMode; }
@@ -91,60 +88,60 @@ public class ModeManager {
 
     public void inventoryTick(ItemStack stack, World world, Entity player, int itemSlot, boolean isSelected) {
         ActionResultType res = getMode(selectedMode).onEntityTick(data, stack, world, player, itemSlot, isSelected);
-        if (res.isSuccessOrConsume()) return;
+        if (res != ActionResultType.PASS) return;
         for (int i = installedModes.size() - 1; i >= 0; --i) {
             String name = installedModes.get(i);
             if (name.equals(selectedMode) || name.equals("Default") || !getMode(name).CAN_BACKGROUND) continue;
             res = getMode(name).onEntityTick(data, stack, world, player, itemSlot, isSelected);
-            if (res.isSuccessOrConsume()) return;
+            if (res != ActionResultType.PASS) return;
         }
         getMode("Default").onEntityTick(data, stack, world, player, itemSlot, isSelected);
     }
 
     public ActionResultType onItemUse(World world, PlayerEntity player, int slot, BlockRayTraceResult ray) {
         ActionResultType res = getMode(selectedMode).onItemUse(data, world, player, slot, ray);
-        if (res.isSuccessOrConsume()) return res;
+        if (res != ActionResultType.PASS) return res;
         for (int i = installedModes.size() - 1; i >= 0; --i) {
             String name = installedModes.get(i);
             if (name.equals(selectedMode) || name.equals("Default") || !getMode(name).CAN_BACKGROUND) continue;
             res = getMode(name).onItemUse(data, world, player, slot, ray);
-            if (res.isSuccessOrConsume()) return res;
+            if (res != ActionResultType.PASS) return res;
         }
         return getMode("Default").onItemUse(data, world, player, slot, ray);
     }
 
     public ActionResult<ItemStack> onItemRightClick(World world, PlayerEntity player, int slot) {
         ActionResult<ItemStack> res = getMode(selectedMode).onItemRightClick(data, world, player, slot);
-        if (res.getType().isSuccessOrConsume()) return res;
+        if (res.getType() != ActionResultType.PASS) return res;
         for (int i = installedModes.size() - 1; i >= 0; --i) {
             String name = installedModes.get(i);
             if (name.equals(selectedMode) || name.equals("Default") || !getMode(name).CAN_BACKGROUND) continue;
             res = getMode(name).onItemRightClick(data, world, player, slot);
-            if (res.getType().isSuccessOrConsume()) return res;
+            if (res.getType() != ActionResultType.PASS) return res;
         }
         return getMode("Default").onItemRightClick(data, world, player, slot);
     }
 
     public ActionResultType onAttack(ItemStack stack, PlayerEntity player, Entity entity) {
         ActionResultType res = getMode(selectedMode).onAttack(data, stack, player, entity);
-        if (res.isSuccessOrConsume()) return res;
+        if (res != ActionResultType.PASS) return res;
         for (int i = installedModes.size() - 1; i >= 0; --i) {
             String name = installedModes.get(i);
             if (name.equals(selectedMode) || name.equals("Default") || !getMode(name).CAN_BACKGROUND) continue;
             res = getMode(name).onAttack(data, stack, player, entity);
-            if (res.isSuccessOrConsume()) return res;
+            if (res != ActionResultType.PASS) return res;
         }
         return getMode("Default").onAttack(data, stack, player, entity);
     }
 
     public ActionResultType onActivateItem(ItemStack stack, PlayerEntity player) {
         ActionResultType res = getMode(selectedMode).onActivateItem(data, stack, player);
-        if (res.isSuccessOrConsume()) return res;
+        if (res != ActionResultType.PASS) return res;
         for (int i = installedModes.size() - 1; i >= 0; --i) {
             String name = installedModes.get(i);
             if (name.equals(selectedMode) || name.equals("Default") || !getMode(name).CAN_BACKGROUND) continue;
             res = getMode(name).onActivateItem(data, stack, player);
-            if (res.isSuccessOrConsume()) return res;
+            if (res != ActionResultType.PASS) return res;
         }
         return getMode("Default").onActivateItem(data, stack, player);
     }

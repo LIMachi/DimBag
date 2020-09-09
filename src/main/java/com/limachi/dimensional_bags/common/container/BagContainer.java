@@ -53,13 +53,11 @@ public class BagContainer extends BaseWrappedInventoryContainer {
                     this.addSlot(new SlotItemHandler(openInv, x + y * columns, sx + SLOT_SIZE_X * x, sy + SLOT_SIZE_Y * y));
     }
 
-    public int getRows() {
-        return rows;
-    }
+    public int getRows() { return rows; }
 
-    public int getColumns() {
-        return columns;
-    }
+    public int getColumns() { return columns; }
+
+    public int getInventorySize() { return openInv.getSlots(); }
 
     @Override
     public void detectAndSendChanges() {

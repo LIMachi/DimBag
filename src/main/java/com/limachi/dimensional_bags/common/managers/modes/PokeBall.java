@@ -39,10 +39,7 @@ public class PokeBall extends Mode {
 
     @Override
     public ActionResultType onActivateItem(EyeData data, ItemStack stack, PlayerEntity player) {
-        if (!player.isCrouching()) {
-            WorldUtils.teleportEntity(getFirstNonPlayerEntityNestToEye(data), WorldUtils.worldRKFromWorld(player.world), player.getPositionVec().add(0, 1, 0).add(player.getLookVec().scale(5)));
-            return ActionResultType.SUCCESS;
-        }
-        return ActionResultType.PASS;
+        WorldUtils.teleportEntity(getFirstNonPlayerEntityNestToEye(data), WorldUtils.worldRKFromWorld(player.world), player.getPositionVec().add(0, 1, 0).add(player.getLookVec().scale(5)));
+        return ActionResultType.SUCCESS;
     }
 }

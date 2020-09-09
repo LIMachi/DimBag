@@ -42,6 +42,8 @@ public class UpgradeManager {
         new SlotUpgrade(4).attach(UPGRADES);
         new SlotUpgrade(9).attach(UPGRADES);
         new ElytraUpgrade().attach(UPGRADES);
+        new TankUpgrade().attach(UPGRADES);
+        new TankCapacityUpgrade().attach(UPGRADES);
     }
 
     /*

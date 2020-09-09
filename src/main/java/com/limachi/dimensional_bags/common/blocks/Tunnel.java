@@ -1,6 +1,7 @@
 package com.limachi.dimensional_bags.common.blocks;
 
 import com.limachi.dimensional_bags.DimBag;
+import com.limachi.dimensional_bags.KeyMapController;
 import com.limachi.dimensional_bags.common.Registries;
 import com.limachi.dimensional_bags.common.data.EyeData;
 import net.minecraft.block.*;
@@ -25,7 +26,7 @@ public class Tunnel extends Block {
         EyeData data = EyeData.getEyeData(world, pos, false);
         if (data == null) //invalid tunnel,could not find a valid eye
             return ActionResultType.FAIL;
-        if (player.isCrouching())
+        if (KeyMapController.getKey(player, KeyMapController.CROUCH_KEY))
             data.tpIn(player); //if crouching, go back to the main room
         else
             data.tpTunnel(player, pos); //try to go to the next room through the tunnel
@@ -42,7 +43,7 @@ public class Tunnel extends Block {
             super.onBlockClicked(state, worldIn, pos, player);
             return;
         }
-        if (player.isCrouching()) {//shift-left-click, remove the tunnel (replace it by a wall) and give back the tunnel placer (item)
+        if (KeyMapController.getKey(player, KeyMapController.CROUCH_KEY)) {//shift-left-click, remove the tunnel (replace it by a wall) and give back the tunnel placer (item)
             worldIn.setBlockState(pos, Registries.WALL_BLOCK.get().getDefaultState());
             EyeData.tunnel(worldIn, pos, player, false, true);
             player.addItemStackToInventory(new ItemStack(Registries.TUNNEL_ITEM.get()));

@@ -27,6 +27,12 @@ public class BagEntityItem extends ItemEntity {
     }
 
     @Override
+    public void onKillCommand() {}
+
+    @Override
+    protected void outOfWorld() {}
+
+    @Override
     public boolean isImmuneToExplosions() {
         return true;
     }
@@ -45,7 +51,7 @@ public class BagEntityItem extends ItemEntity {
                 setPosition(getPosX(), 1, getPosZ());
             int id = Bag.getId(getItem());
             if (id != 0) {
-                EyeData data = EyeData.get(getServer(), id);
+                EyeData data = EyeData.get(id);
                 data.setUser(this);
             }
         }

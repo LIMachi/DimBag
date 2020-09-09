@@ -1,6 +1,7 @@
 package com.limachi.dimensional_bags.common.blocks;
 
 import com.limachi.dimensional_bags.DimBag;
+import com.limachi.dimensional_bags.KeyMapController;
 import com.limachi.dimensional_bags.common.Registries;
 import com.limachi.dimensional_bags.common.data.EyeData;
 import com.limachi.dimensional_bags.common.network.Network;
@@ -36,11 +37,11 @@ public class TheEye extends ContainerBlock {
 
     @Override
     public ActionResultType onBlockActivated(BlockState state, World world, BlockPos pos, PlayerEntity player, Hand hand, BlockRayTraceResult ray) {
-        if (!DimBag.isServer(world)) return super.onBlockActivated(state, world, pos, player, hand, ray);
+        if (!DimBag.isServer(world)) return ActionResultType.SUCCESS;
         EyeData data = EyeData.getEyeData(world, pos, true);
         if (data == null)
             return ActionResultType.FAIL;
-        if (player.isCrouching())
+        if (KeyMapController.getKey(player, KeyMapController.CROUCH_KEY))
             data.tpBack(player);
         else
             Network.openEyeInventory((ServerPlayerEntity) player, data);

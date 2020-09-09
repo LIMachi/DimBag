@@ -33,6 +33,7 @@ public class DimBag {
     public static final String MOD_ID = "dim_bag";
     public static final Logger LOGGER = LogManager.getLogger();
     public static DimBag INSTANCE;
+    private static MinecraftServer serverCache = null;
     public static final ItemGroup ITEM_GROUP = new ItemGroup(ItemGroup.GROUPS.length, "tab_" + MOD_ID) {
         @Override
         public ItemStack createIcon() { return new ItemStack(Items.ITEM_FRAME); } //FIXME: change the item used as icon
@@ -57,8 +58,10 @@ public class DimBag {
     }
 
     public static MinecraftServer getServer(@Nullable World world) {
+        if (serverCache != null)
+            return serverCache;
         if (world != null && world.getServer() != null)
-            return world.getServer();
-        return ServerLifecycleHooks.getCurrentServer();
+            return serverCache = world.getServer();
+        return serverCache = ServerLifecycleHooks.getCurrentServer();
     }
 }

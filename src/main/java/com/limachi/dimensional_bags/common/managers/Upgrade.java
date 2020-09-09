@@ -167,7 +167,7 @@ public abstract class Upgrade { //contain all information for config, item, upgr
                 NonNullList.create(),
                 (IInventory inv, World world) -> {
                     if (inv.getStackInSlot(0).getItem() instanceof Bag && inv.getStackInSlot(1).getItem() == getItem()) {
-                        EyeData data = EyeData.get(null, Bag.getId(inv.getStackInSlot(0)));
+                        EyeData data = EyeData.get(Bag.getId(inv.getStackInSlot(0)));
                         if (data == null)
                             return false;
                         return this.getCount(data) < this.limit;

@@ -38,6 +38,8 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.ICapabilityProvider;
 import net.minecraftforge.common.util.LazyOptional;
+import net.minecraftforge.energy.CapabilityEnergy;
+import net.minecraftforge.fluids.capability.CapabilityFluidHandler;
 import net.minecraftforge.items.CapabilityItemHandler;
 
 import javax.annotation.Nonnull;
@@ -47,13 +49,13 @@ import java.util.List;
 import java.util.UUID;
 import java.util.function.Consumer;
 
+import static com.limachi.dimensional_bags.common.data.EyeData.getCapabilityProvider;
 import static net.minecraft.item.Items.AIR;
 
 public class Bag extends ArmorItem implements IDimBagCommonItem {
 
     public static final String ID_KEY = "dim_bag_eye_id";
     public static final String OWNER_KEY = "dim_bag_eye_owner";
-//    private static final UUID[] ARMOR_MODIFIERS = new UUID[]{UUID.fromString("845DB27C-C624-495F-8C9F-6020A9A58B6B"), UUID.fromString("D8499B04-0E66-4726-AB29-64469D734E0D"), UUID.fromString("9F3D476D-C118-4544-8365-64846904B48E"), UUID.fromString("2AD3F246-FEE1-4E67-B886-69FD380BB150")};
 
     public Bag() { super(ArmorMaterial.LEATHER, EquipmentSlotType.CHEST, new Properties().group(DimBag.ITEM_GROUP).maxStackSize(1)); DispenserBlock.registerDispenseBehavior(this, ArmorItem.DISPENSER_BEHAVIOR); }
 
@@ -180,13 +182,8 @@ public class Bag extends ArmorItem implements IDimBagCommonItem {
             @Nonnull
             @Override
             public <T> LazyOptional<T> getCapability(@Nonnull Capability<T> cap, @Nullable Direction side) {
-                if (cap == CapabilityItemHandler.ITEM_HANDLER_CAPABILITY) {
-                    int id = Bag.getId(stack);
-                    EyeData data = EyeData.get(null, id);
-                    if (data != null)
-                        return LazyOptional.of(data::getInventory).cast();
-                }
-                return LazyOptional.empty();
+                EyeData data = EyeData.get(Bag.getId(stack));
+                return data != null ? data.getCapability(cap, side) : LazyOptional.empty();
             }
         };
     }
@@ -220,7 +217,7 @@ public class Bag extends ArmorItem implements IDimBagCommonItem {
         if (stack == null || !(stack.getItem() instanceof Bag)) return;
         int id = getId(stack);
         if (id == 0) return;
-        EyeData data = EyeData.get(player.server, id);
+        EyeData data = EyeData.get(id);
         if (data == null) return;
         ArrayList<String> modes = data.modeManager().getInstalledModes();
         for (int i = 0; i < modes.size(); ++i) {
@@ -256,7 +253,7 @@ public class Bag extends ArmorItem implements IDimBagCommonItem {
     public void addInformation(ItemStack stack, World world, List<ITextComponent> tooltip, ITooltipFlag flagIn) {
         int id = getId(stack);
         EyeData data = null;
-        if (id == 0 || (data = EyeData.get(world.getServer(), id)) == null)
+        if (id == 0 || (data = EyeData.get(id)) == null)
             tooltip.add(new TranslationTextComponent("tooltip.bag.missing_id"));
         else {
             tooltip.add(new TranslationTextComponent("tooltip.bag.mode", new TranslationTextComponent("bag.mode." + stack.getTag().getString("Mode"))));
@@ -287,7 +284,7 @@ public class Bag extends ArmorItem implements IDimBagCommonItem {
                 nbt.putString(OWNER_KEY, entityIn.getName().getString());
                 stack.setTag(nbt);
             } else
-                data = EyeData.get(worldIn.getServer(), id);
+                data = EyeData.get(id);
             if (!stack.getTag().getString("Mode").equals(data.modeManager().getSelectedMode()))
                 stack.getTag().putString("Mode", data.modeManager().getSelectedMode());
             data.setUser(entityIn);
@@ -307,14 +304,14 @@ public class Bag extends ArmorItem implements IDimBagCommonItem {
     public ActionResultType onItemUse(World world, PlayerEntity player, int slot, BlockRayTraceResult ray) {
         int id;
         EyeData data;
-        if (!DimBag.isServer(world) || (id = getId(player.inventory.getStackInSlot(slot))) == 0 || (data = EyeData.get(world.getServer(), id)) == null) return ActionResultType.PASS;
+        if (!DimBag.isServer(world) || (id = getId(player.inventory.getStackInSlot(slot))) == 0 || (data = EyeData.get(id)) == null) return ActionResultType.PASS;
         return data.modeManager().onItemUse(world, player, slot, ray);
     }
 
     public ActionResult<ItemStack> onItemRightClick(World world, PlayerEntity player, int slot) {
         int id;
         EyeData data;
-        if (!DimBag.isServer(world) || (id = getId(player.inventory.getStackInSlot(slot))) == 0 || (data = EyeData.get(world.getServer(), id)) == null) return new ActionResult<>(ActionResultType.PASS, player.inventory.getStackInSlot(slot));
+        if (!DimBag.isServer(world) || (id = getId(player.inventory.getStackInSlot(slot))) == 0 || (data = EyeData.get(id)) == null) return new ActionResult<>(ActionResultType.PASS, player.inventory.getStackInSlot(slot));
         return data.modeManager().onItemRightClick(world, player, slot);
     }
 
@@ -327,7 +324,7 @@ public class Bag extends ArmorItem implements IDimBagCommonItem {
     public boolean onLeftClickEntity(ItemStack stack, PlayerEntity player, Entity entity) {
         int id;
         EyeData data;
-        if (!DimBag.isServer(player.world) || (id = getId(stack)) == 0 || (data = EyeData.get(player.world.getServer(), id)) == null) return false;
+        if (!DimBag.isServer(player.world) || (id = getId(stack)) == 0 || (data = EyeData.get(id)) == null) return false;
         return data.modeManager().onAttack(stack, player, entity).isSuccessOrConsume();
     }
 }

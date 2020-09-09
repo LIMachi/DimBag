@@ -4,6 +4,7 @@ import com.limachi.dimensional_bags.DimBag;
 import com.limachi.dimensional_bags.common.Registries;
 import com.limachi.dimensional_bags.common.WorldUtils;
 import com.limachi.dimensional_bags.common.inventory.BagInventory;
+import com.limachi.dimensional_bags.common.inventory.MultyTank;
 import com.limachi.dimensional_bags.common.managers.ModeManager;
 import com.limachi.dimensional_bags.common.managers.UpgradeManager;
 import net.minecraft.entity.Entity;
@@ -19,7 +20,16 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraft.world.server.ServerWorld;
 import net.minecraft.world.storage.WorldSavedData;
+import net.minecraftforge.common.capabilities.Capability;
+import net.minecraftforge.common.capabilities.ICapabilityProvider;
+import net.minecraftforge.common.util.LazyOptional;
+import net.minecraftforge.energy.CapabilityEnergy;
+import net.minecraftforge.energy.EnergyStorage;
+import net.minecraftforge.energy.IEnergyStorage;
+import net.minecraftforge.fluids.capability.CapabilityFluidHandler;
+import net.minecraftforge.items.CapabilityItemHandler;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.lang.ref.WeakReference;
 import java.util.*;
@@ -41,15 +51,27 @@ public class EyeData extends WorldSavedData { //TODO: make EyeData a WorldSavedD
     private ArrayList<BlockPos> idToSubRooms; //inverse of the above map
     private CompoundNBT upgradesNBT; //private storage of the upgrades
     private ModeManager modeManager;
+    private MultyTank tanks;
+    private ICapabilityProvider capabilityProvider;
+    private static final ICapabilityProvider EMPTY_CAPABILITY_PROVIDER = new ICapabilityProvider() {
+        @Nonnull
+        @Override
+        public <T> LazyOptional<T> getCapability(@Nonnull Capability<T> cap, @Nullable Direction side) {
+            return LazyOptional.empty();
+        }
+    };
 
     public ModeManager modeManager() { return modeManager; }
+
+    public boolean canEnter(Entity entity) { return true; } //TODO: use upgrades to change this
+    public boolean canInvade(Entity entity) { return canEnter(entity); } //TODO: use upgrades to change this
 
     public int roomCount() { return idToSubRooms.size(); }
 
     public static void tunnel(World world, BlockPos tunnel, Entity entity, boolean create, boolean destroy) { //create mode: build (if needed) a room and place a portal, !create mode: teleport the entity to the next portal
         int[] req = getRoomIds(world, tunnel, false);
         if (req == null) return ;
-        EyeData data = EyeData.get(world.getServer(), req[0]);
+        EyeData data = EyeData.get(req[0]);
         BlockPos coord = data.idToSubRooms.get(req[1]); //virtual coordinates of the current room
         Direction wall = data.wall(tunnel, req[1]); //which wall the tunnel was placed on
         if (wall == null) return ;
@@ -72,6 +94,33 @@ public class EyeData extends WorldSavedData { //TODO: make EyeData a WorldSavedD
         return new BlockPos(tunnelIn.getX() + (-Math.abs(direction.getXOffset()) * 2 * (tunnelIn.getX() - roomCenter.getX())),
                             tunnelIn.getY() + (-Math.abs(direction.getYOffset()) * 2 * (tunnelIn.getY() - roomCenter.getY())),
                             tunnelIn.getZ() + (-Math.abs(direction.getZOffset()) * 2 * (tunnelIn.getZ() - roomCenter.getZ())) + deltaRoom * 1024);
+    }
+
+    public <T> LazyOptional<T> getCapability(@Nonnull Capability<T> cap, @Nullable Direction side) {
+        if (cap == CapabilityItemHandler.ITEM_HANDLER_CAPABILITY)
+            return LazyOptional.of(this::getInventory).cast();
+        if (cap == CapabilityFluidHandler.FLUID_HANDLER_CAPABILITY)
+            return LazyOptional.of(this::getTank).cast();
+        if (cap == CapabilityEnergy.ENERGY)
+            return LazyOptional.of(this::getBattery).cast();
+        return LazyOptional.empty();
+    }
+
+    public IEnergyStorage getBattery() {
+        return new EnergyStorage(100, 100, 100, 100);
+    }
+
+    public MultyTank getTank() {
+        return tanks;
+    }
+
+    public ICapabilityProvider getCapabilityProvider() { return capabilityProvider; }
+
+    public static ICapabilityProvider getCapabilityProvider(int id) {
+        EyeData data = EyeData.get(id);
+        if (data != null)
+            return data.getCapabilityProvider();
+        return EMPTY_CAPABILITY_PROVIDER;
     }
 
     public int createSubRoom(World world, BlockPos targetRoom) {
@@ -119,18 +168,37 @@ public class EyeData extends WorldSavedData { //TODO: make EyeData a WorldSavedD
         this.modeManager = new ModeManager(this);
         UpgradeManager.startingUpgrades(this);
         this.inventory = new BagInventory(this);
+        this.tanks = new MultyTank();
+        this.tanks.attachListener(this::markDirty);
         this.subRoomsToId = new HashMap<>();
         this.subRoomsToId.put(new BlockPos(0, 0, 0), 0);
         this.idToSubRooms = new ArrayList<>();
         this.idToSubRooms.add(0, new BlockPos(0, 0, 0));
+        EyeData data = this;
+        this.capabilityProvider = new ICapabilityProvider() {
+            @Nonnull
+            @Override
+            public <T> LazyOptional<T> getCapability(@Nonnull Capability<T> cap, @Nullable Direction side) {
+                return data.getCapability(cap, side);
+            }
+        };
     }
 
-    public static EyeData get(@Nullable MinecraftServer server, int id) { //this getter does not create the eye, call DimBagData#newEye instead
-        if (server == null)
-            server = DimBag.getServer(null); //overkill security
-        if (server == null)
-            return null; //overkill security
-        return server.getWorld(World.field_234918_g_).getSavedData().get(() -> new EyeData(null, id), MOD_ID + "_eye_" + id);
+    private static final HashMap<Integer, EyeData> cachedEyes = new HashMap();
+
+    public static EyeData get(int id) {
+        if (id < 1) return null;
+        EyeData data = cachedEyes.get(id);
+        if (data != null)
+            return data;
+        MinecraftServer server = DimBag.getServer(null);
+        if (server == null) return null;
+        ServerWorld world = server.getWorld(World.field_234918_g_);
+        if (world == null) return null;
+        data = world.getSavedData().get(() -> new EyeData(null, id), MOD_ID + "_eye_" + id);
+        if (data != null)
+            cachedEyes.put(id, data);
+        return data;
     }
 
     public static BlockPos getEyePos(int id) { return new BlockPos(8 + ((id - 1) << 10), 128, 8); } //each eye is 1024 blocks appart, so for the maximum size of a room (radius 127, 255 blocks diameter), there is at least 32 chunks (32*16=512 blocks) between each room
@@ -142,7 +210,7 @@ public class EyeData extends WorldSavedData { //TODO: make EyeData a WorldSavedD
     public static EyeData getEyeData(World world, BlockPos pos, boolean eye) {
         int[] req = getRoomIds(world, pos, eye);
         if (req == null) return null;
-        return get(world.getServer(), req[0]);
+        return get(req[0]);
     }
 
     public static int[] getRoomIds(World world, BlockPos pos, boolean eye) {
@@ -155,7 +223,7 @@ public class EyeData extends WorldSavedData { //TODO: make EyeData a WorldSavedD
         }
         else if (((x + 128) & 1023) <= 256) { //we add 128, so the range [-128, 128], becomes [0, 256], the maximum size of a room + extra
             int id = ((x + 128) >> 10) + 1; //since the block is now in a range [0, 256] + unknown * 1024, we cam divide by 1024 and the [0, 256] part will be discarded by the int precision, also, using a shift instead of a division
-            EyeData data = EyeData.get(world.getServer(), id);
+            EyeData data = EyeData.get(id);
             int radius = data.getRadius();
             if (((x + radius) & 1023) <= radius << 1 && pos.getY() >= 128 - radius && pos.getY() <= 128 + radius && ((z + radius) & 1023) <= radius << 1) //now that we know the radius, we can quickly test the room on the X and Z axis
                 return new int[]{id, (z + 128) >> 10}; //same trick as for the id, but rooms start at 0 (0 = center room, where the eye resides)
@@ -163,40 +231,24 @@ public class EyeData extends WorldSavedData { //TODO: make EyeData a WorldSavedD
         return null;
     }
 
-    public /*PlayerInvWrapper*/PlayerInventory getPlayerInventory() {
+    public PlayerInventory getPlayerInventory() {
         Entity try1 = entity.get();
-        if (try1 instanceof ServerPlayerEntity) {
-//            userInventory.resyncPlayerInventory(((ServerPlayerEntity) try1).inventory);
-            return /*new PlayerInvWrapper(*/((ServerPlayerEntity) try1).inventory/*, ioRights)*/;
-        }
+        if (try1 instanceof ServerPlayerEntity)
+            return ((ServerPlayerEntity) try1).inventory;
         ServerPlayerEntity try2 = getOwnerPlayer();
-        if (try2 != null) {
-//            userInventory.resyncPlayerInventory(try2.inventory);
-            return /*new PlayerInvWrapper(*/try2.inventory/*, ioRights)*/;
-        }
+        if (try2 != null)
+            return try2.inventory;
         return null;
     }
 
-//    public EyeData setRows(int rows) { this.upgrades[ROWS] = rows; return this; }
     public int getRows() { return UpgradeManager.getUpgrade("upgrade_row").getCount(this); }
 
-//    public EyeData setColumns(int columns) { this.upgrades[COLUMNS] = columns; return this; }
     public int getColumns() { return UpgradeManager.getUpgrade("upgrade_column").getCount(this); }
 
     public int getRadius() { return UpgradeManager.getUpgrade("upgrade_radius").getCount(this); }
-//    public EyeData setRadius(int radius) { this.upgrades[RADIUS] = radius; return this; }
 
     public CompoundNBT getUpgradesNBT() { return this.upgradesNBT; }
     public Set<String> getUpgrades() { return this.upgradesNBT.keySet(); }
-
-    /*
-    public int getUpgrade(int id) { return id < 0 || id >= UpgradeManager.upgradesCount() ? 0 : this.upgrades[id]; }
-    public EyeData setUpgrade(int id, int value) {
-        if (id >= 0 && id < UpgradeManager.upgradesCount())
-            this.upgrades[id] = value;
-        return this;
-    }
-     */
 
     public final int getId() { return this.id; }
 
@@ -213,14 +265,6 @@ public class EyeData extends WorldSavedData { //TODO: make EyeData a WorldSavedD
     public final Entity getUser() { //try to get the user from the cache, or the owner from the cache, or the owner from the server, might return null if nobody is using the bag and the owner is not online
         return entity.get();
     }
-
-    /*
-    public final Entity getBagEntity() { //try to get the entity representing the bag (itemstack/player/bag entity) //for now, only get the player using the bag
-        if (user.get() != null)
-            return user.get();
-        return null;
-    }
-    */
 
     public String getOwnerName() { return ownerName; }
 
@@ -262,6 +306,7 @@ public class EyeData extends WorldSavedData { //TODO: make EyeData a WorldSavedD
         nbt.putInt("Y", this.tpPosition.getY());
         nbt.putInt("Z", this.tpPosition.getZ());
         nbt.put("Inventory", this.inventory.write(new CompoundNBT()));
+        nbt.put("Tanks", tanks.write(new CompoundNBT()));
         nbt.put("Modes", modeManager.write(new CompoundNBT()));
         nbt.put("UpgradesData", this.upgradesNBT);
         ListNBT listSubRooms = new ListNBT();
@@ -281,6 +326,7 @@ public class EyeData extends WorldSavedData { //TODO: make EyeData a WorldSavedD
         this.tpDimension = WorldUtils.stringToWorldRK(nbt.getString("Dim"));
         this.tpPosition = new BlockPos(nbt.getInt("X"), nbt.getInt("Y"), nbt.getInt("Z"));
         this.inventory.read(nbt.getCompound("Inventory"));
+        this.tanks.read(nbt.getCompound("Tanks"));
         this.modeManager = new ModeManager(this);
         this.modeManager.read(nbt.getCompound("Modes"));
         this.upgradesNBT = nbt.getCompound("UpgradesData");

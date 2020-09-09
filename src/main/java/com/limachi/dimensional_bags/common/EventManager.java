@@ -2,7 +2,6 @@ package com.limachi.dimensional_bags.common;
 
 import com.limachi.dimensional_bags.DimBag;
 import com.limachi.dimensional_bags.KeyMapController;
-import com.limachi.dimensional_bags.client.ClientEventSubscriber;
 import com.limachi.dimensional_bags.common.data.DimBagData;
 import com.limachi.dimensional_bags.common.data.EyeData;
 import com.limachi.dimensional_bags.common.entities.BagEntity;
@@ -18,15 +17,13 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.inventory.EquipmentSlotType;
 import net.minecraft.item.ItemStack;
-import net.minecraft.item.ItemUseContext;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.ActionResultType;
 import net.minecraft.util.Direction;
-import net.minecraft.util.Hand;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.BlockRayTraceResult;
 import net.minecraft.util.math.RayTraceContext;
+import net.minecraft.util.math.vector.Vector3d;
 import net.minecraft.world.World;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.item.ItemEvent;
@@ -36,7 +33,6 @@ import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
-import javax.annotation.Nullable;
 import java.util.*;
 import java.util.function.Supplier;
 
@@ -55,9 +51,7 @@ public class EventManager {
         });
     }
 
-    private static void addDelayedTask(int tick, Supplier<Boolean> func) {
-        DelayedTasks.add(new Pair<>(tick, func));
-    }
+    public static void addDelayedTask(int tick, Supplier<Boolean> func) { DelayedTasks.add(new Pair<>(tick, func)); }
 
     @SubscribeEvent
     public static void onServerTick(TickEvent.ServerTickEvent event) {
@@ -70,7 +64,7 @@ public class EventManager {
             DimBagData dbd = DimBagData.get(server);
             int l = dbd.getLastId() + 1;
             for (int i = 1; i < l; ++i) {
-                EyeData data = EyeData.get(server, i);
+                EyeData data = EyeData.get(i);
                 Entity user = data.getUser();
                 if (user instanceof ServerPlayerEntity) { //test if the player has the bag on them
                     ServerPlayerEntity player = (ServerPlayerEntity)user;
@@ -138,7 +132,7 @@ public class EventManager {
         if (event.getTo().getItem() instanceof Bag) { //this entity equiped a bag
             int id = Bag.getId(event.getTo());
             if (id == 0) return;
-            EyeData data = EyeData.get(null, id);
+            EyeData data = EyeData.get(id);
             data.setUser(event.getEntity());
         }
     }
@@ -154,12 +148,12 @@ public class EventManager {
                 if (new_bag == ItemStack.EMPTY) {
                     new_bag = Bag.stackWithId(((BagEntity) event.getEntity()).getId());
                 }
-                if (player.isCrouching() && player.inventory.armorItemInSlot(EquipmentSlotType.CHEST.getIndex()).isEmpty())
+                if (KeyMapController.getKey(player, KeyMapController.CROUCH_KEY) && player.inventory.armorItemInSlot(EquipmentSlotType.CHEST.getIndex()).isEmpty())
                     player.inventory.armorInventory.set(EquipmentSlotType.CHEST.getIndex(), new_bag);
                 else if (!player.addItemStackToInventory(new_bag))
                     return;
                 event.getTarget().remove();
-            } else if (KeyMapController.getKey(event.getPlayer(), KeyMapController.BAG_CATION_KEY)) {
+            } else if (KeyMapController.getKey(event.getPlayer(), KeyMapController.BAG_ACTION_KEY)) {
                 IDimBagCommonItem.ItemSearchResult src = IDimBagCommonItem.searchItem(event.getPlayer(), 0, Bag.class, (x)->true);
                 if (src != null) {
                     if (((Bag)src.stack.getItem()).onLeftClickEntity(src.stack, event.getPlayer(), event.getTarget()))
@@ -173,7 +167,7 @@ public class EventManager {
     public static void onItemRightClick(PlayerInteractEvent.RightClickItem event) {
         PlayerEntity player = event.getPlayer();
         if (player != null) {
-            if (KeyMapController.getKey(player, KeyMapController.BAG_CATION_KEY)) {
+            if (KeyMapController.getKey(player, KeyMapController.BAG_ACTION_KEY)) {
                 IDimBagCommonItem.ItemSearchResult src = IDimBagCommonItem.searchItem(player, 0, Bag.class, (x)->true);
                 if (src != null) {
                     ActionResult<ItemStack> res = ((Bag)src.stack.getItem()).onItemRightClick(player.world, player, src.index);
@@ -187,12 +181,35 @@ public class EventManager {
     @SubscribeEvent
     public static void onItemRightClickBlock(PlayerInteractEvent.RightClickBlock event) {
         if (!event.getPlayer().getEntityWorld().isRemote()) {
-            if (KeyMapController.getKey(event.getPlayer(), KeyMapController.BAG_CATION_KEY)) {
+            if (KeyMapController.getKey(event.getPlayer(), KeyMapController.BAG_ACTION_KEY)) {
                 IDimBagCommonItem.ItemSearchResult src = IDimBagCommonItem.searchItem(event.getPlayer(), 0, Bag.class, (x)->true);
                 if (src != null) {
                     ActionResultType res = ((Bag)src.stack.getItem()).onItemUse(event.getWorld(), event.getPlayer(), src.index, Bag.rayTrace(event.getWorld(), event.getPlayer(), RayTraceContext.FluidMode.ANY));
                     if (res.isSuccessOrConsume())
                         event.setCanceled(true);
+                }
+            }
+        }
+    }
+
+    @SubscribeEvent
+    public static void onEntityInteract(PlayerInteractEvent.EntityInteract event) {
+        if (!event.getPlayer().getEntityWorld().isRemote()) {
+            PlayerEntity player = event.getPlayer();
+            if (event.getTarget() instanceof PlayerEntity && KeyMapController.getKey(player, KeyMapController.CROUCH_KEY)) { //the player clicked on another player
+                PlayerEntity target = (PlayerEntity)event.getTarget();
+                Vector3d deltaXZ = target.getPositionVec().subtract(player.getPositionVec()).mul(1, 0, 1).normalize(); //where is the player relative to the target, only in XZ coordinates
+                double lookDelta = deltaXZ.dotProduct(target.getLookVec().mul(1, 0, 1).normalize()); //dot product, which can be used as the angle between two vectors
+                if (lookDelta > 0.25) {//range [-1,1] -1 -> oposite vectors: entities look each other, 0 -> perpendicular, 1 -> aligned vectors (entities look in the same directon, so we can assume the clicker is behind the clicked)
+                    //will now look if the target has a bag equiped (armor slot), and if the bag can be invaded
+                    ItemStack stack = target.inventory.armorItemInSlot(EquipmentSlotType.CHEST.getIndex());
+                    if (!stack.isEmpty() && stack.getItem() instanceof Bag) {
+                        EyeData data = EyeData.get(Bag.getId(stack));
+                        if (data != null && data.canInvade(player)) {
+                            event.setCanceled(true);
+                            data.tpIn(player);
+                        }
+                    }
                 }
             }
         }

@@ -197,7 +197,7 @@ public interface IDimBagCommonItem {
     static void executePendingCommand(String s, ItemStack stack, World worldIn, Entity entityIn, int itemSlot, boolean isSelected) {
         if (worldIn.isRemote()) return;
         if (s.startsWith("upgrade.") && stack.getItem() instanceof Bag) {
-            EyeData data = EyeData.get(worldIn.getServer(), Bag.getId(stack));
+            EyeData data = EyeData.get(Bag.getId(stack));
             UpgradeManager.getUpgrade(s.substring(8)).upgradeCrafted(data, stack, worldIn, entityIn);
         }
         if (s.startsWith("add.") && entityIn instanceof ServerPlayerEntity) {

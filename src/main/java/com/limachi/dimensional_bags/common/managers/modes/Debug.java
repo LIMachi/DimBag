@@ -13,7 +13,7 @@ import net.minecraft.world.World;
 import static com.limachi.dimensional_bags.DimBag.LOGGER;
 
 public class Debug extends Mode {
-    public Debug() { super("Debug", false, /**/true/*FIXME: debug test*/); }
+    public Debug() { super("Debug", false, false); }
 
     public ActionResultType onPlayerTick(EyeData data, ItemStack stack, World world, Entity player, int itemSlot, boolean isSelected) { LOGGER.info("onPlayerTick"); return ActionResultType.SUCCESS; }
     public ActionResultType onEntityTick(EyeData data, ItemStack stack, World world, Entity entity, int itemSlot, boolean isSelected) { LOGGER.info("onEntityTick"); return ActionResultType.SUCCESS; }

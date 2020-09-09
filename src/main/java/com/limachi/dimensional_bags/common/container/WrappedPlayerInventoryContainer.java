@@ -11,9 +11,6 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.IIntArray;
-import net.minecraftforge.fml.common.ObfuscationReflectionHelper;
-import java.lang.reflect.Field;
-import java.util.List;
 
 import javax.annotation.Nullable;
 
@@ -26,9 +23,6 @@ public class WrappedPlayerInventoryContainer extends Container {
     private final PlayerInventory playerInventory;
     private final boolean isClient;
     private String localUserName;
-
-    protected static Field field = ObfuscationReflectionHelper.findField(Container.class, "field_75149_d");
-    protected List<IContainerListener> listenersR;
 
     public static WrappedPlayerInventoryContainer createClient(int windowId, PlayerInventory playerInventory, PacketBuffer extraData) {
         return new WrappedPlayerInventoryContainer(Registries.PLAYER_CONTAINER.get(), windowId, playerInventory, extraData.readBoolean() ? new PlayerInvWrapper(playerInventory, extraData) : new PlayerInvWrapper(extraData), true, null);
@@ -51,7 +45,6 @@ public class WrappedPlayerInventoryContainer extends Container {
 
     private WrappedPlayerInventoryContainer(@Nullable ContainerType<? extends WrappedPlayerInventoryContainer> type, int windowId, PlayerInventory playerInventory, PlayerInvWrapper targetInventory, boolean isClient, TileEntity te) {
         super(type, windowId);
-        try { this.listenersR = (List<IContainerListener>) field.get(this); } catch (Throwable e) {}
         this.isClient = isClient;
         this.targetInventory = targetInventory;
         this.playerInventory = playerInventory;
@@ -102,19 +95,6 @@ public class WrappedPlayerInventoryContainer extends Container {
 
     public void changeRights(int slot, Wrapper.IORights rights) {
         targetInventory.setRights(slot, rights);
-        /*
-        if (!isClient)
-            targetInventory.markDirty();
-        */
-        /*
-        if (!isClient) {
-            data.markDirty();
-            SlotIORightsChanged pack = new SlotIORightsChanged(slot, rights);
-            for (IContainerListener listener : listenersR)
-                if (listener instanceof PlayerEntity)
-                    PacketHandler.toClient(pack, (ServerPlayerEntity) listener);
-        }
-        */
     }
 
     public Wrapper.IORights getRights(int slot) {

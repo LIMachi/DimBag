@@ -24,14 +24,14 @@ public class BaseWrappedInventoryContainer extends Container {
         super(type, windowId);
     }
 
-    public BaseWrappedInventoryContainer(ContainerType<? extends BaseWrappedInventoryContainer> type, int windowId, PlayerInventory playerInv, PacketBuffer extraData) { //client side/registry constructor
+    protected BaseWrappedInventoryContainer(ContainerType<? extends BaseWrappedInventoryContainer> type, int windowId, PlayerInventory playerInv, PacketBuffer extraData) { //client side/registry constructor
         super(type, windowId);
         this.playerInv = new PlayerInvWrapper(playerInv);
         this.openInv = new Wrapper(extraData);
         this.client = true;
     }
 
-    public BaseWrappedInventoryContainer(ContainerType<? extends BaseWrappedInventoryContainer> type, int windowId, ServerPlayerEntity player, Wrapper openInv) { //server side constructor
+    protected BaseWrappedInventoryContainer(ContainerType<? extends BaseWrappedInventoryContainer> type, int windowId, ServerPlayerEntity player, Wrapper openInv) { //server side constructor
         super(type, windowId);
         this.playerInv = new PlayerInvWrapper(player.inventory);
         this.openInv = openInv;
@@ -45,19 +45,6 @@ public class BaseWrappedInventoryContainer extends Container {
 
     public void changeRights(int slot, Wrapper.IORights rights) {
         openInv.setRights(slot, rights);
-        /*
-        if (!isClient)
-            targetInventory.markDirty();
-        */
-        /*
-        if (!isClient) {
-            data.markDirty();
-            SlotIORightsChanged pack = new SlotIORightsChanged(slot, rights);
-            for (IContainerListener listener : listenersR)
-                if (listener instanceof PlayerEntity)
-                    PacketHandler.toClient(pack, (ServerPlayerEntity) listener);
-        }
-        */
     }
 
     protected void addPlayerSlots(int px, int py) {
