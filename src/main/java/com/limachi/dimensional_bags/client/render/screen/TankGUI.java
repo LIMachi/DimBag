@@ -1,4 +1,4 @@
-package com.limachi.dimensional_bags.client.screen;
+package com.limachi.dimensional_bags.client.render.screen;
 
 import com.limachi.dimensional_bags.common.container.WrappedPlayerInventoryContainer;
 import com.limachi.dimensional_bags.common.inventory.Wrapper;

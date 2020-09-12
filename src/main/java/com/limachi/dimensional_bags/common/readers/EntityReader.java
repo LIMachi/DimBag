@@ -6,32 +6,42 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.util.DamageSource;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.text.ITextComponent;
+import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraft.world.World;
 
-import java.util.HashMap;
+import org.apache.commons.lang3.StringUtils;
+
+import java.util.*;
 import java.util.function.Function;
 
 public class EntityReader<T extends Entity> {
 
+    public enum Comparator {
+        EQUAL,
+        NOT_EQUAL,
+        LESS,
+        MORE,
+        LESS_OR_EQUAL,
+        MORE_OR_EQUAL;
+    }
+
+    public enum Commands {
+        RANGE_DOUBLE,
+        RANGE_INTEGER,
+        COMPARE_KEYS,
+        COMPARE_KEY_CONSTANT;
+    }
+
     static protected HashMap<EntityType<?>, EntityReader<?>> cache = new HashMap<>();
-
     protected T entity;
-
-    protected HashMap<String, Function<T, String>> suppliersString = new HashMap<>();
-    protected HashMap<String, Function<T, Integer>> suppliersInteger = new HashMap<>();
-    protected HashMap<String, Function<T, Double>> suppliersDouble = new HashMap<>();
-    protected HashMap<String, Function<T, Boolean>> suppliersBoolean = new HashMap<>();
-    protected HashMap<String, HashMap<String, ?>> suppliers = new HashMap<>();
+    protected HashMap<String, EntityValueReader> suppliers = new HashMap<>();
 
     public EntityReader(T entity) {
         this.entity = entity;
         EntityType<?> type = entity.getType();
         EntityReader<?> cached = cache.get(type);
         if (cached == null) {
-            suppliers.put("String", suppliersString);
-            suppliers.put("Integer", suppliersInteger);
-            suppliers.put("Double", suppliersDouble);
-            suppliers.put("Boolean", suppliersBoolean);
             initSuppliers();
             cache.put(type, this);
         }
@@ -39,10 +49,6 @@ public class EntityReader<T extends Entity> {
         {
             EntityReader<T> cast = (EntityReader<T>)cached;
             this.suppliers = cast.suppliers;
-            this.suppliersInteger = cast.suppliersInteger;
-            this.suppliersDouble = cast.suppliersDouble;
-            this.suppliersBoolean = cast.suppliersBoolean;
-            this.suppliersString = cast.suppliersString;
         }
     }
 
@@ -69,245 +75,300 @@ public class EntityReader<T extends Entity> {
         public int getPermissionLevel() { return super.getPermissionLevel(); }
     }
 
+    public enum ValueType {
+        STRING,
+        INTEGER,
+        DOUBLE,
+        BOOLEAN,
+        INVALID
+    }
+
+    public class EntityValueReader {
+        private final ValueType valueType;
+        private final Function<T, Object> supplier;
+        private final Class<? extends Entity> entityClass;
+
+        protected EntityValueReader(ValueType valueType, Function<T, Object> supplier, Class<? extends Entity> entityClass) {
+            this.valueType = valueType;
+            this.supplier = supplier;
+            this.entityClass = entityClass;
+        }
+
+        public boolean matchClass(T entity) { return entityClass.isInstance(entity); }
+        public ValueType getValueType() { return valueType; }
+        public Object getValue(T entity) { return supplier.apply(entity); }
+
+        public ITextComponent getPrintable(String key, T entity) { return new TranslationTextComponent("entity_value_reader.printable", entityClass.toString(), key, getValue(entity), valueType.name()); }
+    }
+
     protected void initSuppliers() {
-        suppliersString.put("type", t->t.getType().toString());
-        suppliersInteger.put("ride_cooldown", t->((CommonEntityReader)t).getRideCooldown());
-        suppliersString.put("world", t-> WorldUtils.worldRKFromWorld(t.world).toString());
-        suppliersDouble.put("previous_position_x", t->t.prevPosX);
-        suppliersDouble.put("previous_position_y", t->t.prevPosY);
-        suppliersDouble.put("previous_position_z", t->t.prevPosZ);
-        suppliersDouble.put("position_x", Entity::getPosX);
-        suppliersDouble.put("position_y", Entity::getPosY);
-        suppliersDouble.put("position_z", Entity::getPosZ);
-        suppliersInteger.put("block_position_x", t->t.getPosition().getX());
-        suppliersInteger.put("block_position_y", t->t.getPosition().getY());
-        suppliersInteger.put("block_position_z", t->t.getPosition().getZ());
-        suppliersDouble.put("motion_x", t->t.getMotion().x);
-        suppliersDouble.put("motion_y", t->t.getMotion().y);
-        suppliersDouble.put("motion_z", t->t.getMotion().z);
-        suppliersDouble.put("rotation_yaw", t->(double) t.rotationYaw);
-        suppliersDouble.put("rotation_pitch", t-> (double) t.rotationPitch);
-        suppliersDouble.put("previous_rotation_yaw", t-> (double) t.prevRotationYaw);
-        suppliersDouble.put("previous_rotation_pitch", t-> (double) t.prevRotationPitch);
-        suppliersBoolean.put("is_on_ground", Entity::isOnGround);
-        suppliersBoolean.put("is_colliding_horizontally", t-> t.collidedHorizontally);
-        suppliersBoolean.put("is_colliding_vertically", t-> t.collidedVertically);
-        suppliersBoolean.put("did_velocity_chang", t-> t.velocityChanged);
-        suppliersDouble.put("previous_distance_walked", t-> (double) t.prevDistanceWalkedModified);
-        suppliersDouble.put("distance_walked", t-> (double) t.distanceWalkedModified);
-        suppliersDouble.put("distance_walked_step", t-> (double) t.distanceWalkedOnStepModified);
-        suppliersDouble.put("fall_distance", t-> (double) t.fallDistance);
-        suppliersDouble.put("step_height", t-> (double) t.stepHeight);
-        suppliersBoolean.put("is_no_clip", t-> t.noClip);
-        suppliersInteger.put("ticks_existed", t-> t.ticksExisted);
-        suppliersInteger.put("fire_tick", Entity::getFireTimer);
-        suppliersBoolean.put("is_immune_to_fire", Entity::isImmuneToFire);
-        suppliersBoolean.put("is_in_water", Entity::isInWater);
-        suppliersBoolean.put("is_in_lava", Entity::isInLava);
-        suppliersInteger.put("hurt_resistance_timer", t->t.hurtResistantTime);
-        suppliersInteger.put("air", Entity::getAir);
-        suppliersInteger.put("maximum_air", Entity::getMaxAir);
-        suppliersBoolean.put("is_name_visible", Entity::isCustomNameVisible);
-        suppliersBoolean.put("is_silent", Entity::isSilent);
-        suppliersBoolean.put("has_no_gravity", Entity::hasNoGravity);
-        suppliersInteger.put("chunk_coordinates_x", t->t.chunkCoordX);
-        suppliersInteger.put("chunk_coordinates_y", t->t.chunkCoordY);
-        suppliersInteger.put("chunk_coordinates_z", t->t.chunkCoordZ);
-        suppliersBoolean.put("is_airborne", t->t.isAirBorne);
-        suppliersBoolean.put("is_in_portal", t->((CommonEntityReader)t).isInPortal());
-        suppliersInteger.put("portal_counter", t->((CommonEntityReader)t).getPortalCounter());
-        suppliersBoolean.put("is_invulnerable", Entity::isInvulnerable);
-        suppliersString.put("UUID", Entity::getCachedUniqueIdString);
-        suppliersBoolean.put("is_glowing", t->((CommonEntityReader)t).isGlowing());
-        suppliersDouble.put("eye_height", t->(double) t.getEyeHeight());
-        suppliersDouble.put("width", t->(double) t.getSize(t.getPose()).width);
-        suppliersDouble.put("height", t->(double) t.getSize(t.getPose()).height);
-        suppliersBoolean.put("can_passenger_steer", Entity::canPassengerSteer);
-        suppliersString.put("push_reaction", t->t.getPushReaction().toString());
-        suppliersString.put("sound_category", t->t.getSoundCategory().getName());
-        suppliersBoolean.put("is_vulnerable_to_fall", t->t.isInvulnerableTo(DamageSource.FALL));
-        suppliersBoolean.put("is_vulnerable_to_anvil", t->t.isInvulnerableTo(DamageSource.ANVIL));
-        suppliersBoolean.put("is_vulnerable_to_cactus", t->t.isInvulnerableTo(DamageSource.CACTUS));
-        suppliersBoolean.put("is_vulnerable_to_craming", t->t.isInvulnerableTo(DamageSource.CRAMMING));
-        suppliersBoolean.put("is_vulnerable_to_dragon_breath", t->t.isInvulnerableTo(DamageSource.DRAGON_BREATH));
-        suppliersBoolean.put("is_vulnerable_to_drown", t->t.isInvulnerableTo(DamageSource.DROWN));
-        suppliersBoolean.put("is_vulnerable_to_dryout", t->t.isInvulnerableTo(DamageSource.DRYOUT));
-        suppliersBoolean.put("is_vulnerable_to_falling_block", t->t.isInvulnerableTo(DamageSource.FALLING_BLOCK));
-        suppliersBoolean.put("is_vulnerable_to_fly_into_wall", t->t.isInvulnerableTo(DamageSource.FLY_INTO_WALL));
-        suppliersBoolean.put("is_vulnerable_to_generic", t->t.isInvulnerableTo(DamageSource.GENERIC));
-        suppliersBoolean.put("is_vulnerable_to_hot_floor", t->t.isInvulnerableTo(DamageSource.HOT_FLOOR));
-        suppliersBoolean.put("is_vulnerable_to_in_fire", t->t.isInvulnerableTo(DamageSource.IN_FIRE));
-        suppliersBoolean.put("is_vulnerable_to_in_wall", t->t.isInvulnerableTo(DamageSource.IN_WALL));
-        suppliersBoolean.put("is_vulnerable_to_lava", t->t.isInvulnerableTo(DamageSource.LAVA));
-        suppliersBoolean.put("is_vulnerable_to_lightning_bolt", t->t.isInvulnerableTo(DamageSource.LIGHTNING_BOLT));
-        suppliersBoolean.put("is_vulnerable_to_magic", t->t.isInvulnerableTo(DamageSource.MAGIC));
-        suppliersBoolean.put("is_vulnerable_to_on_fire", t->t.isInvulnerableTo(DamageSource.ON_FIRE));
-        suppliersBoolean.put("is_vulnerable_to_out_of_world", t->t.isInvulnerableTo(DamageSource.OUT_OF_WORLD));
-        suppliersBoolean.put("is_vulnerable_to_starve", t->t.isInvulnerableTo(DamageSource.STARVE));
-        suppliersBoolean.put("is_vulnerable_to_sweet_berry_bush", t->t.isInvulnerableTo(DamageSource.SWEET_BERRY_BUSH));
-        suppliersBoolean.put("is_vulnerable_to_wither", t->t.isInvulnerableTo(DamageSource.WITHER));
-        suppliersBoolean.put("is_spectator", Entity::isSpectator);
-        suppliersString.put("pose", t->t.getPose().name());
-        suppliersDouble.put("jump_factor", t->(double)((CommonEntityReader)t).getJumpFactor());
-        suppliersDouble.put("speed_factor", t->(double)((CommonEntityReader)t).getSpeedFactor());
-        suppliersBoolean.put("is_in_rain", t->((CommonEntityReader)t).isInRain());
-        suppliersBoolean.put("is_in_bubble_column", t->((CommonEntityReader)t).isInBubbleColumn());
-        suppliersBoolean.put("can_swim", Entity::canSwim);
-        suppliersString.put("entity_string", Entity::getEntityString);
-        suppliersBoolean.put("is_alive", Entity::isAlive);
-        suppliersBoolean.put("is_inside_opaque_block", Entity::isEntityInsideOpaqueBlock);
-        suppliersBoolean.put("is_being_ridden", Entity::isBeingRidden);
-        suppliersBoolean.put("is_passenger", Entity::isPassenger);
-        suppliersBoolean.put("can_be_ridden_in_water", Entity::canBeRiddenInWater);
-        suppliersBoolean.put("is_sprinting", Entity::isSprinting);
-        suppliersBoolean.put("is_swiming", Entity::isSwimming);
-        suppliersBoolean.put("is_invisible", Entity::isInvisible);
-        suppliersString.put("team", t->t.getTeam() != null ? t.getTeam().getName() : "");
-        suppliersString.put("team_color", t->t.getTeam() != null ? t.getTeam().getColor().getFriendlyName() : "");
-        suppliersString.put("string", Entity::toString);
-        suppliersBoolean.put("is_non_boss", Entity::isNonBoss);
-        suppliersInteger.put("max_fall_height", Entity::getMaxFallHeight);
-        suppliersBoolean.put("does_not_trigger_pressure_plate", Entity::doesEntityNotTriggerPressurePlate);
-        suppliersBoolean.put("can_be_pushed_by_water", Entity::isPushedByWater);
-        suppliersString.put("server", t->t.getServer() != null ? t.getServer().getServerHostname() : "");
-        suppliersBoolean.put("is_one_player_riding", Entity::isOnePlayerRiding);
-        suppliersInteger.put("permission_level", t->((CommonEntityReader)t).getPermissionLevel());
+        suppliers.put("type", new EntityValueReader(ValueType.STRING, t->t.getType().toString(), Entity.class));
+        suppliers.put("ride_cooldown", new EntityValueReader(ValueType.INTEGER, t->((CommonEntityReader)t).getRideCooldown(), Entity.class));
+        suppliers.put("world", new EntityValueReader(ValueType.STRING, t-> WorldUtils.worldRKFromWorld(t.world).toString(), Entity.class));
+        suppliers.put("previous_position_x", new EntityValueReader(ValueType.DOUBLE, t->t.prevPosX, Entity.class));
+        suppliers.put("previous_position_y", new EntityValueReader(ValueType.DOUBLE, t->t.prevPosY, Entity.class));
+        suppliers.put("previous_position_z", new EntityValueReader(ValueType.DOUBLE, t->t.prevPosZ, Entity.class));
+        suppliers.put("position_x", new EntityValueReader(ValueType.DOUBLE, Entity::getPosX, Entity.class));
+        suppliers.put("position_y", new EntityValueReader(ValueType.DOUBLE, Entity::getPosY, Entity.class));
+        suppliers.put("position_z", new EntityValueReader(ValueType.DOUBLE, Entity::getPosZ, Entity.class));
+        suppliers.put("block_position_x", new EntityValueReader(ValueType.INTEGER, t->t.getPosition().getX(), Entity.class));
+        suppliers.put("block_position_y", new EntityValueReader(ValueType.INTEGER, t->t.getPosition().getY(), Entity.class));
+        suppliers.put("block_position_z", new EntityValueReader(ValueType.INTEGER, t->t.getPosition().getZ(), Entity.class));
+        suppliers.put("motion_x", new EntityValueReader(ValueType.DOUBLE, t->t.getMotion().x, Entity.class));
+        suppliers.put("motion_y", new EntityValueReader(ValueType.DOUBLE, t->t.getMotion().y, Entity.class));
+        suppliers.put("motion_z", new EntityValueReader(ValueType.DOUBLE, t->t.getMotion().z, Entity.class));
+        suppliers.put("rotation_yaw", new EntityValueReader(ValueType.DOUBLE, t->(double) t.rotationYaw, Entity.class));
+        suppliers.put("rotation_pitch", new EntityValueReader(ValueType.DOUBLE, t-> (double) t.rotationPitch, Entity.class));
+        suppliers.put("previous_rotation_yaw", new EntityValueReader(ValueType.DOUBLE, t-> (double) t.prevRotationYaw, Entity.class));
+        suppliers.put("previous_rotation_pitch", new EntityValueReader(ValueType.DOUBLE, t-> (double) t.prevRotationPitch, Entity.class));
+        suppliers.put("is_on_ground", new EntityValueReader(ValueType.BOOLEAN, Entity::isOnGround, Entity.class));
+        suppliers.put("is_colliding_horizontally", new EntityValueReader(ValueType.BOOLEAN, t-> t.collidedHorizontally, Entity.class));
+        suppliers.put("is_colliding_vertically", new EntityValueReader(ValueType.BOOLEAN, t-> t.collidedVertically, Entity.class));
+        suppliers.put("did_velocity_chang", new EntityValueReader(ValueType.BOOLEAN, t-> t.velocityChanged, Entity.class));
+        suppliers.put("previous_distance_walked", new EntityValueReader(ValueType.DOUBLE, t-> (double) t.prevDistanceWalkedModified, Entity.class));
+        suppliers.put("distance_walked", new EntityValueReader(ValueType.DOUBLE, t-> (double) t.distanceWalkedModified, Entity.class));
+        suppliers.put("distance_walked_step", new EntityValueReader(ValueType.DOUBLE, t-> (double) t.distanceWalkedOnStepModified, Entity.class));
+        suppliers.put("fall_distance", new EntityValueReader(ValueType.DOUBLE, t-> (double) t.fallDistance, Entity.class));
+        suppliers.put("step_height", new EntityValueReader(ValueType.DOUBLE, t-> (double) t.stepHeight, Entity.class));
+        suppliers.put("is_no_clip", new EntityValueReader(ValueType.BOOLEAN, t-> t.noClip, Entity.class));
+        suppliers.put("ticks_existed", new EntityValueReader(ValueType.INTEGER, t-> t.ticksExisted, Entity.class));
+        suppliers.put("fire_tick", new EntityValueReader(ValueType.INTEGER, Entity::getFireTimer, Entity.class));
+        suppliers.put("is_immune_to_fire", new EntityValueReader(ValueType.BOOLEAN, Entity::isImmuneToFire, Entity.class));
+        suppliers.put("is_in_water", new EntityValueReader(ValueType.BOOLEAN, Entity::isInWater, Entity.class));
+        suppliers.put("is_in_lava", new EntityValueReader(ValueType.BOOLEAN, Entity::isInLava, Entity.class));
+        suppliers.put("hurt_resistance_timer", new EntityValueReader(ValueType.INTEGER, t->t.hurtResistantTime, Entity.class));
+        suppliers.put("air", new EntityValueReader(ValueType.INTEGER, Entity::getAir, Entity.class));
+        suppliers.put("maximum_air", new EntityValueReader(ValueType.INTEGER, Entity::getMaxAir, Entity.class));
+        suppliers.put("is_name_visible", new EntityValueReader(ValueType.BOOLEAN, Entity::isCustomNameVisible, Entity.class));
+        suppliers.put("is_silent", new EntityValueReader(ValueType.BOOLEAN, Entity::isSilent, Entity.class));
+        suppliers.put("has_no_gravity", new EntityValueReader(ValueType.BOOLEAN, Entity::hasNoGravity, Entity.class));
+        suppliers.put("chunk_coordinates_x", new EntityValueReader(ValueType.INTEGER, t->t.chunkCoordX, Entity.class));
+        suppliers.put("chunk_coordinates_y", new EntityValueReader(ValueType.INTEGER, t->t.chunkCoordY, Entity.class));
+        suppliers.put("chunk_coordinates_z", new EntityValueReader(ValueType.INTEGER, t->t.chunkCoordZ, Entity.class));
+        suppliers.put("is_airborne", new EntityValueReader(ValueType.BOOLEAN, t->t.isAirBorne, Entity.class));
+        suppliers.put("is_in_portal", new EntityValueReader(ValueType.BOOLEAN, t->((CommonEntityReader)t).isInPortal(), Entity.class));
+        suppliers.put("portal_counter", new EntityValueReader(ValueType.INTEGER, t->((CommonEntityReader)t).getPortalCounter(), Entity.class));
+        suppliers.put("is_invulnerable", new EntityValueReader(ValueType.BOOLEAN, Entity::isInvulnerable, Entity.class));
+        suppliers.put("UUID", new EntityValueReader(ValueType.STRING, Entity::getCachedUniqueIdString, Entity.class));
+        suppliers.put("is_glowing", new EntityValueReader(ValueType.BOOLEAN, t->((CommonEntityReader)t).isGlowing(), Entity.class));
+        suppliers.put("eye_height", new EntityValueReader(ValueType.DOUBLE, t->(double) t.getEyeHeight(), Entity.class));
+        suppliers.put("width", new EntityValueReader(ValueType.DOUBLE, t->(double) t.getSize(t.getPose()).width, Entity.class));
+        suppliers.put("height", new EntityValueReader(ValueType.DOUBLE, t->(double) t.getSize(t.getPose()).height, Entity.class));
+        suppliers.put("can_passenger_steer", new EntityValueReader(ValueType.BOOLEAN, Entity::canPassengerSteer, Entity.class));
+        suppliers.put("push_reaction", new EntityValueReader(ValueType.STRING, t->t.getPushReaction().toString(), Entity.class));
+        suppliers.put("sound_category", new EntityValueReader(ValueType.STRING, t->t.getSoundCategory().getName(), Entity.class));
+        suppliers.put("is_vulnerable_to_fall", new EntityValueReader(ValueType.BOOLEAN, t->t.isInvulnerableTo(DamageSource.FALL), Entity.class));
+        suppliers.put("is_vulnerable_to_anvil", new EntityValueReader(ValueType.BOOLEAN, t->t.isInvulnerableTo(DamageSource.ANVIL), Entity.class));
+        suppliers.put("is_vulnerable_to_cactus", new EntityValueReader(ValueType.BOOLEAN, t->t.isInvulnerableTo(DamageSource.CACTUS), Entity.class));
+        suppliers.put("is_vulnerable_to_craming", new EntityValueReader(ValueType.BOOLEAN, t->t.isInvulnerableTo(DamageSource.CRAMMING), Entity.class));
+        suppliers.put("is_vulnerable_to_dragon_breath", new EntityValueReader(ValueType.BOOLEAN, t->t.isInvulnerableTo(DamageSource.DRAGON_BREATH), Entity.class));
+        suppliers.put("is_vulnerable_to_drown", new EntityValueReader(ValueType.BOOLEAN, t->t.isInvulnerableTo(DamageSource.DROWN), Entity.class));
+        suppliers.put("is_vulnerable_to_dryout", new EntityValueReader(ValueType.BOOLEAN, t->t.isInvulnerableTo(DamageSource.DRYOUT), Entity.class));
+        suppliers.put("is_vulnerable_to_falling_block", new EntityValueReader(ValueType.BOOLEAN, t->t.isInvulnerableTo(DamageSource.FALLING_BLOCK), Entity.class));
+        suppliers.put("is_vulnerable_to_fly_into_wall", new EntityValueReader(ValueType.BOOLEAN, t->t.isInvulnerableTo(DamageSource.FLY_INTO_WALL), Entity.class));
+        suppliers.put("is_vulnerable_to_generic", new EntityValueReader(ValueType.BOOLEAN, t->t.isInvulnerableTo(DamageSource.GENERIC), Entity.class));
+        suppliers.put("is_vulnerable_to_hot_floor", new EntityValueReader(ValueType.BOOLEAN, t->t.isInvulnerableTo(DamageSource.HOT_FLOOR), Entity.class));
+        suppliers.put("is_vulnerable_to_in_fire", new EntityValueReader(ValueType.BOOLEAN, t->t.isInvulnerableTo(DamageSource.IN_FIRE), Entity.class));
+        suppliers.put("is_vulnerable_to_in_wall", new EntityValueReader(ValueType.BOOLEAN, t->t.isInvulnerableTo(DamageSource.IN_WALL), Entity.class));
+        suppliers.put("is_vulnerable_to_lava", new EntityValueReader(ValueType.BOOLEAN, t->t.isInvulnerableTo(DamageSource.LAVA), Entity.class));
+        suppliers.put("is_vulnerable_to_lightning_bolt", new EntityValueReader(ValueType.BOOLEAN, t->t.isInvulnerableTo(DamageSource.LIGHTNING_BOLT), Entity.class));
+        suppliers.put("is_vulnerable_to_magic", new EntityValueReader(ValueType.BOOLEAN, t->t.isInvulnerableTo(DamageSource.MAGIC), Entity.class));
+        suppliers.put("is_vulnerable_to_on_fire", new EntityValueReader(ValueType.BOOLEAN, t->t.isInvulnerableTo(DamageSource.ON_FIRE), Entity.class));
+        suppliers.put("is_vulnerable_to_out_of_world", new EntityValueReader(ValueType.BOOLEAN, t->t.isInvulnerableTo(DamageSource.OUT_OF_WORLD), Entity.class));
+        suppliers.put("is_vulnerable_to_starve", new EntityValueReader(ValueType.BOOLEAN, t->t.isInvulnerableTo(DamageSource.STARVE), Entity.class));
+        suppliers.put("is_vulnerable_to_sweet_berry_bush", new EntityValueReader(ValueType.BOOLEAN, t->t.isInvulnerableTo(DamageSource.SWEET_BERRY_BUSH), Entity.class));
+        suppliers.put("is_vulnerable_to_wither", new EntityValueReader(ValueType.BOOLEAN, t->t.isInvulnerableTo(DamageSource.WITHER), Entity.class));
+        suppliers.put("is_spectator", new EntityValueReader(ValueType.BOOLEAN, Entity::isSpectator, Entity.class));
+        suppliers.put("pose", new EntityValueReader(ValueType.STRING, t->t.getPose().name(), Entity.class));
+        suppliers.put("jump_factor", new EntityValueReader(ValueType.DOUBLE, t->(double)((CommonEntityReader)t).getJumpFactor(), Entity.class));
+        suppliers.put("speed_factor", new EntityValueReader(ValueType.DOUBLE, t->(double)((CommonEntityReader)t).getSpeedFactor(), Entity.class));
+        suppliers.put("is_in_rain", new EntityValueReader(ValueType.BOOLEAN, t->((CommonEntityReader)t).isInRain(), Entity.class));
+        suppliers.put("is_in_bubble_column", new EntityValueReader(ValueType.BOOLEAN, t->((CommonEntityReader)t).isInBubbleColumn(), Entity.class));
+        suppliers.put("can_swim", new EntityValueReader(ValueType.BOOLEAN, Entity::canSwim, Entity.class));
+        suppliers.put("entity_string", new EntityValueReader(ValueType.STRING, Entity::getEntityString, Entity.class));
+        suppliers.put("is_alive", new EntityValueReader(ValueType.BOOLEAN, Entity::isAlive, Entity.class));
+        suppliers.put("is_inside_opaque_block", new EntityValueReader(ValueType.BOOLEAN, Entity::isEntityInsideOpaqueBlock, Entity.class));
+        suppliers.put("is_being_ridden", new EntityValueReader(ValueType.BOOLEAN, Entity::isBeingRidden, Entity.class));
+        suppliers.put("is_passenger", new EntityValueReader(ValueType.BOOLEAN, Entity::isPassenger, Entity.class));
+        suppliers.put("can_be_ridden_in_water", new EntityValueReader(ValueType.BOOLEAN, Entity::canBeRiddenInWater, Entity.class));
+        suppliers.put("is_sprinting", new EntityValueReader(ValueType.BOOLEAN, Entity::isSprinting, Entity.class));
+        suppliers.put("is_swiming", new EntityValueReader(ValueType.BOOLEAN, Entity::isSwimming, Entity.class));
+        suppliers.put("is_invisible", new EntityValueReader(ValueType.BOOLEAN, Entity::isInvisible, Entity.class));
+        suppliers.put("team", new EntityValueReader(ValueType.STRING, t->t.getTeam() != null ? t.getTeam().getName() : "", Entity.class));
+        suppliers.put("team_color", new EntityValueReader(ValueType.STRING, t->t.getTeam() != null ? t.getTeam().getColor().getFriendlyName() : "", Entity.class));
+        suppliers.put("string", new EntityValueReader(ValueType.STRING, Entity::toString, Entity.class));
+        suppliers.put("is_non_boss", new EntityValueReader(ValueType.BOOLEAN, Entity::isNonBoss, Entity.class));
+        suppliers.put("max_fall_height", new EntityValueReader(ValueType.INTEGER, Entity::getMaxFallHeight, Entity.class));
+        suppliers.put("does_not_trigger_pressure_plate", new EntityValueReader(ValueType.BOOLEAN, Entity::doesEntityNotTriggerPressurePlate, Entity.class));
+        suppliers.put("can_be_pushed_by_water", new EntityValueReader(ValueType.BOOLEAN, Entity::isPushedByWater, Entity.class));
+        suppliers.put("server", new EntityValueReader(ValueType.STRING, t->t.getServer() != null ? t.getServer().getServerHostname() : "", Entity.class));
+        suppliers.put("is_one_player_riding", new EntityValueReader(ValueType.BOOLEAN, Entity::isOnePlayerRiding, Entity.class));
+        suppliers.put("permission_level", new EntityValueReader(ValueType.INTEGER, t->((CommonEntityReader)t).getPermissionLevel(), Entity.class));
     }
 
-    protected String keyType(String key) {
-        for (String group : suppliers.keySet())
-            if (suppliers.get(group).containsKey(key))
-                return group;
-        return "InvalidGroup";
-    }
-
-    public enum Comparator {
-        EQUAL,
-        NOT_EQUAL,
-        LESS,
-        MORE,
-        LESS_OR_EQUAL,
-        MORE_OR_EQUAL;
-    }
-
-    public enum Commands {
-        RANGE_DOUBLE,
-        RANGE_INTEGER,
-        COMPARE_KEYS,
-        COMPARE_KEY_CONSTANT;
+    protected EntityValueReader getValueReader(String key) {
+        EntityValueReader reader = suppliers.get(key);
+        if (reader != null && reader.matchClass(entity))
+                return reader;
+        return null;
     }
 
     protected boolean compare2keys(Comparator comparator, String key1, String key2) {
-        String group1 = keyType(key1);
-        String group2 = keyType(key2);
-        if (group1.equals("InvalidGroup") || group2.equals("InvalidGroup") || !group1.equals(group2)) return comparator == Comparator.NOT_EQUAL || comparator == Comparator.MORE || comparator == Comparator.LESS;
-        if (group1.equals("String")) {
-            String str1 = suppliersString.get(key1).apply(entity);
-            String str2 = suppliersString.get(key2).apply(entity);
-            switch (comparator) {
-                case EQUAL: return str1.equals(str2);
-                case NOT_EQUAL: return !str1.equals(str2);
-                case MORE: case MORE_OR_EQUAL: return str1.contains(str2);
-                case LESS: case LESS_OR_EQUAL: return str2.contains(str1);
-                default: return false;
+        EntityValueReader reader1 = getValueReader(key1);
+        EntityValueReader reader2 = getValueReader(key2);
+        if (reader1 == null || reader2 == null || reader1.valueType != reader2.valueType) return comparator == Comparator.NOT_EQUAL || comparator == Comparator.MORE || comparator == Comparator.LESS;
+        switch (reader1.valueType) {
+            case STRING:
+                String str1 = (String)reader1.getValue(entity);
+                String str2 = (String)reader2.getValue(entity);
+                switch (comparator) {
+                    case EQUAL:
+                        return str1.equals(str2);
+                    case NOT_EQUAL:
+                        return !str1.equals(str2);
+                    case MORE:
+                    case MORE_OR_EQUAL:
+                        return str1.contains(str2);
+                    case LESS:
+                    case LESS_OR_EQUAL:
+                        return str2.contains(str1);
+                    default:
+                        return false;
+                }
+            case INTEGER:
+                int i1 = (Integer)reader1.getValue(entity);
+                int i2 = (Integer)reader2.getValue(entity);
+                switch (comparator) {
+                    case EQUAL: return i1 == i2;
+                    case NOT_EQUAL: return i1 != i2;
+                    case MORE: return i1 > i2;
+                    case MORE_OR_EQUAL: return i1 >= i2;
+                    case LESS: return i1 < i2;
+                    case LESS_OR_EQUAL: return i1 <= i2;
+                    default: return false;
+                }
+            case DOUBLE:
+                double d1 = (Double)reader1.getValue(entity);
+                double d2 = (Double)reader2.getValue(entity);
+                switch (comparator) {
+                    case EQUAL: return d1 == d2;
+                    case NOT_EQUAL: return d1 != d2;
+                    case MORE: return d1 > d2;
+                    case MORE_OR_EQUAL: return d1 >= d2;
+                    case LESS: return d1 < d2;
+                    case LESS_OR_EQUAL: return d1 <= d2;
+                    default: return false;
+                }
+            case BOOLEAN:
+                boolean b1 = (Boolean)reader1.getValue(entity);
+                boolean b2 = (Boolean)reader2.getValue(entity);
+                switch (comparator) {
+                    case EQUAL:
+                    case MORE_OR_EQUAL:
+                    case LESS_OR_EQUAL:
+                        return b1 == b2;
+                    case NOT_EQUAL:
+                    case MORE:
+                    case LESS:
+                        return b1 != b2;
+                    default:
+                        return false;
+                }
             }
-        } else if (group1.equals("Integer")) {
-            int i1 = suppliersInteger.get(key1).apply(entity);
-            int i2 = suppliersInteger.get(key2).apply(entity);
-            switch (comparator) {
-                case EQUAL: return i1 == i2;
-                case NOT_EQUAL: return i1 != i2;
-                case MORE: return i1 > i2;
-                case MORE_OR_EQUAL: return i1 >= i2;
-                case LESS: return i1 < i2;
-                case LESS_OR_EQUAL: return i1 <= i2;
-                default: return false;
-            }
-        } else if (group1.equals("Double")) {
-            double i1 = suppliersDouble.get(key1).apply(entity);
-            double i2 = suppliersDouble.get(key2).apply(entity);
-            switch (comparator) {
-                case EQUAL: return i1 == i2;
-                case NOT_EQUAL: return i1 != i2;
-                case MORE: return i1 > i2;
-                case MORE_OR_EQUAL: return i1 >= i2;
-                case LESS: return i1 < i2;
-                case LESS_OR_EQUAL: return i1 <= i2;
-                default: return false;
-            }
-        } else if (group1.equals("Boolean")) {
-            boolean i1 = suppliersBoolean.get(key1).apply(entity);
-            boolean i2 = suppliersBoolean.get(key2).apply(entity);
-            switch (comparator) {
-                case EQUAL: case MORE_OR_EQUAL: case LESS_OR_EQUAL: return i1 == i2;
-                case NOT_EQUAL: case MORE: case LESS: return i1 != i2;
-                default: return false;
-            }
-        }
         return comparator == Comparator.NOT_EQUAL || comparator == Comparator.MORE || comparator == Comparator.LESS;
     }
 
     protected boolean compare1key1constant(Comparator comparator, String key, String constant) {
-        String group = keyType(key);
-        if (group.equals("InvalidGroup")) return comparator == Comparator.NOT_EQUAL || comparator == Comparator.MORE || comparator == Comparator.LESS;
-        if (group.equals("String")) {
-            String str = suppliersString.get(key).apply(entity);
-            switch (comparator) {
-                case EQUAL: return str.equals(constant);
-                case NOT_EQUAL: return !str.equals(constant);
-                case MORE: case MORE_OR_EQUAL: return str.contains(constant);
-                case LESS: case LESS_OR_EQUAL: return constant.contains(str);
-                default: return false;
+        EntityValueReader reader = getValueReader(key);
+        if (reader == null) return comparator == Comparator.NOT_EQUAL || comparator == Comparator.MORE || comparator == Comparator.LESS;
+        switch (reader.valueType) {
+            case STRING:
+                String str = (String)reader.getValue(entity);
+                switch (comparator) {
+                    case EQUAL:
+                        return str.equals(constant);
+                    case NOT_EQUAL:
+                        return !str.equals(constant);
+                    case MORE:
+                    case MORE_OR_EQUAL:
+                        return str.contains(constant);
+                    case LESS:
+                    case LESS_OR_EQUAL:
+                        return constant.contains(str);
+                    default:
+                        return false;
+                }
+            case BOOLEAN:
+                boolean b1 = (Boolean)reader.getValue(entity);
+                boolean b2 = constant.equals("true");
+                switch (comparator) {
+                    case EQUAL:
+                    case MORE_OR_EQUAL:
+                    case LESS_OR_EQUAL:
+                        return b1 == b2;
+                    case NOT_EQUAL:
+                    case MORE:
+                    case LESS:
+                        return b1 != b2;
+                    default:
+                        return false;
+                }
+            case INTEGER:
+                int i1 = (Integer)reader.getValue(entity);
+                int i2;
+                try {
+                    i2 = Integer.parseInt(constant);
+                } catch (NumberFormatException e) {
+                    return false;
+                }
+                switch (comparator) {
+                    case EQUAL:
+                        return i1 == i2;
+                    case NOT_EQUAL:
+                        return i1 != i2;
+                    case MORE:
+                        return i1 > i2;
+                    case MORE_OR_EQUAL:
+                        return i1 >= i2;
+                    case LESS:
+                        return i1 < i2;
+                    case LESS_OR_EQUAL:
+                        return i1 <= i2;
+                    default:
+                        return false;
+                }
+            case DOUBLE:
+                double d1 = (Double)reader.getValue(entity);
+                double d2;
+                try {
+                    d2 = Double.parseDouble(constant);
+                } catch (NumberFormatException e) {
+                    return false;
+                }
+                switch (comparator) {
+                    case EQUAL:
+                        return d1 == d2;
+                    case NOT_EQUAL:
+                        return d1 != d2;
+                    case MORE:
+                        return d1 > d2;
+                    case MORE_OR_EQUAL:
+                        return d1 >= d2;
+                    case LESS:
+                        return d1 < d2;
+                    case LESS_OR_EQUAL:
+                        return d1 <= d2;
+                    default:
+                        return false;
+                }
             }
-        } else if (group.equals("Boolean")) {
-            boolean k = suppliersBoolean.get(key).apply(entity);
-            boolean b = constant.equals("true");
-            switch (comparator) {
-                case EQUAL: case MORE_OR_EQUAL: case LESS_OR_EQUAL: return k == b;
-                case NOT_EQUAL: case MORE: case LESS: return k != b;
-                default: return false;
-            }
-        } else if (group.equals("Integer")) {
-            int k = suppliersInteger.get(key).apply(entity);
-            int c;
-            try {
-                c = Integer.parseInt(constant);
-            } catch (NumberFormatException e) {
-                return false;
-            }
-            switch (comparator) {
-                case EQUAL: return k == c;
-                case NOT_EQUAL: return k != c;
-                case MORE: return k > c;
-                case MORE_OR_EQUAL: return k >= c;
-                case LESS: return k < c;
-                case LESS_OR_EQUAL: return k <= c;
-                default: return false;
-            }
-        } else if (group.equals("Double")) {
-            double k = suppliersDouble.get(key).apply(entity);
-            double d;
-            try {
-                d = Double.parseDouble(constant);
-            } catch (NumberFormatException e) {
-                return false;
-            }
-            switch (comparator) {
-                case EQUAL: return k == d;
-                case NOT_EQUAL: return k != d;
-                case MORE: return k > d;
-                case MORE_OR_EQUAL: return k >= d;
-                case LESS: return k < d;
-                case LESS_OR_EQUAL: return k <= d;
-                default: return false;
-            }
-        }
         return comparator == Comparator.NOT_EQUAL || comparator == Comparator.MORE || comparator == Comparator.LESS;
     }
 
     protected int rangeInt(String key, int start, int end) {
-        if (suppliersInteger.containsKey(key)) {
-            int k = suppliersInteger.get(key).apply(entity);
+        EntityValueReader reader = getValueReader(key);
+        if (reader != null && reader.valueType == ValueType.INTEGER) {
+            int k = (Integer)reader.getValue(entity);
             if (start < end) {
                 if (k < start || k > end) return 0;
                 return (int)Math.round((15.0d / ((double)(end - start))) * (double)(k - start));
@@ -320,8 +381,9 @@ public class EntityReader<T extends Entity> {
     }
 
     protected int rangeDouble(String key, double start, double end) {
-        if (suppliersDouble.containsKey(key)) {
-            double k = suppliersDouble.get(key).apply(entity);
+        EntityValueReader reader = getValueReader(key);
+        if (reader != null && reader.valueType == ValueType.DOUBLE) {
+            double k = (Double)reader.getValue(entity);
             if (start < end) {
                 if (k < start || k > end) return 0;
                 return (int)Math.round((15.0d / (end - start)) * (k - start));
@@ -359,5 +421,38 @@ public class EntityReader<T extends Entity> {
             } catch (IllegalArgumentException e) {} //invalid command/comparator
         }
         return 0;
+    }
+
+    public int comparisonScore1(String search, String key) {
+        if (suppliers.get(key).matchClass(entity))
+            return StringUtils.getFuzzyDistance(search, key, Locale.ENGLISH); //could use GameSettings.language as locale
+        else return Integer.MIN_VALUE;
+    }
+
+    public int comparisonScore2(String search, String key) {
+        if (suppliers.get(key).matchClass(entity))
+            return (int)(StringUtils.getJaroWinklerDistance(search, key) * 100.0D);
+        else return Integer.MIN_VALUE;
+    }
+
+    public ArrayList<String> sortedKeys(String currentSearch) {
+        ArrayList<String> test = new ArrayList(suppliers.keySet());
+        test.sort(new java.util.Comparator<String>() {
+            @Override
+            public int compare(String o1, String o2) {
+                if (currentSearch != null && !currentSearch.isEmpty()) {
+                    int s1 = comparisonScore1(currentSearch, o1);
+                    int s2 = comparisonScore1(currentSearch, o2);
+                    if (s1 == s2) {
+                        s1 = comparisonScore2(currentSearch, o1);
+                        s2 = comparisonScore2(currentSearch, o2);
+                    }
+                    if (s1 != s2)
+                        return s2 - s1;
+                }
+                return o1.compareTo(o2);
+            }
+        });
+        return test;
     }
 }

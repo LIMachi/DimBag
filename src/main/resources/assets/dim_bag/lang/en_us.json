@@ -26,5 +26,6 @@
   "tooltip.shift_for_info": "use [SHIFT] for more information",
   "tooltip.bag.mode": "Selected mode: %s",
   "notification.bag.changed_mode": "Switched mode to: %s",
-  "bag.mode.Default": "Default"
+  "bag.mode.Default": "Default",
+  "entity_value_reader.printable": "%s->%s = '%s'(%s)"
 }
