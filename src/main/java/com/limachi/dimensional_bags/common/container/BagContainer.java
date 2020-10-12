@@ -1,7 +1,7 @@
 package com.limachi.dimensional_bags.common.container;
 
 import com.limachi.dimensional_bags.common.Registries;
-import com.limachi.dimensional_bags.common.data.EyeData;
+import com.limachi.dimensional_bags.common.data.EyeDataMK2.InventoryData;
 import com.limachi.dimensional_bags.common.inventory.PlayerInvWrapper;
 import com.limachi.dimensional_bags.common.inventory.Wrapper;
 import com.limachi.dimensional_bags.common.network.Network;
@@ -20,9 +20,9 @@ public class BagContainer extends BaseWrappedInventoryContainer {
 
     private int rows;
     private int columns;
-    private EyeData data;
+    private InventoryData data;
 
-    private BagContainer(int windowId, PlayerInventory playerInv, int rows, int columns, Wrapper openInv, EyeData data) {
+    private BagContainer(int windowId, PlayerInventory playerInv, int rows, int columns, Wrapper openInv, InventoryData data) {
         super(Registries.BAG_CONTAINER.get(), windowId);
         this.playerInv = new PlayerInvWrapper(playerInv);
         this.openInv = openInv;
@@ -37,7 +37,7 @@ public class BagContainer extends BaseWrappedInventoryContainer {
         return new BagContainer(windowId, playerInv, extraData.readInt(), extraData.readInt(), new Wrapper(extraData), null);
     }
 
-    public static BagContainer CreateServer(int windowId, PlayerInventory playerInv, EyeData data) { //server
+    public static BagContainer CreateServer(int windowId, PlayerInventory playerInv, InventoryData data) { //server
         return new BagContainer(windowId, playerInv, data.getRows(), data.getColumns(), data.getInventory(), data);
     }
 
@@ -62,7 +62,7 @@ public class BagContainer extends BaseWrappedInventoryContainer {
     @Override
     public void detectAndSendChanges() {
         if (!client && data != null && (data.getColumns() != columns || data.getRows() != rows)) //size changed, should reopen the gui client side (via openGUI server side) to sync the new size/item position
-            Network.openEyeInventory((ServerPlayerEntity) playerInv.getPlayerInventory().player, data);
+            Network.openEyeInventory((ServerPlayerEntity) playerInv.getPlayerInventory().player, data.getEyeId());
         else
             super.detectAndSendChanges();
     }

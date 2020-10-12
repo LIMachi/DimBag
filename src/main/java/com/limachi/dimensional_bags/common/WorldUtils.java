@@ -9,6 +9,7 @@ import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.network.play.server.SPlayerPositionLookPacket;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.util.ClassInheritanceMultiMap;
 import net.minecraft.util.RegistryKey;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.AxisAlignedBB;
@@ -18,35 +19,40 @@ import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.vector.Vector3d;
 import net.minecraft.util.registry.Registry;
 import net.minecraft.world.World;
+import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.server.ServerWorld;
 import net.minecraft.world.server.TicketType;
 
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 
 public class WorldUtils { //TODO: remove bloat once MCP/Forge mappings are better/more stable
 
-    public static final RegistryKey<World> DimBagRiftKey = RegistryKey.func_240903_a_(Registry.WORLD_KEY, new ResourceLocation("dim_bag:bag_rift"));
-    public static final RegistryKey<World> DimOverworldKey = World.field_234918_g_; //TODO: replace field mapping
+    public static final UUID NULLID = new UUID(0, 0);
 
-    public static ServerWorld getRiftWorld() { return DimBag.getServer(null).getWorld(DimBagRiftKey); }
-    public static ServerWorld getOverWorld() { return DimBag.getServer(null).getWorld(DimOverworldKey); }
+    public static final RegistryKey<World> DimBagRiftKey = RegistryKey.getOrCreateKey(Registry.WORLD_KEY, new ResourceLocation("dim_bag:bag_rift"));
+
+    public static ServerWorld getRiftWorld() { return DimBag.getServer() != null ? DimBag.getServer().getWorld(DimBagRiftKey) : null; }
+    public static ServerWorld getOverWorld() { return DimBag.getServer() != null ? DimBag.getServer().getWorld(World.OVERWORLD) : null; }
 
     public static ServerWorld getWorld(MinecraftServer server, String regName) {
+        if (server == null) return null;
         return server.getWorld(stringToWorldRK(regName));
     }
 
-    public static RegistryKey<World> worldRKFromWorld(World world) { //TODO: replace this once the mappings are good
-        return world.func_234923_W_();
+    public static ServerWorld getWorld(MinecraftServer server, RegistryKey<World> reg) {
+        if (server == null) return null;
+        return server.getWorld(reg);
     }
 
     public static RegistryKey<World> stringToWorldRK(String str) {
-        return RegistryKey.func_240903_a_(Registry.WORLD_KEY, new ResourceLocation(str));
+        return RegistryKey.getOrCreateKey(Registry.WORLD_KEY, new ResourceLocation(str));
     }
 
     public static String worldRKToString(RegistryKey<World> reg) {
-        return reg.func_240901_a_().toString();
+        return reg.getLocation().toString();
     }
 
     private static void teleport(Entity entityIn, ServerWorld worldIn, double x, double y, double z, float yaw, float pitch) { //modified version of TeleportCommand.java: 123: TeleportCommand#teleport(CommandSource source, Entity entityIn, ServerWorld worldIn, double x, double y, double z, Set<SPlayerPositionLookPacket.Flags> relativeList, float yaw, float pitch, @Nullable TeleportCommand.Facing facing) throws CommandSyntaxException
@@ -175,6 +181,16 @@ public class WorldUtils { //TODO: remove bloat once MCP/Forge mappings are bette
                     world.setBlockState(new BlockPos(dx + i, dy - prevRad, dz + j), air, 2);
                     world.setBlockState(new BlockPos(dx + i, dy + prevRad, dz + j), air, 2);
                 }
+    }
+
+    public static Entity getEntityByUUIDInChunk(Chunk chunk, UUID entityId) {
+        if (chunk == null || entityId.equals(NULLID)) return null;
+        ClassInheritanceMultiMap<Entity>[] LayeredEntityList = chunk.getEntityLists();
+        for (ClassInheritanceMultiMap<Entity> map : LayeredEntityList)
+            for (Entity tested : map.getByClass(Entity.class))
+                if (tested.getUniqueID().equals(entityId))
+                    return tested;
+        return null;
     }
 
     public static <T extends Entity> List<T> getEntitiesInRadius(World world, Vector3d pos, double radius, Class<? extends T> entities) {

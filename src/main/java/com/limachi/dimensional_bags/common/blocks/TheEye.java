@@ -3,7 +3,8 @@ package com.limachi.dimensional_bags.common.blocks;
 import com.limachi.dimensional_bags.DimBag;
 import com.limachi.dimensional_bags.KeyMapController;
 import com.limachi.dimensional_bags.common.Registries;
-import com.limachi.dimensional_bags.common.data.EyeData;
+import com.limachi.dimensional_bags.common.data.EyeDataMK2.HolderData;
+import com.limachi.dimensional_bags.common.data.EyeDataMK2.SubRoomsManager;
 import com.limachi.dimensional_bags.common.network.Network;
 import net.minecraft.block.BlockRenderType;
 import net.minecraft.block.BlockState;
@@ -38,13 +39,16 @@ public class TheEye extends ContainerBlock {
     @Override
     public ActionResultType onBlockActivated(BlockState state, World world, BlockPos pos, PlayerEntity player, Hand hand, BlockRayTraceResult ray) {
         if (!DimBag.isServer(world)) return ActionResultType.SUCCESS;
-        EyeData data = EyeData.getEyeData(world, pos, true);
-        if (data == null)
+        int eyeId = SubRoomsManager.getEyeId(world, pos, true);
+        if (eyeId <= 0)
             return ActionResultType.FAIL;
-        if (KeyMapController.getKey(player, KeyMapController.CROUCH_KEY))
-            data.tpBack(player);
+        if (KeyMapController.getKey(player, KeyMapController.CROUCH_KEY)) {
+            HolderData holderData = HolderData.getInstance(null, eyeId);
+            if (holderData != null)
+                holderData.tpToHolder(player);
+        }
         else
-            Network.openEyeInventory((ServerPlayerEntity) player, data);
+            Network.openEyeInventory((ServerPlayerEntity) player, eyeId);
         return ActionResultType.SUCCESS;
     }
 }

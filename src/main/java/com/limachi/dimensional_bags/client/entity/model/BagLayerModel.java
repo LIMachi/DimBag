@@ -4,9 +4,9 @@ import com.mojang.blaze3d.matrix.MatrixStack;
 import com.mojang.blaze3d.vertex.IVertexBuilder;
 import net.minecraft.client.renderer.entity.model.BipedModel;
 import net.minecraft.client.renderer.model.ModelRenderer;
-import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.entity.LivingEntity;
 
-public class BagLayerModel<T extends PlayerEntity> extends BipedModel<T> {
+public class BagLayerModel<T extends LivingEntity> extends BipedModel<T> {
 
     public final ModelRenderer Body;
     private final ModelRenderer Bag; //shild of body, used as back
@@ -16,10 +16,6 @@ public class BagLayerModel<T extends PlayerEntity> extends BipedModel<T> {
 
     public BagLayerModel(boolean lidOpen) { //same model for the portal, entity and player layer
         super(0f);
-        //<part> = new ModelRenderer(this);
-        //<part>.setRotationPoint(posX, posY, posZ)
-        //<part>.setTextureOffset(tx, ty).addBox(poxX, posY, posZ, sizeX, sizeY, sizeZ, scale, mirrored)
-        //<part>.addChild(<sub-part>);
 
         textureWidth = 64;
         textureHeight = 64;

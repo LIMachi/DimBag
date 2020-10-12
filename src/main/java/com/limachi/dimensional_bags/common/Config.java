@@ -19,16 +19,13 @@ public class Config {
         CONFIG = specPair.getLeft();
     }
 
-    public static final ForgeConfigSpec getSpec() { return SPEC; }
+    public static ForgeConfigSpec getSpec() { return SPEC; }
 
     @SubscribeEvent
     public static void onModConfigEvent(final ModConfig.ModConfigEvent event) {
-        if (event.getConfig().getSpec() == Config.SPEC)
-            bakeConfig();
-    }
-
-    private static void bakeConfig() {
-        UpgradeManager.bakeConfig();
+        if (event.getConfig().getSpec() == Config.SPEC) {
+            UpgradeManager.bakeConfig();
+        }
     }
 
     private static class ConfigBuilder {

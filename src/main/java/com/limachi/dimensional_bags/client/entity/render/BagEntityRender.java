@@ -27,7 +27,5 @@ public class BagEntityRender extends MobRenderer<BagEntity, BagEntityModel> {
     }
 
     @Override
-    public ResourceLocation getEntityTexture(BagEntity entity) {
-        return TEXTURE;
-    }
+    public ResourceLocation getEntityTexture(BagEntity entity) { return TEXTURE; }
 }

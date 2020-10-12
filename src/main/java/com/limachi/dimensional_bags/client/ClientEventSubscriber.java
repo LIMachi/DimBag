@@ -2,19 +2,23 @@ package com.limachi.dimensional_bags.client;
 
 import com.limachi.dimensional_bags.KeyMapController;
 import com.limachi.dimensional_bags.client.entity.layer.BagLayer;
-import com.limachi.dimensional_bags.client.entity.layer.ElytraOnBagLayer;
-import com.limachi.dimensional_bags.client.entity.model.BagLayerModel;
 import com.limachi.dimensional_bags.client.entity.render.BagEntityRender;
 import com.limachi.dimensional_bags.client.itemEntity.EntityItemRenderer;
+import com.limachi.dimensional_bags.client.render.screen.BrainGUI;
 import com.limachi.dimensional_bags.client.render.screen.InventoryGUI;
 import com.limachi.dimensional_bags.client.render.screen.PlayerInterfaceGUI;
+import com.limachi.dimensional_bags.client.render.screen.SettingsGUI;
 import com.limachi.dimensional_bags.common.Registries;
 import com.limachi.dimensional_bags.common.items.Bag;
+import com.limachi.dimensional_bags.common.items.GhostBag;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.ScreenManager;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.RenderTypeLookup;
+import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.PlayerRenderer;
+import net.minecraft.client.renderer.entity.model.BipedModel;
+import net.minecraft.entity.EntityType;
 import net.minecraft.item.ItemModelsProperties;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.api.distmarker.Dist;
@@ -36,18 +40,26 @@ public class ClientEventSubscriber {
     public static void clientSetup(FMLClientSetupEvent event) {
         ScreenManager.registerFactory(Registries.BAG_CONTAINER.get(), InventoryGUI::new);
         ScreenManager.registerFactory(Registries.PLAYER_CONTAINER.get(), PlayerInterfaceGUI::new);
+        ScreenManager.registerFactory(Registries.BRAIN_CONTAINER.get(), BrainGUI::new);
+        ScreenManager.registerFactory(Registries.SETTINGS_CONTAINER.get(), SettingsGUI::new);
+
         RenderingRegistry.registerEntityRenderingHandler(Registries.BAG_ITEM_ENTITY.get(), EntityItemRenderer::new);
+
         RenderTypeLookup.setRenderLayer(Registries.CLOUD_BLOCK.get(), RenderType.getTranslucent());
+
         for (int i = 0; i < KeyMapController.NON_VANILLA_KEY_BIND_COUNT; ++i)
             ClientRegistry.registerKeyBinding(KeyMapController.TRACKED_KEYBINDS[i]);
-        ItemModelsProperties.func_239418_a_(Registries.BAG_ITEM.get(), new ResourceLocation(MOD_ID, "bag_mode_property"), Bag::getModeProperty);
+
+        ItemModelsProperties.registerProperty(Registries.BAG_ITEM.get(), new ResourceLocation(MOD_ID, "bag_mode_property"), Bag::getModeProperty);
+        ItemModelsProperties.registerProperty(Registries.GHOST_BAG_ITEM.get(), new ResourceLocation(MOD_ID, "bag_mode_property"), GhostBag::getModeProperty);
+
         Map<String, PlayerRenderer> skin = Minecraft.getInstance().getRenderManager().getSkinMap();
-        PlayerRenderer defaultSkin = skin.get("default");
-        PlayerRenderer slimSkin = skin.get("slim");
-        defaultSkin.addLayer(new BagLayer<>(defaultSkin, new BagLayerModel(false)));
-        defaultSkin.addLayer(new ElytraOnBagLayer<>(defaultSkin));
-        slimSkin.addLayer(new BagLayer<>(slimSkin, new BagLayerModel(false)));
-        slimSkin.addLayer(new ElytraOnBagLayer<>(slimSkin));
+        for (String key : skin.keySet()) {
+            PlayerRenderer renderer = skin.get(key);
+            renderer.addLayer(new BagLayer<>(renderer, new BipedModel(0.5F), new BipedModel(1.0F)));
+        }
+
+        Map<EntityType<?>, EntityRenderer<?>> renderers = Minecraft.getInstance().getRenderManager().renderers;
     }
 
     @SubscribeEvent

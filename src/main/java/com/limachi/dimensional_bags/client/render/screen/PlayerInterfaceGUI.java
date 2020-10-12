@@ -1,6 +1,9 @@
 package com.limachi.dimensional_bags.client.render.screen;
 
-import com.limachi.dimensional_bags.client.render.widget.ScrollBar;
+import com.limachi.dimensional_bags.client.render.widgets.Button;
+import com.limachi.dimensional_bags.client.render.widgets.Scrollbar;
+import com.limachi.dimensional_bags.client.render.widgets.TextField;
+import com.limachi.dimensional_bags.client.render.widgets.ViewPort;
 import com.limachi.dimensional_bags.common.container.WrappedPlayerInventoryContainer;
 import com.limachi.dimensional_bags.common.inventory.Wrapper;
 import com.mojang.blaze3d.matrix.MatrixStack;
@@ -17,7 +20,11 @@ import static com.limachi.dimensional_bags.common.references.GUIs.ScreenParts.*;
 
 public class PlayerInterfaceGUI extends BaseScreen<WrappedPlayerInventoryContainer> {
 
-    ScrollBar test;
+    Button test;
+    Scrollbar test1;
+    TextField test2;
+    ViewPort.ViewPortWithButtons test3;
+    Scrollbar.ScrollbarWithButtons test4;
 
     public PlayerInterfaceGUI(WrappedPlayerInventoryContainer screenContainer, PlayerInventory inv, ITextComponent titleIn) {
         super(screenContainer, inv, titleIn);
@@ -25,6 +32,12 @@ public class PlayerInterfaceGUI extends BaseScreen<WrappedPlayerInventoryContain
         this.ySize = BACKGROUND_Y;
         this.guiLeft = (this.width - BACKGROUND_X) / 2;
         this.guiTop = (this.height - BACKGROUND_Y) / 2;
+        test3 = new ViewPort.ViewPortWithButtons(this, null, 10, 10, 100, 100, 200, 200, 0, 0, 0.5, true, true, true);
+//        test3 = new ViewPort(this, null, 10, 10, 100, 100, 200, 200, 0, 0, 0.5);
+        test = Button.smallButton(this, test3, 10, 10, Button.VIEW_DRAGGER, null);
+        test1 = new Scrollbar(this, test3, 25, 25,100, false, 0, null, 0.03, null);
+        test2 = new TextField(this, test3, 0, 0, 150, 10, "test", (s1, s2)->true, null);
+//        test4 = new Scrollbar.ScrollbarWithButtons(this, null, 0, 0, 200, false, 0, null, 0.03, null);
     }
 
     private void blitGuiFull(MatrixStack matrixStack, int x, int y, int w, int h) {
@@ -32,28 +45,7 @@ public class PlayerInterfaceGUI extends BaseScreen<WrappedPlayerInventoryContain
     }
 
     @Override
-    protected void firstInit() {
-        super.firstInit();
-        this.rootWidget.attachChild(test = new ScrollBar(0, 0, height - 50, false, 0, null, 0.03D, null));
-    }
-
-    @Override
-    protected void reloadInit() {
-        super.reloadInit();
-        test.resize(11, height - 50);
-    }
-
-    @Override
-    public void render(MatrixStack matrixStack, final int mouseX, final int mouseY, final float partialTicks) {
-//        this.renderBackground(matrixStack);
-        super.render(matrixStack, mouseX, mouseY, partialTicks);
-//        this.renderHoveredToolTip(mouseX, mouseY);
-//        this.func_230459_a_(matrixStack, mouseX, mouseY);
-    }
-
-    @Override
     protected void drawGuiContainerForegroundLayer(MatrixStack matrixStack, int mouseX, int mouseY) {
-//        super.drawGuiContainerForegroundLayer(matrixStack, mouseX, mouseY);
         this.font.drawString(matrixStack, new TranslationTextComponent("inventory.player_interface.name", container.getLocalUserName())/*.getFormattedText()*/.getString(), TITLES_X, GUI_TITLE_Y, 4210752);
         this.font.drawString(matrixStack, this.playerInventory.getDisplayName()/*.getFormattedText()*/.getString(), TITLES_X, INVENTORY_TITLE_Y, 4210752);
     }

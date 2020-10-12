@@ -1,10 +1,10 @@
 modLoader="javafml" #mandatory
-loaderVersion="[33,)" #mandatory This is typically bumped every Minecraft version by Forge. See our download page for lists of versions.
+loaderVersion="[34,)" #mandatory This is typically bumped every Minecraft version by Forge. See our download page for lists of versions.
 license="Mozilla Public License 2.0"
 issueTrackerURL="http://my.issue.tracker/" #optional
 [[mods]] #mandatory
 modId="dim_bag" #mandatory
-version="1.16.2-0.1.0" #mandatory
+version="1.16.3-0.1.0" #mandatory
 displayName="Dimensional Bags" #mandatory
 #logoFile="dim_bag.png" #optional
 authors="LIMachi_" #optional
@@ -12,12 +12,12 @@ description=''''''
 [[dependencies.dim_bag]] #optional
     modId="forge" #mandatory
     mandatory=true #mandatory
-    versionRange="[33.0.37,)" #mandatory
+    versionRange="[34.0.9,)" #mandatory
     ordering="NONE"
     side="BOTH"
 [[dependencies.dim_bag]]
     modId="minecraft"
     mandatory=true
-    versionRange="[1.16.2]"
+    versionRange="[1.16.3]"
     ordering="NONE"
     side="BOTH"

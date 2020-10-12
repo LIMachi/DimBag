@@ -34,7 +34,7 @@ public class TankGUI extends ContainerScreen<WrappedPlayerInventoryContainer> {
         this.renderBackground(matrixStack);
         super.render(matrixStack, mouseX, mouseY, partialTicks);
 //        this.renderHoveredToolTip(mouseX, mouseY);
-        this.func_230459_a_(matrixStack, mouseX, mouseY);
+        this.renderHoveredTooltip(matrixStack, mouseX, mouseY);
     }
 
     @Override

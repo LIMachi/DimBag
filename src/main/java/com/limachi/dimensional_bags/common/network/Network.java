@@ -1,10 +1,9 @@
 package com.limachi.dimensional_bags.common.network;
 
-import com.limachi.dimensional_bags.common.container.BagContainer;
-import com.limachi.dimensional_bags.common.container.UpgradeContainer;
-import com.limachi.dimensional_bags.common.container.WrappedPlayerInventoryContainer;
-import com.limachi.dimensional_bags.common.data.EyeData;
+import com.limachi.dimensional_bags.common.container.*;
+import com.limachi.dimensional_bags.common.data.EyeDataMK2.InventoryData;
 import com.limachi.dimensional_bags.common.inventory.PlayerInvWrapper;
+import com.limachi.dimensional_bags.common.tileentities.BrainTileEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.entity.player.ServerPlayerEntity;
@@ -18,7 +17,8 @@ import net.minecraftforge.fml.network.NetworkHooks;
 import javax.annotation.Nullable;
 
 public class Network {
-    public static void openEyeInventory(ServerPlayerEntity player, EyeData data) {
+    public static void openEyeInventory(ServerPlayerEntity player, int eyeId) {
+        InventoryData data = InventoryData.getInstance(null, eyeId);
         NetworkHooks.openGui(player, new INamedContainerProvider() {
             @Override
             public ITextComponent getDisplayName() {
@@ -39,35 +39,46 @@ public class Network {
 
     public static void openWrappedPlayerInventory(ServerPlayerEntity player, PlayerInvWrapper inv, TileEntity te) {
         NetworkHooks.openGui(player, new INamedContainerProvider() {
+                @Override
+                public ITextComponent getDisplayName() {
+                    return new TranslationTextComponent("inventory.player_interface.name");
+                }
+
+                @Nullable
+                @Override
+                public Container createMenu(int windowId, PlayerInventory playerInv, PlayerEntity player) {
+                    return new WrappedPlayerInventoryContainer(windowId, playerInv, te, inv);
+                }
+            }, (buffer) -> {
+                WrappedPlayerInventoryContainer.writeParameters(buffer, te, inv.matchInventory(player.inventory), inv);
+        });
+    }
+
+    public static void openBrainInterface(ServerPlayerEntity player, BrainTileEntity te) {
+        NetworkHooks.openGui(player, new INamedContainerProvider() {
             @Override
             public ITextComponent getDisplayName() {
-                return new TranslationTextComponent("inventory.player_interface.name");
+                return new TranslationTextComponent("inventory.brain.name");
             }
 
             @Nullable
             @Override
             public Container createMenu(int windowId, PlayerInventory playerInv, PlayerEntity player) {
-                return WrappedPlayerInventoryContainer.createServer(windowId, playerInv, inv, te);
-            }}, (buffer) -> {
-                buffer.writeBoolean(inv.matchInventory(player.inventory));
-                inv.sizeAndRightsToBuffer(buffer);
-        });
+                return new BrainContainer(windowId, playerInv, te);
+            }
+        }, (buffer)-> BaseContainer.writeBaseParameters(buffer, BaseContainer.ContainerConnectionType.TILE_ENTITY, te, 0));
     }
 
-    /*
-    public static void openEyeUpgrades(ServerPlayerEntity player, EyeData data) {
+    public static void openSettingsGui(ServerPlayerEntity player, int eyeId, int slot) {
         NetworkHooks.openGui(player, new INamedContainerProvider() {
             @Override
-            public ITextComponent getDisplayName() {
-                return new TranslationTextComponent("inventory.upgrades.name");
-            }
+            public ITextComponent getDisplayName() { return new TranslationTextComponent("inventory.settings.name"); }
 
             @Nullable
             @Override
-            public Container createMenu(int windowId, PlayerInventory inventory, PlayerEntity player) {
-                return new UpgradeContainer(windowId, (ServerPlayerEntity) player, data);
+            public Container createMenu(int windowId, PlayerInventory playerInv, PlayerEntity player) {
+                return new SettingsContainer(windowId, playerInv, slot);
             }
-        }, data.getupgrades()::sizeAndRightsToBuffer);
+        }, buffer->BaseContainer.writeBaseParameters(buffer, BaseContainer.ContainerConnectionType.ITEM, null, slot));
     }
-    */
 }

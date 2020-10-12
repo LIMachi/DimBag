@@ -12,6 +12,8 @@ import net.minecraft.inventory.container.Slot;
 import net.minecraft.item.ItemStack;
 import net.minecraft.network.PacketBuffer;
 
+import java.util.ArrayList;
+
 import static com.limachi.dimensional_bags.common.references.GUIs.ScreenParts.*;
 
 public class BaseWrappedInventoryContainer extends Container {
@@ -69,9 +71,9 @@ public class BaseWrappedInventoryContainer extends Container {
             ItemStack itemstack1 = slot.getStack();
             itemstack = itemstack1.copy();
 
-            if(position >= 36 && !Wrapper.mergeItemStack(inventorySlots, itemstack1, 0, 36, false, -1))
+            if(position >= 36 && !Wrapper.mergeItemStack(inventorySlots, itemstack1, 0, 36, false, new ArrayList<>()))
                 return ItemStack.EMPTY;
-            else if(!Wrapper.mergeItemStack(inventorySlots, itemstack1, 36, this.inventorySlots.size(), false, -1))
+            else if(!Wrapper.mergeItemStack(inventorySlots, itemstack1, 36, this.inventorySlots.size(), false, new ArrayList<>()))
                 return ItemStack.EMPTY;
             if(itemstack1.getCount() == 0)
                 slot.putStack(ItemStack.EMPTY);

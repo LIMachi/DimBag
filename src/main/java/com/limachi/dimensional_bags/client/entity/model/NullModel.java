@@ -4,9 +4,9 @@ import com.mojang.blaze3d.matrix.MatrixStack;
 import com.mojang.blaze3d.vertex.IVertexBuilder;
 import net.minecraft.client.renderer.entity.model.BipedModel;
 import net.minecraft.client.renderer.model.ModelRenderer;
-import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.entity.LivingEntity;
 
-public class NullModel<T extends PlayerEntity> extends BipedModel<T> {
+public class NullModel<T extends LivingEntity> extends BipedModel<T> {
 
     public NullModel() { super(0f); }
 

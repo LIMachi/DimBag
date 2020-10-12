@@ -1,13 +1,21 @@
 package com.limachi.dimensional_bags.common.managers;
 
-import com.limachi.dimensional_bags.common.data.EyeData;
+import com.limachi.dimensional_bags.common.data.EyeDataMK2.ClientDataManager;
+import com.limachi.dimensional_bags.common.entities.BagEntity;
+import com.mojang.blaze3d.matrix.MatrixStack;
+import net.minecraft.client.MainWindow;
+import net.minecraft.client.renderer.IRenderTypeBuffer;
+import net.minecraft.client.renderer.entity.model.BipedModel;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.ActionResultType;
 import net.minecraft.util.math.BlockRayTraceResult;
 import net.minecraft.world.World;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
 
 import java.util.Map;
 
@@ -29,12 +37,39 @@ public class Mode {
 
     public final void attach(Map<String, Mode> col) { col.put(this.NAME, this); }
 
-    public ActionResultType onPlayerTick(EyeData data, ItemStack stack, World world, Entity player, int itemSlot, boolean isSelected) { return ActionResultType.PASS; } //called while the bag is ticking inside a player inventory
-    public ActionResultType onEntityTick(EyeData data, ItemStack stack, World world, Entity entity, int itemSlot, boolean isSelected) { return ActionResultType.PASS; } //called every X ticks by the bag manager
-    public ActionResultType onItemUse(EyeData data, World world, PlayerEntity player, int slot, BlockRayTraceResult ray) { return ActionResultType.PASS; } //called when the bag is right clicked on something, before the bag does anything
-    public ActionResult<ItemStack> onItemRightClick(EyeData data, World world, PlayerEntity player, int slot) { //called when the bag is right clicked in the air or shift-right-clicked, before the bag does anything (except set the id if needed and accessing data)
-        return new ActionResult<>(onActivateItem(data, player.inventory.getStackInSlot(slot), player), player.inventory.getStackInSlot(slot));
+    public void installMode(int eyeId, ItemStack stack, boolean preview) {
+        ModeManager modeManager = null;
+        ClientDataManager clientDataManager = null;
+        if (preview) {
+            clientDataManager = ClientDataManager.getInstance(stack);
+            modeManager = clientDataManager.getModeManager();
+        }
+        else
+            modeManager = ModeManager.getInstance(null, eyeId);
+        if (modeManager != null) {
+            modeManager.installMode(NAME);
+            if (preview)
+                clientDataManager.store(stack);
+        }
     }
-    public ActionResultType onAttack(EyeData data, ItemStack stack, PlayerEntity player, Entity entity) { return ActionResultType.PASS; } //called when the bag is left-clicked on an entity
-    public ActionResultType onActivateItem(EyeData data, ItemStack stack, PlayerEntity playerEntity) { return ActionResultType.PASS; } //called when the client release the bag action key (or by default, right click the bag)
+
+//    public ActionResultType onPlayerTick(int eyeId, ItemStack stack, World world, Entity player, int itemSlot, boolean isSelected) { return ActionResultType.CONSUME; } //called while the bag is ticking inside a player inventory
+    public ActionResultType onEntityTick(int eyeId, ItemStack stack, World world, Entity entity, int itemSlot, boolean isSelected) { return ActionResultType.PASS; } //called every X ticks by the bag manager
+    public ActionResultType onItemUse(int eyeId, World world, PlayerEntity player, int slot, BlockRayTraceResult ray) { return ActionResultType.CONSUME; } //called when the bag is right clicked on something, before the bag does anything
+    public ActionResult<ItemStack> onItemRightClick(int eyeId, World world, PlayerEntity player, int slot) { //called when the bag is right clicked in the air or shift-right-clicked, before the bag does anything (except set the id if needed and accessing data)
+        return new ActionResult<>(onActivateItem(eyeId, player.inventory.getStackInSlot(slot), player), player.inventory.getStackInSlot(slot));
+    }
+    public ActionResultType onAttack(int eyeId, ItemStack stack, PlayerEntity player, Entity entity) { return ActionResultType.CONSUME; } //called when the bag is left-clicked on an entity
+    public ActionResultType onActivateItem(int eyeId, ItemStack stack, PlayerEntity playerEntity) { return ActionResultType.CONSUME; } //called when the client release the bag action key (or by default, right click the bag)
+    @OnlyIn(Dist.CLIENT)
+    public void onRenderHud(int eyeId, boolean isSelected, PlayerEntity player, MainWindow window, MatrixStack matrixStack, float partialTicks) {} //called each tick by the game overlay event
+    @OnlyIn(Dist.CLIENT)
+    public <T extends LivingEntity> void onRenderEquippedBag(int eyeId, boolean isSelected, BipedModel<T> entityModel, MatrixStack matrixStackIn, IRenderTypeBuffer bufferIn, int packedLightIn, T entity, float limbSwing, float limbSwingAmount, float partialTicks, float ageInTicks, float netHeadYaw, float headPitch) {}
+    @OnlyIn(Dist.CLIENT)
+    public void onRenderBagEntity(int eyeId, boolean isSelected, BagEntity entity, float yaw, float partialTicks, MatrixStack matrix, IRenderTypeBuffer buffer, int packedLight) {}
+    public boolean hasSettingsGUI() { return false; }
+    @OnlyIn(Dist.CLIENT)
+    public void initSettingsGUI() {}
+    @OnlyIn(Dist.CLIENT)
+    public void drawSettingsGUI() {}
 }

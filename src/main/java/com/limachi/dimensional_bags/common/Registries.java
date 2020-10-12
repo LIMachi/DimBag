@@ -3,9 +3,12 @@ package com.limachi.dimensional_bags.common;
 import com.limachi.dimensional_bags.DimBag;
 import com.limachi.dimensional_bags.common.blocks.*;
 import com.limachi.dimensional_bags.common.container.BagContainer;
+import com.limachi.dimensional_bags.common.container.BrainContainer;
+import com.limachi.dimensional_bags.common.container.SettingsContainer;
 import com.limachi.dimensional_bags.common.container.WrappedPlayerInventoryContainer;
 import com.limachi.dimensional_bags.common.entities.BagEntity;
 import com.limachi.dimensional_bags.common.items.Bag;
+import com.limachi.dimensional_bags.common.items.GhostBag;
 import com.limachi.dimensional_bags.common.items.TunnelPlacer;
 import com.limachi.dimensional_bags.common.items.entity.BagEntityItem;
 import com.limachi.dimensional_bags.common.tileentities.BrainTileEntity;
@@ -43,6 +46,7 @@ public class Registries {
     public static final RegistryObject<Block> BRAIN_BLOCK = BLOCK_REGISTER.register("brain", Brain::new);
 
     public static final RegistryObject<Item> BAG_ITEM = ITEM_REGISTER.register("bag", Bag::new);
+    public static final RegistryObject<Item> GHOST_BAG_ITEM = ITEM_REGISTER.register("ghost_bag", GhostBag::new);
     public static final RegistryObject<Item> TUNNEL_ITEM = ITEM_REGISTER.register("tunnel_placer", TunnelPlacer::new);
 
     public static RegistryObject<EntityType<BagEntityItem>> BAG_ITEM_ENTITY = ENTITY_REGISTER
@@ -61,7 +65,9 @@ public class Registries {
     public static final RegistryObject<TileEntityType<BrainTileEntity>> BRAIN_TE = TILE_ENTITY_REGISTER.register("brain", () -> TileEntityType.Builder.create(BrainTileEntity::new, BRAIN_BLOCK.get()).build(null));
 
     public static final RegistryObject<ContainerType<BagContainer>> BAG_CONTAINER = CONTAINER_TYPE_REGISTER.register("inventory", () -> IForgeContainerType.create(BagContainer::CreateClient));
-    public static final RegistryObject<ContainerType<WrappedPlayerInventoryContainer>> PLAYER_CONTAINER = CONTAINER_TYPE_REGISTER.register("player", () -> IForgeContainerType.create(WrappedPlayerInventoryContainer::createClient));
+    public static final RegistryObject<ContainerType<WrappedPlayerInventoryContainer>> PLAYER_CONTAINER = CONTAINER_TYPE_REGISTER.register("player", () -> IForgeContainerType.create(WrappedPlayerInventoryContainer::new));
+    public static final RegistryObject<ContainerType<BrainContainer>> BRAIN_CONTAINER = CONTAINER_TYPE_REGISTER.register("brain", () -> IForgeContainerType.create(BrainContainer::new));
+    public static final RegistryObject<ContainerType<SettingsContainer>> SETTINGS_CONTAINER = CONTAINER_TYPE_REGISTER.register("settings", () -> IForgeContainerType.create(SettingsContainer::new));
 
     public static final RegistryObject<EntityType<BagEntity>> BAG_ENTITY = ENTITY_REGISTER.register("bag_entity", () -> EntityType.Builder.<BagEntity>create(BagEntity::new, EntityClassification.MISC).size(0.5f, 1f).build(new ResourceLocation(MOD_ID, "bag_entity").toString()));
 

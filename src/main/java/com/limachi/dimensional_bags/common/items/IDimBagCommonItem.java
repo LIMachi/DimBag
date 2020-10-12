@@ -3,12 +3,18 @@ package com.limachi.dimensional_bags.common.items;
 import com.limachi.dimensional_bags.DimBag;
 import com.limachi.dimensional_bags.common.data.EyeData;
 import com.limachi.dimensional_bags.common.data.IMarkDirty;
+import com.limachi.dimensional_bags.common.inventory.NBTStoredItemHandler;
 import com.limachi.dimensional_bags.common.managers.UpgradeManager;
+import net.minecraft.block.Block;
+import net.minecraft.block.Blocks;
+import net.minecraft.block.ShulkerBoxBlock;
 import net.minecraft.client.util.ITooltipFlag;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.inventory.IInventory;
+import net.minecraft.item.BlockItem;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundNBT;
@@ -23,15 +29,26 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.items.CapabilityItemHandler;
 import net.minecraftforge.items.IItemHandler;
+import net.minecraftforge.items.ItemHandlerHelper;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
+
+import static com.limachi.dimensional_bags.common.inventory.Wrapper.IORights.*;
 
 public interface IDimBagCommonItem {
+    /*
     String onTickCommands = "pending";
     String onCreateCommands = "crafting";
+     */
 
+    /*
     static String[] getStringList(ItemStack stack, String key) {
         if (!stack.hasTag())
             return new String[]{""};
@@ -41,7 +58,9 @@ public interface IDimBagCommonItem {
             out[i] = list.get(i).getString();
         return out;
     }
+     */
 
+    /*
     static ItemStack addToStringList(ItemStack stack, String key, String toAdd) {
         if (!stack.hasTag())
             stack.setTag(new CompoundNBT());
@@ -50,6 +69,7 @@ public interface IDimBagCommonItem {
         stack.getTag().put(key, list);
         return stack;
     }
+     */
 
     static int getFirstValidItemFromPlayer(PlayerEntity player, Class<? extends Item> clazz, Predicate<? super ItemStack> predicate) { //will search in order: the main hand, the off hand, the armor then the rest of the inventory, returns -1 if no bag was found
         ItemStack stack = player.inventory.mainInventory.get(player.inventory.currentItem);
@@ -77,86 +97,279 @@ public interface IDimBagCommonItem {
         return null;
     }
 
-    static int getFirstValidItemFromBag(EyeData data, Class<? extends Item> clazz, Predicate<? super ItemStack> predicate) {
-        IItemHandler inv = data.getInventory();
-        for (int i = 0; i < inv.getSlots(); ++i) {
-            ItemStack stack = inv.getStackInSlot(i);
-            if (clazz.isInstance(stack.getItem()) && predicate.test(stack))
-                return i;
-        }
-        return -1;
-    }
+//    static int getFirstValidItemFromBag(EyeData data, Class<? extends Item> clazz, Predicate<? super ItemStack> predicate) {
+//        IItemHandler inv = data.getInventory();
+//        for (int i = 0; i < inv.getSlots(); ++i) {
+//            ItemStack stack = inv.getStackInSlot(i);
+//            if (clazz.isInstance(stack.getItem()) && predicate.test(stack))
+//                return i;
+//        }
+//        return -1;
+//    }
 
-    static void _recursiveSearchItem(ItemSearchResult search, int depth, Class<? extends Item> clazz, Predicate<? super ItemStack> predicate) {
-        ArrayList<ItemStack> pending = new ArrayList<>();
+    static boolean _recursiveSearchItem(ItemSearchResult search, int depth, Class<? extends Item> clazz, Predicate<? super ItemStack> predicate, boolean continueAfterOne) {
+        int ls = search.stackList.size();
+        ArrayList<IItemHandler> pending = new ArrayList<>();
         for (int i = 0; i < search.searchedItemHandler.getSlots(); ++i) {
             search.stack = search.searchedItemHandler.getStackInSlot(i);
             search.index = i;
-            if (clazz.isInstance(search.stack.getItem()) && predicate.test(search.stack)) return ;
-            if (depth > 0 && search.stack.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY).isPresent()) pending.add(search.stack);
+            if (clazz.isInstance(search.stack.getItem()) && predicate.test(search.stack)) {
+                if (continueAfterOne)
+                    search.stackList.add(search.stack);
+                else
+                    return true;
+            }
+            if (depth > 0) {
+                IItemHandler iItemHandler = getItemHandlerFromStack(search.stack, search);
+                if (iItemHandler != null)
+                    pending.add(iItemHandler);
+            }
         }
         for (int i = 0; i < pending.size(); ++i) {
-            search.stack = pending.get(i);
-            search.searchedItemHandler = search.stack.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY).orElse(null);
-            if (search.searchedItemHandler == null) continue;
+            search.searchedItemHandler = pending.get(i);
             search.stacks[depth - 1] = search.stack;
-            _recursiveSearchItem(search, depth - 1, clazz, predicate);
-            if (search.index != -1) return ;
+            if (_recursiveSearchItem(search, depth - 1, clazz, predicate, continueAfterOne) && !continueAfterOne)
+                return true;
         }
-        search.index = -1;
+        return search.stackList.size() != ls;
+    }
+
+    static IItemHandler getItemHandlerFromStack(ItemStack stack, ItemSearchResult search) {
+        return stack.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY).orElse(stack.getItem() instanceof BlockItem && ((BlockItem)stack.getItem()).getBlock() instanceof ShulkerBoxBlock ? new NBTStoredItemHandler.ShulkerBoxItemHandler(stack, (search.searchedItemHandler instanceof IMarkDirty) ? (IMarkDirty)search.searchedItemHandler : null) : null);
     }
 
     static int slotFromHand(PlayerEntity player, Hand hand) {
         return hand == Hand.OFF_HAND ? player.inventory.getSizeInventory() - player.inventory.offHandInventory.size() : player.inventory.currentItem;
     }
 
-    static ItemSearchResult searchItem(PlayerEntity player, int depth, Class<? extends Item> clazz, Predicate<? super ItemStack> predicate) {
+    static ItemSearchResult searchItem(PlayerEntity player, int depth, Class<? extends Item> clazz, Predicate<? super ItemStack> predicate, boolean continueAfterOne) {
         ItemSearchResult search = new ItemSearchResult();
         search.searchedEntity = player;
         search.searchedInventory = player.inventory;
         search.searchedItemHandler = null;
         search.stacks = new ItemStack[depth];
-        ArrayList<ItemStack> pending = new ArrayList<>();
+        search.stackList = new ArrayList<>();
+        ArrayList<IItemHandler> pending = new ArrayList<>();
         search.index = player.inventory.currentItem;
         search.stack = player.inventory.mainInventory.get(player.inventory.currentItem);
-        if (clazz.isInstance(search.stack.getItem()) && predicate.test(search.stack)) return search;
-        if (depth > 0 && search.stack.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY).isPresent()) pending.add(search.stack);
+        if (clazz.isInstance(search.stack.getItem()) && predicate.test(search.stack)) {
+            if (continueAfterOne)
+                search.stackList.add(search.stack);
+            else
+                return search;
+        }
+        if (depth > 0) {
+            IItemHandler iItemHandler = getItemHandlerFromStack(search.stack, search);
+            if (iItemHandler != null)
+                pending.add(iItemHandler);
+        }
         int s = player.inventory.offHandInventory.size();
         int d = player.inventory.getSizeInventory() - s;
         for (int i = 0; i < s; ++i) {
             search.index = d + i;
             search.stack = player.inventory.getStackInSlot(search.index);
-            if (clazz.isInstance(search.stack.getItem()) && predicate.test(search.stack)) return search;
-            if (depth > 0 && search.stack.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY).isPresent()) pending.add(search.stack);
+            if (clazz.isInstance(search.stack.getItem()) && predicate.test(search.stack)) {
+                if (continueAfterOne)
+                    search.stackList.add(search.stack);
+                else
+                    return search;
+            }
+            if (depth > 0) {
+                IItemHandler iItemHandler = getItemHandlerFromStack(search.stack, search);
+                if (iItemHandler != null)
+                    pending.add(iItemHandler);
+            }
         }
         s = player.inventory.armorInventory.size();
         d = player.inventory.getSizeInventory() - player.inventory.offHandInventory.size() - s;
         for (int i = 0; i < s; ++i) {
             search.index = d + i;
             search.stack = player.inventory.getStackInSlot(search.index);
-            if (clazz.isInstance(search.stack.getItem()) && predicate.test(search.stack)) return search;
-            if (depth > 0 && search.stack.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY).isPresent()) pending.add(search.stack);
+            if (clazz.isInstance(search.stack.getItem()) && predicate.test(search.stack)) {
+                if (continueAfterOne)
+                    search.stackList.add(search.stack);
+                else
+                    return search;
+            }
+            if (depth > 0) {
+                IItemHandler iItemHandler = getItemHandlerFromStack(search.stack, search);
+                if (iItemHandler != null)
+                    pending.add(iItemHandler);
+            }
         }
         s = player.inventory.mainInventory.size();
         for (int i = 0; i < s; ++i) {
             if (i == player.inventory.currentItem) continue;
             search.index = i;
             search.stack = player.inventory.getStackInSlot(search.index);
-            if (clazz.isInstance(search.stack.getItem()) && predicate.test(search.stack)) return search;
-            if (depth > 0 && search.stack.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY).isPresent()) pending.add(search.stack);
+            if (clazz.isInstance(search.stack.getItem()) && predicate.test(search.stack)) {
+                if (continueAfterOne)
+                    search.stackList.add(search.stack);
+                else
+                    return search;
+            }
+            if (depth > 0) {
+                IItemHandler iItemHandler = getItemHandlerFromStack(search.stack, search);
+                if (iItemHandler != null)
+                    pending.add(iItemHandler);
+            }
         }
         if (depth > 0)
             for (int i = 0; i < pending.size(); ++i) {
-                search.stack = pending.get(i);
-                search.searchedItemHandler = search.stack.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY).orElse(null);
-                if (search.searchedItemHandler == null) continue;
+                search.searchedItemHandler = pending.get(i);
                 search.stacks[depth - 1] = search.stack;
-                _recursiveSearchItem(search, depth - 1, clazz, predicate);
-                if (search.index != -1)
+                if (_recursiveSearchItem(search, depth - 1, clazz, predicate, continueAfterOne) && !continueAfterOne)
                     return search;
             }
-        return null;
+        return search.stackList.size() != 0 ? search : null;
     }
+
+    /*class ShulkerBoxItemHandler implements IItemHandler, IMarkDirty {
+
+        protected final ItemStack shulkerBox;
+        protected final ItemStack[] stacks;
+        protected final IMarkDirty parentDirty;
+
+        public ShulkerBoxItemHandler(ItemStack shulkerBox, IMarkDirty parentDirty) {
+            this.shulkerBox = shulkerBox;
+            stacks = new ItemStack[27];
+            for (int i = 0; i < 27; ++i)
+                stacks[i] = ItemStack.EMPTY;
+            if (shulkerBox.getTag() != null) {
+                ListNBT list = shulkerBox.getTag().getCompound("BlockEntityTag").getList("Items", 10);
+                for (int i = 0; i < list.size(); ++i) {
+                    CompoundNBT nbt = list.getCompound(i);
+                    stacks[nbt.getInt("Slot")] = ItemStack.read(nbt);
+                }
+            }
+            this.parentDirty = parentDirty;
+        }
+
+        @Override
+        public void markDirty() {
+            write();
+            if (parentDirty != null)
+                parentDirty.markDirty();
+        }
+
+        protected void write() {
+            ListNBT list = new ListNBT();
+            for (int i = 0; i < 27; ++i)
+                if (!stacks[i].isEmpty()) {
+                    CompoundNBT nbt = stacks[i].write(new CompoundNBT());
+                    nbt.putInt("Slot", i);
+                    list.add(nbt);
+                }
+            if (shulkerBox.getTag() != null) {
+                shulkerBox.setTag(new CompoundNBT());
+                shulkerBox.getTag().put("BlockEntityTag", new CompoundNBT());
+            }
+            shulkerBox.getTag().getCompound("BlockEntityTag").put("Items", list);
+        }
+
+        @Override
+        public int getSlots() {
+            return 27;
+        }
+
+        @Nonnull
+        @Override
+        public ItemStack getStackInSlot(int slot) {
+            return slot < 0 || slot >= 27 ? ItemStack.EMPTY : stacks[slot];
+        }
+
+        @Nonnull
+        @Override
+        public ItemStack insertItem(int slot, @Nonnull ItemStack stack, boolean simulate) {
+            if (stack.isEmpty()) return ItemStack.EMPTY;
+            if (!isItemValid(slot, stack)) return stack;
+            ItemStack stackInSlot = getStackInSlot(slot);
+
+            int stackLimit = Math.min(stack.getMaxStackSize(), getSlotLimit(slot));
+
+            if (!stackInSlot.isEmpty())
+            {
+                if (stackInSlot.getCount() >= stackLimit) return stack; //limit already reached (note: since we merge stacks, there is no need to test the size of the stack already in the slot)
+                if (!ItemHandlerHelper.canItemStacksStack(stack, stackInSlot)) return stack; //those stacks can't be merged
+                stackLimit -= stackInSlot.getCount(); //how much can be inserted (tacking into acount the number of items already in the slot)
+                if (stack.getCount() <= stackLimit) { //there is enough room to insert the entirety of the stack
+                    if (!simulate) {
+                        ItemStack copy = stack.copy();
+                        copy.grow(stackInSlot.getCount());
+                        stacks[slot] = copy;
+                        markDirty();
+                    }
+                    return ItemStack.EMPTY;
+                } else {//not enough room, we will return a truncated stack
+                    stack = stack.copy();
+                    if (!simulate)
+                    {
+                        ItemStack copy = stack.split(stackLimit);
+                        copy.grow(stackInSlot.getCount());
+                        stacks[slot] = copy;
+                        markDirty();
+                        return stack;
+                    } else {
+                        stack.shrink(stackLimit);
+                        return stack;
+                    }
+                }
+            } else { //the slot we want to insert the stack into is empty
+                if (stackLimit < stack.getCount()) {
+                    stack = stack.copy();
+                    if (!simulate) {
+                        stacks[slot] = stack.split(stackLimit);
+                        markDirty();
+                        return stack;
+                    } else {
+                        stack.shrink(stackLimit);
+                        return stack;
+                    }
+                } else {
+                    if (!simulate) {
+                        stacks[slot] = stack;
+                        markDirty();
+                    }
+                    return ItemStack.EMPTY;
+                }
+            }
+        }
+
+        @Nonnull
+        @Override
+        public ItemStack extractItem(int slot, int amount, boolean simulate) {
+            if (amount == 0) return ItemStack.EMPTY; //nothing requested
+            ItemStack stackInSlot = getStackInSlot(slot);
+            if (stackInSlot.isEmpty()) return ItemStack.EMPTY; //nothing to extract
+
+            amount = Math.min(amount, Math.max(0, stackInSlot.getCount()));
+            if (amount == 0) return ItemStack.EMPTY; //minimum limit reached, can't remove more items
+
+            if (simulate) {
+                if (stackInSlot.getCount() < amount)
+                    return stackInSlot.copy();
+                else {
+                    ItemStack copy = stackInSlot.copy();
+                    copy.setCount(amount);
+                    return copy;
+                }
+            } else {
+                ItemStack decrStackSize = amount > 0 ? stacks[slot].split(amount) : ItemStack.EMPTY;
+                markDirty();
+                return decrStackSize;
+            }
+        }
+
+        @Override
+        public int getSlotLimit(int slot) {
+            return 64;
+        }
+
+        @Override
+        public boolean isItemValid(int slot, @Nonnull ItemStack stack) {
+            return slot >= 0 && slot < 27 && (stacks[slot].isEmpty() || (stacks[slot].isItemEqual(stack) && ItemStack.areItemStackTagsEqual(stacks[slot], stack)));
+        }
+    }*/
 
     class ItemSearchResult {
         public Entity searchedEntity;
@@ -165,6 +378,7 @@ public interface IDimBagCommonItem {
         public int index;
         public ItemStack stack;
         public ItemStack[] stacks;
+        public ArrayList<ItemStack> stackList;
 
         public void setStackDirty() {
             if (searchedItemHandler != null) {
@@ -175,6 +389,7 @@ public interface IDimBagCommonItem {
         }
     }
 
+    /*
     static void resetStringList(ItemStack stack, String key) {
         if (!stack.hasTag()) return;
         stack.getTag().put(key, new ListNBT());
@@ -197,7 +412,7 @@ public interface IDimBagCommonItem {
     static void executePendingCommand(String s, ItemStack stack, World worldIn, Entity entityIn, int itemSlot, boolean isSelected) {
         if (worldIn.isRemote()) return;
         if (s.startsWith("upgrade.") && stack.getItem() instanceof Bag) {
-            EyeData data = EyeData.get(Bag.getId(stack));
+            EyeData data = Bag.getData(stack, true);
             UpgradeManager.getUpgrade(s.substring(8)).upgradeCrafted(data, stack, worldIn, entityIn);
         }
         if (s.startsWith("add.") && entityIn instanceof ServerPlayerEntity) {
@@ -256,4 +471,5 @@ public interface IDimBagCommonItem {
                     tooltip.add(new StringTextComponent(s.substring(4)));
             }
     }
+     */
 }

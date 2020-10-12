@@ -17,3 +17,9 @@
 example:
 -use the stone cutter to create slots
 -apply upgrades using the smithing table
+
+-lightning upgrade: consume rf to generate lightning
+-guardian upgrade: consume rf to shoot guardian laser to entities close to the holder and to the eye (always exclude owner, white list by mob type and player name)
+-projectile absorber: consume rf to catch projectiles that aren't sent by the holder or owner (white list allowed projectiles to go through)
+-boost upgrade: repurpose the firework part of the elytra upgrade, if elytra is equiped, easy elytra + firework. If no elytra and in water/rain, do a trident spin attack. If no elytra and no water, temporary speed + jump boost + fall absorbtion
+-armor stand upgrade: repurpose the elytra part of the elytra upgrade and application of armor: add 2 slots to the bag that store a chest plate and an elytra

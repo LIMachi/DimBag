@@ -9,7 +9,7 @@ import net.minecraftforge.fluids.capability.IFluidHandler;
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
 
-public class MultyTank implements IFluidHandler {
+public class MultyTank {} /*implements IFluidHandler {
 
     protected Runnable dirty = null;
     protected ArrayList<Tank> tanks = new ArrayList<>();
@@ -133,8 +133,13 @@ public class MultyTank implements IFluidHandler {
         return out;
     }
 
+    public void setFluid(int tank, FluidStack fluid) {
+        tanks.get(tank).setFluid(fluid);
+        onContentsChanged();
+    }
+
     protected void onContentsChanged() {
         if (dirty != null)
             dirty.run();
     }
-}
+}*/

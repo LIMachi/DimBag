@@ -1,5 +1,6 @@
 {
   "item.dim_bag.bag": "Dimensional Bag",
+  "item.dim_bag.ghost_bag": "Virtual Bag",
   "item.dim_bag.upgrade_row": "DimBag™ upgrade: Row",
   "item.dim_bag.upgrade_column": "DimBag™ upgrade: Column",
   "item.dim_bag.upgrade_radius": "DimBag™ upgrade: Radius",

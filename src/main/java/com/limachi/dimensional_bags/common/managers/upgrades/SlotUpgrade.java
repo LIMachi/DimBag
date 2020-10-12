@@ -1,13 +1,12 @@
 package com.limachi.dimensional_bags.common.managers.upgrades;
 
-import com.limachi.dimensional_bags.common.data.EyeData;
+import com.limachi.dimensional_bags.common.data.EyeDataMK2.InventoryData;
 import com.limachi.dimensional_bags.common.managers.Upgrade;
 import com.limachi.dimensional_bags.common.managers.UpgradeManager;
-import net.minecraft.entity.Entity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.util.ActionResultType;
-import net.minecraft.world.World;
+
+import java.util.HashMap;
 
 public class SlotUpgrade extends Upgrade {
 
@@ -21,28 +20,42 @@ public class SlotUpgrade extends Upgrade {
     }
 
     @Override
-    public CompoundNBT getMemory(EyeData data) {
-        if (qty != 1)
-            return UpgradeManager.getUpgrade("upgrade_slot").getMemory(data);
-        return super.getMemory(data);
+    public void installUpgrade(int eyeId, ItemStack stack, int amount, boolean preview) {
+        if (!preview) {
+            InventoryData data = InventoryData.getInstance(null, eyeId);
+            int rows = data.getRows();
+            int columns = data.getColumns();
+            int size = data.getInventory().getSlots();
+            data.getInventory().resizeInventory(size + amount, rows, columns, rows, columns);
+        }
     }
 
     @Override
-    public void setMemory(EyeData data, CompoundNBT nbt) {
+    public int getCount(HashMap<String, Integer> map) {
         if (qty != 1)
-            UpgradeManager.getUpgrade("upgrade_slot").setMemory(data, nbt);
+            return map.get("upgrade_slot");
+        return super.getCount(map);
+    }
+
+    @Override
+    public void changeCount(HashMap<String, Integer> map, int count) {
+        if (qty != 1)
+            map.put("upgrade_slot", count);
+        super.changeCount(map, count);
+    }
+
+    @Override
+    public CompoundNBT getMemory(UpgradeManager manager) {
+        if (qty != 1)
+            return UpgradeManager.getUpgrade("upgrade_slot").getMemory(manager);
+        return super.getMemory(manager);
+    }
+
+    @Override
+    public void setMemory(UpgradeManager manager, CompoundNBT nbt) {
+        if (qty != 1)
+            UpgradeManager.getUpgrade("upgrade_slot").setMemory(manager, nbt);
         else
-            super.setMemory(data, nbt);
-    }
-
-    @Override
-    public ActionResultType upgradeCrafted(EyeData data, ItemStack stack, World world, Entity crafter) {
-        int rows = data.getRows();
-        int columns = data.getColumns();
-        int size = data.getInventory().getSlots();
-        data.getInventory().resizeInventory(size + qty, rows, columns, rows, columns);
-        incrementInt(data, "Count", qty);
-        data.markDirty();
-        return ActionResultType.SUCCESS;
+            super.setMemory(manager, nbt);
     }
 }

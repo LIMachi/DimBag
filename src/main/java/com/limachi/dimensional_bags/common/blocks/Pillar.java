@@ -2,7 +2,6 @@ package com.limachi.dimensional_bags.common.blocks;
 
 import com.limachi.dimensional_bags.DimBag;
 import com.limachi.dimensional_bags.common.Registries;
-import com.limachi.dimensional_bags.common.data.EyeData;
 import com.limachi.dimensional_bags.common.inventory.PlayerInvWrapper;
 import com.limachi.dimensional_bags.common.network.Network;
 import com.limachi.dimensional_bags.common.tileentities.PillarTileEntity;
@@ -39,6 +38,7 @@ public class Pillar extends ContainerBlock {
         TileEntity te = world.getTileEntity(pos);
         if (!(te instanceof PillarTileEntity)) return super.onBlockActivated(state, world, pos, player, hand, ray);
         PlayerInvWrapper inv = ((PillarTileEntity)te).getWrapper();
+        LOGGER.info(inv);
         if (inv != null)
             Network.openWrappedPlayerInventory((ServerPlayerEntity) player, inv, te);
         return ActionResultType.SUCCESS;

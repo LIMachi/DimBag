@@ -1,9 +1,7 @@
 package com.limachi.dimensional_bags.common.recipes;
 
 import com.limachi.dimensional_bags.common.Registries;
-import com.limachi.dimensional_bags.common.data.EyeData;
 import com.limachi.dimensional_bags.common.items.Bag;
-import com.limachi.dimensional_bags.common.items.IDimBagCommonItem;
 import com.limachi.dimensional_bags.common.managers.UpgradeManager;
 import net.minecraft.inventory.EquipmentSlotType;
 import net.minecraft.inventory.IInventory;
@@ -26,7 +24,7 @@ public class RecipeList {
             new StoneCutting(
                 new ResourceLocation(MOD_ID, "slot_from_enderchest"),
                 Ingredient.fromItems(Items.ENDER_CHEST),
-                (IInventory inv) -> IDimBagCommonItem.addToStringList(IDimBagCommonItem.addToStringList(new ItemStack(UpgradeManager.getUpgrade("upgrade_slot").getItem(), 1), IDimBagCommonItem.onTickCommands, "cmd.multiply.random.9:27"), IDimBagCommonItem.onTickCommands, "msg.translate.tooltip.upgrade.slot.craft_result")),
+                (IInventory inv) -> /*IDimBagCommonItem.addToStringList(IDimBagCommonItem.addToStringList(*/new ItemStack(UpgradeManager.getUpgrade("upgrade_slot").getItem(), 9)/*, IDimBagCommonItem.onTickCommands, "cmd.multiply.random.9:27"), IDimBagCommonItem.onTickCommands, "msg.translate.tooltip.upgrade.slot.craft_result")*/),
             new Smithing(new ResourceLocation(MOD_ID, "add_armor_to_bag"),
                 ()->{
                     ITag test = ItemTags.getCollection().get(new ResourceLocation("dim_bag", "armor/chestplate"));

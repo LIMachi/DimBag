@@ -21,6 +21,7 @@ import net.minecraftforge.items.ItemHandlerHelper;
 import javax.annotation.Nonnull;
 
 import java.awt.*;
+import java.util.ArrayList;
 import java.util.List;
 
 import static com.limachi.dimensional_bags.common.inventory.Wrapper.IORights.*;
@@ -305,6 +306,8 @@ public class Wrapper implements IItemHandlerModifiable { //rewrite of InvWrapper
 
     public boolean matchInventory(IInventory inv) { return this.inv == inv; }
 
+    public IInventory getInventory() { return inv; }
+
     public void markDirty() {
         inv.markDirty();
         if (dirt != null)
@@ -401,13 +404,13 @@ public class Wrapper implements IItemHandlerModifiable { //rewrite of InvWrapper
      * Merge provided ItemStack with the first available one in the inventory between slot minIndex (included) and
      * maxIndex (excluded), do validation before inserting the items, based on Container#mergeItemStack
      */
-    public static boolean mergeItemStack(List<Slot> inventorySlots, ItemStack stack, int startIndex, int endIndex, boolean reverseDirection, int blackListSlot) {
+    public static boolean mergeItemStack(List<Slot> inventorySlots, ItemStack stack, int startIndex, int endIndex, boolean reverseDirection, ArrayList<Integer> blackListSlot) {
         boolean flag = false; //tell if something was put, return false if the stack in input wasn't shrinked/consumed
         int i = reverseDirection ? endIndex - 1 : startIndex;
         if (stack.isStackable()) //first try to merge with already present stack
             while (!stack.isEmpty()) {
                 if (reverseDirection ? (i < startIndex) : (i >= endIndex)) break;
-                if (i == blackListSlot) {
+                if (blackListSlot.contains(i)) {
                     i += reverseDirection ? -1 : 1;
                     continue;
                 }
@@ -442,7 +445,7 @@ public class Wrapper implements IItemHandlerModifiable { //rewrite of InvWrapper
         if (!stack.isEmpty()) { //there is still something left to merge
             i = reverseDirection ? endIndex - 1 : startIndex;
             while (reverseDirection ? (i >= startIndex) : (i < endIndex)) {
-                if (i == blackListSlot) {
+                if (blackListSlot.contains(i)) {
                     i += reverseDirection ? -1 : 1;
                     continue;
                 }

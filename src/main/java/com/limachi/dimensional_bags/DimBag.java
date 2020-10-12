@@ -8,7 +8,6 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemGroup;
 import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.World;
 import net.minecraftforge.api.distmarker.Dist;
@@ -26,17 +25,20 @@ import org.apache.logging.log4j.Logger;
 
 import javax.annotation.Nullable;
 
+import java.util.concurrent.Callable;
+import java.util.function.Supplier;
+
 import static com.limachi.dimensional_bags.DimBag.MOD_ID;
 
 @Mod(MOD_ID)
 public class DimBag {
+
     public static final String MOD_ID = "dim_bag";
     public static final Logger LOGGER = LogManager.getLogger();
     public static DimBag INSTANCE;
-    private static MinecraftServer serverCache = null;
     public static final ItemGroup ITEM_GROUP = new ItemGroup(ItemGroup.GROUPS.length, "tab_" + MOD_ID) {
         @Override
-        public ItemStack createIcon() { return new ItemStack(Items.ITEM_FRAME); } //FIXME: change the item used as icon
+        public ItemStack createIcon() { return new ItemStack(Registries.BAG_ITEM.get()); }
     };
 
     public DimBag() {
@@ -47,21 +49,28 @@ public class DimBag {
         Registries.registerAll(eventBus);
     }
 
+    /** try by all means to know if the current invocation is on a logical client or logical server */
     public static boolean isServer(@Nullable World world) {
         if (world != null)
             return !world.isRemote();
         return EffectiveSide.get() == LogicalSide.SERVER;
     }
 
-    public static PlayerEntity getPlayer() { //get the local client, if available
-        return DistExecutor.callWhenOn(Dist.CLIENT, ()->()->Minecraft.getInstance().player);
+    /** execute the first wrapped callable only on logical client + physical client, and the second wrapped callable on logical server (any physical side) */
+    public static <T> T runLogicalSide(@Nullable World world, Supplier<Callable<T>> client, Supplier<Callable<T>> server) {
+        if (isServer(world))
+            try {
+                return server.get().call();
+            } catch (Exception e) { return null; }
+        else
+            return DistExecutor.callWhenOn(Dist.CLIENT, client);
     }
 
-    public static MinecraftServer getServer(@Nullable World world) {
-        if (serverCache != null)
-            return serverCache;
-        if (world != null && world.getServer() != null)
-            return serverCache = world.getServer();
-        return serverCache = ServerLifecycleHooks.getCurrentServer();
+    /** get the local minecraft player (only on client logical and physical side, returns null otherwise) */
+    public static PlayerEntity getPlayer() {
+        return runLogicalSide(null, ()->()->Minecraft.getInstance().player, ()->()->null);
     }
+
+    /** try to get the current server we are connected on, return null if we aren't connected (hanging in main menu for example) */
+    public static MinecraftServer getServer() { return ServerLifecycleHooks.getCurrentServer(); }
 }

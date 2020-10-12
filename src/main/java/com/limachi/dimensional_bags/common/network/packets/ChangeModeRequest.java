@@ -1,53 +1,30 @@
 package com.limachi.dimensional_bags.common.network.packets;
 
-import com.limachi.dimensional_bags.DimBag;
 import com.limachi.dimensional_bags.common.items.Bag;
+import com.limachi.dimensional_bags.common.managers.ModeManager;
 import com.limachi.dimensional_bags.common.network.PacketHandler;
-import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.network.PacketBuffer;
-import net.minecraftforge.fml.network.NetworkEvent;
 
-import java.util.UUID;
-import java.util.function.Supplier;
-
-public class ChangeModeRequest {
-
-    UUID id;
+public class ChangeModeRequest extends PacketHandler.Message {
     int slot;
     boolean up;
 
-    private ChangeModeRequest(UUID player, int slot, boolean up) {
-        this.id = player;
-        this.slot = slot;
-        this.up = up;
+    public ChangeModeRequest(PacketBuffer buffer) {
+        slot = buffer.readInt();
+        up = buffer.readBoolean();
     }
 
-    public ChangeModeRequest(PlayerEntity player, int slot, boolean up) {
-        this.id = player.getUniqueID();
+    public ChangeModeRequest(int slot, boolean up) {
         this.slot = slot;
         this.up = up;
     }
 
     public void toBytes(PacketBuffer buffer) {
-        buffer.writeUniqueId(id);
         buffer.writeInt(slot);
         buffer.writeBoolean(up);
     }
 
-    public static ChangeModeRequest fromBytes(PacketBuffer buffer) {
-        UUID id = buffer.readUniqueId();
-        int slot = buffer.readInt();
-        boolean up = buffer.readBoolean();
-        return new ChangeModeRequest(id, slot, up);
-    }
-
-    public static void enqueue(ChangeModeRequest pack, Supplier<NetworkEvent.Context> ctxs) {
-        NetworkEvent.Context ctx = ctxs.get();
-        PacketHandler.Target t = PacketHandler.target(ctx);
-        if (t == PacketHandler.Target.SERVER)
-            ctx.enqueueWork(() -> {
-                Bag.changeModeRequest(DimBag.getServer(null).getPlayerList().getPlayerByUUID(pack.id), pack.slot, pack.up);
-            });
-        ctx.setPacketHandled(true);
-    }
+    @Override
+    public void serverWork(ServerPlayerEntity player) { ModeManager.changeModeRequest(player, slot, up); }
 }

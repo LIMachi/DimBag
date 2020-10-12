@@ -80,4 +80,21 @@ public class GUIs { //common resources and size/position information for screens
 
         public static final ResourceLocation BACKGROUND = new ResourceLocation(MOD_ID, "textures/screens/player_interface.png");
     }
+
+    public static class ArmorStandUpgrade {
+        public static final int BACKGROUND_X = 176;
+        public static final int BACKGROUND_Y = 166;
+        public static final int PLAYER_INVENTORY_X = 7;
+        public static final int PLAYER_INVENTORY_Y = 83;
+        public static final int ARMOR_INVENTORY_X = 79;
+        public static final int ARMOR_INVENTORY_CHEST_PLATE_Y = 25;
+        public static final int ARMOR_INVENTORY_ELYTRA_Y = 43;
+        public static final int EMPTY_CHEST_PLATE_SLOT_X = 176;
+        public static final int EMPTY_ELYTRA_SLOT_X = 192;
+        public static final int TITLES_X = 6;
+        public static final int GUI_TITLE_Y = 5;
+        public static final int INVENTORY_TITLE_Y = 72;
+
+        public static final ResourceLocation BACKGROUND = new ResourceLocation(MOD_ID, "textures/screens/armor_stand_upgrade.png");
+    }
 }

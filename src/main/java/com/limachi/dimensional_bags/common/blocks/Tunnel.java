@@ -3,7 +3,7 @@ package com.limachi.dimensional_bags.common.blocks;
 import com.limachi.dimensional_bags.DimBag;
 import com.limachi.dimensional_bags.KeyMapController;
 import com.limachi.dimensional_bags.common.Registries;
-import com.limachi.dimensional_bags.common.data.EyeData;
+import com.limachi.dimensional_bags.common.data.EyeDataMK2.SubRoomsManager;
 import net.minecraft.block.*;
 import net.minecraft.block.material.Material;
 import net.minecraft.entity.player.PlayerEntity;
@@ -13,6 +13,7 @@ import net.minecraft.util.Hand;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockRayTraceResult;
 import net.minecraft.world.World;
+import net.minecraft.world.server.ServerWorld;
 
 public class Tunnel extends Block {
     public Tunnel() { super(Properties.create(Material.ROCK).hardnessAndResistance(-1f, 3600000f).sound(SoundType.STONE)); }
@@ -23,7 +24,7 @@ public class Tunnel extends Block {
     @Override
     public ActionResultType onBlockActivated(BlockState state, World world, BlockPos pos, PlayerEntity player, Hand hand, BlockRayTraceResult ray) { //'right-click' behavior (use/interact)
         if (!DimBag.isServer(world)) return super.onBlockActivated(state, world, pos, player, hand, ray);
-        EyeData data = EyeData.getEyeData(world, pos, false);
+        SubRoomsManager data = SubRoomsManager.getInstance(null, SubRoomsManager.getEyeId(world, pos, false));
         if (data == null) //invalid tunnel,could not find a valid eye
             return ActionResultType.FAIL;
         if (KeyMapController.getKey(player, KeyMapController.CROUCH_KEY))
@@ -38,14 +39,14 @@ public class Tunnel extends Block {
             super.onBlockClicked(state, worldIn, pos, player);
             return;
         }
-        EyeData data = EyeData.getEyeData(worldIn, pos, false);
-        if (data == null) {
-            super.onBlockClicked(state, worldIn, pos, player);
-            return;
-        }
         if (KeyMapController.getKey(player, KeyMapController.CROUCH_KEY)) {//shift-left-click, remove the tunnel (replace it by a wall) and give back the tunnel placer (item)
             worldIn.setBlockState(pos, Registries.WALL_BLOCK.get().getDefaultState());
-            EyeData.tunnel(worldIn, pos, player, false, true);
+            SubRoomsManager data = SubRoomsManager.getInstance(null, SubRoomsManager.getEyeId(worldIn, pos, false));
+            if (data == null) {
+                super.onBlockClicked(state, worldIn, pos, player);
+                return;
+            }
+            SubRoomsManager.tunnel((ServerWorld)worldIn, pos, player, false, true);
             player.addItemStackToInventory(new ItemStack(Registries.TUNNEL_ITEM.get()));
         }
     }

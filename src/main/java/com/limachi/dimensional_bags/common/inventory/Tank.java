@@ -47,6 +47,10 @@ public class Tank implements IFluidTank {
         return fluid;
     }
 
+    public void setFluid(FluidStack fluid) {
+        this.fluid = fluid;
+    }
+
     @Override
     public int getFluidAmount() {
         return fluid.getAmount();

@@ -1,30 +1,31 @@
 package com.limachi.dimensional_bags.common.managers;
 import com.limachi.dimensional_bags.DimBag;
-import com.limachi.dimensional_bags.common.Registries;
-import com.limachi.dimensional_bags.common.data.EyeData;
-import com.limachi.dimensional_bags.common.items.Bag;
+import com.limachi.dimensional_bags.common.NBTUtils;
+import com.limachi.dimensional_bags.common.entities.BagEntity;
 import com.limachi.dimensional_bags.common.items.IDimBagCommonItem;
-import com.limachi.dimensional_bags.common.recipes.IRecipe;
-import com.limachi.dimensional_bags.common.recipes.Smithing;
+import com.mojang.blaze3d.matrix.MatrixStack;
+import net.minecraft.client.MainWindow;
+import net.minecraft.client.renderer.IRenderTypeBuffer;
+import net.minecraft.client.renderer.entity.model.BipedModel;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.inventory.IInventory;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.ItemUseContext;
 import net.minecraft.item.Items;
-import net.minecraft.item.crafting.Ingredient;
 import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.nbt.INBT;
 import net.minecraft.util.*;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraft.world.World;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.common.ForgeConfigSpec;
 import net.minecraftforge.fml.RegistryObject;
 import net.minecraftforge.registries.DeferredRegister;
-import net.minecraft.nbt.*;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import static com.limachi.dimensional_bags.DimBag.MOD_ID;
@@ -85,95 +86,73 @@ public abstract class Upgrade { //contain all information for config, item, upgr
         this.limit = this.cLimit.get();
     }
 
-    public ActionResultType upgradeCrafted(EyeData data, ItemStack stack, World world, Entity crafter) { return ActionResultType.PASS; } //called when the upgrade is 'crafted' (when the 'apply' command is run on a bag)
-    public ActionResultType upgradePlayerTick(EyeData data, ItemStack stack, World world, Entity player, int itemSlot, boolean isSelected) { return ActionResultType.PASS; } //called while the bag is ticking inside a player inventory
-    public ActionResultType upgradeEntityTick(EyeData data, ItemStack stack, World world, Entity entity, int itemSlot, boolean isSelected) { return ActionResultType.PASS; } //called every X ticks by the bag manager
-    public ActionResultType onItemUse(EyeData data, ItemUseContext context) { return ActionResultType.PASS; } //called when the bag is right clicked on something, before the bag does anything
-    public ActionResult<ItemStack> onItemRightClick(World world, PlayerEntity player, Hand hand) { return ActionResult.resultPass(player.getHeldItem(hand)); } //called when the bag is right clicked in the air or shift-right-clicked, before the bag does anything (except set the id if needed and accessing data)
-    public ActionResultType onAttack(EyeData data, ItemStack stack, PlayerEntity player, Entity entity) { return ActionResultType.PASS; } //called when the bag is left-clicked on an entity
+    public boolean hasSettingsGUI() { return false; }
+    @OnlyIn(Dist.CLIENT)
+    public void initSettingsGUI() {}
+    @OnlyIn(Dist.CLIENT)
+    public void drawSettingsGUI() {}
 
-    public CompoundNBT write(CompoundNBT nbt, boolean isItem) { return nbt; } //called by both eyedata and the bag item to store data on the bag/eye
-    public void read(CompoundNBT nbt, boolean isItem) {} //called by both eyedata and the bag item to get data from the bag/eye
+    public void installUpgrade(int eyeId, ItemStack stack, int amount, boolean preview) {}
+    @OnlyIn(Dist.CLIENT)
+    public <T extends LivingEntity> void onRenderEquippedBag(int eyeId, BipedModel<T> entityModel, MatrixStack matrixStackIn, IRenderTypeBuffer bufferIn, int packedLightIn, T entity, float limbSwing, float limbSwingAmount, float partialTicks, float ageInTicks, float netHeadYaw, float headPitch) {}
+    @OnlyIn(Dist.CLIENT)
+    public void onRenderHud(int eyeId, PlayerEntity player, MainWindow window, MatrixStack matrixStack, float partialTicks) {} //called each tick by the game overlay event
+    @OnlyIn(Dist.CLIENT)
+    public void onRenderBagEntity(int eyeId, BagEntity entity, float yaw, float partialTicks, MatrixStack matrix, IRenderTypeBuffer buffer, int packedLight) {}
+//    public ActionResultType upgradePlayerTick(EyeData data, ItemStack stack, World world, Entity player, int itemSlot, boolean isSelected) { return ActionResultType.PASS; } //called while the bag is ticking inside a player inventory
+    public ActionResultType upgradeEntityTick(int eyeId, boolean isSelected, ItemStack stack, World world, Entity entity, int itemSlot) { return ActionResultType.PASS; } //called every X ticks by the bag manager
+//    public ActionResultType onItemUse(EyeData data, ItemUseContext context) { return ActionResultType.PASS; } //called when the bag is right clicked on something, before the bag does anything
+//    public ActionResult<ItemStack> onItemRightClick(World world, PlayerEntity player, Hand hand) { return ActionResult.resultPass(player.getHeldItem(hand)); } //called when the bag is right clicked in the air or shift-right-clicked, before the bag does anything (except set the id if needed and accessing data)
+//    public ActionResultType onAttack(EyeData data, ItemStack stack, PlayerEntity player, Entity entity) { return ActionResultType.PASS; } //called when the bag is left-clicked on an entity
+//    @OnlyIn(Dist.CLIENT)
+//    public void onRenderHud(EyeData data, PlayerEntity player, MainWindow window, MatrixStack matrixStack, float partialTicks) {} //called each tick by the game overlay event
+//    @OnlyIn(Dist.CLIENT)
+//    public <T extends LivingEntity> void onRenderEquippedBag(EyeData data, BipedModel<T> entityModel, MatrixStack matrixStackIn, IRenderTypeBuffer bufferIn, int packedLightIn, T entity, float limbSwing, float limbSwingAmount, float partialTicks, float ageInTicks, float netHeadYaw, float headPitch) {}
 
-    public final int getCount(EyeData data) { return getMemory(data).getInt("Count"); }
-    public final void setCount(EyeData data, int count) {
-        CompoundNBT nbt = getMemory(data);
-        nbt.putInt("Count", count);
-        setMemory(data, nbt);
+//    public CompoundNBT write(CompoundNBT nbt, boolean isItem) { return nbt; } //called by both eyedata and the bag item to store data on the bag/eye
+//    public void read(CompoundNBT nbt, boolean isItem) {} //called by both eyedata and the bag item to get data from the bag/eye
+
+//    public final int getCount(UpgradeManager manager) { return getMemory(manager).getInt("Count"); }
+
+//    public final void setCount(UpgradeManager manager, int count) {
+//        CompoundNBT nbt = getMemory(manager);
+//        nbt.putInt("Count", count);
+//        setMemory(manager, nbt);
+//    }
+
+//    public final int incrementInt(UpgradeManager manager, String id, int add) {
+//        int t;
+//        CompoundNBT nbt = getMemory(manager);
+//        nbt.putInt(id, t = nbt.getInt(id) + add);
+//        setMemory(manager, nbt);
+//        return t;
+//    }
+
+    public int getCount(UpgradeManager manager) {
+        if (manager == null) return 0;
+        return getCount(manager.getUpgradesCountMap());
     }
 
-    public final int incrementInt(EyeData data, String id, int add) {
-        int t;
-        CompoundNBT nbt = getMemory(data);
-        nbt.putInt(id, t = nbt.getInt(id) + add);
-        setMemory(data, nbt);
-        return t;
+    public int getCount(HashMap<String, Integer> map) {
+        return map.get(sId);
     }
 
-    public CompoundNBT getMemory(EyeData data) { return data.getUpgradesNBT().getCompound(this.sId); }
-    public void setMemory(EyeData data, CompoundNBT nbt) { data.getUpgradesNBT().put(this.sId, nbt); }
-    public void shallowAddMemory(EyeData data, CompoundNBT nbt) {
-        CompoundNBT t = getMemory(data);
+    public void changeCount(HashMap<String, Integer> map, int count) {
+        map.put(sId, count);
+    }
+
+    public CompoundNBT getMemory(UpgradeManager manager) { return manager.getUpgradesNBT().getCompound(this.sId); }
+
+    public void setMemory(UpgradeManager manager, CompoundNBT nbt) { manager.getUpgradesNBT().put(this.sId, nbt); manager.markDirty(); }
+
+    public void shallowAddMemory(UpgradeManager manager, CompoundNBT nbt) {
+        CompoundNBT t = getMemory(manager);
         for (String key : nbt.keySet())
             t.put(key, nbt.get(key));
-        setMemory(data, t);
-    }
-    private INBT deepAddNBTInternal(INBT to, INBT from) {
-        if (from == null)
-            return to;
-        if (to == null
-                || to.getType() != from.getType()
-                || from.getType() == StringNBT.TYPE
-                || from.getType() == ByteNBT.TYPE
-                || from.getType() == DoubleNBT.TYPE
-                || from.getType() == FloatNBT.TYPE
-                || from.getType() == IntNBT.TYPE
-                || from.getType() == LongNBT.TYPE
-                || from.getType() == ShortNBT.TYPE)
-            return from;
-        if (from.getType() == CompoundNBT.TYPE) {
-            CompoundNBT tc = (CompoundNBT) to;
-            CompoundNBT fc = (CompoundNBT) from;
-            for (String key : fc.keySet()) {
-                INBT p = deepAddNBTInternal(tc.get(key), fc.get(key));
-                if (p != null)
-                    tc.put(key, p);
-            }
-            return to;
-        }
-        if (from.getType() == ByteArrayNBT.TYPE
-                || from.getType() == IntArrayNBT.TYPE
-                || from.getType() == ListNBT.TYPE
-                || from.getType() == LongArrayNBT.TYPE) {
-            int sf = ((CollectionNBT) from).size();
-            int st = ((CollectionNBT) to).size();
-            for (int i = 0; i < sf; ++i)
-                if (i < st)
-                    ((CollectionNBT) to).set(i, deepAddNBTInternal((INBT) ((CollectionNBT) to).get(i), (INBT) ((CollectionNBT) from).get(i)));
-                else
-                    ((CollectionNBT) to).add(i, (INBT) ((CollectionNBT) from).get(i));
-                return to;
-        }
-        return null;
-    }
-    public void deepAddMemory(EyeData data, CompoundNBT nbt) {
-        setMemory(data, (CompoundNBT)deepAddNBTInternal(getMemory(data), nbt));
+        setMemory(manager, t);
     }
 
-    public IRecipe getRecipe() {
-        return new Smithing(
-                new ResourceLocation(MOD_ID, sId + "_application"),
-                ()->NonNullList.from(Ingredient.EMPTY, Ingredient.fromItems(Registries.BAG_ITEM.get()), Ingredient.fromItems(getItem())),
-                NonNullList.create(),
-                (IInventory inv, World world) -> {
-                    if (inv.getStackInSlot(0).getItem() instanceof Bag && inv.getStackInSlot(1).getItem() == getItem()) {
-                        EyeData data = EyeData.get(Bag.getId(inv.getStackInSlot(0)));
-                        if (data == null)
-                            return false;
-                        return this.getCount(data) < this.limit;
-                    }
-                    return false;
-                },
-                (IInventory inv) -> IDimBagCommonItem.addToStringList(inv.getStackInSlot(0).copy(), Bag.onTickCommands, "cmd.upgrade." + sId));
+    public void deepAddMemory(UpgradeManager manager, CompoundNBT nbt) {
+        setMemory(manager, (CompoundNBT) NBTUtils.deepMergeNBTInternal(getMemory(manager), nbt));
     }
 }

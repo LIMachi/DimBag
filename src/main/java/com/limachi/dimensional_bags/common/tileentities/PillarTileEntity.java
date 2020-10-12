@@ -1,7 +1,8 @@
 package com.limachi.dimensional_bags.common.tileentities;
 
 import com.limachi.dimensional_bags.common.Registries;
-import com.limachi.dimensional_bags.common.data.EyeData;
+import com.limachi.dimensional_bags.common.data.EyeDataMK2.HolderData;
+import com.limachi.dimensional_bags.common.data.EyeDataMK2.SubRoomsManager;
 import com.limachi.dimensional_bags.common.data.IMarkDirty;
 import com.limachi.dimensional_bags.common.inventory.PlayerInvWrapper;
 import com.limachi.dimensional_bags.common.inventory.Wrapper;
@@ -18,10 +19,12 @@ import net.minecraftforge.items.CapabilityItemHandler;
 
 import net.minecraftforge.items.IItemHandlerModifiable;
 
+import java.lang.ref.WeakReference;
+
 public class PillarTileEntity extends TileEntity implements ITickableTileEntity, IMarkDirty {
 
     private LazyOptional<IItemHandlerModifiable> invPtr = LazyOptional.empty();
-    private EyeData data;
+    private WeakReference<HolderData> holderDataRef = new WeakReference<>(null);
     private Wrapper.IORights[] rights;
     private int tick;
 
@@ -59,31 +62,32 @@ public class PillarTileEntity extends TileEntity implements ITickableTileEntity,
 
     @Override
     public void tick() {
-        if ((tick & 7) == 0)
-            if (data == null)
-                data = EyeData.getEyeData(this.world, this.pos, false);
         ++tick;
-        if (data == null) {
-            if (invPtr.isPresent())
+        if ((tick & 7) == 0) {
+            if (holderDataRef.get() == null)
+                holderDataRef = new WeakReference<>(HolderData.getInstance(null, SubRoomsManager.getEyeId(this.world, this.pos, false)));
+            if (holderDataRef.get() == null) {
+                if (invPtr.isPresent())
+                    invPtr = LazyOptional.empty();
+                return;
+            }
+            PlayerInventory inv = holderDataRef.get().getPlayerInventory();
+            if (inv != null) {
+                IItemHandlerModifiable handler = null;
+                if (invPtr.isPresent())
+                    handler = invPtr.orElse(null);
+                if (!invPtr.isPresent() || handler == null || ((PlayerInvWrapper) handler).getPlayerInventory() != inv)
+                    invPtr = LazyOptional.of(() -> new PlayerInvWrapper(inv, rights, this));
+            } else if (invPtr.isPresent())
                 invPtr = LazyOptional.empty();
-            return;
         }
-        PlayerInventory inv = data.getPlayerInventory();
-        if (inv != null) {
-            IItemHandlerModifiable handler = null;
-            if (invPtr.isPresent())
-                handler = invPtr.orElse(null);
-            if (!invPtr.isPresent() || handler == null || ((PlayerInvWrapper) handler).getPlayerInventory() != inv)
-                invPtr = LazyOptional.of(() -> new PlayerInvWrapper(inv, rights, this));
-        } else if (invPtr.isPresent())
-            invPtr = LazyOptional.empty();
     }
 
     public PlayerInvWrapper getWrapper() { return (PlayerInvWrapper)invPtr.orElse(null); }
 
     @Override
     public <T> LazyOptional<T> getCapability(Capability<T> capability, Direction facing) {
-        if (data != null) {
+        if (holderDataRef.get() != null) {
             if (capability == CapabilityItemHandler.ITEM_HANDLER_CAPABILITY) {
                 if (invPtr.isPresent())
                     return invPtr.cast();

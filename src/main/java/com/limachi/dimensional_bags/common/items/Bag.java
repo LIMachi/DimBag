@@ -3,11 +3,14 @@ package com.limachi.dimensional_bags.common.items;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Multimap;
 import com.limachi.dimensional_bags.DimBag;
-import com.limachi.dimensional_bags.client.entity.layer.BagLayer;
-import com.limachi.dimensional_bags.client.entity.model.BagLayerModel;
 import com.limachi.dimensional_bags.client.entity.model.NullModel;
 import com.limachi.dimensional_bags.common.data.DimBagData;
-import com.limachi.dimensional_bags.common.data.EyeData;
+import com.limachi.dimensional_bags.common.data.EyeDataMK2.ClientDataManager;
+import com.limachi.dimensional_bags.common.data.EyeDataMK2.HolderData;
+import com.limachi.dimensional_bags.common.data.EyeDataMK2.OwnerData;
+import com.limachi.dimensional_bags.common.data.IEyeIdHolder;
+import com.limachi.dimensional_bags.common.data.IMarkDirty;
+import com.limachi.dimensional_bags.common.inventory.NBTStoredItemHandler;
 import com.limachi.dimensional_bags.common.items.entity.BagEntityItem;
 import com.limachi.dimensional_bags.common.managers.ModeManager;
 import com.limachi.dimensional_bags.common.managers.Upgrade;
@@ -18,15 +21,14 @@ import net.minecraft.client.renderer.entity.model.BipedModel;
 import net.minecraft.client.util.ITooltipFlag;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.MobEntity;
 import net.minecraft.entity.ai.attributes.Attribute;
 import net.minecraft.entity.ai.attributes.AttributeModifier;
-import net.minecraft.entity.ai.attributes.Attributes;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.inventory.EquipmentSlotType;
 import net.minecraft.item.*;
 import net.minecraft.nbt.CompoundNBT;
+import net.minecraft.nbt.ListNBT;
 import net.minecraft.util.*;
 import net.minecraft.util.math.BlockRayTraceResult;
 import net.minecraft.util.math.RayTraceContext;
@@ -38,56 +40,96 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.ICapabilityProvider;
 import net.minecraftforge.common.util.LazyOptional;
-import net.minecraftforge.energy.CapabilityEnergy;
-import net.minecraftforge.fluids.capability.CapabilityFluidHandler;
-import net.minecraftforge.items.CapabilityItemHandler;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 import java.util.function.Consumer;
-
-import static com.limachi.dimensional_bags.common.data.EyeData.getCapabilityProvider;
-import static net.minecraft.item.Items.AIR;
 
 public class Bag extends ArmorItem implements IDimBagCommonItem {
 
-    public static final String ID_KEY = "dim_bag_eye_id";
-    public static final String OWNER_KEY = "dim_bag_eye_owner";
-
     public Bag() { super(ArmorMaterial.LEATHER, EquipmentSlotType.CHEST, new Properties().group(DimBag.ITEM_GROUP).maxStackSize(1)); DispenserBlock.registerDispenseBehavior(this, ArmorItem.DISPENSER_BEHAVIOR); }
+
+    public static NBTStoredItemHandler getArmorStandUpgradeInventory(ItemStack bag) {
+        if (bag.getTag() == null)
+            bag.setTag(new CompoundNBT());
+        IMarkDirty syncEnchants = new IMarkDirty() {
+            @Override
+            public void markDirty() {
+                bag.getTag().put("Enchantments", new ListNBT()); //clears the enchantments and also make sure the list for the enchantments exists
+                bag.getEnchantmentTagList().addAll(getChestPlate(bag).getEnchantmentTagList()); //blunt copy of the enchantments of the chestplate
+                bag.getEnchantmentTagList().addAll(getElytra(bag).getEnchantmentTagList()); //blunt copy of the enchantments of the chestplate
+            }
+        };
+        return new NBTStoredItemHandler(()->bag.getTag().getCompound("ArmorStandUpgrade"), nbt->bag.getTag().put("ArmorStandUpgrade", nbt), syncEnchants).resize(2);
+    }
+
+    public static boolean equipBagOnChestSlot(ItemStack bag, PlayerEntity player) {
+        ItemStack chestplate = player.getItemStackFromSlot(EquipmentSlotType.CHEST);
+        if (!chestplate.isEmpty()) {
+            NBTStoredItemHandler handler = getArmorStandUpgradeInventory(bag);
+            if (chestplate.getItem() instanceof ElytraItem) {
+                if (!handler.insertItem(1, chestplate, true).isEmpty())
+                    return false;
+                else
+                    handler.insertItem(1, chestplate, false);
+            } else {
+                if (!handler.insertItem(0, chestplate, true).isEmpty())
+                    return false;
+                else
+                    handler.insertItem(0, chestplate, false);
+            }
+            handler.markDirty();
+        }
+        player.setItemStackToSlot(EquipmentSlotType.CHEST, bag);
+        return true;
+    }
+
+    public static ItemStack unequipBagOnChestSlot(PlayerEntity player) {
+        ItemStack bag = player.getItemStackFromSlot(EquipmentSlotType.CHEST).copy();
+        if (!(bag.getItem() instanceof Bag)) return ItemStack.EMPTY;
+        NBTStoredItemHandler handler = getArmorStandUpgradeInventory(bag);
+        for (int i = 0; i < handler.getSlots(); ++i)
+            if (!handler.extractItem(i, 1, true).isEmpty()) {
+                player.setItemStackToSlot(EquipmentSlotType.CHEST, handler.extractItem(i, 1, false));
+                return bag;
+            }
+        player.setItemStackToSlot(EquipmentSlotType.CHEST, ItemStack.EMPTY);
+        return bag;
+    }
 
     /*
      * elytra behavior
      */
     @Override
-    public boolean canElytraFly(ItemStack stack, LivingEntity entity) { return stack.hasTag() && stack.getTag().getBoolean("ElytraAttached"); }
+    public boolean canElytraFly(ItemStack stack, LivingEntity entity) {
+        return getArmorStandUpgradeInventory(stack).getStackInSlot(1).canElytraFly(entity);
+    }
 
     @Override
-    public boolean elytraFlightTick(ItemStack stack, LivingEntity entity, int flightTicks) { return canElytraFly(stack, entity); }
-
-    public static ItemStack stackWithId(int id) {
-        ItemStack stack = new ItemStack(new Bag());
-        CompoundNBT tag = new CompoundNBT();
-        tag.putInt(ID_KEY, id);
-        tag.putString("Mode", "Default");
-        tag.putBoolean("ElytraAttached", true); //test
-        stack.setTag(tag);
-        return stack;
+    public boolean elytraFlightTick(ItemStack stack, LivingEntity entity, int flightTicks) {
+        NBTStoredItemHandler handler = getArmorStandUpgradeInventory(stack);
+        ItemStack elytra = handler.getStackInSlot(1);
+        boolean out = elytra.elytraFlightTick(entity, flightTicks);
+        handler.markDirty();
+        return out;
     }
 
     /*
      * armor behavior
      */
 
+    @Override
+    public boolean canEquip(ItemStack stack, EquipmentSlotType armorType, Entity entity) {
+        return entity instanceof PlayerEntity && super.canEquip(stack, armorType, entity); //only a player can equip the bag
+    }
+
     public static ItemStack getChestPlate(ItemStack stack) {
-        if (stack == null || !(stack.getItem() instanceof Bag) || !stack.hasTag()) return ItemStack.EMPTY;
-        ItemStack out = ItemStack.read(stack.getTag().getCompound("ChestPlate"));
-        if (out.isEmpty() || !(out.getItem() instanceof ArmorItem) || ((ArmorItem)out.getItem()).getEquipmentSlot() != EquipmentSlotType.CHEST)
-            return ItemStack.EMPTY;
-        return out;
+        return getArmorStandUpgradeInventory(stack).getStackInSlot(0);
+    }
+
+    public static ItemStack getElytra(ItemStack stack) {
+        return getArmorStandUpgradeInventory(stack).getStackInSlot(1);
     }
 
     @OnlyIn(Dist.CLIENT)
@@ -97,12 +139,7 @@ public class Bag extends ArmorItem implements IDimBagCommonItem {
         ItemStack chestPlate = getChestPlate(stack);
         if (!chestPlate.isEmpty())
             return chestPlate.getItem().getArmorModel(entityLiving, chestPlate, armorSlot, _default);
-        return (A)new NullModel();
-    }
-
-    @Override
-    public IArmorMaterial getArmorMaterial() {
-        return super.getArmorMaterial();
+        return (A)new /*BagLayerModel(false)*/NullModel<>();
     }
 
     @Override
@@ -122,7 +159,11 @@ public class Bag extends ArmorItem implements IDimBagCommonItem {
     }
 
     @Override
-    public void onArmorTick(ItemStack stack, World world, PlayerEntity player) {} //might be usefull someday, for now the tick method is enough
+    public void onArmorTick(ItemStack stack, World world, PlayerEntity player) {
+        NBTStoredItemHandler handler = getArmorStandUpgradeInventory(stack);
+        handler.getStackInSlot(0).onArmorTick(world, player);
+        handler.markDirty();
+    }
 
     @OnlyIn(Dist.CLIENT)
     @Nullable
@@ -146,10 +187,21 @@ public class Bag extends ArmorItem implements IDimBagCommonItem {
     public void renderHelmetOverlay(ItemStack stack, PlayerEntity player, int width, int height, float partialTicks) {} //might be usefull someday, but for now only works on helmets
 
     @Override
-    public int getItemEnchantability(ItemStack stack) { return 0; } //this property should be read from the attached armor
+    public int getItemEnchantability(ItemStack stack) { return 0; } //the bag might render the enchantments of the equiped chest plate, but is not itself enchentable
 
     @Override
-    public <T extends LivingEntity> int damageItem(ItemStack stack, int amount, T entity, Consumer<T> onBroken) { return 0; } //prevent damage to the bag
+    public <T extends LivingEntity> int damageItem(ItemStack stack, int amount, T entity, Consumer<T> onBroken) {
+        NBTStoredItemHandler handler = getArmorStandUpgradeInventory(stack);
+        ItemStack chestplate = handler.getStackInSlot(0);
+        chestplate.damageItem(amount, entity, onBroken);
+        handler.markDirty();
+        return 0;
+    } //prevent damage to the bag
+
+    @Override
+    public int getMaxDamage(ItemStack stack) {
+        return getChestPlate(stack).getMaxDamage();
+    }
 
     @Override
     public int getDamageReduceAmount() { return 0; } //seem to only be used by mobs to switch armor, the attributes are used by damage calculation
@@ -161,12 +213,9 @@ public class Bag extends ArmorItem implements IDimBagCommonItem {
     public Multimap<Attribute, AttributeModifier> getAttributeModifiers(EquipmentSlotType slot, ItemStack stack)
     {
         if (slot == this.slot) {
-//            ImmutableMultimap.Builder<Attribute, AttributeModifier> builder = ImmutableMultimap.builder();
-//            UUID uuid = ARMOR_MODIFIERS[slot.getIndex()];
             ItemStack chestplate = getChestPlate(stack);
             if (!chestplate.isEmpty())
                 return ((ArmorItem)chestplate.getItem()).getAttributeModifiers(slot);
-//            return builder.build();
         }
         return ImmutableMultimap.of();
     }
@@ -182,53 +231,37 @@ public class Bag extends ArmorItem implements IDimBagCommonItem {
             @Nonnull
             @Override
             public <T> LazyOptional<T> getCapability(@Nonnull Capability<T> cap, @Nullable Direction side) {
-                EyeData data = EyeData.get(Bag.getId(stack));
-                return data != null ? data.getCapability(cap, side) : LazyOptional.empty();
+//                EyeData data = getData(stack, true);
+                return /*data != null ? data.getCapability(cap, side) :*/ LazyOptional.empty();
             }
         };
     }
 
-    public static int getId(ItemStack stack) {
-        return stack.hasTag() ? stack.getTag().getInt(ID_KEY) : 0;
-    }
-
-    public static int getId(PlayerEntity player, int slot) {
-        ItemStack stack = IDimBagCommonItem.getItemFromPlayer(player, slot);
-        if (stack != null && stack.getItem() instanceof Bag)
-            return getId(stack);
+    public static int getEyeId(ItemStack stack) {
+//        return NBTUtils.getNbt(stack).getInt(IEyeIdHolder.EYE_ID_KEY);
+        if (stack.getTag() != null)
+            return stack.getTag().getInt(IEyeIdHolder.EYE_ID_KEY);
         return 0;
     }
 
-    public static String getOwner(ItemStack stack) {
-        return stack.hasTag() ? stack.getTag().getString(OWNER_KEY) : "Unavailable";
+    @Override
+    public void onCreated(ItemStack stack, World worldIn, PlayerEntity playerIn) {
+        DimBag.LOGGER.info("onCreated: " + stack + ", world: " + worldIn + " player: " + playerIn);
+        super.onCreated(stack, worldIn, playerIn);
+        ClientDataManager.getInstance(stack).syncToServer(stack);
     }
 
-    /*
-     * modal behavior
-     */
+    public static ClientDataManager getClientData(ItemStack stack) {
+        return ClientDataManager.getInstance(stack);
+    }
 
     public static float getModeProperty(ItemStack stack, World world, Entity entity) {
-        if (stack.getTag() == null) return 0;
-        return ModeManager.getModeIndex(stack.getTag().getString("Mode"));
-    }
-
-    public static void changeModeRequest(ServerPlayerEntity player, int slot, boolean up) {
-        ItemStack stack = IDimBagCommonItem.getItemFromPlayer(player, slot);
-        if (stack == null || !(stack.getItem() instanceof Bag)) return;
-        int id = getId(stack);
-        if (id == 0) return;
-        EyeData data = EyeData.get(id);
-        if (data == null) return;
-        ArrayList<String> modes = data.modeManager().getInstalledModes();
-        for (int i = 0; i < modes.size(); ++i) {
-            if (!modes.get(i).equals(data.modeManager().getSelectedMode())) continue;
-            data.modeManager().selectMode((i + (up ? 1 : modes.size() - 1)) % modes.size());
-            CompoundNBT nbt = stack.hasTag() ? stack.getTag() : new CompoundNBT();
-            nbt.putString("Mode", modes.get((i + (up ? 1 : modes.size() - 1)) % modes.size()));
-            stack.setTag(nbt);
-            player.sendStatusMessage(new TranslationTextComponent("notification.bag.changed_mode", new TranslationTextComponent("bag.mode." + data.modeManager().getSelectedMode())), true);
-            return;
-        }
+//        if (stack.getTag() == null) return 0;
+//        return ModeManager.getModeIndex(NBTUtils.getNbt(stack).getString("Mode"));
+        ModeManager modeManager = ClientDataManager.getInstance(stack).getModeManager();
+        if (modeManager != null)
+            return ModeManager.getModeIndex(modeManager.getSelectedMode());
+        return ModeManager.getModeIndex("Default");
     }
 
     /*
@@ -251,20 +284,19 @@ public class Bag extends ArmorItem implements IDimBagCommonItem {
     @Override
     @OnlyIn(Dist.CLIENT)
     public void addInformation(ItemStack stack, World world, List<ITextComponent> tooltip, ITooltipFlag flagIn) {
-        int id = getId(stack);
-        EyeData data = null;
-        if (id == 0 || (data = EyeData.get(id)) == null)
+        ClientDataManager data = getClientData(stack);
+        if (data.getId() <= 0)
             tooltip.add(new TranslationTextComponent("tooltip.bag.missing_id"));
         else {
-            tooltip.add(new TranslationTextComponent("tooltip.bag.mode", new TranslationTextComponent("bag.mode." + stack.getTag().getString("Mode"))));
-            tooltip.add(new TranslationTextComponent("tooltip.bag.id", id, getOwner(stack)));
+            tooltip.add(new TranslationTextComponent("tooltip.bag.mode", new TranslationTextComponent("bag.mode." + data.getModeManager().getSelectedMode())));
+            tooltip.add(new TranslationTextComponent("tooltip.bag.id", data.getId(), data.getOwnerName()));
         }
         super.addInformation(stack, world, tooltip, flagIn);
         if (Screen.hasShiftDown() && data != null) {
-            tooltip.add(new TranslationTextComponent("tooltip.bag.usable_slots", Math.min(data.getColumns() * data.getRows(), data.getInventory().getSlots()), Math.max(data.getColumns() * data.getRows(), data.getInventory().getSlots())));
-            for (String upgrade : data.getUpgrades()) {
+//            tooltip.add(new TranslationTextComponent("tooltip.bag.usable_slots", Math.min(data.getColumns() * data.getRows(), data.getInventory().getSlots()), Math.max(data.getColumns() * data.getRows(), data.getInventory().getSlots())));
+            for (String upgrade : data.getUpgradeManager().getInstalledUpgrades()) {
                 Upgrade up = UpgradeManager.getUpgrade(upgrade);
-                tooltip.add(new TranslationTextComponent("tooltip.bag.upgrade_count", up.getBaseName(), up.getCount(data), up.getLimit()));
+                tooltip.add(new TranslationTextComponent("tooltip.bag.upgrade_count", up.getBaseName(), up.getCount(data.getUpgradeManager()), up.getLimit()));
             }
         }
         else
@@ -273,23 +305,68 @@ public class Bag extends ArmorItem implements IDimBagCommonItem {
 
     @Override
     public void inventoryTick(ItemStack stack, World worldIn, Entity entityIn, int itemSlot, boolean isSelected) {
-        IDimBagCommonItem.sInventoryTick(stack, worldIn, entityIn, itemSlot, isSelected);
-        if (DimBag.isServer(worldIn) && entityIn instanceof ServerPlayerEntity) {
-            int id = getId(stack);
-            EyeData data;
-            if (id == 0) {
-                data = DimBagData.get(worldIn.getServer()).newEye((ServerPlayerEntity) entityIn);
-                CompoundNBT nbt = stack.hasTag() ? stack.getTag() : new CompoundNBT();
-                nbt.putInt(ID_KEY, data.getId());
-                nbt.putString(OWNER_KEY, entityIn.getName().getString());
-                stack.setTag(nbt);
-            } else
-                data = EyeData.get(id);
-            if (!stack.getTag().getString("Mode").equals(data.modeManager().getSelectedMode()))
-                stack.getTag().putString("Mode", data.modeManager().getSelectedMode());
-            data.setUser(entityIn);
-            data.modeManager().inventoryTick(stack, worldIn, entityIn, itemSlot, isSelected);
+//        IDimBagCommonItem.sInventoryTick(stack, worldIn, entityIn, itemSlot, isSelected);
+        if (DimBag.isServer(worldIn)) {
+            int eyeId;
+            if ((eyeId = getEyeId(stack)) == 0 && entityIn instanceof PlayerEntity) {
+                eyeId = DimBagData.get(worldIn.getServer()).newEye((ServerPlayerEntity) entityIn);
+                OwnerData ownerData = OwnerData.getInstance(null, eyeId);
+                if (ownerData != null) {
+                    ownerData.setPlayer((PlayerEntity)entityIn);
+                    new ClientDataManager(eyeId, UpgradeManager.getInstance(null, eyeId), ModeManager.getInstance(null, eyeId), ownerData).store(stack);
+                }
+            }
+            if (eyeId > 0) {
+                ClientDataManager.getInstance(stack).syncToServer(stack);
+                ModeManager modeManager = ModeManager.getInstance(null, eyeId);
+                if (modeManager != null)
+                    modeManager.inventoryTick(stack, worldIn, entityIn, itemSlot, isSelected);
+                UpgradeManager upgradeManager = UpgradeManager.getInstance(null, eyeId);
+                if (upgradeManager != null)
+                    for (String upgrade : upgradeManager.getInstalledUpgrades())
+                        UpgradeManager.getUpgrade(upgrade).upgradeEntityTick(eyeId, isSelected, stack, worldIn, entityIn, itemSlot);
+                HolderData holderData = HolderData.getInstance(null, eyeId);
+                if (holderData != null)
+                    holderData.setHolder(entityIn);
+            }
         }
+    }
+
+    @Override
+    public boolean isDamageable() { return true; } //set to true by default since damage are meant to be sent to the chestplate
+
+    @Override
+    public boolean isDamaged(ItemStack stack) {
+        return getChestPlate(stack).isDamaged();
+    }
+
+    @Override
+    public int getDamage(ItemStack stack) {
+        return getChestPlate(stack).getDamage();
+    }
+
+    @Override
+    public float getXpRepairRatio(ItemStack stack) {
+        return getChestPlate(stack).getXpRepairRatio();
+    }
+
+    @Override
+    public boolean isDamageable(ItemStack stack) {
+        ItemStack chestplate = getChestPlate(stack);
+        return chestplate.getItem().isDamageable(chestplate);
+    }
+
+    @Override
+    public void setDamage(ItemStack stack, int damage) {
+        NBTStoredItemHandler handler = getArmorStandUpgradeInventory(stack);
+        ItemStack chestplate = handler.getStackInSlot(0);
+        chestplate.setDamage(damage);
+        handler.markDirty();
+    }
+
+    @Override
+    public boolean shouldCauseReequipAnimation(ItemStack oldStack, ItemStack newStack, boolean slotChanged) {
+        return slotChanged || oldStack.getItem() != newStack.getItem();
     }
 
     public static BlockRayTraceResult rayTrace(World worldIn, PlayerEntity player, RayTraceContext.FluidMode fluidMode) {
@@ -301,18 +378,16 @@ public class Bag extends ArmorItem implements IDimBagCommonItem {
         return onItemUse(context.getWorld(), context.getPlayer(), IDimBagCommonItem.slotFromHand(context.getPlayer(), context.getHand()), new BlockRayTraceResult(context.getHitVec(), context.getFace(), context.getPos(), context.isInside()));
     }
 
-    public ActionResultType onItemUse(World world, PlayerEntity player, int slot, BlockRayTraceResult ray) {
-        int id;
-        EyeData data;
-        if (!DimBag.isServer(world) || (id = getId(player.inventory.getStackInSlot(slot))) == 0 || (data = EyeData.get(id)) == null) return ActionResultType.PASS;
-        return data.modeManager().onItemUse(world, player, slot, ray);
+    public static ActionResultType onItemUse(World world, PlayerEntity player, int slot, BlockRayTraceResult ray) {
+        ModeManager data;
+        if (!DimBag.isServer(world) || (data = ModeManager.getInstance(null, getEyeId(player.inventory.getStackInSlot(slot)))) == null) return ActionResultType.PASS;
+        return data.onItemUse(world, player, slot, ray);
     }
 
-    public ActionResult<ItemStack> onItemRightClick(World world, PlayerEntity player, int slot) {
-        int id;
-        EyeData data;
-        if (!DimBag.isServer(world) || (id = getId(player.inventory.getStackInSlot(slot))) == 0 || (data = EyeData.get(id)) == null) return new ActionResult<>(ActionResultType.PASS, player.inventory.getStackInSlot(slot));
-        return data.modeManager().onItemRightClick(world, player, slot);
+    public static ActionResult<ItemStack> onItemRightClick(World world, PlayerEntity player, int slot) {
+        ModeManager data;
+        if (!DimBag.isServer(world) || (data = ModeManager.getInstance(null, getEyeId(player.inventory.getStackInSlot(slot)))) == null) return new ActionResult<>(ActionResultType.PASS, player.inventory.getStackInSlot(slot));
+        return data.onItemRightClick(world, player, slot);
     }
 
     @Override
@@ -322,9 +397,8 @@ public class Bag extends ArmorItem implements IDimBagCommonItem {
 
     @Override
     public boolean onLeftClickEntity(ItemStack stack, PlayerEntity player, Entity entity) {
-        int id;
-        EyeData data;
-        if (!DimBag.isServer(player.world) || (id = getId(stack)) == 0 || (data = EyeData.get(id)) == null) return false;
-        return data.modeManager().onAttack(stack, player, entity).isSuccessOrConsume();
+        ModeManager data;
+        if (!DimBag.isServer(player.world) || (data = ModeManager.getInstance(null, getEyeId(stack))) == null) return false;
+        return data.onAttack(stack, player, entity).isSuccessOrConsume();
     }
 }

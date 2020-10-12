@@ -1,7 +1,9 @@
 package com.limachi.dimensional_bags.common.items.entity;
 
+import com.limachi.dimensional_bags.common.NBTUtils;
 import com.limachi.dimensional_bags.common.Registries;
-import com.limachi.dimensional_bags.common.data.EyeData;
+import com.limachi.dimensional_bags.common.data.EyeDataMK2.HolderData;
+import com.limachi.dimensional_bags.common.data.IEyeIdHolder;
 import com.limachi.dimensional_bags.common.items.Bag;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
@@ -12,7 +14,7 @@ import net.minecraft.util.DamageSource;
 import net.minecraft.world.World;
 import net.minecraftforge.fml.network.NetworkHooks;
 
-public class BagEntityItem extends ItemEntity {
+public class BagEntityItem extends ItemEntity implements IEyeIdHolder {
     public BagEntityItem(EntityType<? extends ItemEntity> type, World world) { //registry constructor?
         super(type, world);
     }
@@ -49,16 +51,21 @@ public class BagEntityItem extends ItemEntity {
         if (!world.isRemote()) {
             if (getPosition().getY() < 1)
                 setPosition(getPosX(), 1, getPosZ());
-            int id = Bag.getId(getItem());
-            if (id != 0) {
-                EyeData data = EyeData.get(id);
-                data.setUser(this);
+            int id = Bag.getEyeId(getItem());
+            if (id <= 0) return;
+            HolderData holderData = HolderData.getInstance(null, id);
+            if (holderData != null)
+                holderData.setHolder(this);
             }
-        }
         super.tick();
     }
 
     public boolean attackEntityFrom(DamageSource source, float amount) {
         return false;
+    }
+
+    @Override
+    public int getEyeId() {
+        return Bag.getEyeId(getItem());
     }
 }

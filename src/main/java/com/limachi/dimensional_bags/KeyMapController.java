@@ -19,7 +19,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-public class KeyMapController {
+public class KeyMapController { //FIXME: freeze after joining back a world
     public static final String KEY_CATEGORY = "Dimensional Bags";
 
     public static final int BAG_ACTION_KEY = 0;
@@ -27,7 +27,7 @@ public class KeyMapController {
     public final static int KEY_BIND_COUNT = 2;
     public static final int NON_VANILLA_KEY_BIND_COUNT = 1;
 
-    public final static KeyBinding[] TRACKED_KEYBINDS = DistExecutor.callWhenOn(Dist.CLIENT, ()->()->new KeyBinding[]{ //only initialized client side
+    public final static KeyBinding[] TRACKED_KEYBINDS = DistExecutor.callWhenOn(Dist.CLIENT, ()->()->new KeyBinding[]{ //only initialized physical client side (but will only be used on the logical client side)
             new KeyBinding("key.open_gui", KeyConflictContext.IN_GAME, InputMappings.Type.KEYSYM, GLFW.GLFW_KEY_I, KEY_CATEGORY),
             Minecraft.getInstance().gameSettings.keyBindSneak
     });
@@ -36,29 +36,11 @@ public class KeyMapController {
     private static boolean[] local_key_map = new boolean[KEY_BIND_COUNT]; //only used client side
 
     public static boolean getKey(PlayerEntity player, int keymapId) {
-        if (player instanceof ServerPlayerEntity)
-            return playerKeyStateMap.getOrDefault(player.getUniqueID(), new boolean[KEY_BIND_COUNT])[keymapId];
-        return DistExecutor.runForDist(
+//        if (player instanceof ServerPlayerEntity)
+//            return playerKeyStateMap.getOrDefault(player.getUniqueID(), new boolean[KEY_BIND_COUNT])[keymapId];
+        return DimBag.runLogicalSide(null,
                 ()->()->TRACKED_KEYBINDS[keymapId].isKeyDown(),
-                ()->()-> player != null && playerKeyStateMap.getOrDefault(player.getUniqueID(), new boolean[KEY_BIND_COUNT])[keymapId]);
-    }
-
-    @OnlyIn(Dist.CLIENT)
-    public static void syncKeyMap() {
-        PlayerEntity player = Minecraft.getInstance().player;
-        if (player == null)
-            return;
-        boolean[] newKeyState = new boolean[KEY_BIND_COUNT];
-        boolean shouldUpdate = false;
-        for (int i = 0; i < KEY_BIND_COUNT; ++i) {
-            newKeyState[i] = TRACKED_KEYBINDS[i].isKeyDown();
-            if (newKeyState[i] != local_key_map[i])
-                shouldUpdate = true;
-        }
-        if (shouldUpdate) {
-            local_key_map = newKeyState;
-            PacketHandler.toServer(new SyncKeyMapMsg(player.getUniqueID(), local_key_map));
-        }
+                ()->()->player != null && playerKeyStateMap.getOrDefault(player.getUniqueID(), new boolean[KEY_BIND_COUNT])[keymapId]);
     }
 
     @OnlyIn(Dist.CLIENT)
@@ -70,7 +52,7 @@ public class KeyMapController {
             if (/*TRACKED_KEYBINDS[i].getKeyConflictContext().isActive() &&*/ mouse ? TRACKED_KEYBINDS[i].matchesMouseKey(key) : TRACKED_KEYBINDS[i].matchesKey(key, scan)) {
                 if (state != local_key_map[i]) {
                     local_key_map[i] = state;
-                    PacketHandler.toServer(new SyncKeyMapMsg(player.getUniqueID(), local_key_map));
+                    PacketHandler.toServer(new SyncKeyMapMsg(/*player.getUniqueID(),*/ local_key_map));
                 }
                 return;
             }
@@ -80,19 +62,33 @@ public class KeyMapController {
     public static class KeyMapChangedEvent extends Event {
         private PlayerEntity player;
         private boolean[] keys;
+        private boolean[] previousKeys;
 
-        KeyMapChangedEvent(PlayerEntity player, boolean[] keys) {
+        KeyMapChangedEvent(PlayerEntity player, boolean[] keys, boolean[] previousKeys) {
             this.player = player;
             this.keys = keys;
+            this.previousKeys = previousKeys;
         }
 
         public PlayerEntity getPlayer() { return player; }
 
         public boolean[] getKeys() { return keys; }
+
+        public boolean[] getPreviousKeys() { return previousKeys; }
+
+        public boolean[] getChangedKeys() {
+            boolean[] out = new boolean[Math.max(keys.length, previousKeys.length)];
+            for (int i = 0; i < out.length; ++i)
+                out[i] = (i < keys.length && keys[i]) != (i < previousKeys.length && previousKeys[i]);
+            return out;
+        }
     }
 
-    public static void syncKeyMapMsg(UUID playerId, boolean[] keys) {
-        playerKeyStateMap.put(playerId, keys);
-        MinecraftForge.EVENT_BUS.post(new KeyMapChangedEvent(DimBag.getServer(null).getPlayerList().getPlayerByUUID(playerId), keys));
+    public static void syncKeyMapMsg(ServerPlayerEntity player, boolean[] keys) {
+        boolean[] previousKeys = playerKeyStateMap.getOrDefault(player.getUniqueID(), new boolean[KEY_BIND_COUNT]);
+        playerKeyStateMap.put(player.getUniqueID(), keys);
+//        PlayerEntity player = DimBag.getServer().getPlayerList().getPlayerByUUID(playerId);
+//        if (player != null)
+            MinecraftForge.EVENT_BUS.post(new KeyMapChangedEvent(player, keys, previousKeys));
     }
 }

@@ -1,6 +1,7 @@
 package com.limachi.dimensional_bags.common.managers.modes;
 
 import com.limachi.dimensional_bags.common.data.EyeData;
+import com.limachi.dimensional_bags.common.data.EyeDataMK2.TankData;
 import com.limachi.dimensional_bags.common.inventory.MultyTank;
 import com.limachi.dimensional_bags.common.items.Bag;
 import com.limachi.dimensional_bags.common.managers.Mode;
@@ -47,7 +48,7 @@ public class Tank extends Mode {
         boolean flag1 = blockstate.isAir() || flag || block instanceof ILiquidContainer && ((ILiquidContainer)block).canContainFluid(world, pos, blockstate, fluid);
         if (!flag1) {
             return rayTrace != null && this.placeFluid(world, player, rayTrace.getPos().offset(rayTrace.getFace()), fluid, null);
-        } else if (world.func_230315_m_().func_236040_e_() && fluid.isIn(FluidTags.WATER)) {
+        } else if (world.getDimensionType().isUltrawarm() && fluid.isIn(FluidTags.WATER)) {
             int i = pos.getX();
             int j = pos.getY();
             int k = pos.getZ();
@@ -82,8 +83,8 @@ public class Tank extends Mode {
     }
 
     @Override
-    public ActionResult<ItemStack> onItemRightClick(EyeData data, World world, PlayerEntity player, int slot) {
-        MultyTank mt = data.getTank();
+    public ActionResult<ItemStack> onItemRightClick(int eyeId, World world, PlayerEntity player, int slot) {
+        TankData mt = TankData.getInstance(null, eyeId);
         ItemStack stack = player.inventory.getStackInSlot(slot);
         if (mt.getTanks() == 0) return ActionResult.resultPass(stack);
         for (RayTraceContext.FluidMode mode : new RayTraceContext.FluidMode[]{RayTraceContext.FluidMode.SOURCE_ONLY, RayTraceContext.FluidMode.NONE}) {
