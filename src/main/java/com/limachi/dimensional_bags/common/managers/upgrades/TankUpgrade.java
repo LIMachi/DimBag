@@ -15,10 +15,7 @@ public class TankUpgrade extends Upgrade {
 
     @Override
     public void installUpgrade(int eyeId, ItemStack stack, int amount, boolean preview) {
-        if (!preview) {
-            TankData tankData = TankData.getInstance(null, eyeId);
-            if (tankData != null)
-                tankData.attachTank(new Tank(UpgradeManager.getUpgrade("upgrade_tank_capacity").getCount(UpgradeManager.getInstance(null, eyeId)) * 1000), (byte) (CANINPUT | CANOUTPUT));
-        }
+        if (!preview)
+            TankData.execute(eyeId, tankData -> tankData.attachTank(new Tank(UpgradeManager.getUpgrade("upgrade_tank_capacity").getCount(UpgradeManager.getInstance(eyeId)) * 1000), (byte) (CANINPUT | CANOUTPUT)));
     }
 }

@@ -1,32 +1,35 @@
 package com.limachi.dimensional_bags.common.managers.upgrades;
 
+import com.google.common.collect.ImmutableMultimap;
 import com.limachi.dimensional_bags.common.data.EyeDataMK2.EnergyData;
 import com.limachi.dimensional_bags.common.data.EyeDataMK2.HolderData;
 import com.limachi.dimensional_bags.common.managers.Upgrade;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.ai.attributes.Attribute;
+import net.minecraft.entity.ai.attributes.AttributeModifier;
+import net.minecraft.entity.ai.attributes.Attributes;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.inventory.EquipmentSlotType;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.ActionResultType;
 import net.minecraft.world.World;
 
+import java.util.UUID;
+
 public class KineticGeneratorUpgrade extends Upgrade {
+
+    public static final AttributeModifier KINETIC_GENERATOR_SLOW_MODIFIER = new AttributeModifier(UUID.fromString("f9e786f8-0c69-11eb-adc1-0242ac120002"), "Kinetic Generator Slowness", -0.15, AttributeModifier.Operation.MULTIPLY_TOTAL);
 
     public KineticGeneratorUpgrade() { super("kinetic_generator", true, 0, 1, 0, 1); }
 
     protected int motionGeneration(int eyeId, Entity entity) {
-//        if (entity instanceof ServerPlayerEntity) {
-//            ServerPlayerEntity player = (ServerPlayerEntity) entity;
-//            player.getStats().getValue(Stats.WA)
-//        }
+
         boolean isRiding = entity.getRidingEntity() != null;
         boolean isElytraFlying = entity instanceof PlayerEntity && ((PlayerEntity) entity).isElytraFlying();
         boolean isInWater = entity.isInWater();
         boolean isInLava = entity.isInLava();
 
-        HolderData holderData = HolderData.getInstance(null, eyeId);
-        if (holderData == null) return 0;
-
-        double generation = entity.getPositionVec().distanceTo(holderData.getLastKnownPosition());
+        double generation = HolderData.execute(eyeId, (holderData)->entity.getPositionVec().distanceTo(holderData.getLastKnownPosition()), 0D);
         if (isElytraFlying && !isInWater && !isInLava)
             generation /= 12D;
         if (isElytraFlying && (isInWater || isInLava))
@@ -39,20 +42,19 @@ public class KineticGeneratorUpgrade extends Upgrade {
             generation *= 2D;
         if (isRiding)
             generation /= 4D;
-//        if (generation != 0)
-//            DimBag.LOGGER.info("generated: " + (int)(generation * 10));
         return (int)(generation * 10);
     }
 
     @Override
-    public ActionResultType upgradeEntityTick(int eyeId, boolean isSelected, ItemStack stack, World world, Entity entity, int itemSlot) {
-        EnergyData energyData = EnergyData.getInstance(null, eyeId);
-        if (energyData == null) return ActionResultType.FAIL;
-        int tickGeneration = 0;
-        {
-            tickGeneration = motionGeneration(eyeId, entity);
-        }
-        energyData.receiveEnergy(tickGeneration, false);
+    public void getAttributeModifiers(int eyeId, EquipmentSlotType slot, ImmutableMultimap.Builder<Attribute, AttributeModifier> builder) {
+        if (slot == EquipmentSlotType.CHEST)
+            builder.put(Attributes.MOVEMENT_SPEED, KINETIC_GENERATOR_SLOW_MODIFIER);
+    }
+
+    @Override
+    public ActionResultType upgradeEntityTick(int eyeId, ItemStack stack, World world, Entity entity, int itemSlot) {
+        if (itemSlot == 38)
+            EnergyData.execute(eyeId, (energyData)->energyData.receiveEnergy(motionGeneration(eyeId, entity), false), 0);
         return ActionResultType.SUCCESS;
     }
 }

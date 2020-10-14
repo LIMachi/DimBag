@@ -30,15 +30,13 @@ public class PokeBall extends Mode {
 
     @Override
     public ActionResultType onAttack(int eyeId, ItemStack stack, PlayerEntity player, Entity entity) {
-        SubRoomsManager subRoomsManager = SubRoomsManager.getInstance(null, eyeId);
-        if (subRoomsManager != null)
-            subRoomsManager.tpIn(entity); //FIXME: add a condition for players/special entities (like the dragon)
+        SubRoomsManager.execute(eyeId, subRoomsManager -> subRoomsManager.tpIn(entity)); //FIXME: add a condition for players/special entities (like the dragon)
         return ActionResultType.SUCCESS;
     }
 
     @Override
     public ActionResultType onEntityTick(int eyeId, ItemStack stack, World world, Entity entity, int itemSlot, boolean isSelected) {
-        UpgradeManager manager = UpgradeManager.getInstance(null, eyeId);
+        UpgradeManager manager = UpgradeManager.getInstance(eyeId);
         if (manager != null) {
             Entity e = getClosestNonPlayerEntityNextToEye(eyeId);
             manager.getUpgradesNBT().putString("PokeBall_closest_entity_name", e != null ? e.getDisplayName().getString() : "No entity close to the eye");
@@ -81,10 +79,7 @@ public class PokeBall extends Mode {
     @Override
     @OnlyIn(Dist.CLIENT)
     public void onRenderHud(int eyeId, boolean isSelected, PlayerEntity player, MainWindow window, MatrixStack matrixStack, float partialTicks) {
-        if (isSelected) {
-            UpgradeManager manager = UpgradeManager.getInstance(null, eyeId);
-            String name = manager != null ? manager.getUpgradesNBT().getString("PokeBall_closest_entity_name") : "No entity close to the eye";
-            RenderUtils.drawString(matrixStack, Minecraft.getInstance().fontRenderer, "Target: " + name, new Box2d(10, 20, 100, 10), 0xFFFFFFFF, true, false);
-        }
+        if (isSelected)
+            RenderUtils.drawString(matrixStack, Minecraft.getInstance().fontRenderer, "Target: " + UpgradeManager.execute(eyeId, upgradeManager -> upgradeManager.getUpgradesNBT().getString("PokeBall_closest_entity_name"), "No entity close to the eye"), new Box2d(10, 20, 100, 10), 0xFFFFFFFF, true, false);
     }
 }

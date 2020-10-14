@@ -84,7 +84,7 @@ public class Tank extends Mode {
 
     @Override
     public ActionResult<ItemStack> onItemRightClick(int eyeId, World world, PlayerEntity player, int slot) {
-        TankData mt = TankData.getInstance(null, eyeId);
+        TankData mt = TankData.getInstance(eyeId);
         ItemStack stack = player.inventory.getStackInSlot(slot);
         if (mt.getTanks() == 0) return ActionResult.resultPass(stack);
         for (RayTraceContext.FluidMode mode : new RayTraceContext.FluidMode[]{RayTraceContext.FluidMode.SOURCE_ONLY, RayTraceContext.FluidMode.NONE}) {

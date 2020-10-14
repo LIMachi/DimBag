@@ -14,9 +14,10 @@ import net.minecraft.world.World;
 import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.server.ServerWorld;
 
-import javax.annotation.Nullable;
 import java.lang.ref.WeakReference;
 import java.util.UUID;
+import java.util.function.Consumer;
+import java.util.function.Function;
 
 public class HolderData extends WorldSavedDataManager.EyeWorldSavedData {
 
@@ -146,7 +147,15 @@ public class HolderData extends WorldSavedDataManager.EyeWorldSavedData {
         return nbt;
     }
 
-    static public HolderData getInstance(@Nullable ServerWorld world, int id) {
-        return WorldSavedDataManager.getInstance(HolderData.class, world, id);
+    static public HolderData getInstance(int id) {
+        return WorldSavedDataManager.getInstance(HolderData.class, null, id);
+    }
+
+    static public <T> T execute(int id, Function<HolderData, T> executable, T onErrorReturn) {
+        return WorldSavedDataManager.execute(HolderData.class, null, id, executable, onErrorReturn);
+    }
+
+    static public boolean execute(int id, Consumer<HolderData> executable) {
+        return WorldSavedDataManager.execute(HolderData.class, null, id, data->{executable.accept(data); return true;}, false);
     }
 }

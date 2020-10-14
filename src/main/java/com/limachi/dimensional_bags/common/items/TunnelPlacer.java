@@ -17,6 +17,7 @@ public class TunnelPlacer extends Item implements IDimBagCommonItem {
     @Override
     public ActionResultType onItemUse(ItemUseContext context) { //detect right clic on walls to transform them in tunnels, consuming 1 tunnel placer
         World world = context.getWorld();
+        if (!(world instanceof ServerWorld)) return ActionResultType.PASS;
         BlockPos pos = context.getPos();
         if (world.getBlockState(pos) != Registries.WALL_BLOCK.get().getDefaultState()) return ActionResultType.PASS;
         world.setBlockState(pos, Registries.TUNNEL_BLOCK.get().getDefaultState());

@@ -1,16 +1,14 @@
 package com.limachi.dimensional_bags.common.data.EyeDataMK2;
 
 import com.limachi.dimensional_bags.DimBag;
-import com.limachi.dimensional_bags.common.WorldUtils;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.world.server.ServerWorld;
-import net.minecraft.world.storage.WorldSavedData;
 
-import javax.annotation.Nullable;
 import java.lang.ref.WeakReference;
 import java.util.UUID;
+import java.util.function.Consumer;
+import java.util.function.Function;
 
 public class OwnerData extends WorldSavedDataManager.EyeWorldSavedData {
 
@@ -21,7 +19,6 @@ public class OwnerData extends WorldSavedDataManager.EyeWorldSavedData {
 
     public OwnerData(String suffix, int id, boolean client) {
         super(suffix, id, client);
-//        super(DimBag.MOD_ID + "_eye_" + id + "_owner_data");
     }
 
     /**
@@ -86,16 +83,15 @@ public class OwnerData extends WorldSavedDataManager.EyeWorldSavedData {
         return nbt;
     }
 
-//    static public OwnerData getInstance(@Nullable ServerWorld world, int id) {
-//        if (id <= 0) return null;
-//        if (world == null)
-//            world = WorldUtils.getOverWorld();
-//        if (world != null)
-//            return world.getSavedData().getOrCreate(()->new OwnerData(id), DimBag.MOD_ID + "_eye_" + id + "_owner_data");
-//        return null;
-//    }
+    static public OwnerData getInstance(int id) {
+        return WorldSavedDataManager.getInstance(OwnerData.class, null, id);
+    }
 
-    static public OwnerData getInstance(@Nullable ServerWorld world, int id) {
-        return WorldSavedDataManager.getInstance(OwnerData.class, world, id);
+    static public <T> T execute(int id, Function<OwnerData, T> executable, T onErrorReturn) {
+        return WorldSavedDataManager.execute(OwnerData.class, null, id, executable, onErrorReturn);
+    }
+
+    static public boolean execute(int id, Consumer<OwnerData> executable) {
+        return WorldSavedDataManager.execute(OwnerData.class, null, id, data->{executable.accept(data); return true;}, false);
     }
 }

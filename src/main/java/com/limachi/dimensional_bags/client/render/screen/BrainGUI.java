@@ -4,7 +4,7 @@ import com.limachi.dimensional_bags.client.render.widgets.Text;
 import com.limachi.dimensional_bags.client.render.widgets.TextField;
 import com.limachi.dimensional_bags.common.container.BaseContainer;
 import com.limachi.dimensional_bags.common.container.BrainContainer;
-import com.limachi.dimensional_bags.common.readers.PlayerReader;
+import com.limachi.dimensional_bags.common.readers.EntityReader;
 import com.limachi.dimensional_bags.common.tileentities.BrainTileEntity;
 import com.mojang.blaze3d.matrix.MatrixStack;
 import net.minecraft.client.Minecraft;
@@ -16,7 +16,7 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 @OnlyIn(Dist.CLIENT)
 public class BrainGUI extends BaseScreen<BrainContainer> {
 
-    protected PlayerReader placeHolderReader;
+    protected EntityReader placeHolderReader;
     protected BrainTileEntity brain;
 
     protected TextField commandField;
@@ -29,7 +29,7 @@ public class BrainGUI extends BaseScreen<BrainContainer> {
     }
 
     protected void init() {
-        placeHolderReader = new PlayerReader(Minecraft.getInstance().player);
+        placeHolderReader = new EntityReader(Minecraft.getInstance().player);
         commandField = new TextField(this, null, 10, 10, 100, 10, container.command, (s1, s2)->true,s->{command = s;});
         resultPreviewWidget = new Text(this, null, 10, 25, 100, 10, font, "", 0xFFFFFFFF, true);
         command = container.command;

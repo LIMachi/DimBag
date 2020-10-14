@@ -1,10 +1,10 @@
 package com.limachi.dimensional_bags.common.data.EyeDataMK2;
 
 import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.world.server.ServerWorld;
 import net.minecraftforge.energy.IEnergyStorage;
 
-import javax.annotation.Nullable;
+import java.util.function.Consumer;
+import java.util.function.Function;
 
 public class EnergyData extends WorldSavedDataManager.EyeWorldSavedData implements IEnergyStorage {
 
@@ -20,7 +20,6 @@ public class EnergyData extends WorldSavedDataManager.EyeWorldSavedData implemen
 
     public EnergyData(String suffix, int id, boolean client) {
         super(suffix, id, client);
-//        super(WorldSavedDataManager.EyeWorldSavedData.nameGenerator("energy_Data", id));
         energy = 0;
         capacity = 0;
         tickCursor = 0;
@@ -66,17 +65,16 @@ public class EnergyData extends WorldSavedDataManager.EyeWorldSavedData implemen
         return nbt;
     }
 
-//    static public EnergyData getInstance(@Nullable ServerWorld world, int id) {
-//        if (id <= 0) return null;
-//        if (world == null)
-//            world = WorldUtils.getOverWorld();
-//        if (world != null)
-//            return world.getSavedData().getOrCreate(()->new EnergyData(id), WorldSavedDataManager.EyeWorldSavedData.nameGenerator("energy_Data", id));
-//        return null;
-//    }
+    static public EnergyData getInstance(int id) {
+        return WorldSavedDataManager.getInstance(EnergyData.class, null, id);
+    }
 
-    static public EnergyData getInstance(@Nullable ServerWorld world, int id) {
-        return WorldSavedDataManager.getInstance(EnergyData.class, world, id);
+    static public <T> T execute(int id, Function<EnergyData, T> executable, T onErrorReturn) {
+        return WorldSavedDataManager.execute(EnergyData.class, null, id, executable, onErrorReturn);
+    }
+
+    static public boolean execute(int id, Consumer<EnergyData> executable) {
+        return WorldSavedDataManager.execute(EnergyData.class, null, id, data->{executable.accept(data); return true;}, false);
     }
 
     @Override

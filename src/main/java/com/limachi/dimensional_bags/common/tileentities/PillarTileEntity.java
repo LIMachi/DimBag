@@ -65,7 +65,7 @@ public class PillarTileEntity extends TileEntity implements ITickableTileEntity,
         ++tick;
         if ((tick & 7) == 0) {
             if (holderDataRef.get() == null)
-                holderDataRef = new WeakReference<>(HolderData.getInstance(null, SubRoomsManager.getEyeId(this.world, this.pos, false)));
+                holderDataRef = new WeakReference<>(HolderData.getInstance(SubRoomsManager.getEyeId(this.world, this.pos, false)));
             if (holderDataRef.get() == null) {
                 if (invPtr.isPresent())
                     invPtr = LazyOptional.empty();

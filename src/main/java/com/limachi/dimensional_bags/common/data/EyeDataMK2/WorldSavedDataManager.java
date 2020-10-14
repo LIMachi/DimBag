@@ -18,6 +18,7 @@ import net.minecraftforge.fml.common.Mod;
 import javax.annotation.Nullable;
 import java.lang.reflect.Constructor;
 import java.util.HashMap;
+import java.util.function.Function;
 
 @Mod.EventBusSubscriber(value = Dist.CLIENT)
 public class WorldSavedDataManager {
@@ -139,5 +140,14 @@ public class WorldSavedDataManager {
         } else if (suffix != null && suffix.length() != 0)
             return (T)clientSideReflexion.get(EyeWorldSavedData.nameGenerator(suffix, id));
         return null;
+    }
+
+    public static <T extends Object, S extends EyeWorldSavedData> T execute(Class<S> type, @Nullable ServerWorld world, int id, Function<S, T> executable, T onErrorReturn) {
+        if (type != null && id > 0 && executable != null) {
+            S instance = getInstance(type, world, id);
+            if (instance != null)
+                return executable.apply(instance);
+        }
+        return onErrorReturn;
     }
 }

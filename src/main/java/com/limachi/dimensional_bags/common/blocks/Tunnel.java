@@ -24,13 +24,10 @@ public class Tunnel extends Block {
     @Override
     public ActionResultType onBlockActivated(BlockState state, World world, BlockPos pos, PlayerEntity player, Hand hand, BlockRayTraceResult ray) { //'right-click' behavior (use/interact)
         if (!DimBag.isServer(world)) return super.onBlockActivated(state, world, pos, player, hand, ray);
-        SubRoomsManager data = SubRoomsManager.getInstance(null, SubRoomsManager.getEyeId(world, pos, false));
-        if (data == null) //invalid tunnel,could not find a valid eye
-            return ActionResultType.FAIL;
         if (KeyMapController.getKey(player, KeyMapController.CROUCH_KEY))
-            data.tpIn(player); //if crouching, go back to the main room
+            SubRoomsManager.execute(SubRoomsManager.getEyeId(world, pos, false), subRoomsManager -> subRoomsManager.tpIn(player));
         else
-            data.tpTunnel(player, pos); //try to go to the next room through the tunnel
+            SubRoomsManager.execute(SubRoomsManager.getEyeId(world, pos, false), subRoomsManager -> subRoomsManager.tpTunnel(player, pos));
         return ActionResultType.SUCCESS;
     }
 
@@ -41,7 +38,7 @@ public class Tunnel extends Block {
         }
         if (KeyMapController.getKey(player, KeyMapController.CROUCH_KEY)) {//shift-left-click, remove the tunnel (replace it by a wall) and give back the tunnel placer (item)
             worldIn.setBlockState(pos, Registries.WALL_BLOCK.get().getDefaultState());
-            SubRoomsManager data = SubRoomsManager.getInstance(null, SubRoomsManager.getEyeId(worldIn, pos, false));
+            SubRoomsManager data = SubRoomsManager.getInstance(SubRoomsManager.getEyeId(worldIn, pos, false));
             if (data == null) {
                 super.onBlockClicked(state, worldIn, pos, player);
                 return;

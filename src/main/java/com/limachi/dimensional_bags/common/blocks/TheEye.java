@@ -42,11 +42,8 @@ public class TheEye extends ContainerBlock {
         int eyeId = SubRoomsManager.getEyeId(world, pos, true);
         if (eyeId <= 0)
             return ActionResultType.FAIL;
-        if (KeyMapController.getKey(player, KeyMapController.CROUCH_KEY)) {
-            HolderData holderData = HolderData.getInstance(null, eyeId);
-            if (holderData != null)
-                holderData.tpToHolder(player);
-        }
+        if (KeyMapController.getKey(player, KeyMapController.CROUCH_KEY))
+            HolderData.execute(eyeId, holderData -> holderData.tpToHolder(player));
         else
             Network.openEyeInventory((ServerPlayerEntity) player, eyeId);
         return ActionResultType.SUCCESS;

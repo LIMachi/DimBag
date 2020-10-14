@@ -52,7 +52,7 @@ public class BrainTileEntity extends TileEntity implements ITickableTileEntity, 
         HolderData data = dataRef.get();
         if (data == null) {
             int id = SubRoomsManager.getEyeId(world, pos, false);
-            data = HolderData.getInstance(null, id);
+            data = HolderData.getInstance(id);
             if (data == null) return null;
             dataRef =  new WeakReference<>(data);
         }
@@ -68,13 +68,10 @@ public class BrainTileEntity extends TileEntity implements ITickableTileEntity, 
         if (!DimBag.isServer(world) || (tick % getBlockState().get(Brain.TICK_RATE)) != 0) return;
         Entity holder = getHolder();
         if (holder != null && command.length() != 0) {
-            if (holder instanceof PlayerEntity) {
-                PlayerReader<PlayerEntity> reader = new PlayerReader<>((PlayerEntity)holder);
-                int r = reader.redstoneFromCommand(command);
-                if (r != cachedPower) {
-                    world.setBlockState(pos, getBlockState().with(Brain.POWER, r));
-                    cachedPower = r;
-                }
+            int r = new EntityReader(holder).redstoneFromCommand(command);
+            if (r != cachedPower) {
+                world.setBlockState(pos, getBlockState().with(Brain.POWER, r));
+                cachedPower = r;
             }
         }
     }

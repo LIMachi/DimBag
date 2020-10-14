@@ -10,10 +10,7 @@ public class RadiusUpgrade extends Upgrade {
 
     @Override
     public void installUpgrade(int eyeId, ItemStack stack, int amount, boolean simulate) {
-        if (!simulate) {
-            SubRoomsManager subRoomsManager = SubRoomsManager.getInstance(null, eyeId);
-            if (subRoomsManager != null)
-                subRoomsManager.changeRadius(subRoomsManager.getRadius() + amount);
-        }
+        if (!simulate)
+            SubRoomsManager.execute(eyeId, subRoomsManager -> subRoomsManager.changeRadius(subRoomsManager.getRadius() + amount));
     }
 }

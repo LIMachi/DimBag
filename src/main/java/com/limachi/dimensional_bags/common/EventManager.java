@@ -69,8 +69,7 @@ public class EventManager {
             DimBagData dbd = DimBagData.get(server);
             int l = dbd.getLastId() + 1;
             for (int i = 1; i < l; ++i) {
-                HolderData holderData = HolderData.getInstance(null, i);
-                Entity user = holderData != null ? holderData.getEntity() : null;
+                Entity user = HolderData.execute(i, HolderData::getEntity, null);
 //                if (user instanceof ServerPlayerEntity) { //test if the player has the bag on them
 //                    ServerPlayerEntity player = (ServerPlayerEntity)user;
 //                    boolean present = false;
@@ -135,9 +134,7 @@ public class EventManager {
         //DimBag.LOGGER.info("InventoryChangeEvent: " + event.getEntity() + " slot: " + event.getSlot() + ", " + event.getFrom() + " -> " + event.getTo());
         if (event.getEntity() instanceof ServerPlayerEntity) return; //tracking of the bag for players is done by the item ticking in their inventory
         if (event.getTo().getItem() instanceof Bag) { //this entity equiped a bag
-            HolderData holderData = HolderData.getInstance(null, Bag.getEyeId(event.getTo()));
-            if (holderData != null)
-                holderData.setHolder(event.getEntity());
+            HolderData.execute(Bag.getEyeId(event.getTo()), holderData -> holderData.setHolder(event.getEntity()));
         }
     }
 

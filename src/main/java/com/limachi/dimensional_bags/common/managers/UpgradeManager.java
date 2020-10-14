@@ -1,14 +1,15 @@
 package com.limachi.dimensional_bags.common.managers;
 
-import com.limachi.dimensional_bags.DimBag;
+import com.google.common.collect.ImmutableMultimap;
 import com.limachi.dimensional_bags.common.Registries;
-import com.limachi.dimensional_bags.common.WorldUtils;
 import com.limachi.dimensional_bags.common.data.EyeDataMK2.ClientDataManager;
-import com.limachi.dimensional_bags.common.data.EyeDataMK2.EnergyData;
 import com.limachi.dimensional_bags.common.data.EyeDataMK2.WorldSavedDataManager;
 import com.limachi.dimensional_bags.common.items.Bag;
 import com.limachi.dimensional_bags.common.managers.upgrades.*;
 import com.limachi.dimensional_bags.common.recipes.Smithing;
+import net.minecraft.entity.ai.attributes.Attribute;
+import net.minecraft.entity.ai.attributes.AttributeModifier;
+import net.minecraft.inventory.EquipmentSlotType;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
@@ -17,17 +18,16 @@ import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.util.NonNullList;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.world.World;
-import net.minecraft.world.server.ServerWorld;
-import net.minecraft.world.storage.WorldSavedData;
 import net.minecraftforge.common.ForgeConfigSpec;
 import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.IForgeRegistry;
 
-import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Consumer;
+import java.util.function.Function;
 
 import static com.limachi.dimensional_bags.DimBag.MOD_ID;
 
@@ -90,7 +90,7 @@ public class UpgradeManager extends WorldSavedDataManager.EyeWorldSavedData {
                     if (inv.getStackInSlot(0).getItem() instanceof Bag && Bag.getEyeId(inv.getStackInSlot(0)) > 0 && inv.getStackInSlot(1).getItem() instanceof Upgrade.UpgradeItem) {
                         Upgrade upgrade = UpgradeManager.getUpgrade(inv.getStackInSlot(1).getItem());
                         if (upgrade == null) return false;
-                        UpgradeManager manager = UpgradeManager.getInstance(null, Bag.getEyeId(inv.getStackInSlot(0)));
+                        UpgradeManager manager = UpgradeManager.getInstance(Bag.getEyeId(inv.getStackInSlot(0)));
                         if (manager == null) return false;
                         return manager.upgradesCount.get(upgrade.getId()) < upgrade.getLimit();
                     }
@@ -98,11 +98,7 @@ public class UpgradeManager extends WorldSavedDataManager.EyeWorldSavedData {
                 },
                 (IInventory inv) -> {
                     ItemStack out = inv.getStackInSlot(0).copy();
-//                    int eyeId = Bag.getEyeId(out);
                     Upgrade upgrade = UpgradeManager.getUpgrade(inv.getStackInSlot(1).getItem());
-//                    ClientDataManager clientDataManager = ClientDataManager.getInstance(inv.getStackInSlot(1));
-//                    UpgradeManager manager = UpgradeManager.getInstance(null, eyeId);
-//                    manager.installUpgrade(upgrade.getId(), out, 1);
                     installUpgrade(upgrade.getId(), out, 1, true);
                     return out;
                 }).register(registry);
@@ -110,7 +106,6 @@ public class UpgradeManager extends WorldSavedDataManager.EyeWorldSavedData {
 
     private CompoundNBT upgradesNBT;
     private HashMap<String, Integer> upgradesCount;
-//    private int id;
 
     public UpgradeManager(int id) {
         this("upgrade_manager", id, true);
@@ -118,10 +113,8 @@ public class UpgradeManager extends WorldSavedDataManager.EyeWorldSavedData {
 
     public UpgradeManager(String suffix, int id, boolean client) {
         super(suffix, id, client);
-//        super(DimBag.MOD_ID + "_eye_" + id + "_upgrade_manager");
         upgradesNBT = new CompoundNBT();
         upgradesCount = new HashMap<>();
-//        this.id = id;
         for (String key : UPGRADES.keySet())
             upgradesCount.put(key, UPGRADES.get(key).getStart());
     }
@@ -158,7 +151,7 @@ public class UpgradeManager extends WorldSavedDataManager.EyeWorldSavedData {
                 clientDataManager = ClientDataManager.getInstance(stack);
                 upgradeManager = clientDataManager.getUpgradeManager();
             } else
-                upgradeManager = UpgradeManager.getInstance(null, id);
+                upgradeManager = UpgradeManager.getInstance(id);
             if (upgradeManager != null) {
                 upgrade.changeCount(upgradeManager.upgradesCount, upgrade.getCount(upgradeManager.upgradesCount) + amount);
                 if (preview)
@@ -167,6 +160,13 @@ public class UpgradeManager extends WorldSavedDataManager.EyeWorldSavedData {
                     upgradeManager.markDirty();
             }
         }
+    }
+
+    public static void getAttributeModifiers(int eyeId, EquipmentSlotType slot, ImmutableMultimap.Builder<Attribute, AttributeModifier> builder) {
+        UpgradeManager instance = getInstance(eyeId);
+        if (instance != null)
+            for (String upgrade : instance.getInstalledUpgrades())
+                UpgradeManager.getUpgrade(upgrade).getAttributeModifiers(eyeId, slot, builder);
     }
 
     @Override
@@ -185,16 +185,15 @@ public class UpgradeManager extends WorldSavedDataManager.EyeWorldSavedData {
         return nbt;
     }
 
-//    static public UpgradeManager getInstance(@Nullable ServerWorld world, int id) {
-//        if (id <= 0) return null;
-//        if (world == null)
-//            world = WorldUtils.getOverWorld();
-//        if (world != null)
-//            return world.getSavedData().getOrCreate(()->new UpgradeManager(id), DimBag.MOD_ID + "_eye_" + id + "_upgrade_manager");
-//        return null;
-//    }
+    static public UpgradeManager getInstance(int id) {
+        return WorldSavedDataManager.getInstance(UpgradeManager.class, null, id);
+    }
 
-    static public UpgradeManager getInstance(@Nullable ServerWorld world, int id) {
-        return WorldSavedDataManager.getInstance(UpgradeManager.class, world, id);
+    static public <T> T execute(int id, Function<UpgradeManager, T> executable, T onErrorReturn) {
+        return WorldSavedDataManager.execute(UpgradeManager.class, null, id, executable, onErrorReturn);
+    }
+
+    static public boolean execute(int id, Consumer<UpgradeManager> executable) {
+        return WorldSavedDataManager.execute(UpgradeManager.class, null, id, data->{executable.accept(data); return true;}, false);
     }
 }

@@ -31,7 +31,7 @@ public class DimBagData extends WorldSavedData { //server side only, client side
 
     public int newEye(ServerPlayerEntity player) {
         int id = ++lastId;
-        SubRoomsManager roomsManager = SubRoomsManager.getInstance(null, id);
+        SubRoomsManager roomsManager = SubRoomsManager.getInstance(id);
         if (roomsManager == null) {
             --lastId;
             return 0;

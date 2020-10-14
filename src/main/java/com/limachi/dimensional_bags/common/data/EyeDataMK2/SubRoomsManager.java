@@ -1,6 +1,5 @@
 package com.limachi.dimensional_bags.common.data.EyeDataMK2;
 
-import com.limachi.dimensional_bags.DimBag;
 import com.limachi.dimensional_bags.common.Registries;
 import com.limachi.dimensional_bags.common.WorldUtils;
 import com.limachi.dimensional_bags.common.managers.UpgradeManager;
@@ -13,23 +12,20 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.vector.Vector3i;
 import net.minecraft.world.World;
 import net.minecraft.world.server.ServerWorld;
-import net.minecraft.world.storage.WorldSavedData;
 
-import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Optional;
+import java.util.function.Consumer;
+import java.util.function.Function;
 
 public class SubRoomsManager extends WorldSavedDataManager.EyeWorldSavedData {
     private HashMap<Vector3i, Integer> subRoomsToId = new HashMap<>();
     private ArrayList<Vector3i> idToSubRooms = new ArrayList<>();
     private int radius;
-//    private final int id;
 
     public SubRoomsManager(String suffix, int id, boolean client) {
         super(suffix, id, client);
-//        super(DimBag.MOD_ID + "_eye_" + id + "_sub_rooms_manager");
-//        this.id = id;
         subRoomsToId.put(new Vector3i(0, 0, 0), 0);
         idToSubRooms.add(0, new Vector3i(0, 0, 0));
         radius = UpgradeManager.getUpgrade("upgrade_radius").getStart();
@@ -45,7 +41,7 @@ public class SubRoomsManager extends WorldSavedDataManager.EyeWorldSavedData {
         }
         else if (((x + 128) & 1023) <= 256) { //we add 128, so the range [-128, 128], becomes [0, 256], the maximum size of a room + extra
             int id = ((x + 128) >> 10) + 1; //since the block is now in a range [0, 256] + unknown * 1024, we cam divide by 1024 and the [0, 256] part will be discarded by the int precision, also, using a shift instead of a division
-            SubRoomsManager manager = getInstance(null, id);
+            SubRoomsManager manager = getInstance(id);
             if (manager != null) {
                 int radius = manager.getRadius();
                 if (((x + radius) & 1023) <= radius << 1 && pos.getY() >= 128 - radius && pos.getY() <= 128 + radius && ((z + radius) & 1023) <= radius << 1) //now that we know the radius, we can quickly test the room on the X and Z axis
@@ -101,7 +97,7 @@ public class SubRoomsManager extends WorldSavedDataManager.EyeWorldSavedData {
         if (!req.isPresent()) return;
         int id = req.get().getKey();
         int room = req.get().getValue();
-        SubRoomsManager data = getInstance(world, id);
+        SubRoomsManager data = getInstance(id);
         if (data == null) return;
         Vector3i coord = data.idToSubRooms.get(room); //virtual coordinates of the current room
         Direction wall = data.wall(tunnel, room); //which wall the tunnel was placed on
@@ -163,16 +159,15 @@ public class SubRoomsManager extends WorldSavedDataManager.EyeWorldSavedData {
         return nbt;
     }
 
-//    static public SubRoomsManager getInstance(@Nullable ServerWorld world, int id) {
-//        if (id <= 0) return null;
-//        if (world == null)
-//            world = WorldUtils.getOverWorld();
-//        if (world != null)
-//            return world.getSavedData().getOrCreate(()->new SubRoomsManager(id), DimBag.MOD_ID + "_eye_" + id + "_sub_rooms_manager");
-//        return null;
-//    }
+    static public SubRoomsManager getInstance(int id) {
+        return WorldSavedDataManager.getInstance(SubRoomsManager.class, null, id);
+    }
 
-    static public SubRoomsManager getInstance(@Nullable ServerWorld world, int id) {
-        return WorldSavedDataManager.getInstance(SubRoomsManager.class, world, id);
+    static public <T> T execute(int id, Function<SubRoomsManager, T> executable, T onErrorReturn) {
+        return WorldSavedDataManager.execute(SubRoomsManager.class, null, id, executable, onErrorReturn);
+    }
+
+    static public boolean execute(int id, Consumer<SubRoomsManager> executable) {
+        return WorldSavedDataManager.execute(SubRoomsManager.class, null, id, data->{executable.accept(data); return true;}, false);
     }
 }

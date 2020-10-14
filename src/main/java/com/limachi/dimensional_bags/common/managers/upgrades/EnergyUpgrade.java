@@ -17,7 +17,7 @@ public class EnergyUpgrade extends Upgrade {
     @Override
     public void installUpgrade(int eyeId, ItemStack stack, int amount, boolean simulate) {
         if (!simulate) {
-            EnergyData energyData = EnergyData.getInstance(null, eyeId);
+            EnergyData energyData = EnergyData.getInstance(eyeId);
             int previousStorage = energyData.getMaxEnergyStored();
             if (previousStorage == 0 && amount > 0) {
                 energyData.changeBatterySize(65536);
@@ -30,8 +30,6 @@ public class EnergyUpgrade extends Upgrade {
 
     @Override
     public void onRenderHud(int eyeId, PlayerEntity player, MainWindow window, MatrixStack matrixStack, float partialTicks) {
-        EnergyData energyData = EnergyData.getInstance(null, eyeId);
-        if (energyData != null)
-            RenderUtils.drawString(matrixStack, Minecraft.getInstance().fontRenderer, "Energy: " + energyData.getEnergyStored() + " / " + energyData.getMaxEnergyStored(), new Box2d(10, 10, 100, 10), 0xFFFFFFFF, true, false);
+        EnergyData.execute(eyeId, energyData->{RenderUtils.drawString(matrixStack, Minecraft.getInstance().fontRenderer, "Energy: " + energyData.getEnergyStored() + " / " + energyData.getMaxEnergyStored(), new Box2d(10, 10, 100, 10), 0xFFFFFFFF, true, false); return true;}, false);
     }
 }

@@ -1,32 +1,26 @@
 package com.limachi.dimensional_bags.common.data.EyeDataMK2;
 
-import com.limachi.dimensional_bags.DimBag;
-import com.limachi.dimensional_bags.common.WorldUtils;
 import com.limachi.dimensional_bags.common.inventory.Tank;
 import com.limachi.dimensional_bags.common.inventory.Wrapper;
 import net.minecraft.nbt.ByteArrayNBT;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.nbt.ListNBT;
-import net.minecraft.world.server.ServerWorld;
-import net.minecraft.world.storage.WorldSavedData;
 import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.fluids.capability.IFluidHandler;
 
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import java.util.ArrayList;
+import java.util.function.Consumer;
+import java.util.function.Function;
 
 public class TankData extends WorldSavedDataManager.EyeWorldSavedData implements IFluidHandler {
 
-//    private final int id;
     private ArrayList<Tank> tanks = new ArrayList<>();
     private ArrayList<Byte> rights = new ArrayList<>();
     private int selected = 0;
 
     public TankData(String suffix, int id, boolean client) {
         super(suffix, id, client);
-//        super(DimBag.MOD_ID + "_eye_" + id + "_tank_data");
-//        this.id = id;
     }
 
     public void selectTank(int tank) {
@@ -121,16 +115,15 @@ public class TankData extends WorldSavedDataManager.EyeWorldSavedData implements
         return nbt;
     }
 
-//    static public TankData getInstance(@Nullable ServerWorld world, int id) {
-//        if (id <= 0) return null;
-//        if (world == null)
-//            world = WorldUtils.getOverWorld();
-//        if (world != null)
-//            return world.getSavedData().getOrCreate(()->new TankData(id), DimBag.MOD_ID + "_eye_" + id + "_tank_data");
-//        return null;
-//    }
+    static public TankData getInstance(int id) {
+        return WorldSavedDataManager.getInstance(TankData.class, null, id);
+    }
 
-    static public TankData getInstance(@Nullable ServerWorld world, int id) {
-        return WorldSavedDataManager.getInstance(TankData.class, world, id);
+    static public <T> T execute(int id, Function<TankData, T> executable, T onErrorReturn) {
+        return WorldSavedDataManager.execute(TankData.class, null, id, executable, onErrorReturn);
+    }
+
+    static public boolean execute(int id, Consumer<TankData> executable) {
+        return WorldSavedDataManager.execute(TankData.class, null, id, data->{executable.accept(data); return true;}, false);
     }
 }

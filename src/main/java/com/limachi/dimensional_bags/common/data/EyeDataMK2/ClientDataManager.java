@@ -51,13 +51,14 @@ public class ClientDataManager {
      * sync the date from the stack to the worldsaveddate, overwritting and calling the upgrades that got changed
      */
     public void syncToServer(ItemStack bagItem) {
-        UpgradeManager upgradeManager = UpgradeManager.getInstance(null, id);
-        if (upgradeManager == null) return;
-        for (String name : localUpgrades.getInstalledUpgrades()) {
-            int d = localUpgrades.getUpgradeCount(name) - upgradeManager.getUpgradeCount(name);
-            if (d != 0)
-                UpgradeManager.installUpgrade(name, bagItem, d, false);
-        }
+        UpgradeManager.execute(id, upgradeManager -> {
+            for (String name : localUpgrades.getInstalledUpgrades()) {
+                int d = localUpgrades.getUpgradeCount(name) - upgradeManager.getUpgradeCount(name);
+                if (d != 0)
+                    UpgradeManager.installUpgrade(name, bagItem, d, false);
+            }
+        });
+
     }
 
     /**

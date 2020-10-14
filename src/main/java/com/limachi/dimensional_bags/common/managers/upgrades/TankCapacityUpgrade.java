@@ -10,10 +10,7 @@ public class TankCapacityUpgrade extends Upgrade {
 
     @Override
     public void installUpgrade(int eyeId, ItemStack stack, int amount, boolean preview) {
-        if (!preview) {
-            TankData tankData = TankData.getInstance(null, eyeId);
-            if (tankData != null)
-                tankData.increaseCapacity(1000);
-        }
+        if (!preview)
+            TankData.execute(eyeId, tankData -> tankData.increaseCapacity(1000));
     }
 }

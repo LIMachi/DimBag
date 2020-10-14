@@ -53,10 +53,8 @@ public class BagEntityItem extends ItemEntity implements IEyeIdHolder {
                 setPosition(getPosX(), 1, getPosZ());
             int id = Bag.getEyeId(getItem());
             if (id <= 0) return;
-            HolderData holderData = HolderData.getInstance(null, id);
-            if (holderData != null)
-                holderData.setHolder(this);
-            }
+            HolderData.execute(id, holderData -> holderData.setHolder(this));
+        }
         super.tick();
     }
 

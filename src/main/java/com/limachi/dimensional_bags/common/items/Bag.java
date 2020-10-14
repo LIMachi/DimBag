@@ -24,6 +24,7 @@ import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.ai.attributes.Attribute;
 import net.minecraft.entity.ai.attributes.AttributeModifier;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.inventory.EquipmentSlotType;
 import net.minecraft.item.*;
@@ -212,12 +213,18 @@ public class Bag extends ArmorItem implements IDimBagCommonItem {
     @Override
     public Multimap<Attribute, AttributeModifier> getAttributeModifiers(EquipmentSlotType slot, ItemStack stack)
     {
+        ImmutableMultimap.Builder<Attribute, AttributeModifier> builder = ImmutableMultimap.builder();
         if (slot == this.slot) {
             ItemStack chestplate = getChestPlate(stack);
             if (!chestplate.isEmpty())
-                return ((ArmorItem)chestplate.getItem()).getAttributeModifiers(slot);
+                builder.putAll(((ArmorItem)chestplate.getItem()).getAttributeModifiers(slot));
         }
-        return ImmutableMultimap.of();
+        int eyeId = getEyeId(stack);
+        if (eyeId > 0) {
+            UpgradeManager.getAttributeModifiers(eyeId, slot, builder);
+            ModeManager.getAttributeModifiers(eyeId, slot, builder);
+        }
+        return builder.build();
     }
 
     /*
@@ -307,27 +314,36 @@ public class Bag extends ArmorItem implements IDimBagCommonItem {
     public void inventoryTick(ItemStack stack, World worldIn, Entity entityIn, int itemSlot, boolean isSelected) {
 //        IDimBagCommonItem.sInventoryTick(stack, worldIn, entityIn, itemSlot, isSelected);
         if (DimBag.isServer(worldIn)) {
+
+            if (entityIn instanceof PlayerEntity && itemSlot < 4) { //recalculate the itemslot because the player inventory is cut in 3 parts: main, armor, offhand
+                for (int d : itemSlot == 0 ? new int[]{0, 36, 40} : new int[]{0, 36})
+                    if (((PlayerEntity)entityIn).inventory.getStackInSlot(itemSlot + d) == stack) {
+                        itemSlot += d;
+                        break;
+                    }
+            }
+            int finalItemSlot = itemSlot;
+
             int eyeId;
             if ((eyeId = getEyeId(stack)) == 0 && entityIn instanceof PlayerEntity) {
                 eyeId = DimBagData.get(worldIn.getServer()).newEye((ServerPlayerEntity) entityIn);
-                OwnerData ownerData = OwnerData.getInstance(null, eyeId);
+                OwnerData ownerData = OwnerData.getInstance(eyeId);
                 if (ownerData != null) {
                     ownerData.setPlayer((PlayerEntity)entityIn);
-                    new ClientDataManager(eyeId, UpgradeManager.getInstance(null, eyeId), ModeManager.getInstance(null, eyeId), ownerData).store(stack);
+                    new ClientDataManager(eyeId, UpgradeManager.getInstance(eyeId), ModeManager.getInstance(eyeId), ownerData).store(stack);
                 }
             }
             if (eyeId > 0) {
                 ClientDataManager.getInstance(stack).syncToServer(stack);
-                ModeManager modeManager = ModeManager.getInstance(null, eyeId);
-                if (modeManager != null)
-                    modeManager.inventoryTick(stack, worldIn, entityIn, itemSlot, isSelected);
-                UpgradeManager upgradeManager = UpgradeManager.getInstance(null, eyeId);
-                if (upgradeManager != null)
+                ModeManager.execute(eyeId, modeManager -> modeManager.inventoryTick(stack, worldIn, entityIn, finalItemSlot, isSelected));
+
+                int finalEyeId = eyeId;
+                UpgradeManager.execute(eyeId, upgradeManager -> {
                     for (String upgrade : upgradeManager.getInstalledUpgrades())
-                        UpgradeManager.getUpgrade(upgrade).upgradeEntityTick(eyeId, isSelected, stack, worldIn, entityIn, itemSlot);
-                HolderData holderData = HolderData.getInstance(null, eyeId);
-                if (holderData != null)
-                    holderData.setHolder(entityIn);
+                        UpgradeManager.getUpgrade(upgrade).upgradeEntityTick(finalEyeId, stack, worldIn, entityIn, finalItemSlot);
+                });
+
+                HolderData.execute(eyeId, holderData -> holderData.setHolder(entityIn));
             }
         }
     }
@@ -379,15 +395,11 @@ public class Bag extends ArmorItem implements IDimBagCommonItem {
     }
 
     public static ActionResultType onItemUse(World world, PlayerEntity player, int slot, BlockRayTraceResult ray) {
-        ModeManager data;
-        if (!DimBag.isServer(world) || (data = ModeManager.getInstance(null, getEyeId(player.inventory.getStackInSlot(slot)))) == null) return ActionResultType.PASS;
-        return data.onItemUse(world, player, slot, ray);
+        return !DimBag.isServer(world) ? ActionResultType.PASS : ModeManager.execute(getEyeId(player.inventory.getStackInSlot(slot)), modeManager -> modeManager.onItemUse(world, player, slot, ray), ActionResultType.PASS);
     }
 
     public static ActionResult<ItemStack> onItemRightClick(World world, PlayerEntity player, int slot) {
-        ModeManager data;
-        if (!DimBag.isServer(world) || (data = ModeManager.getInstance(null, getEyeId(player.inventory.getStackInSlot(slot)))) == null) return new ActionResult<>(ActionResultType.PASS, player.inventory.getStackInSlot(slot));
-        return data.onItemRightClick(world, player, slot);
+        return !DimBag.isServer(world) ? new ActionResult<>(ActionResultType.PASS, player.inventory.getStackInSlot(slot)) : ModeManager.execute(getEyeId(player.inventory.getStackInSlot(slot)), modeManager -> modeManager.onItemRightClick(world, player, slot), new ActionResult<>(ActionResultType.PASS, player.inventory.getStackInSlot(slot)));
     }
 
     @Override
@@ -397,8 +409,6 @@ public class Bag extends ArmorItem implements IDimBagCommonItem {
 
     @Override
     public boolean onLeftClickEntity(ItemStack stack, PlayerEntity player, Entity entity) {
-        ModeManager data;
-        if (!DimBag.isServer(player.world) || (data = ModeManager.getInstance(null, getEyeId(stack))) == null) return false;
-        return data.onAttack(stack, player, entity).isSuccessOrConsume();
+        return DimBag.isServer(player.world) && ModeManager.execute(getEyeId(stack), modeManager -> modeManager.onAttack(stack, player, entity).isSuccessOrConsume(), false);
     }
 }

@@ -51,8 +51,12 @@ public class Elytra extends Mode {
             player.setOnGround(false);
             player.startFallFlying();
         }
-        UpgradeManager upgradeManager = UpgradeManager.getInstance(null, eyeId);
-        if (upgradeManager != null && !upgradeManager.getInstalledUpgrades().contains("upgrade_energy")) {
+        if (UpgradeManager.execute(eyeId, upgradeManager -> upgradeManager.getInstalledUpgrades().contains("upgrade_energy"), false)) {
+            EnergyData energyData = EnergyData.getInstance(eyeId);
+            if (energyData != null && energyData.extractEnergy(512, true) == 512)
+                if (energyData.extractEnergy(512, false) == 512)
+                    player.world.addEntity(new FireworkRocketEntity(player.world, ENERGY_FIREWORK_ROCKET, player));
+        } else {
             IDimBagCommonItem.ItemSearchResult res = IDimBagCommonItem.searchItem(player, 10, FireworkRocketItem.class, (x)->{
                 CompoundNBT nbt = x.getChildTag("Fireworks");
                 return nbt == null || nbt.getList("Explosions", 10).size() == 0;
@@ -66,11 +70,6 @@ public class Elytra extends Mode {
                     res.setStackDirty();
                 }
             }
-        } else {
-            EnergyData energyData = EnergyData.getInstance(null, eyeId);
-            if (energyData != null && energyData.extractEnergy(512, true) == 512)
-                if (energyData.extractEnergy(512, false) == 512)
-                    player.world.addEntity(new FireworkRocketEntity(player.world, ENERGY_FIREWORK_ROCKET, player));
         }
         return ActionResultType.SUCCESS;
     }
@@ -79,8 +78,7 @@ public class Elytra extends Mode {
     @OnlyIn(Dist.CLIENT)
     public void onRenderHud(int eyeId, boolean isSelected, PlayerEntity player, MainWindow window, MatrixStack matrixStack, float partialTicks) {
         if (isSelected) {
-            UpgradeManager upgradeManager = UpgradeManager.getInstance(null, eyeId);
-            if (upgradeManager != null && !upgradeManager.getInstalledUpgrades().contains("upgrade_energy")) {
+            if (UpgradeManager.execute(eyeId, upgradeManager -> !upgradeManager.getInstalledUpgrades().contains("upgrade_energy"), true)) {
                 IDimBagCommonItem.ItemSearchResult res = IDimBagCommonItem.searchItem(player, 10, FireworkRocketItem.class, (x) -> {
                     CompoundNBT nbt = x.getChildTag("Fireworks");
                     return nbt == null || nbt.getList("Explosions", 10).size() == 0;

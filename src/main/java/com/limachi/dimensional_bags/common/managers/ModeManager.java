@@ -1,16 +1,17 @@
 package com.limachi.dimensional_bags.common.managers;
 
-import com.limachi.dimensional_bags.DimBag;
-import com.limachi.dimensional_bags.common.WorldUtils;
+import com.google.common.collect.ImmutableMultimap;
 import com.limachi.dimensional_bags.common.data.EyeDataMK2.ClientDataManager;
-import com.limachi.dimensional_bags.common.data.EyeDataMK2.EnergyData;
 import com.limachi.dimensional_bags.common.data.EyeDataMK2.WorldSavedDataManager;
 import com.limachi.dimensional_bags.common.items.Bag;
 import com.limachi.dimensional_bags.common.items.IDimBagCommonItem;
 import com.limachi.dimensional_bags.common.managers.modes.*;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.ai.attributes.Attribute;
+import net.minecraft.entity.ai.attributes.AttributeModifier;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
+import net.minecraft.inventory.EquipmentSlotType;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.nbt.ListNBT;
@@ -20,11 +21,10 @@ import net.minecraft.util.ActionResultType;
 import net.minecraft.util.math.BlockRayTraceResult;
 import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraft.world.World;
-import net.minecraft.world.server.ServerWorld;
-import net.minecraft.world.storage.WorldSavedData;
 
-import javax.annotation.Nullable;
 import java.util.*;
+import java.util.function.Consumer;
+import java.util.function.Function;
 
 public class ModeManager extends WorldSavedDataManager.EyeWorldSavedData {
     public static final Mode[] MODES = {
@@ -40,7 +40,7 @@ public class ModeManager extends WorldSavedDataManager.EyeWorldSavedData {
         ItemStack stack = IDimBagCommonItem.getItemFromPlayer(player, slot);
         int id;
         if (stack == null || !(stack.getItem() instanceof Bag) || (id = Bag.getEyeId(stack)) <= 0) return;
-        ModeManager dataS = getInstance(null, id);
+        ModeManager dataS = getInstance(id);
         if (dataS == null) return;
         ClientDataManager dataC = ClientDataManager.getInstance(stack);
         ArrayList<String> modes = dataS.getInstalledModes();
@@ -70,7 +70,6 @@ public class ModeManager extends WorldSavedDataManager.EyeWorldSavedData {
 
     private String selectedMode;
     private ArrayList<String> installedModes;
-//    private final int id;
 
     public ModeManager(int id) {
         this("mode_manager", id, true);
@@ -78,32 +77,36 @@ public class ModeManager extends WorldSavedDataManager.EyeWorldSavedData {
 
     public ModeManager(String suffix, int id, boolean client) {
         super(suffix, id, client);
-//        super(DimBag.MOD_ID + "_eye_" + id + "_mode_manager");
         selectedMode = Default.ID;
         installedModes = new ArrayList<>();
         for (Mode mode : MODES)
             if (mode.IS_INSTALED_BY_DEFAULT)
                 installedModes.add(mode.NAME);
-//        this.id = id;
     }
 
-//    static public ModeManager getInstance(@Nullable ServerWorld world, int id) {
-//        if (id <= 0) return null;
-//        if (world == null)
-//            world = WorldUtils.getOverWorld();
-//        if (world != null)
-//            return world.getSavedData().getOrCreate(()->new ModeManager(id), DimBag.MOD_ID + "_eye_" + id + "_mode_manager");
-//        return null;
-//    }
+    static public ModeManager getInstance(int id) {
+        return WorldSavedDataManager.getInstance(ModeManager.class, null, id);
+    }
 
-    static public ModeManager getInstance(@Nullable ServerWorld world, int id) {
-        return WorldSavedDataManager.getInstance(ModeManager.class, world, id);
+    static public <T> T execute(int id, Function<ModeManager, T> executable, T onErrorReturn) {
+        return WorldSavedDataManager.execute(ModeManager.class, null, id, executable, onErrorReturn);
+    }
+
+    static public boolean execute(int id, Consumer<ModeManager> executable) {
+        return WorldSavedDataManager.execute(ModeManager.class, null, id, data->{executable.accept(data); return true;}, false);
     }
 
     public void installMode(String name) {
         if (!installedModes.contains(name))
             installedModes.add(name);
         markDirty();
+    }
+
+    public static void getAttributeModifiers(int eyeId, EquipmentSlotType slot, ImmutableMultimap.Builder<Attribute, AttributeModifier> builder) {
+        ModeManager instance = getInstance(eyeId);
+        if (instance != null)
+            for (String mode : instance.getInstalledModes())
+                ModeManager.getMode(mode).getAttributeModifiers(eyeId, mode.equals(instance.getSelectedMode()), slot, builder);
     }
 
     public String getSelectedMode() { return selectedMode; }

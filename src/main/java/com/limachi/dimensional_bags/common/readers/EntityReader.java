@@ -8,19 +8,13 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 
-public class EntityReader<T extends Entity> {
+public class EntityReader {
 
     protected static class SuppliersMap<O extends Entity> {
-        private Class<O> clazz;
+        private final Class<O> clazz;
         private final HashMap<String, Function<O, Object>> map = new HashMap<>();
 
         public SuppliersMap(Class<O> clazz) { this.clazz = clazz; }
-
-//        public SuppliersMap(Class<O> clazz, SuppliersMap<?> original) {
-//            this(clazz);
-//            if (original.clazz.isAssignableFrom(clazz))
-//                map.putAll((Map<String, ? extends Function<O, Object>>) original.map);
-//        }
 
         public boolean isValidMethod(String name, Object entity) {
             return entity instanceof Entity && clazz.isInstance(entity) && map.containsKey(name);
@@ -39,113 +33,111 @@ public class EntityReader<T extends Entity> {
 
     static final protected HashMap<Class<? extends Entity>, SuppliersMap<?>> cache = new HashMap<>();
 
-    protected SuppliersMap<T> suppliers;
-    protected final Entity entity;
-
-    public EntityReader(T entity) {
-        this.entity = entity;
-        Class<? extends Entity> clazz = entity.getClass();
-        SuppliersMap<T> cached = (SuppliersMap<T>)cache.get(clazz);
-        if (cached == null) {
-            suppliers = new SuppliersMap<T>((Class<T>)entity.getClass());
-            registerSuppliers();
-            cache.put(clazz, suppliers);
-        } else
-            suppliers = cached;
+    static public <O extends Entity> void register(Class<O> clazz, String name, Function<O, Object> supplier) {
+        SuppliersMap<O> cached = (SuppliersMap<O>)cache.get(clazz);
+        if (cached == null)
+            cache.put(clazz, cached = new SuppliersMap<>(clazz));
+        cached.register(name, supplier);
     }
 
-    protected void registerSuppliers() {
-        suppliers.register("type", t -> t.getType().toString());
-        suppliers.register("world", t -> t.world.getDimensionKey().toString());
-        suppliers.register("previous_position_x", t -> t.prevPosX);
-        suppliers.register("previous_position_y", t -> t.prevPosY);
-        suppliers.register("previous_position_z", t -> t.prevPosZ);
-        suppliers.register("position_x", Entity::getPosX);
-        suppliers.register("position_y", Entity::getPosY);
-        suppliers.register("position_z", Entity::getPosZ);
-        suppliers.register("block_position_x", t -> t.getPosition().getX());
-        suppliers.register("block_position_y", t -> t.getPosition().getY());
-        suppliers.register("block_position_z", t -> t.getPosition().getZ());
-        suppliers.register("motion_x", t -> t.getMotion().x);
-        suppliers.register("motion_y", t -> t.getMotion().y);
-        suppliers.register("motion_z", t -> t.getMotion().z);
-        suppliers.register("rotation_yaw", t -> t.rotationYaw);
-        suppliers.register("rotation_pitch", t -> t.rotationPitch);
-        suppliers.register("previous_rotation_yaw", t -> t.prevRotationYaw);
-        suppliers.register("previous_rotation_pitch", t -> t.prevRotationPitch);
-        suppliers.register("is_on_ground", Entity::isOnGround);
-        suppliers.register("is_colliding_horizontally", t -> t.collidedHorizontally);
-        suppliers.register("is_colliding_vertically", t -> t.collidedVertically);
-        suppliers.register("did_velocity_chang", t -> t.velocityChanged);
-        suppliers.register("previous_distance_walked", t -> t.prevDistanceWalkedModified);
-        suppliers.register("distance_walked", t -> t.distanceWalkedModified);
-        suppliers.register("distance_walked_step", t -> t.distanceWalkedOnStepModified);
-        suppliers.register("fall_distance", t -> t.fallDistance);
-        suppliers.register("step_height", t -> t.stepHeight);
-        suppliers.register("is_no_clip", t -> t.noClip);
-        suppliers.register("ticks_existed", t -> t.ticksExisted);
-        suppliers.register("fire_tick", Entity::getFireTimer);
-        suppliers.register("is_immune_to_fire", Entity::isImmuneToFire);
-        suppliers.register("is_in_water", Entity::isInWater);
-        suppliers.register("is_in_lava", Entity::isInLava);
-        suppliers.register("hurt_resistance_timer", t -> t.hurtResistantTime);
-        suppliers.register("air", Entity::getAir);
-        suppliers.register("maximum_air", Entity::getMaxAir);
-        suppliers.register("is_name_visible", Entity::isCustomNameVisible);
-        suppliers.register("is_silent", Entity::isSilent);
-        suppliers.register("has_no_gravity", Entity::hasNoGravity);
-        suppliers.register("chunk_coordinates_x", t -> t.chunkCoordX);
-        suppliers.register("chunk_coordinates_y", t -> t.chunkCoordY);
-        suppliers.register("chunk_coordinates_z", t -> t.chunkCoordZ);
-        suppliers.register("is_airborne", t -> t.isAirBorne);
-        suppliers.register("is_invulnerable", Entity::isInvulnerable);
-        suppliers.register("UUID", Entity::getCachedUniqueIdString);
-        suppliers.register("eye_height", Entity::getEyeHeight);
-        suppliers.register("width", t -> t.getSize(t.getPose()).width);
-        suppliers.register("height", t -> t.getSize(t.getPose()).height);
-        suppliers.register("can_passenger_steer", Entity::canPassengerSteer);
-        suppliers.register("push_reaction", t -> t.getPushReaction().toString());
-        suppliers.register("sound_category", t -> t.getSoundCategory().getName());
-        suppliers.register("is_vulnerable_to_fall", t -> t.isInvulnerableTo(DamageSource.FALL));
-        suppliers.register("is_vulnerable_to_anvil", t -> t.isInvulnerableTo(DamageSource.ANVIL));
-        suppliers.register("is_vulnerable_to_cactus", t -> t.isInvulnerableTo(DamageSource.CACTUS));
-        suppliers.register("is_vulnerable_to_craming", t -> t.isInvulnerableTo(DamageSource.CRAMMING));
-        suppliers.register("is_vulnerable_to_dragon_breath", t -> t.isInvulnerableTo(DamageSource.DRAGON_BREATH));
-        suppliers.register("is_vulnerable_to_drown", t -> t.isInvulnerableTo(DamageSource.DROWN));
-        suppliers.register("is_vulnerable_to_drysuppliers", t -> t.isInvulnerableTo(DamageSource.DRYOUT));
-        suppliers.register("is_vulnerable_to_falling_block", t -> t.isInvulnerableTo(DamageSource.FALLING_BLOCK));
-        suppliers.register("is_vulnerable_to_fly_into_wall", t -> t.isInvulnerableTo(DamageSource.FLY_INTO_WALL));
-        suppliers.register("is_vulnerable_to_generic", t -> t.isInvulnerableTo(DamageSource.GENERIC));
-        suppliers.register("is_vulnerable_to_hot_floor", t -> t.isInvulnerableTo(DamageSource.HOT_FLOOR));
-        suppliers.register("is_vulnerable_to_in_fire", t -> t.isInvulnerableTo(DamageSource.IN_FIRE));
-        suppliers.register("is_vulnerable_to_in_wall", t -> t.isInvulnerableTo(DamageSource.IN_WALL));
-        suppliers.register("is_vulnerable_to_lava", t -> t.isInvulnerableTo(DamageSource.LAVA));
-        suppliers.register("is_vulnerable_to_lightning_bolt", t -> t.isInvulnerableTo(DamageSource.LIGHTNING_BOLT));
-        suppliers.register("is_vulnerable_to_magic", t -> t.isInvulnerableTo(DamageSource.MAGIC));
-        suppliers.register("is_vulnerable_to_on_fire", t -> t.isInvulnerableTo(DamageSource.ON_FIRE));
-        suppliers.register("is_vulnerable_to_suppliers_of_world", t -> t.isInvulnerableTo(DamageSource.OUT_OF_WORLD));
-        suppliers.register("is_vulnerable_to_starve", t -> t.isInvulnerableTo(DamageSource.STARVE));
-        suppliers.register("is_vulnerable_to_sweet_berry_bush", t -> t.isInvulnerableTo(DamageSource.SWEET_BERRY_BUSH));
-        suppliers.register("is_vulnerable_to_wither", t -> t.isInvulnerableTo(DamageSource.WITHER));
-        suppliers.register("is_spectator", Entity::isSpectator);
-        suppliers.register("pose", t -> t.getPose().name());
-        suppliers.register("can_swim", Entity::canSwim);
-        suppliers.register("is_alive", Entity::isAlive);
-        suppliers.register("is_inside_opaque_block", Entity::isEntityInsideOpaqueBlock);
-        suppliers.register("is_being_ridden", Entity::isBeingRidden);
-        suppliers.register("is_passenger", Entity::isPassenger);
-        suppliers.register("can_be_ridden_in_water", Entity::canBeRiddenInWater);
-        suppliers.register("is_sprinting", Entity::isSprinting);
-        suppliers.register("is_swiming", Entity::isSwimming);
-        suppliers.register("is_invisible", Entity::isInvisible);
-        suppliers.register("team", t -> t.getTeam() != null ? t.getTeam().getName() : "");
-        suppliers.register("team_color", t -> t.getTeam() != null ? t.getTeam().getColor().getFriendlyName() : "");
-        suppliers.register("string", Entity::toString);
-        suppliers.register("is_non_boss", Entity::isNonBoss);
-        suppliers.register("max_fall_height", Entity::getMaxFallHeight);
-        suppliers.register("does_not_trigger_pressure_plate", Entity::doesEntityNotTriggerPressurePlate);
-        suppliers.register("can_be_pushed_by_water", Entity::isPushedByWater);
-        suppliers.register("is_one_player_riding", Entity::isOnePlayerRiding);
+    protected final Entity entity;
+
+    public <T extends Entity> EntityReader(T entity) {
+        this.entity = entity;
+    }
+
+    static {
+        register(Entity.class, "type", t -> t.getType().toString());
+        register(Entity.class, "world", t -> t.world.getDimensionKey().toString());
+        register(Entity.class, "previous_position_x", t -> t.prevPosX);
+        register(Entity.class, "previous_position_y", t -> t.prevPosY);
+        register(Entity.class, "previous_position_z", t -> t.prevPosZ);
+        register(Entity.class, "position_x", Entity::getPosX);
+        register(Entity.class, "position_y", Entity::getPosY);
+        register(Entity.class, "position_z", Entity::getPosZ);
+        register(Entity.class, "block_position_x", t -> t.getPosition().getX());
+        register(Entity.class, "block_position_y", t -> t.getPosition().getY());
+        register(Entity.class, "block_position_z", t -> t.getPosition().getZ());
+        register(Entity.class, "motion_x", t -> t.getMotion().x);
+        register(Entity.class, "motion_y", t -> t.getMotion().y);
+        register(Entity.class, "motion_z", t -> t.getMotion().z);
+        register(Entity.class, "rotation_yaw", t -> t.rotationYaw);
+        register(Entity.class, "rotation_pitch", t -> t.rotationPitch);
+        register(Entity.class, "previous_rotation_yaw", t -> t.prevRotationYaw);
+        register(Entity.class, "previous_rotation_pitch", t -> t.prevRotationPitch);
+        register(Entity.class, "is_on_ground", Entity::isOnGround);
+        register(Entity.class, "is_colliding_horizontally", t -> t.collidedHorizontally);
+        register(Entity.class, "is_colliding_vertically", t -> t.collidedVertically);
+        register(Entity.class, "did_velocity_chang", t -> t.velocityChanged);
+        register(Entity.class, "previous_distance_walked", t -> t.prevDistanceWalkedModified);
+        register(Entity.class, "distance_walked", t -> t.distanceWalkedModified);
+        register(Entity.class, "distance_walked_step", t -> t.distanceWalkedOnStepModified);
+        register(Entity.class, "fall_distance", t -> t.fallDistance);
+        register(Entity.class, "step_height", t -> t.stepHeight);
+        register(Entity.class, "is_no_clip", t -> t.noClip);
+        register(Entity.class, "ticks_existed", t -> t.ticksExisted);
+        register(Entity.class, "fire_tick", Entity::getFireTimer);
+        register(Entity.class, "is_immune_to_fire", Entity::isImmuneToFire);
+        register(Entity.class, "is_in_water", Entity::isInWater);
+        register(Entity.class, "is_in_lava", Entity::isInLava);
+        register(Entity.class, "hurt_resistance_timer", t -> t.hurtResistantTime);
+        register(Entity.class, "air", Entity::getAir);
+        register(Entity.class, "maximum_air", Entity::getMaxAir);
+        register(Entity.class, "is_name_visible", Entity::isCustomNameVisible);
+        register(Entity.class, "is_silent", Entity::isSilent);
+        register(Entity.class, "has_no_gravity", Entity::hasNoGravity);
+        register(Entity.class, "chunk_coordinates_x", t -> t.chunkCoordX);
+        register(Entity.class, "chunk_coordinates_y", t -> t.chunkCoordY);
+        register(Entity.class, "chunk_coordinates_z", t -> t.chunkCoordZ);
+        register(Entity.class, "is_airborne", t -> t.isAirBorne);
+        register(Entity.class, "is_invulnerable", Entity::isInvulnerable);
+        register(Entity.class, "UUID", Entity::getCachedUniqueIdString);
+        register(Entity.class, "eye_height", Entity::getEyeHeight);
+        register(Entity.class, "width", t -> t.getSize(t.getPose()).width);
+        register(Entity.class, "height", t -> t.getSize(t.getPose()).height);
+        register(Entity.class, "can_passenger_steer", Entity::canPassengerSteer);
+        register(Entity.class, "push_reaction", t -> t.getPushReaction().toString());
+        register(Entity.class, "sound_category", t -> t.getSoundCategory().getName());
+        register(Entity.class, "is_vulnerable_to_fall", t -> t.isInvulnerableTo(DamageSource.FALL));
+        register(Entity.class, "is_vulnerable_to_anvil", t -> t.isInvulnerableTo(DamageSource.ANVIL));
+        register(Entity.class, "is_vulnerable_to_cactus", t -> t.isInvulnerableTo(DamageSource.CACTUS));
+        register(Entity.class, "is_vulnerable_to_craming", t -> t.isInvulnerableTo(DamageSource.CRAMMING));
+        register(Entity.class, "is_vulnerable_to_dragon_breath", t -> t.isInvulnerableTo(DamageSource.DRAGON_BREATH));
+        register(Entity.class, "is_vulnerable_to_drown", t -> t.isInvulnerableTo(DamageSource.DROWN));
+        register(Entity.class, "is_vulnerable_to_drysuppliers", t -> t.isInvulnerableTo(DamageSource.DRYOUT));
+        register(Entity.class, "is_vulnerable_to_falling_block", t -> t.isInvulnerableTo(DamageSource.FALLING_BLOCK));
+        register(Entity.class, "is_vulnerable_to_fly_into_wall", t -> t.isInvulnerableTo(DamageSource.FLY_INTO_WALL));
+        register(Entity.class, "is_vulnerable_to_generic", t -> t.isInvulnerableTo(DamageSource.GENERIC));
+        register(Entity.class, "is_vulnerable_to_hot_floor", t -> t.isInvulnerableTo(DamageSource.HOT_FLOOR));
+        register(Entity.class, "is_vulnerable_to_in_fire", t -> t.isInvulnerableTo(DamageSource.IN_FIRE));
+        register(Entity.class, "is_vulnerable_to_in_wall", t -> t.isInvulnerableTo(DamageSource.IN_WALL));
+        register(Entity.class, "is_vulnerable_to_lava", t -> t.isInvulnerableTo(DamageSource.LAVA));
+        register(Entity.class, "is_vulnerable_to_lightning_bolt", t -> t.isInvulnerableTo(DamageSource.LIGHTNING_BOLT));
+        register(Entity.class, "is_vulnerable_to_magic", t -> t.isInvulnerableTo(DamageSource.MAGIC));
+        register(Entity.class, "is_vulnerable_to_on_fire", t -> t.isInvulnerableTo(DamageSource.ON_FIRE));
+        register(Entity.class, "is_vulnerable_to_suppliers_of_world", t -> t.isInvulnerableTo(DamageSource.OUT_OF_WORLD));
+        register(Entity.class, "is_vulnerable_to_starve", t -> t.isInvulnerableTo(DamageSource.STARVE));
+        register(Entity.class, "is_vulnerable_to_sweet_berry_bush", t -> t.isInvulnerableTo(DamageSource.SWEET_BERRY_BUSH));
+        register(Entity.class, "is_vulnerable_to_wither", t -> t.isInvulnerableTo(DamageSource.WITHER));
+        register(Entity.class, "is_spectator", Entity::isSpectator);
+        register(Entity.class, "pose", t -> t.getPose().name());
+        register(Entity.class, "can_swim", Entity::canSwim);
+        register(Entity.class, "is_alive", Entity::isAlive);
+        register(Entity.class, "is_inside_opaque_block", Entity::isEntityInsideOpaqueBlock);
+        register(Entity.class, "is_being_ridden", Entity::isBeingRidden);
+        register(Entity.class, "is_passenger", Entity::isPassenger);
+        register(Entity.class, "can_be_ridden_in_water", Entity::canBeRiddenInWater);
+        register(Entity.class, "is_sprinting", Entity::isSprinting);
+        register(Entity.class, "is_swiming", Entity::isSwimming);
+        register(Entity.class, "is_invisible", Entity::isInvisible);
+        register(Entity.class, "team", t -> t.getTeam() != null ? t.getTeam().getName() : "");
+        register(Entity.class, "team_color", t -> t.getTeam() != null ? t.getTeam().getColor().getFriendlyName() : "");
+        register(Entity.class, "string", Entity::toString);
+        register(Entity.class, "is_non_boss", Entity::isNonBoss);
+        register(Entity.class, "max_fall_height", Entity::getMaxFallHeight);
+        register(Entity.class, "does_not_trigger_pressure_plate", Entity::doesEntityNotTriggerPressurePlate);
+        register(Entity.class, "can_be_pushed_by_water", Entity::isPushedByWater);
+        register(Entity.class, "is_one_player_riding", Entity::isOnePlayerRiding);
     }
 
     public enum Commands {
@@ -170,8 +162,22 @@ public class EntityReader<T extends Entity> {
         return Optional.empty();
     }
 
+    protected Object getValue(String key) {
+        for (Map.Entry<Class<? extends Entity>, SuppliersMap<?>> entry : cache.entrySet())
+            if (entry.getValue().isValidMethod(key, entity))
+                return entry.getValue().get(key, entity);
+        return null;
+    }
+
+    protected boolean isValidMethod(String key) {
+        for (Map.Entry<Class<? extends Entity>, SuppliersMap<?>> entry : cache.entrySet())
+            if (entry.getValue().isValidMethod(key, entity))
+                return true;
+        return false;
+    }
+
     protected boolean compare(String key, Comparator cmp, String constant) {
-        Object o = suppliers.get(key, entity);
+        Object o = getValue(key);
         if (o == null) return false;
         String s = o.toString();
         if (s == null) return false;
@@ -227,7 +233,7 @@ public class EntityReader<T extends Entity> {
     }
 
     protected int range(String key, double start, double end) {
-        Object o = suppliers.get(key, entity);
+        Object o = getValue(key);
         if (o == null) return 0;
         String s = o.toString();
         if (s == null) return 0;
@@ -264,13 +270,13 @@ public class EntityReader<T extends Entity> {
     }
 
     protected int comparisonScore1(String search, String key) {
-        if (suppliers.isValidMethod(key, entity))
+        if (isValidMethod(key))
             return StringUtils.getFuzzyDistance(search, key, Locale.ENGLISH); //could use GameSettings.language as locale
         else return Integer.MIN_VALUE;
     }
 
     protected int comparisonScore2(String search, String key) {
-        if (suppliers.isValidMethod(key, entity))
+        if (isValidMethod(key))
             return (int)(StringUtils.getJaroWinklerDistance(search, key) * 100.0D);
         else return Integer.MIN_VALUE;
     }

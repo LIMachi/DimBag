@@ -2,16 +2,12 @@ package com.limachi.dimensional_bags.common.entities;
 
 import com.limachi.dimensional_bags.DimBag;
 import com.limachi.dimensional_bags.KeyMapController;
-import com.limachi.dimensional_bags.common.NBTUtils;
 import com.limachi.dimensional_bags.common.Registries;
 import com.limachi.dimensional_bags.common.WorldUtils;
-import com.limachi.dimensional_bags.common.data.EyeData;
 import com.limachi.dimensional_bags.common.data.EyeDataMK2.HolderData;
-import com.limachi.dimensional_bags.common.data.EyeDataMK2.SubRoomsManager;
 import com.limachi.dimensional_bags.common.data.IEyeIdHolder;
 import com.limachi.dimensional_bags.common.items.Bag;
 import com.limachi.dimensional_bags.common.network.Network;
-import javafx.util.Pair;
 import net.minecraft.entity.*;
 import net.minecraft.entity.ai.attributes.AttributeModifierMap;
 import net.minecraft.entity.ai.attributes.Attributes;
@@ -26,13 +22,11 @@ import net.minecraft.util.Hand;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.world.World;
-import net.minecraft.world.server.ServerWorld;
 
 public class BagEntity extends MobEntity implements IEyeIdHolder {
 
     public static String ITEM_KEY = "BagItemStack";
 
-    private int id = 0;
     private int tick = 0;
 
     public BagEntity(EntityType<? extends MobEntity> type, World world) {
@@ -45,7 +39,7 @@ public class BagEntity extends MobEntity implements IEyeIdHolder {
 
     @Override
     public void onDeath(DamageSource cause) {
-        LOGGER.error("Something tried to remove this bag without authorization: " + id + " (cause: " + cause + ")");
+        LOGGER.error("Something tried to remove this bag without authorization: " + getEyeId() + " (cause: " + cause + ")");
     }
 
     @Override
@@ -59,7 +53,6 @@ public class BagEntity extends MobEntity implements IEyeIdHolder {
         out.setPosition(position.getX() + 0.5d, position.getY() + 0.5d, position.getZ() + 0.5d);
         out.setInvulnerable(true);
         out.enablePersistence();
-        out.id = Bag.getEyeId(bag);
         out.getPersistentData().put(ITEM_KEY, bag.write(new CompoundNBT()));
         out.setCustomName(bag.getDisplayName());
         out.setCustomNameVisible(true);
@@ -116,16 +109,8 @@ public class BagEntity extends MobEntity implements IEyeIdHolder {
     public void tick() {
         super.tick();
         if (this.world.isRemote()) return; //do nothing client side
-        if ((tick & 7) == 0) {
-            HolderData holderData = HolderData.getInstance(null, id);
-            if (holderData != null)
-                holderData.setHolder(this);
-//            EyeData data = EyeData.get(getEyeId());
-//            if (data != null && data != EyeData.getEyeData(this.world, this.getPosition(), false)) //only update the position if the bag isn't in itself
-//                data.updateBagPosition(this.getPositionVec(), (ServerWorld)this.world);
-//            if (data != null)
-//                data.setUser(this);
-        }
+        if ((tick & 7) == 0)
+            HolderData.execute(getEyeId(), holderData->holderData.setHolder(this));
         ++tick;
     }
 
@@ -134,9 +119,9 @@ public class BagEntity extends MobEntity implements IEyeIdHolder {
         if (player.world.isRemote()) return ActionResultType.PASS;
         if (getEyeId() == 0) return ActionResultType.PASS;
         if (KeyMapController.getKey(player, KeyMapController.CROUCH_KEY))
-            WorldUtils.teleportEntity(player, WorldUtils.DimBagRiftKey, new BlockPos(1024 * (id - 1) + 8, 129, 8));
+            WorldUtils.teleportEntity(player, WorldUtils.DimBagRiftKey, new BlockPos(1024 * (getEyeId() - 1) + 8, 129, 8));
         else
-            Network.openEyeInventory((ServerPlayerEntity)player, id);
+            Network.openEyeInventory((ServerPlayerEntity)player, getEyeId());
         return ActionResultType.SUCCESS;
     }
 
@@ -145,8 +130,12 @@ public class BagEntity extends MobEntity implements IEyeIdHolder {
 
     }
 
+    public ItemStack getBagItem() {
+        return ItemStack.read(getPersistentData().getCompound(ITEM_KEY));
+    }
+
     @Override
     public int getEyeId() {
-        return id;
+        return Bag.getEyeId(getBagItem());
     }
 }

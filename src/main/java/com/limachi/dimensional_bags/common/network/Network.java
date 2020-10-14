@@ -18,7 +18,7 @@ import javax.annotation.Nullable;
 
 public class Network {
     public static void openEyeInventory(ServerPlayerEntity player, int eyeId) {
-        InventoryData data = InventoryData.getInstance(null, eyeId);
+        InventoryData data = InventoryData.getInstance(eyeId);
         NetworkHooks.openGui(player, new INamedContainerProvider() {
             @Override
             public ITextComponent getDisplayName() {

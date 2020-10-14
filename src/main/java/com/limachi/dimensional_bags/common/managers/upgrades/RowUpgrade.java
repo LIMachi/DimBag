@@ -12,7 +12,7 @@ public class RowUpgrade extends Upgrade {
     @Override
     public void installUpgrade(int eyeId, ItemStack stack, int amount, boolean simulate) {
         if (!simulate) {
-            InventoryData data = InventoryData.getInstance(null, eyeId);
+            InventoryData data = InventoryData.getInstance(eyeId);
             int rows = data.getRows();
             int columns = data.getColumns();
             int size = data.getInventory().getSlots();
