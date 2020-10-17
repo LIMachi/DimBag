@@ -24,7 +24,6 @@ import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.ai.attributes.Attribute;
 import net.minecraft.entity.ai.attributes.AttributeModifier;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.inventory.EquipmentSlotType;
 import net.minecraft.item.*;
@@ -245,7 +244,6 @@ public class Bag extends ArmorItem implements IDimBagCommonItem {
     }
 
     public static int getEyeId(ItemStack stack) {
-//        return NBTUtils.getNbt(stack).getInt(IEyeIdHolder.EYE_ID_KEY);
         if (stack.getTag() != null)
             return stack.getTag().getInt(IEyeIdHolder.EYE_ID_KEY);
         return 0;
@@ -263,8 +261,6 @@ public class Bag extends ArmorItem implements IDimBagCommonItem {
     }
 
     public static float getModeProperty(ItemStack stack, World world, Entity entity) {
-//        if (stack.getTag() == null) return 0;
-//        return ModeManager.getModeIndex(NBTUtils.getNbt(stack).getString("Mode"));
         ModeManager modeManager = ClientDataManager.getInstance(stack).getModeManager();
         if (modeManager != null)
             return ModeManager.getModeIndex(modeManager.getSelectedMode());
@@ -322,7 +318,6 @@ public class Bag extends ArmorItem implements IDimBagCommonItem {
                         break;
                     }
             }
-            int finalItemSlot = itemSlot;
 
             int eyeId;
             if ((eyeId = getEyeId(stack)) == 0 && entityIn instanceof PlayerEntity) {
@@ -335,17 +330,22 @@ public class Bag extends ArmorItem implements IDimBagCommonItem {
             }
             if (eyeId > 0) {
                 ClientDataManager.getInstance(stack).syncToServer(stack);
-                ModeManager.execute(eyeId, modeManager -> modeManager.inventoryTick(stack, worldIn, entityIn, finalItemSlot, isSelected));
+                ModeManager.execute(eyeId, modeManager -> modeManager.inventoryTick(worldIn, entityIn, isSelected));
 
                 int finalEyeId = eyeId;
                 UpgradeManager.execute(eyeId, upgradeManager -> {
                     for (String upgrade : upgradeManager.getInstalledUpgrades())
-                        UpgradeManager.getUpgrade(upgrade).upgradeEntityTick(finalEyeId, stack, worldIn, entityIn, finalItemSlot);
+                        UpgradeManager.getUpgrade(upgrade).upgradeEntityTick(finalEyeId, worldIn, entityIn);
                 });
 
                 HolderData.execute(eyeId, holderData -> holderData.setHolder(entityIn));
             }
         }
+    }
+
+    public static int getBagSlot(PlayerEntity player, int eyeId) {
+        IDimBagCommonItem.ItemSearchResult res = IDimBagCommonItem.searchItem(player, 0, Bag.class, t->t.getTag().getInt(IEyeIdHolder.EYE_ID_KEY) == eyeId, false);
+        return res != null ? res.index : -1;
     }
 
     @Override
@@ -391,24 +391,31 @@ public class Bag extends ArmorItem implements IDimBagCommonItem {
 
     @Override
     public ActionResultType onItemUse(ItemUseContext context) {
-        return onItemUse(context.getWorld(), context.getPlayer(), IDimBagCommonItem.slotFromHand(context.getPlayer(), context.getHand()), new BlockRayTraceResult(context.getHitVec(), context.getFace(), context.getPos(), context.isInside()));
+        return onItemUse(context.getWorld(), context.getPlayer(), getEyeId(context.getItem()), new BlockRayTraceResult(context.getHitVec(), context.getFace(), context.getPos(), context.isInside()));
     }
 
-    public static ActionResultType onItemUse(World world, PlayerEntity player, int slot, BlockRayTraceResult ray) {
-        return !DimBag.isServer(world) ? ActionResultType.PASS : ModeManager.execute(getEyeId(player.inventory.getStackInSlot(slot)), modeManager -> modeManager.onItemUse(world, player, slot, ray), ActionResultType.PASS);
+    public static ActionResultType onItemUse(World world, PlayerEntity player, int eyeId, BlockRayTraceResult ray) {
+        return !DimBag.isServer(world) ? ActionResultType.PASS : ModeManager.execute(eyeId, modeManager -> modeManager.onItemUse(world, player, ray), ActionResultType.PASS);
     }
 
-    public static ActionResult<ItemStack> onItemRightClick(World world, PlayerEntity player, int slot) {
-        return !DimBag.isServer(world) ? new ActionResult<>(ActionResultType.PASS, player.inventory.getStackInSlot(slot)) : ModeManager.execute(getEyeId(player.inventory.getStackInSlot(slot)), modeManager -> modeManager.onItemRightClick(world, player, slot), new ActionResult<>(ActionResultType.PASS, player.inventory.getStackInSlot(slot)));
+    public static ActionResult<ItemStack> onItemRightClick(World world, PlayerEntity player, int slot, int eyeId) {
+        return new ActionResult<>(!DimBag.isServer(world) ? ActionResultType.PASS : ModeManager.execute(eyeId, modeManager -> modeManager.onItemRightClick(world, player), ActionResultType.PASS), player.inventory.getStackInSlot(slot));
     }
 
     @Override
     public ActionResult<ItemStack> onItemRightClick(World world, PlayerEntity player, Hand hand) {
-        return onItemRightClick(world, player, IDimBagCommonItem.slotFromHand(player, hand));
+        return onItemRightClick(world, player, IDimBagCommonItem.slotFromHand(player, hand), getEyeId(player.getHeldItem(hand)));
+    }
+
+    /**
+     * static helper function that might also be called by a ghost bag
+     */
+    public static boolean onLeftClickEntity(int eyeId, PlayerEntity player, Entity entity) {
+        return DimBag.isServer(player.world) && ModeManager.execute(eyeId, modeManager -> modeManager.onAttack(player, entity).isSuccessOrConsume(), false);
     }
 
     @Override
     public boolean onLeftClickEntity(ItemStack stack, PlayerEntity player, Entity entity) {
-        return DimBag.isServer(player.world) && ModeManager.execute(getEyeId(stack), modeManager -> modeManager.onAttack(stack, player, entity).isSuccessOrConsume(), false);
+        return onLeftClickEntity(getEyeId(stack), player, entity);
     }
 }

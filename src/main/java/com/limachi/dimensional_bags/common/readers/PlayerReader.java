@@ -28,8 +28,8 @@ public class PlayerReader {
         EntityReader.register(PlayerEntity.class, "player_name", t -> t.getGameProfile().getName());
         EntityReader.register(PlayerEntity.class, "player_uuid", t -> t.getGameProfile().getId().toString());
         EntityReader.register(PlayerEntity.class, "is_sneaking", Entity::isCrouching);
-        EntityReader.register(PlayerEntity.class, "is_sneaking_key_down", t -> KeyMapController.getKey(t, KeyMapController.CROUCH_KEY));
-        EntityReader.register(PlayerEntity.class, "is_bag_key_down", t -> KeyMapController.getKey(t, KeyMapController.BAG_ACTION_KEY));
+        EntityReader.register(PlayerEntity.class, "is_sneaking_key_down", KeyMapController.KeyBindings.SNEAK_KEY::getState);
+        EntityReader.register(PlayerEntity.class, "is_bag_key_down", KeyMapController.KeyBindings.BAG_KEY::getState);
         EntityReader.register(PlayerEntity.class, "max_portal_time", PlayerEntity::getMaxInPortalTime);
         //TODO: finish to add the other properties
     }

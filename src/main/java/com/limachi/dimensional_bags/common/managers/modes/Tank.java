@@ -25,6 +25,7 @@ import net.minecraft.world.IWorld;
 import net.minecraft.world.World;
 import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.fluids.capability.IFluidHandler;
+import org.lwjgl.system.CallbackI;
 
 import javax.annotation.Nullable;
 
@@ -83,17 +84,16 @@ public class Tank extends Mode {
     }
 
     @Override
-    public ActionResult<ItemStack> onItemRightClick(int eyeId, World world, PlayerEntity player, int slot) {
+    public ActionResultType onItemRightClick(int eyeId, World world, PlayerEntity player) {
         TankData mt = TankData.getInstance(eyeId);
-        ItemStack stack = player.inventory.getStackInSlot(slot);
-        if (mt.getTanks() == 0) return ActionResult.resultPass(stack);
+        if (mt.getTanks() == 0) return ActionResultType.PASS;
         for (RayTraceContext.FluidMode mode : new RayTraceContext.FluidMode[]{RayTraceContext.FluidMode.SOURCE_ONLY, RayTraceContext.FluidMode.NONE}) {
             RayTraceResult ray = Bag.rayTrace(world, player, mode);
             if (ray.getType() == RayTraceResult.Type.BLOCK) { //we found a source block, first we try to take it, if we can't and the tank is of different fluid type, try to replace the fluid block
                 BlockRayTraceResult blockraytraceresult = (BlockRayTraceResult)ray;
                 BlockPos blockHit = blockraytraceresult.getPos();
                 BlockPos blockOffset = blockHit.offset(blockraytraceresult.getFace());
-                if (world.isBlockModifiable(player, blockHit) && player.canPlayerEdit(blockOffset, blockraytraceresult.getFace(), stack)) {
+                if (world.isBlockModifiable(player, blockHit) && player.canPlayerEdit(blockOffset, blockraytraceresult.getFace(), new ItemStack(new Bag()))) {
                     BlockState blockState = world.getBlockState(blockHit);
                     if (blockState.getBlock() instanceof IBucketPickupHandler && !blockState.getFluidState().isEmpty()) {
                         FluidStack targetedFluid = new FluidStack(blockState.getFluidState().getFluid(), 1000);
@@ -103,26 +103,26 @@ public class Tank extends Mode {
                             if (soundevent == null) soundevent = targetedFluid.getFluid().isIn(FluidTags.LAVA) ? SoundEvents.ITEM_BUCKET_FILL_LAVA : SoundEvents.ITEM_BUCKET_FILL;
                             player.playSound(soundevent, 1.0F, 1.0F);
                             mt.fill(targetedFluid, IFluidHandler.FluidAction.EXECUTE);
-                            return ActionResult.resultSuccess(stack);
+                            return ActionResultType.SUCCESS;
                         } else {
                             FluidStack drainable = mt.drain(1000, IFluidHandler.FluidAction.SIMULATE);
                             if (!drainable.isFluidEqual(targetedFluid) && drainable.getAmount() == 1000 && placeFluid(world, player, canBlockContainFluid(world, blockHit, blockState, drainable.getFluid()) ? blockHit : blockOffset, drainable.getFluid(), blockraytraceresult)) {
                                 mt.drain(1000, IFluidHandler.FluidAction.EXECUTE);
-                                return ActionResult.resultSuccess(stack);
+                                return ActionResultType.SUCCESS;
                             }
                         }
                     } else {
                         FluidStack drainable = mt.drain(1000, IFluidHandler.FluidAction.SIMULATE);
                         if (drainable.getAmount() == 1000 && placeFluid(world, player, canBlockContainFluid(world, blockHit, blockState, drainable.getFluid()) ? blockHit : blockOffset, drainable.getFluid(), blockraytraceresult)) {
                             mt.drain(1000, IFluidHandler.FluidAction.EXECUTE);
-                            return ActionResult.resultSuccess(stack);
+                            return ActionResultType.SUCCESS;
                         }
                     }
                 }
                 if (mode == RayTraceContext.FluidMode.NONE)
-                    return ActionResult.resultFail(stack);
+                    return ActionResultType.FAIL;
             }
         }
-        return ActionResult.resultPass(stack);
+        return ActionResultType.PASS;
     }
 }

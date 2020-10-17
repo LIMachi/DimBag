@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableMultimap;
 import com.limachi.dimensional_bags.common.data.EyeDataMK2.ClientDataManager;
 import com.limachi.dimensional_bags.common.data.EyeDataMK2.WorldSavedDataManager;
 import com.limachi.dimensional_bags.common.items.Bag;
+import com.limachi.dimensional_bags.common.items.GhostBag;
 import com.limachi.dimensional_bags.common.items.IDimBagCommonItem;
 import com.limachi.dimensional_bags.common.managers.modes.*;
 import net.minecraft.entity.Entity;
@@ -39,7 +40,7 @@ public class ModeManager extends WorldSavedDataManager.EyeWorldSavedData {
     public static void changeModeRequest(ServerPlayerEntity player, int slot, boolean up) {
         ItemStack stack = IDimBagCommonItem.getItemFromPlayer(player, slot);
         int id;
-        if (stack == null || !(stack.getItem() instanceof Bag) || (id = Bag.getEyeId(stack)) <= 0) return;
+        if (stack == null || !(stack.getItem() instanceof Bag || stack.getItem() instanceof GhostBag) || (id = Bag.getEyeId(stack)) <= 0) return;
         ModeManager dataS = getInstance(id);
         if (dataS == null) return;
         ClientDataManager dataC = ClientDataManager.getInstance(stack);
@@ -144,63 +145,63 @@ public class ModeManager extends WorldSavedDataManager.EyeWorldSavedData {
             installedModes.add(list.getString(i));
     }
 
-    public void inventoryTick(ItemStack stack, World world, Entity player, int itemSlot, boolean isSelected) {
-        ActionResultType res = getMode(selectedMode).onEntityTick(getEyeId(), stack, world, player, itemSlot, isSelected);
+    public void inventoryTick(World world, Entity player, boolean isSelected) {
+        ActionResultType res = getMode(selectedMode).onEntityTick(getEyeId(), world, player, isSelected);
         if (res != ActionResultType.PASS) return;
         for (int i = installedModes.size() - 1; i >= 0; --i) {
             String name = installedModes.get(i);
             if (name.equals(selectedMode) || name.equals("Default") || !getMode(name).CAN_BACKGROUND) continue;
-            res = getMode(name).onEntityTick(getEyeId(), stack, world, player, itemSlot, isSelected);
+            res = getMode(name).onEntityTick(getEyeId(), world, player, isSelected);
             if (res != ActionResultType.PASS) return;
         }
-        getMode("Default").onEntityTick(getEyeId(), stack, world, player, itemSlot, isSelected);
+        getMode("Default").onEntityTick(getEyeId(), world, player, isSelected);
     }
 
-    public ActionResultType onItemUse(World world, PlayerEntity player, int slot, BlockRayTraceResult ray) {
-        ActionResultType res = getMode(selectedMode).onItemUse(getEyeId(), world, player, slot, ray);
+    public ActionResultType onItemUse(World world, PlayerEntity player, BlockRayTraceResult ray) {
+        ActionResultType res = getMode(selectedMode).onItemUse(getEyeId(), world, player, ray);
         if (res != ActionResultType.PASS) return res;
         for (int i = installedModes.size() - 1; i >= 0; --i) {
             String name = installedModes.get(i);
             if (name.equals(selectedMode) || name.equals("Default") || !getMode(name).CAN_BACKGROUND) continue;
-            res = getMode(name).onItemUse(getEyeId(), world, player, slot, ray);
+            res = getMode(name).onItemUse(getEyeId(), world, player, ray);
             if (res != ActionResultType.PASS) return res;
         }
-        return getMode("Default").onItemUse(getEyeId(), world, player, slot, ray);
+        return getMode("Default").onItemUse(getEyeId(), world, player, ray);
     }
 
-    public ActionResult<ItemStack> onItemRightClick(World world, PlayerEntity player, int slot) {
-        ActionResult<ItemStack> res = getMode(selectedMode).onItemRightClick(getEyeId(), world, player, slot);
-        if (res.getType() != ActionResultType.PASS) return res;
-        for (int i = installedModes.size() - 1; i >= 0; --i) {
-            String name = installedModes.get(i);
-            if (name.equals(selectedMode) || name.equals("Default") || !getMode(name).CAN_BACKGROUND) continue;
-            res = getMode(name).onItemRightClick(getEyeId(), world, player, slot);
-            if (res.getType() != ActionResultType.PASS) return res;
-        }
-        return getMode("Default").onItemRightClick(getEyeId(), world, player, slot);
-    }
-
-    public ActionResultType onAttack(ItemStack stack, PlayerEntity player, Entity entity) {
-        ActionResultType res = getMode(selectedMode).onAttack(getEyeId(), stack, player, entity);
+    public ActionResultType onItemRightClick(World world, PlayerEntity player) {
+        ActionResultType res = getMode(selectedMode).onItemRightClick(getEyeId(), world, player);
         if (res != ActionResultType.PASS) return res;
         for (int i = installedModes.size() - 1; i >= 0; --i) {
             String name = installedModes.get(i);
             if (name.equals(selectedMode) || name.equals("Default") || !getMode(name).CAN_BACKGROUND) continue;
-            res = getMode(name).onAttack(getEyeId(), stack, player, entity);
+            res = getMode(name).onItemRightClick(getEyeId(), world, player);
             if (res != ActionResultType.PASS) return res;
         }
-        return getMode("Default").onAttack(getEyeId(), stack, player, entity);
+        return getMode("Default").onItemRightClick(getEyeId(), world, player);
     }
 
-    public ActionResultType onActivateItem(ItemStack stack, PlayerEntity player) {
-        ActionResultType res = getMode(selectedMode).onActivateItem(getEyeId(), stack, player);
+    public ActionResultType onAttack(PlayerEntity player, Entity entity) {
+        ActionResultType res = getMode(selectedMode).onAttack(getEyeId(), player, entity);
         if (res != ActionResultType.PASS) return res;
         for (int i = installedModes.size() - 1; i >= 0; --i) {
             String name = installedModes.get(i);
             if (name.equals(selectedMode) || name.equals("Default") || !getMode(name).CAN_BACKGROUND) continue;
-            res = getMode(name).onActivateItem(getEyeId(), stack, player);
+            res = getMode(name).onAttack(getEyeId(), player, entity);
             if (res != ActionResultType.PASS) return res;
         }
-        return getMode("Default").onActivateItem(getEyeId(), stack, player);
+        return getMode("Default").onAttack(getEyeId(), player, entity);
+    }
+
+    public ActionResultType onActivateItem(PlayerEntity player) {
+        ActionResultType res = getMode(selectedMode).onActivateItem(getEyeId(), player);
+        if (res != ActionResultType.PASS) return res;
+        for (int i = installedModes.size() - 1; i >= 0; --i) {
+            String name = installedModes.get(i);
+            if (name.equals(selectedMode) || name.equals("Default") || !getMode(name).CAN_BACKGROUND) continue;
+            res = getMode(name).onActivateItem(getEyeId(), player);
+            if (res != ActionResultType.PASS) return res;
+        }
+        return getMode("Default").onActivateItem(getEyeId(), player);
     }
 }

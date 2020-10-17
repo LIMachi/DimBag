@@ -23,3 +23,6 @@ example:
 -projectile absorber: consume rf to catch projectiles that aren't sent by the holder or owner (white list allowed projectiles to go through)
 -boost upgrade: repurpose the firework part of the elytra upgrade, if elytra is equiped, easy elytra + firework. If no elytra and in water/rain, do a trident spin attack. If no elytra and no water, temporary speed + jump boost + fall absorbtion
 -armor stand upgrade: repurpose the elytra part of the elytra upgrade and application of armor: add 2 slots to the bag that store a chest plate and an elytra
+
+-see how enchantments work to make some enchantments compatible with the armor stand upgrade
+-see how entities/the player interact with the world to create the functions of the ghost hand (for player, might have to simulate key presses, for entities, might have to inject AI goals)

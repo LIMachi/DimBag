@@ -3,6 +3,7 @@ package com.limachi.dimensional_bags.common.managers.upgrades;
 import com.google.common.collect.ImmutableMultimap;
 import com.limachi.dimensional_bags.common.data.EyeDataMK2.EnergyData;
 import com.limachi.dimensional_bags.common.data.EyeDataMK2.HolderData;
+import com.limachi.dimensional_bags.common.items.Bag;
 import com.limachi.dimensional_bags.common.managers.Upgrade;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.ai.attributes.Attribute;
@@ -10,7 +11,6 @@ import net.minecraft.entity.ai.attributes.AttributeModifier;
 import net.minecraft.entity.ai.attributes.Attributes;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.inventory.EquipmentSlotType;
-import net.minecraft.item.ItemStack;
 import net.minecraft.util.ActionResultType;
 import net.minecraft.world.World;
 
@@ -52,8 +52,8 @@ public class KineticGeneratorUpgrade extends Upgrade {
     }
 
     @Override
-    public ActionResultType upgradeEntityTick(int eyeId, ItemStack stack, World world, Entity entity, int itemSlot) {
-        if (itemSlot == 38)
+    public ActionResultType upgradeEntityTick(int eyeId, World world, Entity entity) {
+        if (entity instanceof PlayerEntity && Bag.getBagSlot((PlayerEntity)entity, eyeId) == 38)
             EnergyData.execute(eyeId, (energyData)->energyData.receiveEnergy(motionGeneration(eyeId, entity), false), 0);
         return ActionResultType.SUCCESS;
     }

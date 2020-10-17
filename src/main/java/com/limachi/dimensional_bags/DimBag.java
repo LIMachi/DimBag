@@ -73,4 +73,13 @@ public class DimBag {
 
     /** try to get the current server we are connected on, return null if we aren't connected (hanging in main menu for example) */
     public static MinecraftServer getServer() { return ServerLifecycleHooks.getCurrentServer(); }
+
+    /**
+     * will run the given runnable in X ticks (on the client/server thread depending on witch thread called this method)
+     */
+    public static <T> void delayedTask(int ticksToWait, Runnable run) {
+        runLogicalSide(null,
+                ()->()->{com.limachi.dimensional_bags.client.EventManager.delayedTask(ticksToWait, run); return null;},
+                ()->()->{com.limachi.dimensional_bags.common.EventManager.delayedTask(ticksToWait, run); return null;});
+    }
 }

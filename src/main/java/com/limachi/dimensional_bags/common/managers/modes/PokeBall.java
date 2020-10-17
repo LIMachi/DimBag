@@ -29,13 +29,13 @@ public class PokeBall extends Mode {
     public PokeBall() { super("PokeBall", false, true); }
 
     @Override
-    public ActionResultType onAttack(int eyeId, ItemStack stack, PlayerEntity player, Entity entity) {
+    public ActionResultType onAttack(int eyeId, PlayerEntity player, Entity entity) {
         SubRoomsManager.execute(eyeId, subRoomsManager -> subRoomsManager.tpIn(entity)); //FIXME: add a condition for players/special entities (like the dragon)
         return ActionResultType.SUCCESS;
     }
 
     @Override
-    public ActionResultType onEntityTick(int eyeId, ItemStack stack, World world, Entity entity, int itemSlot, boolean isSelected) {
+    public ActionResultType onEntityTick(int eyeId, World world, Entity entity, boolean isSelected) {
         UpgradeManager manager = UpgradeManager.getInstance(eyeId);
         if (manager != null) {
             Entity e = getClosestNonPlayerEntityNextToEye(eyeId);
@@ -65,13 +65,13 @@ public class PokeBall extends Mode {
     }
 
     @Override
-    public ActionResultType onItemUse(int eyeId, World world, PlayerEntity player, int slot, BlockRayTraceResult ray) {
+    public ActionResultType onItemUse(int eyeId, World world, PlayerEntity player, BlockRayTraceResult ray) {
         WorldUtils.teleportEntity(getClosestNonPlayerEntityNextToEye(eyeId), world.getDimensionKey(), ray.getPos().offset(Direction.UP));
         return ActionResultType.SUCCESS;
     }
 
     @Override
-    public ActionResultType onActivateItem(int eyeId, ItemStack stack, PlayerEntity player) {
+    public ActionResultType onActivateItem(int eyeId, PlayerEntity player) {
         WorldUtils.teleportEntity(getClosestNonPlayerEntityNextToEye(eyeId), player.world.getDimensionKey(), player.getPositionVec().add(0, 1, 0).add(player.getLookVec().scale(5)));
         return ActionResultType.SUCCESS;
     }

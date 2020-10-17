@@ -2,8 +2,11 @@ package com.limachi.dimensional_bags.common.executors;
 
 import com.limachi.dimensional_bags.ClassUtils;
 import com.limachi.dimensional_bags.DimBag;
+import com.limachi.dimensional_bags.KeyMapController;
+import com.limachi.dimensional_bags.common.data.EyeDataMK2.EnergyData;
 import javafx.util.Pair;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.player.PlayerEntity;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -13,15 +16,28 @@ import java.util.function.BiConsumer;
 
 public class EntityExecutor {
     protected static class ExecutorMao<O extends Entity> {
+
+        protected class Entry {
+            final public Class<?>[] paramTypes;
+            final public int energyCost;
+            final public BiConsumer<O, Object[]> executable;
+
+            public Entry(Class<?>[] paramTypes, int energyCost, BiConsumer<O, Object[]> executable) {
+                this.paramTypes = paramTypes;
+                this.energyCost = energyCost;
+                this.executable = executable;
+            }
+        }
+
         private final Class<O> clazz;
-        private final HashMap<String, Pair<Class<?>[], BiConsumer<O, Object[]>>> map = new HashMap<>();
+        private final HashMap<String, Entry> map = new HashMap<>();
 
         public ExecutorMao(Class<O> clazz) { this.clazz = clazz; }
 
         public boolean isValidMethod(String command, Object entity) {
             if (entity instanceof Entity && clazz.isInstance(entity) && map.containsKey(ClassUtils.Strings.splitIgnoringQuotes(command, " ", 0)[0])) {
                 String[] s = ClassUtils.Strings.splitIgnoringQuotes(command, " ", 0);
-                Class<?>[] pt = map.get(s[0]).getKey();
+                Class<?>[] pt = map.get(s[0]).paramTypes;
                 if (s.length - 1 != pt.length)
                     return false;
                 for (int i = 0; i < pt.length; ++i)
@@ -34,23 +50,27 @@ public class EntityExecutor {
 
         public Set<String> methods() { return map.keySet(); }
 
-        public boolean run(String command, Object entity) {
+        public boolean run(String command, int eyeId, Object entity) {
             if (entity instanceof Entity && clazz.isInstance(entity) && map.containsKey(ClassUtils.Strings.splitIgnoringQuotes(command, " ", 0)[0])) {
                 String[] s = ClassUtils.Strings.splitIgnoringQuotes(command, " ", 0);
-                Class<?>[] pt = map.get(s[0]).getKey();
+                Entry e = map.get(s[0]);
+                Class<?>[] pt = e.paramTypes;
                 if (s.length - 1 != pt.length)
                     return false;
                 Object[] params = new Object[pt.length];
                 for (int i = 0; i < pt.length; ++i)
                     if ((params[i] = ClassUtils.parse(pt[i], s[1 + i])) == null)
                         return false;
-                map.get(s[0]).getValue().accept(clazz.cast(entity), params);
-                return true;
+                if (EnergyData.execute(eyeId, energyData -> energyData.extractEnergy(e.energyCost, true) == e.energyCost, false)) {
+                    EnergyData.execute(eyeId, energyData -> energyData.extractEnergy(e.energyCost, false));
+                    e.executable.accept(clazz.cast(entity), params);
+                    return true;
+                }
             }
             return false;
         }
 
-        public void register(String name, BiConsumer<O, Object[]> consumer, Class<? extends Object> ...paramTypes) { map.put(name, new Pair<>(paramTypes, consumer)); }
+        public void register(String name, int energyCost, BiConsumer<O, Object[]> consumer, Class<? extends Object> ...paramTypes) { map.put(name, new Entry(paramTypes, energyCost, consumer)); }
     }
 
     protected Optional<Boolean> boolFromString(String value) {
@@ -63,21 +83,25 @@ public class EntityExecutor {
 
     static final protected HashMap<Class<? extends Entity>, ExecutorMao<?>> cache = new HashMap<>();
 
-    static public <O extends Entity> void register(Class<O> clazz, String name, BiConsumer<O, Object[]> supplier, Class<? extends Object> ...paramTypes) {
+    static public <O extends Entity> void register(Class<O> clazz, String name, int energyCost, BiConsumer<O, Object[]> supplier, Class<? extends Object> ...paramTypes) {
         ExecutorMao<O> cached = (ExecutorMao<O>)cache.get(clazz);
         if (cached == null)
             cache.put(clazz, cached = new ExecutorMao<>(clazz));
-        cached.register(name, supplier, paramTypes);
+        cached.register(name, energyCost, supplier, paramTypes);
     }
 
     protected final Entity entity;
+    protected final int eyeId;
 
-    public <T extends Entity> EntityExecutor(T entity) {
+    public <T extends Entity> EntityExecutor(T entity, int eyeId) {
         this.entity = entity;
+        this.eyeId = eyeId;
     }
 
     static {
-        register(Entity.class, "test", (t,p) -> DimBag.getServer().getCommandManager().handleCommand(t.getCommandSource(), "/say Hello World"));
+        register(PlayerEntity.class, "jump_key", 16, (t, p) -> {KeyMapController.KeyBindings.JUMP_KEY.forceKeyState(t, (Boolean)p[0]);
+            DimBag.delayedTask(2, ()->KeyMapController.KeyBindings.JUMP_KEY.forceKeyState(t, false));
+        }, Boolean.TYPE);
     }
 
     protected boolean isValidConsumer(String command) {
@@ -90,7 +114,7 @@ public class EntityExecutor {
     public void run(String command) {
         if (isValidConsumer(command)) {
             for (Map.Entry<Class<? extends Entity>, ExecutorMao<?>> entry : cache.entrySet())
-                if (entry.getValue().run(command, entity))
+                if (entry.getValue().run(command, eyeId, entity))
                     return;
         }
     }

@@ -9,7 +9,6 @@ import net.minecraftforge.fml.LogicalSide;
 import net.minecraftforge.fml.network.NetworkDirection;
 import net.minecraftforge.fml.network.NetworkEvent;
 import net.minecraftforge.fml.network.NetworkRegistry;
-import net.minecraftforge.fml.network.PacketDistributor;
 import net.minecraftforge.fml.network.simple.SimpleChannel;
 
 import static com.limachi.dimensional_bags.DimBag.MOD_ID;
@@ -81,7 +80,7 @@ public class PacketHandler {
         registerMsg(WorldSavedDataSyncMsg.class);
         registerMsg(SlotIORightsChanged.class);
         registerMsg(ChangeModeRequest.class);
-        registerMsg(SyncKeyMapMsg.class);
+        registerMsg(KeyStateMsg.class);
         registerMsg(TrackedStringSyncMsg.class);
         registerMsg(FluidSlotSyncMsg.class);
     }

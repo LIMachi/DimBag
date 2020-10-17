@@ -61,7 +61,7 @@ public class ClassUtils {
         Function<String, Object> pred = PARSE.get(clazz);
         if (pred == null) return null;
         try {
-            return clazz.cast(pred.apply(toParse));
+            return (T)pred.apply(toParse);
         } catch (Exception e) {
             return null;
         }

@@ -31,10 +31,10 @@ public class Elytra extends Mode {
     public Elytra() { super("Elytra", false, false); }
 
     @Override
-    public ActionResultType onEntityTick(int eyeId, ItemStack stack, World world, Entity entity, int itemSlot, boolean isSelected) {
+    public ActionResultType onEntityTick(int eyeId, World world, Entity entity, boolean isSelected) {
         if (entity instanceof PlayerEntity) {
             PlayerEntity player = (PlayerEntity)entity;
-            if (player.isElytraFlying() && KeyMapController.getKey(player, KeyMapController.CROUCH_KEY))
+            if (player.isElytraFlying() && KeyMapController.KeyBindings.SNEAK_KEY.getState(player))
                 player.setMotionMultiplier(player.world.getBlockState(player.getPosition()), new Vector3d(0.25D, 0.05D, 0.25D)); //not working
             return ActionResultType.SUCCESS;
         }
@@ -42,10 +42,10 @@ public class Elytra extends Mode {
     }
 
     @Override
-    public ActionResultType onItemUse(int eyeId, World world, PlayerEntity player, int slot, BlockRayTraceResult ray) { return ActionResultType.SUCCESS; }
+    public ActionResultType onItemUse(int eyeId, World world, PlayerEntity player, BlockRayTraceResult ray) { return ActionResultType.SUCCESS; }
 
     @Override
-    public ActionResultType onActivateItem(int eyeId, ItemStack stack, PlayerEntity player) {
+    public ActionResultType onActivateItem(int eyeId, PlayerEntity player) {
         if (!player.getItemStackFromSlot(EquipmentSlotType.CHEST).canElytraFly(player)) return ActionResultType.FAIL;
         if (!player.isElytraFlying()) {
             player.setOnGround(false);

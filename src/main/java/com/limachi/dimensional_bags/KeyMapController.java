@@ -1,47 +1,112 @@
 package com.limachi.dimensional_bags;
 
+import com.limachi.dimensional_bags.common.items.Bag;
+import com.limachi.dimensional_bags.common.items.GhostBag;
+import com.limachi.dimensional_bags.common.items.IDimBagCommonItem;
 import com.limachi.dimensional_bags.common.network.PacketHandler;
-import com.limachi.dimensional_bags.common.network.packets.SyncKeyMapMsg;
+import com.limachi.dimensional_bags.common.network.packets.ChangeModeRequest;
+import com.limachi.dimensional_bags.common.network.packets.KeyStateMsg;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.settings.KeyBinding;
 import net.minecraft.client.util.InputMappings;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
+import net.minecraft.item.Item;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+import net.minecraftforge.client.event.InputEvent;
 import net.minecraftforge.client.settings.KeyConflictContext;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.Event;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.DistExecutor;
+import net.minecraftforge.fml.client.registry.ClientRegistry;
+import net.minecraftforge.fml.common.Mod;
 import org.lwjgl.glfw.GLFW;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.Callable;
+import java.util.function.Supplier;
 
-public class KeyMapController { //FIXME: freeze after joining back a world
+@Mod.EventBusSubscriber(value = Dist.CLIENT)
+public class KeyMapController {
+
     public static final String KEY_CATEGORY = "Dimensional Bags";
 
-    public static final int BAG_ACTION_KEY = 0;
-    public static final int CROUCH_KEY = 1;
-    public final static int KEY_BIND_COUNT = 2;
-    public static final int NON_VANILLA_KEY_BIND_COUNT = 1;
+    @SubscribeEvent
+    public static void onMouseInput(InputEvent.MouseInputEvent event) {
+        KeyMapController.syncKeyMap(event.getButton(), 0, true, event.getAction() == GLFW.GLFW_PRESS || event.getAction() == GLFW.GLFW_REPEAT);
+    }
 
-    public final static KeyBinding[] TRACKED_KEYBINDS = DistExecutor.callWhenOn(Dist.CLIENT, ()->()->new KeyBinding[]{ //only initialized physical client side (but will only be used on the logical client side)
-            new KeyBinding("key.open_gui", KeyConflictContext.IN_GAME, InputMappings.Type.KEYSYM, GLFW.GLFW_KEY_I, KEY_CATEGORY),
-            Minecraft.getInstance().gameSettings.keyBindSneak
-    });
+    @SubscribeEvent
+    public static void onKeyInput(InputEvent.KeyInputEvent event) {
+        KeyMapController.syncKeyMap(event.getKey(), event.getScanCode(), false, event.getAction() == GLFW.GLFW_PRESS || event.getAction() == GLFW.GLFW_REPEAT);
+    }
+
+    @SubscribeEvent
+    public static void onScrollInput(InputEvent.MouseScrollEvent event) {
+        PlayerEntity player = DimBag.getPlayer();
+        if (player != null && KeyBindings.BAG_KEY.getState(player)) {
+            int p = IDimBagCommonItem.getFirstValidItemFromPlayer(player, Item.class, x->x.getItem() instanceof Bag || x.getItem() instanceof GhostBag);
+            if (p != -1) {
+                PacketHandler.toServer(new ChangeModeRequest(p, event.getScrollDelta() > 0));
+                event.setCanceled(true);
+            }
+        }
+    }
+
+    public enum KeyBindings {
+        BAG_KEY(true, ()->()->new KeyBinding("key.open_gui", KeyConflictContext.IN_GAME, InputMappings.Type.KEYSYM, GLFW.GLFW_KEY_I, KEY_CATEGORY)),
+        SNEAK_KEY(false, ()->()->Minecraft.getInstance().gameSettings.keyBindSneak),
+        JUMP_KEY(false, ()->()->Minecraft.getInstance().gameSettings.keyBindJump),
+        FORWARD_KEY(false, ()->()->Minecraft.getInstance().gameSettings.keyBindForward),
+        BACK_KEY(false, ()->()->Minecraft.getInstance().gameSettings.keyBindBack),
+        RIGHT_KEY(false, ()->()->Minecraft.getInstance().gameSettings.keyBindRight),
+        LEFT_KEY(false, ()->()->Minecraft.getInstance().gameSettings.keyBindLeft),
+        USE_KEY(false, ()->()->Minecraft.getInstance().gameSettings.keyBindUseItem),
+        ATTACK_KEY(false, ()->()->Minecraft.getInstance().gameSettings.keyBindAttack),
+        ;
+
+        static public void registerKeybindings() {
+            for (KeyBindings key : KeyBindings.values())
+                if (key.needRegister)
+                    ClientRegistry.registerKeyBinding(key.keybinding);
+        }
+
+        final private boolean needRegister;
+        final private KeyBinding keybinding;
+
+        KeyBindings(boolean needRegister, Supplier<Callable<KeyBinding>> keybinding) {
+            this.needRegister = needRegister;
+            this.keybinding = DistExecutor.callWhenOn(Dist.CLIENT, keybinding);
+        }
+
+        public KeyBinding getKeybinding() { return keybinding; }
+
+        public boolean getState(PlayerEntity player) {
+            return DimBag.runLogicalSide(null,
+                    ()-> keybinding::isKeyDown,
+                    ()->()->player != null && playerKeyStateMap.getOrDefault(player.getUniqueID(), new boolean[KeyBindings.values().length])[this.ordinal()]);
+        }
+
+        public void forceKeyState(PlayerEntity player, boolean state) {
+            DimBag.runLogicalSide(player != null ? player.world : null, ()->()->{
+                local_key_map[this.ordinal()] = state;
+                KeyBindings.values()[this.ordinal()].keybinding.setPressed(state);
+                return null;
+            }, ()->()->{
+                PacketHandler.toClient((ServerPlayerEntity)player, new KeyStateMsg(this.ordinal(), state));
+                return null;
+            });
+        }
+    }
+
+    public static final int KEY_BIND_COUNT = KeyBindings.values().length;
 
     private static Map<UUID, boolean[]> playerKeyStateMap = new HashMap<>(); //only used server side
     private static boolean[] local_key_map = new boolean[KEY_BIND_COUNT]; //only used client side
-
-    public static boolean getKey(PlayerEntity player, int keymapId) {
-//        if (player instanceof ServerPlayerEntity)
-//            return playerKeyStateMap.getOrDefault(player.getUniqueID(), new boolean[KEY_BIND_COUNT])[keymapId];
-        return DimBag.runLogicalSide(null,
-                ()->()->TRACKED_KEYBINDS[keymapId].isKeyDown(),
-                ()->()->player != null && playerKeyStateMap.getOrDefault(player.getUniqueID(), new boolean[KEY_BIND_COUNT])[keymapId]);
-    }
 
     @OnlyIn(Dist.CLIENT)
     public static void syncKeyMap(int key, int scan, boolean mouse, boolean state) {
@@ -49,10 +114,10 @@ public class KeyMapController { //FIXME: freeze after joining back a world
         if (player == null)
             return;
         for (int i = 0; i < KEY_BIND_COUNT; ++i) {
-            if (/*TRACKED_KEYBINDS[i].getKeyConflictContext().isActive() &&*/ mouse ? TRACKED_KEYBINDS[i].matchesMouseKey(key) : TRACKED_KEYBINDS[i].matchesKey(key, scan)) {
+            if (/*TRACKED_KEYBINDS[i].getKeyConflictContext().isActive() &&*/ mouse ? KeyBindings.values()[i].getKeybinding().matchesMouseKey(key) : KeyBindings.values()[i].getKeybinding().matchesKey(key, scan)) {
                 if (state != local_key_map[i]) {
                     local_key_map[i] = state;
-                    PacketHandler.toServer(new SyncKeyMapMsg(/*player.getUniqueID(),*/ local_key_map));
+                    PacketHandler.toServer(new KeyStateMsg(i, state));
                 }
                 return;
             }
@@ -84,11 +149,11 @@ public class KeyMapController { //FIXME: freeze after joining back a world
         }
     }
 
-    public static void syncKeyMapMsg(ServerPlayerEntity player, boolean[] keys) {
+    public static void syncKeyMapMsg(ServerPlayerEntity player, int key, boolean state) {
         boolean[] previousKeys = playerKeyStateMap.getOrDefault(player.getUniqueID(), new boolean[KEY_BIND_COUNT]);
+        boolean[] keys = previousKeys.clone();
+        keys[key] = state;
         playerKeyStateMap.put(player.getUniqueID(), keys);
-//        PlayerEntity player = DimBag.getServer().getPlayerList().getPlayerByUUID(playerId);
-//        if (player != null)
-            MinecraftForge.EVENT_BUS.post(new KeyMapChangedEvent(player, keys, previousKeys));
+        MinecraftForge.EVENT_BUS.post(new KeyMapChangedEvent(player, keys, previousKeys));
     }
 }

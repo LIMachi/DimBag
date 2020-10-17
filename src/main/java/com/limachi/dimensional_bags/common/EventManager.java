@@ -1,5 +1,6 @@
 package com.limachi.dimensional_bags.common;
 
+import com.google.common.collect.ArrayListMultimap;
 import com.limachi.dimensional_bags.DimBag;
 import com.limachi.dimensional_bags.KeyMapController;
 import com.limachi.dimensional_bags.common.data.DimBagData;
@@ -9,7 +10,6 @@ import com.limachi.dimensional_bags.common.items.Bag;
 import com.limachi.dimensional_bags.common.items.GhostBag;
 import com.limachi.dimensional_bags.common.items.IDimBagCommonItem;
 import com.limachi.dimensional_bags.common.items.entity.BagEntityItem;
-import javafx.util.Pair;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.FlowingFluidBlock;
@@ -31,24 +31,9 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
 import java.util.*;
-import java.util.function.Supplier;
 
 @Mod.EventBusSubscriber
 public class EventManager {
-    public static int tick = 0;
-    public static List<Pair<Integer, Supplier<Boolean>>> DelayedTasks = new ArrayList<>();
-
-    private static void runDelayedTasks() {
-        DelayedTasks.removeIf(x -> {
-            if (x.getKey() == tick) {
-                x.getValue().get();
-                return true;
-            }
-            return false;
-        });
-    }
-
-    public static void addDelayedTask(int tick, Supplier<Boolean> func) { DelayedTasks.add(new Pair<>(tick, func)); }
 
     @SubscribeEvent
     public static void onSleepFinishedTime(SleepFinishedTimeEvent event) { //sync the sleep in the rift dimension with the sleep in the overworld
@@ -61,8 +46,6 @@ public class EventManager {
     @SubscribeEvent
     public static void onServerTick(TickEvent.ServerTickEvent event) {
         if (event.phase == TickEvent.Phase.END || event.side.isClient()) return;
-        ++tick;
-        runDelayedTasks();
         if ((tick & 7) == 0) { //determine how often i run the logic, for now, once every 8 ticks (every 0.4s)
             MinecraftServer server = DimBag.getServer();
             World dbworld = WorldUtils.getRiftWorld(); //note: massive lag, should always have a chunk loaded to prevent loading/unloading of the world if there is no player in it
@@ -146,7 +129,7 @@ public class EventManager {
                 event.setCanceled(true);
                 PlayerEntity player = event.getPlayer();
                 ItemStack new_bag = ItemStack.read(event.getTarget().getPersistentData().getCompound(BagEntity.ITEM_KEY));
-                if ((KeyMapController.getKey(player, KeyMapController.CROUCH_KEY) && !(player.inventory.armorInventory.get(EquipmentSlotType.CHEST.getIndex()).getItem() instanceof Bag) && Bag.equipBagOnChestSlot(new_bag, player)) || player.addItemStackToInventory(new_bag))
+                if ((KeyMapController.KeyBindings.SNEAK_KEY.getState(player) && !(player.inventory.armorInventory.get(EquipmentSlotType.CHEST.getIndex()).getItem() instanceof Bag) && Bag.equipBagOnChestSlot(new_bag, player)) || player.addItemStackToInventory(new_bag))
                     event.getTarget().remove();
             }
         }
@@ -189,7 +172,7 @@ public class EventManager {
     public static void onEntityInteract(PlayerInteractEvent.EntityInteract event) {
         if (!event.getPlayer().getEntityWorld().isRemote()) {
             PlayerEntity player = event.getPlayer();
-            if (event.getTarget() instanceof PlayerEntity && KeyMapController.getKey(player, KeyMapController.CROUCH_KEY)) { //the player clicked on another player
+            if (event.getTarget() instanceof PlayerEntity && KeyMapController.KeyBindings.SNEAK_KEY.getState(player)) { //the player clicked on another player
                 PlayerEntity target = (PlayerEntity)event.getTarget();
                 Vector3d deltaXZ = target.getPositionVec().subtract(player.getPositionVec()).mul(1, 0, 1).normalize(); //where is the player relative to the target, only in XZ coordinates
                 double lookDelta = deltaXZ.dotProduct(target.getLookVec().mul(1, 0, 1).normalize()); //dot product, which can be used as the angle between two vectors
@@ -212,10 +195,10 @@ public class EventManager {
     @SubscribeEvent
     public static void onKeyMapChanged(KeyMapController.KeyMapChangedEvent event) {
         if (!event.getPlayer().getEntityWorld().isRemote()) {
-            if (event.getChangedKeys()[KeyMapController.BAG_ACTION_KEY]) {
-                if (event.getKeys()[KeyMapController.BAG_ACTION_KEY]) {
+            if (event.getChangedKeys()[KeyMapController.KeyBindings.BAG_KEY.ordinal()]) {
+                if (event.getKeys()[KeyMapController.KeyBindings.BAG_KEY.ordinal()]) {
                     IDimBagCommonItem.ItemSearchResult res = IDimBagCommonItem.searchItem(event.getPlayer(), 0, Bag.class, o -> true, false);
-                    if (res != null && res.index != -1 && res.index != IDimBagCommonItem.slotFromHand(event.getPlayer(), Hand.MAIN_HAND) && res.index != IDimBagCommonItem.slotFromHand(event.getPlayer(), Hand.OFF_HAND))
+                    if (!(event.getPlayer().getHeldItem(Hand.MAIN_HAND).getItem() instanceof Bag) && !(event.getPlayer().getHeldItem(Hand.MAIN_HAND).getItem() instanceof GhostBag) && !(event.getPlayer().getHeldItem(Hand.OFF_HAND).getItem() instanceof Bag) && !(event.getPlayer().getHeldItem(Hand.OFF_HAND).getItem() instanceof GhostBag))
                         event.getPlayer().replaceItemInInventory(IDimBagCommonItem.slotFromHand(event.getPlayer(), Hand.MAIN_HAND), GhostBag.ghostBagFromStack(event.getPlayer().getHeldItem(Hand.MAIN_HAND), event.getPlayer()));
                 } else {
                     IDimBagCommonItem.ItemSearchResult res = IDimBagCommonItem.searchItem(event.getPlayer(), 0, GhostBag.class, o -> true, false);
@@ -241,4 +224,22 @@ public class EventManager {
         if (event.getEntityItem().getItem().getItem() instanceof Bag)
             DimBag.LOGGER.info(event.toString());
     }*/
+
+    private static int tick = 0;
+    private static ArrayListMultimap<Integer, Runnable> pendingTasks = ArrayListMultimap.create();
+
+    public static <T> void delayedTask(int ticksToWait, Runnable run) { pendingTasks.put(ticksToWait + tick, run); }
+
+    @SubscribeEvent
+    public static void onTick(TickEvent.ServerTickEvent event) {
+        if (event.phase == TickEvent.Phase.START) {
+            List<Runnable> tasks = pendingTasks.get(tick);
+            if (tasks != null)
+                for (Runnable task : tasks)
+                    task.run();
+        } else if (event.phase == TickEvent.Phase.END) {
+            pendingTasks.removeAll(tick);
+            ++tick;
+        }
+    }
 }

@@ -42,7 +42,7 @@ public class TheEye extends ContainerBlock {
         int eyeId = SubRoomsManager.getEyeId(world, pos, true);
         if (eyeId <= 0)
             return ActionResultType.FAIL;
-        if (KeyMapController.getKey(player, KeyMapController.CROUCH_KEY))
+        if (KeyMapController.KeyBindings.SNEAK_KEY.getState(player))
             HolderData.execute(eyeId, holderData -> holderData.tpToHolder(player));
         else
             Network.openEyeInventory((ServerPlayerEntity) player, eyeId);

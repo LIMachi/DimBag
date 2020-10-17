@@ -24,7 +24,7 @@ public class Tunnel extends Block {
     @Override
     public ActionResultType onBlockActivated(BlockState state, World world, BlockPos pos, PlayerEntity player, Hand hand, BlockRayTraceResult ray) { //'right-click' behavior (use/interact)
         if (!DimBag.isServer(world)) return super.onBlockActivated(state, world, pos, player, hand, ray);
-        if (KeyMapController.getKey(player, KeyMapController.CROUCH_KEY))
+        if (KeyMapController.KeyBindings.SNEAK_KEY.getState(player))
             SubRoomsManager.execute(SubRoomsManager.getEyeId(world, pos, false), subRoomsManager -> subRoomsManager.tpIn(player));
         else
             SubRoomsManager.execute(SubRoomsManager.getEyeId(world, pos, false), subRoomsManager -> subRoomsManager.tpTunnel(player, pos));
@@ -36,7 +36,7 @@ public class Tunnel extends Block {
             super.onBlockClicked(state, worldIn, pos, player);
             return;
         }
-        if (KeyMapController.getKey(player, KeyMapController.CROUCH_KEY)) {//shift-left-click, remove the tunnel (replace it by a wall) and give back the tunnel placer (item)
+        if (KeyMapController.KeyBindings.SNEAK_KEY.getState(player)) {//shift-left-click, remove the tunnel (replace it by a wall) and give back the tunnel placer (item)
             worldIn.setBlockState(pos, Registries.WALL_BLOCK.get().getDefaultState());
             SubRoomsManager data = SubRoomsManager.getInstance(SubRoomsManager.getEyeId(worldIn, pos, false));
             if (data == null) {

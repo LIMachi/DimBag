@@ -118,7 +118,7 @@ public class BagEntity extends MobEntity implements IEyeIdHolder {
     protected ActionResultType/*boolean processInteract*/func_230254_b_(PlayerEntity player, Hand hand) { //TODO: update mapping
         if (player.world.isRemote()) return ActionResultType.PASS;
         if (getEyeId() == 0) return ActionResultType.PASS;
-        if (KeyMapController.getKey(player, KeyMapController.CROUCH_KEY))
+        if (KeyMapController.KeyBindings.SNEAK_KEY.getState(player))
             WorldUtils.teleportEntity(player, WorldUtils.DimBagRiftKey, new BlockPos(1024 * (getEyeId() - 1) + 8, 129, 8));
         else
             Network.openEyeInventory((ServerPlayerEntity)player, getEyeId());

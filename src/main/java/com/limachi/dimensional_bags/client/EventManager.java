@@ -1,23 +1,21 @@
 package com.limachi.dimensional_bags.client;
 
+import com.google.common.collect.ArrayListMultimap;
 import com.limachi.dimensional_bags.DimBag;
-import com.limachi.dimensional_bags.KeyMapController;
 import com.limachi.dimensional_bags.common.data.EyeDataMK2.ClientDataManager;
 import com.limachi.dimensional_bags.common.items.Bag;
 import com.limachi.dimensional_bags.common.items.GhostBag;
-import com.limachi.dimensional_bags.common.items.IDimBagCommonItem;
-import com.limachi.dimensional_bags.common.network.PacketHandler;
-import com.limachi.dimensional_bags.common.network.packets.ChangeModeRequest;
 import net.minecraft.client.entity.player.ClientPlayerEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.inventory.EquipmentSlotType;
 import net.minecraft.item.ItemStack;
 import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.client.event.InputEvent;
 import net.minecraftforge.client.event.RenderGameOverlayEvent;
+import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
-import org.lwjgl.glfw.GLFW;
+
+import java.util.List;
 
 @Mod.EventBusSubscriber(value = Dist.CLIENT)
 public class EventManager {
@@ -53,25 +51,19 @@ public class EventManager {
         }
     }
 
-    @SubscribeEvent
-    public static void onMouseInput(InputEvent.MouseInputEvent event) {
-        KeyMapController.syncKeyMap(event.getButton(), 0, true, event.getAction() == GLFW.GLFW_PRESS || event.getAction() == GLFW.GLFW_REPEAT);
-    }
+    private static int tick = 0;
+    private static ArrayListMultimap<Integer, Runnable> pendingTasks = ArrayListMultimap.create();
+
+    public static <T> void delayedTask(int ticksToWait, Runnable run) { pendingTasks.put(ticksToWait + tick, run); }
 
     @SubscribeEvent
-    public static void onKeyInput(InputEvent.KeyInputEvent event) {
-        KeyMapController.syncKeyMap(event.getKey(), event.getScanCode(), false, event.getAction() == GLFW.GLFW_PRESS || event.getAction() == GLFW.GLFW_REPEAT);
-    }
-
-    @SubscribeEvent
-    public static void onScrollInput(InputEvent.MouseScrollEvent event) {
-        PlayerEntity player = DimBag.getPlayer();
-        if (player != null && KeyMapController.getKey(null, KeyMapController.BAG_ACTION_KEY)) {
-            int p = IDimBagCommonItem.getFirstValidItemFromPlayer(player, Bag.class, (x)->true);;
-            if (p != -1) {
-                PacketHandler.toServer(new ChangeModeRequest(p, event.getScrollDelta() > 0));
-                event.setCanceled(true);
-            }
-        }
+    public static void onTick(TickEvent.ClientTickEvent event) {
+        if (event.phase == TickEvent.Phase.START) {
+            List<Runnable> tasks = pendingTasks.get(tick);
+            if (tasks != null)
+                for (Runnable task : tasks)
+                    task.run();
+        } else if (event.phase == TickEvent.Phase.END) pendingTasks.removeAll(tick);
+        ++tick;
     }
 }

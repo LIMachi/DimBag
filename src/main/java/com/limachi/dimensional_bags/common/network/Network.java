@@ -4,6 +4,7 @@ import com.limachi.dimensional_bags.common.container.*;
 import com.limachi.dimensional_bags.common.data.EyeDataMK2.InventoryData;
 import com.limachi.dimensional_bags.common.inventory.PlayerInvWrapper;
 import com.limachi.dimensional_bags.common.tileentities.BrainTileEntity;
+import com.limachi.dimensional_bags.common.tileentities.GhostHandTileEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.entity.player.ServerPlayerEntity;
@@ -65,6 +66,21 @@ public class Network {
             @Override
             public Container createMenu(int windowId, PlayerInventory playerInv, PlayerEntity player) {
                 return new BrainContainer(windowId, playerInv, te);
+            }
+        }, (buffer)-> BaseContainer.writeBaseParameters(buffer, BaseContainer.ContainerConnectionType.TILE_ENTITY, te, 0));
+    }
+
+    public static void openGhostHandInterface(ServerPlayerEntity player, GhostHandTileEntity te) {
+        NetworkHooks.openGui(player, new INamedContainerProvider() {
+            @Override
+            public ITextComponent getDisplayName() {
+                return new TranslationTextComponent("inventory.ghost_hand.name");
+            }
+
+            @Nullable
+            @Override
+            public Container createMenu(int windowId, PlayerInventory playerInv, PlayerEntity player) {
+                return new GhostHandContainer(windowId, playerInv, te);
             }
         }, (buffer)-> BaseContainer.writeBaseParameters(buffer, BaseContainer.ContainerConnectionType.TILE_ENTITY, te, 0));
     }

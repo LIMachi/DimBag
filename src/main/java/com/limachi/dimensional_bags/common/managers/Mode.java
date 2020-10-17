@@ -14,7 +14,6 @@ import net.minecraft.entity.ai.attributes.AttributeModifier;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.inventory.EquipmentSlotType;
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.ActionResult;
 import net.minecraft.util.ActionResultType;
 import net.minecraft.util.math.BlockRayTraceResult;
 import net.minecraft.world.World;
@@ -59,13 +58,13 @@ public class Mode {
 
     public void getAttributeModifiers(int eyeId, boolean selected, EquipmentSlotType slot, ImmutableMultimap.Builder<Attribute, AttributeModifier> builder) {}
 //    public ActionResultType onPlayerTick(int eyeId, ItemStack stack, World world, Entity player, int itemSlot, boolean isSelected) { return ActionResultType.CONSUME; } //called while the bag is ticking inside a player inventory
-    public ActionResultType onEntityTick(int eyeId, ItemStack stack, World world, Entity entity, int itemSlot, boolean isSelected) { return ActionResultType.PASS; } //called every X ticks by the bag manager
-    public ActionResultType onItemUse(int eyeId, World world, PlayerEntity player, int slot, BlockRayTraceResult ray) { return ActionResultType.CONSUME; } //called when the bag is right clicked on something, before the bag does anything
-    public ActionResult<ItemStack> onItemRightClick(int eyeId, World world, PlayerEntity player, int slot) { //called when the bag is right clicked in the air or shift-right-clicked, before the bag does anything (except set the id if needed and accessing data)
-        return new ActionResult<>(onActivateItem(eyeId, player.inventory.getStackInSlot(slot), player), player.inventory.getStackInSlot(slot));
+    public ActionResultType onEntityTick(int eyeId, World world, Entity entity, boolean isSelected) { return ActionResultType.PASS; } //called every X ticks by the bag manager
+    public ActionResultType onItemUse(int eyeId, World world, PlayerEntity player, BlockRayTraceResult ray) { return ActionResultType.CONSUME; } //called when the bag is right clicked on something, before the bag does anything
+    public ActionResultType onItemRightClick(int eyeId, World world, PlayerEntity player) { //called when the bag is right clicked in the air or shift-right-clicked, before the bag does anything (except set the id if needed and accessing data)
+        return onActivateItem(eyeId, player);
     }
-    public ActionResultType onAttack(int eyeId, ItemStack stack, PlayerEntity player, Entity entity) { return ActionResultType.CONSUME; } //called when the bag is left-clicked on an entity
-    public ActionResultType onActivateItem(int eyeId, ItemStack stack, PlayerEntity playerEntity) { return ActionResultType.CONSUME; } //called when the client release the bag action key (or by default, right click the bag)
+    public ActionResultType onAttack(int eyeId, PlayerEntity player, Entity entity) { return ActionResultType.CONSUME; } //called when the bag is left-clicked on an entity
+    public ActionResultType onActivateItem(int eyeId, PlayerEntity playerEntity) { return ActionResultType.CONSUME; } //called when the client release the bag action key (or by default, right click the bag)
     @OnlyIn(Dist.CLIENT)
     public void onRenderHud(int eyeId, boolean isSelected, PlayerEntity player, MainWindow window, MatrixStack matrixStack, float partialTicks) {} //called each tick by the game overlay event
     @OnlyIn(Dist.CLIENT)

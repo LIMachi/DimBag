@@ -48,6 +48,13 @@ public class ClientDataManager {
     }
 
     /**
+     * actually called server side to prepare the nbt to be sent client side via itemstack/itementity/entity sync
+     */
+    public static ClientDataManager getInstance(int eyeId) {
+        return new ClientDataManager(eyeId, UpgradeManager.getInstance(eyeId), ModeManager.getInstance(eyeId), OwnerData.getInstance(eyeId));
+    }
+
+    /**
      * sync the date from the stack to the worldsaveddate, overwritting and calling the upgrades that got changed
      */
     public void syncToServer(ItemStack bagItem) {

@@ -4,11 +4,9 @@ import com.limachi.dimensional_bags.KeyMapController;
 import com.limachi.dimensional_bags.client.entity.layer.BagLayer;
 import com.limachi.dimensional_bags.client.entity.render.BagEntityRender;
 import com.limachi.dimensional_bags.client.itemEntity.EntityItemRenderer;
-import com.limachi.dimensional_bags.client.render.screen.BrainGUI;
-import com.limachi.dimensional_bags.client.render.screen.InventoryGUI;
-import com.limachi.dimensional_bags.client.render.screen.PlayerInterfaceGUI;
-import com.limachi.dimensional_bags.client.render.screen.SettingsGUI;
+import com.limachi.dimensional_bags.client.render.screen.*;
 import com.limachi.dimensional_bags.common.Registries;
+import com.limachi.dimensional_bags.common.container.GhostHandContainer;
 import com.limachi.dimensional_bags.common.items.Bag;
 import com.limachi.dimensional_bags.common.items.GhostBag;
 import net.minecraft.client.Minecraft;
@@ -24,7 +22,6 @@ import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.ModelRegistryEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.client.registry.ClientRegistry;
 import net.minecraftforge.fml.client.registry.RenderingRegistry;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
@@ -41,14 +38,14 @@ public class ClientEventSubscriber {
         ScreenManager.registerFactory(Registries.BAG_CONTAINER.get(), InventoryGUI::new);
         ScreenManager.registerFactory(Registries.PLAYER_CONTAINER.get(), PlayerInterfaceGUI::new);
         ScreenManager.registerFactory(Registries.BRAIN_CONTAINER.get(), BrainGUI::new);
+        ScreenManager.registerFactory(Registries.GHOST_HAND_CONTAINER.get(), GhostHandGUI::new);
         ScreenManager.registerFactory(Registries.SETTINGS_CONTAINER.get(), SettingsGUI::new);
 
         RenderingRegistry.registerEntityRenderingHandler(Registries.BAG_ITEM_ENTITY.get(), EntityItemRenderer::new);
 
         RenderTypeLookup.setRenderLayer(Registries.CLOUD_BLOCK.get(), RenderType.getTranslucent());
 
-        for (int i = 0; i < KeyMapController.NON_VANILLA_KEY_BIND_COUNT; ++i)
-            ClientRegistry.registerKeyBinding(KeyMapController.TRACKED_KEYBINDS[i]);
+        KeyMapController.KeyBindings.registerKeybindings();
 
         ItemModelsProperties.registerProperty(Registries.BAG_ITEM.get(), new ResourceLocation(MOD_ID, "bag_mode_property"), Bag::getModeProperty);
         ItemModelsProperties.registerProperty(Registries.GHOST_BAG_ITEM.get(), new ResourceLocation(MOD_ID, "bag_mode_property"), GhostBag::getModeProperty);

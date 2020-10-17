@@ -2,6 +2,7 @@ package com.limachi.dimensional_bags.common.data.EyeDataMK2;
 
 import com.limachi.dimensional_bags.DimBag;
 import com.limachi.dimensional_bags.common.WorldUtils;
+import com.limachi.dimensional_bags.common.data.DimBagData;
 import com.limachi.dimensional_bags.common.managers.ModeManager;
 import com.limachi.dimensional_bags.common.managers.UpgradeManager;
 import com.limachi.dimensional_bags.common.network.PacketHandler;
@@ -68,9 +69,9 @@ public class WorldSavedDataManager {
     public static void onPlayerLoginEvent(PlayerEvent.PlayerLoggedInEvent event) {
         if (DimBag.isServer(event.getPlayer().world)) {
             /*should send the current state of all the worldsaveddate to the client*/
-            for (int eye = 0; eye < IDManager.getInstance(null).lastId(); ++eye)
+            for (int eye = 0; eye < DimBagData.get(null).getLastId(); ++eye)
                 for (HashMap.Entry<Class<? extends EyeWorldSavedData>, String> entry: TYPES.entrySet()) {
-                    EyeWorldSavedData data = getInstance(entry.getKey(), null, eye);
+                    EyeWorldSavedData data = getInstance(entry.getKey(), null, eye + 1);
                     if (data != null)
                         PacketHandler.toClient((ServerPlayerEntity)event.getPlayer(), new WorldSavedDataSyncMsg(data.suffix, data.id, data.write(new CompoundNBT())));
                 }

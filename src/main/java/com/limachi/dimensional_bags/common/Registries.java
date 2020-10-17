@@ -2,16 +2,14 @@ package com.limachi.dimensional_bags.common;
 
 import com.limachi.dimensional_bags.DimBag;
 import com.limachi.dimensional_bags.common.blocks.*;
-import com.limachi.dimensional_bags.common.container.BagContainer;
-import com.limachi.dimensional_bags.common.container.BrainContainer;
-import com.limachi.dimensional_bags.common.container.SettingsContainer;
-import com.limachi.dimensional_bags.common.container.WrappedPlayerInventoryContainer;
+import com.limachi.dimensional_bags.common.container.*;
 import com.limachi.dimensional_bags.common.entities.BagEntity;
 import com.limachi.dimensional_bags.common.items.Bag;
 import com.limachi.dimensional_bags.common.items.GhostBag;
 import com.limachi.dimensional_bags.common.items.TunnelPlacer;
 import com.limachi.dimensional_bags.common.items.entity.BagEntityItem;
 import com.limachi.dimensional_bags.common.tileentities.BrainTileEntity;
+import com.limachi.dimensional_bags.common.tileentities.GhostHandTileEntity;
 import com.limachi.dimensional_bags.common.tileentities.PillarTileEntity;
 import com.limachi.dimensional_bags.common.tileentities.TheEyeTileEntity;
 import com.limachi.dimensional_bags.common.managers.UpgradeManager;
@@ -44,6 +42,7 @@ public class Registries {
     public static final RegistryObject<Block> WALL_BLOCK = BLOCK_REGISTER.register("wall", Wall::new);
     public static final RegistryObject<Block> CLOUD_BLOCK = BLOCK_REGISTER.register("cloud", Cloud::new);
     public static final RegistryObject<Block> BRAIN_BLOCK = BLOCK_REGISTER.register("brain", Brain::new);
+    public static final RegistryObject<Block> GHOST_HAND_BLOCK = BLOCK_REGISTER.register("ghost_hand", GhostHand::new);
 
     public static final RegistryObject<Item> BAG_ITEM = ITEM_REGISTER.register("bag", Bag::new);
     public static final RegistryObject<Item> GHOST_BAG_ITEM = ITEM_REGISTER.register("ghost_bag", GhostBag::new);
@@ -59,15 +58,18 @@ public class Registries {
     public static final RegistryObject<Item> CLOUD_ITEM = ITEM_REGISTER.register("cloud", () -> new BlockItem(CLOUD_BLOCK.get(), new Item.Properties().group(DimBag.ITEM_GROUP)));
     public static final RegistryObject<Item> BRAIN_ITEM = ITEM_REGISTER.register("brain", () -> new BlockItem(BRAIN_BLOCK.get(), new Item.Properties().group(DimBag.ITEM_GROUP)));
     public static final RegistryObject<Item> WALL_ITEM = ITEM_REGISTER.register("wall", () -> new BlockItem(WALL_BLOCK.get(), new Item.Properties().group(DimBag.ITEM_GROUP)));
+    public static final RegistryObject<Item> GHOST_HAND_ITEM = ITEM_REGISTER.register("ghost_hand", () -> new BlockItem(GHOST_HAND_BLOCK.get(), new Item.Properties().group(DimBag.ITEM_GROUP)));
 
     public static final RegistryObject<TileEntityType<TheEyeTileEntity>> BAG_EYE_TE = TILE_ENTITY_REGISTER.register("bag_eye", () -> TileEntityType.Builder.create(TheEyeTileEntity::new, BAG_EYE_BLOCK.get()).build(null));
     public static final RegistryObject<TileEntityType<PillarTileEntity>> PILLAR_TE = TILE_ENTITY_REGISTER.register("pillar", () -> TileEntityType.Builder.create(PillarTileEntity::new, PILLAR_BLOCK.get()).build(null));
     public static final RegistryObject<TileEntityType<BrainTileEntity>> BRAIN_TE = TILE_ENTITY_REGISTER.register("brain", () -> TileEntityType.Builder.create(BrainTileEntity::new, BRAIN_BLOCK.get()).build(null));
+    public static final RegistryObject<TileEntityType<GhostHandTileEntity>> GHOST_HAND_TE = TILE_ENTITY_REGISTER.register("ghost_hand", () -> TileEntityType.Builder.create(GhostHandTileEntity::new, GHOST_HAND_BLOCK.get()).build(null));
 
     public static final RegistryObject<ContainerType<BagContainer>> BAG_CONTAINER = CONTAINER_TYPE_REGISTER.register("inventory", () -> IForgeContainerType.create(BagContainer::CreateClient));
     public static final RegistryObject<ContainerType<WrappedPlayerInventoryContainer>> PLAYER_CONTAINER = CONTAINER_TYPE_REGISTER.register("player", () -> IForgeContainerType.create(WrappedPlayerInventoryContainer::new));
     public static final RegistryObject<ContainerType<BrainContainer>> BRAIN_CONTAINER = CONTAINER_TYPE_REGISTER.register("brain", () -> IForgeContainerType.create(BrainContainer::new));
     public static final RegistryObject<ContainerType<SettingsContainer>> SETTINGS_CONTAINER = CONTAINER_TYPE_REGISTER.register("settings", () -> IForgeContainerType.create(SettingsContainer::new));
+    public static final RegistryObject<ContainerType<GhostHandContainer>> GHOST_HAND_CONTAINER = CONTAINER_TYPE_REGISTER.register("ghost_hand", () -> IForgeContainerType.create(GhostHandContainer::new));
 
     public static final RegistryObject<EntityType<BagEntity>> BAG_ENTITY = ENTITY_REGISTER.register("bag_entity", () -> EntityType.Builder.<BagEntity>create(BagEntity::new, EntityClassification.MISC).size(0.5f, 1f).build(new ResourceLocation(MOD_ID, "bag_entity").toString()));
 
