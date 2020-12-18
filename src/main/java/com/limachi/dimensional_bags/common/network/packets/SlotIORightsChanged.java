@@ -7,7 +7,7 @@ import com.limachi.dimensional_bags.common.network.PacketHandler;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.network.PacketBuffer;
 
-public class SlotIORightsChanged extends PacketHandler.Message {
+public class SlotIORightsChanged {}/*extends PacketHandler.Message {
 
     int index;
     Wrapper.IORights rights;
@@ -36,3 +36,4 @@ public class SlotIORightsChanged extends PacketHandler.Message {
         }
     }
 }
+*/

@@ -1,7 +1,7 @@
 package com.limachi.dimensional_bags.common.container.slot;
 
 import com.limachi.dimensional_bags.common.data.EyeDataMK2.TankData;
-import com.limachi.dimensional_bags.common.inventory.Wrapper;
+import com.limachi.dimensional_bags.common.inventory.InventoryUtils;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.inventory.Inventory;
 import net.minecraft.inventory.container.ClickType;
@@ -59,5 +59,5 @@ public class RemoteFluidSlot extends Slot implements IIORightsSlot {
     public void setRightsFlag(byte rights) {} //FIXME: for now rights cannot be changed
 
     @Override
-    public void setRights(Wrapper.IORights rights) {} //FIXME: for now rights cannot be changed
+    public void setRights(InventoryUtils.ItemStackIORights rights) {} //FIXME: for now rights cannot be changed
 }

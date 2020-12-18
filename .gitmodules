@@ -1,0 +1,3 @@
+[submodule "Ducky_Library"]
+	path = Ducky_Library
+	url = https://github.com/LIMachi/Ducky_Library.git

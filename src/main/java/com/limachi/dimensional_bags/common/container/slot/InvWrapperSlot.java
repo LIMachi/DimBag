@@ -3,7 +3,7 @@ package com.limachi.dimensional_bags.common.container.slot;
 import com.limachi.dimensional_bags.common.inventory.Wrapper;
 import net.minecraftforge.items.SlotItemHandler;
 
-public class InvWrapperSlot extends SlotItemHandler implements IIORightsSlot {
+public class InvWrapperSlot {}/*extends SlotItemHandler implements IIORightsSlot {
     protected Wrapper inv;
 
     public InvWrapperSlot(Wrapper inv, int index, int x, int y) { super(inv, index, x, y); this.inv = inv; }
@@ -30,3 +30,4 @@ public class InvWrapperSlot extends SlotItemHandler implements IIORightsSlot {
         inv.setRights(this.getSlotIndex(), rights);
     }
 }
+*/

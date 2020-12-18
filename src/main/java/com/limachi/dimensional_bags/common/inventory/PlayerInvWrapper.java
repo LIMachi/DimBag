@@ -9,7 +9,7 @@ import net.minecraft.network.PacketBuffer;
 
 import javax.annotation.Nonnull;
 
-public class PlayerInvWrapper extends Wrapper {
+public class PlayerInvWrapper {}/*extends Wrapper {
     public PlayerInvWrapper(PlayerInventory inv) { super(inv); }
 
     public PlayerInvWrapper(PlayerInventory inv, IORights[] IO, IMarkDirty dirt) { super(inv, IO, dirt); }
@@ -34,4 +34,4 @@ public class PlayerInvWrapper extends Wrapper {
         }
         return super.isItemValid(slot, stack);
     }
-}
+}*/

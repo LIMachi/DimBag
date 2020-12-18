@@ -13,8 +13,8 @@ import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TranslationTextComponent;
 
-import static com.limachi.dimensional_bags.common.inventory.Wrapper.IORights.CANINPUT;
-import static com.limachi.dimensional_bags.common.inventory.Wrapper.IORights.CANOUTPUT;
+//import static com.limachi.dimensional_bags.common.inventory.Wrapper.IORights.CANINPUT;
+//import static com.limachi.dimensional_bags.common.inventory.Wrapper.IORights.CANOUTPUT;
 import static com.limachi.dimensional_bags.common.references.GUIs.PlayerInterface.*;
 import static com.limachi.dimensional_bags.common.references.GUIs.ScreenParts.*;
 
@@ -50,6 +50,7 @@ public class PlayerInterfaceGUI extends BaseScreen<WrappedPlayerInventoryContain
         this.font.drawString(matrixStack, this.playerInventory.getDisplayName()/*.getFormattedText()*/.getString(), TITLES_X, INVENTORY_TITLE_Y, 4210752);
     }
 
+    /*
     protected void drawAccessRectangle(MatrixStack matrixStack, TextureManager tm, int x, int y, Wrapper.IORights rights) {
         int flags = rights.flags & (CANINPUT | CANOUTPUT);
         if (flags == (CANINPUT | CANOUTPUT)) return; //both input and output are enable, no need to change the render
@@ -57,7 +58,7 @@ public class PlayerInterfaceGUI extends BaseScreen<WrappedPlayerInventoryContain
         if (flags == CANOUTPUT) tm.bindTexture(OUTPUT_SLOT);
         if (flags == 0) tm.bindTexture(LOCKED_SLOT);
         this.blitGuiFull(matrixStack, x, y, SLOT_SIZE_X, SLOT_SIZE_Y);
-    }
+    }*/
 
     @Override
     protected void drawGuiContainerBackgroundLayer(MatrixStack matrixStack, float partialTicks, int mouseX, int mouseY) {
@@ -66,13 +67,13 @@ public class PlayerInterfaceGUI extends BaseScreen<WrappedPlayerInventoryContain
         TextureManager tm = this.minecraft.getTextureManager();
         tm.bindTexture(BACKGROUND);
         this.blitGuiFull(matrixStack, 0, 0, BACKGROUND_X, BACKGROUND_Y);
-        for (int x = 0; x < 9; ++x)
-            drawAccessRectangle(matrixStack, tm, BELT_X + x * SLOT_SIZE_X, BELT_Y, container.getRights(36 + x));
-        for (int y = 0; y < 3; ++y)
-            for (int x = 0; x < 9; ++x)
-                drawAccessRectangle(matrixStack, tm, MAIN_INVENTORY_X + x * SLOT_SIZE_X, MAIN_INVENTORY_Y + y * SLOT_SIZE_Y, container.getRights(45 + x + 9 * y));
-        for (int x = 0; x < 4; ++x)
-            drawAccessRectangle(matrixStack, tm, ARMOR_SLOTS_X + x * SLOT_SIZE_X, SPECIAL_SLOTS_Y, container.getRights(72 + x));
-        drawAccessRectangle(matrixStack, tm, OFF_HAND_SLOT_X, SPECIAL_SLOTS_Y, container.getRights(76));
+//        for (int x = 0; x < 9; ++x)
+//            InventoryGUI.drawAccessRectangle(matrixStack, tm, BELT_X + x * SLOT_SIZE_X, BELT_Y, container.getRights(36 + x));
+//        for (int y = 0; y < 3; ++y)
+//            for (int x = 0; x < 9; ++x)
+//                drawAccessRectangle(matrixStack, tm, MAIN_INVENTORY_X + x * SLOT_SIZE_X, MAIN_INVENTORY_Y + y * SLOT_SIZE_Y, container.getRights(45 + x + 9 * y));
+//        for (int x = 0; x < 4; ++x)
+//            drawAccessRectangle(matrixStack, tm, ARMOR_SLOTS_X + x * SLOT_SIZE_X, SPECIAL_SLOTS_Y, container.getRights(72 + x));
+//        drawAccessRectangle(matrixStack, tm, OFF_HAND_SLOT_X, SPECIAL_SLOTS_Y, container.getRights(76));
     }
 }

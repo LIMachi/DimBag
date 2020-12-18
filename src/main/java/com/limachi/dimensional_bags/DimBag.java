@@ -5,12 +5,15 @@ import com.limachi.dimensional_bags.common.Config;
 import com.limachi.dimensional_bags.common.Registries;
 import com.limachi.dimensional_bags.common.network.PacketHandler;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.settings.KeyBinding;
+import net.minecraft.client.util.InputMappings;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemGroup;
 import net.minecraft.item.ItemStack;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.World;
 import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.client.settings.KeyConflictContext;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.fml.LogicalSide;
@@ -29,9 +32,23 @@ import java.util.concurrent.Callable;
 import java.util.function.Supplier;
 
 import static com.limachi.dimensional_bags.DimBag.MOD_ID;
+import static com.limachi.ducky_library.KeyMapController.KEY_CATEGORY;
+
+import com.limachi.ducky_library.KeyMapController;
+import org.lwjgl.glfw.GLFW;
 
 @Mod(MOD_ID)
 public class DimBag {
+
+    public static KeyMapController.KeyBindingEntry BAG_KEY = KeyMapController.KeyBindingEntry.create(true, ()->()->new KeyBinding("key.open_gui", KeyConflictContext.IN_GAME, InputMappings.Type.KEYSYM, GLFW.GLFW_KEY_I, KEY_CATEGORY));
+    public static KeyMapController.KeyBindingEntry SNEAK_KEY = KeyMapController.KeyBindingEntry.create(false, ()->()->Minecraft.getInstance().gameSettings.keyBindSneak);
+    public static KeyMapController.KeyBindingEntry JUMP_KEY = KeyMapController.KeyBindingEntry.create(false, ()->()->Minecraft.getInstance().gameSettings.keyBindJump);
+    public static KeyMapController.KeyBindingEntry FORWARD_KEY = KeyMapController.KeyBindingEntry.create(false, ()->()->Minecraft.getInstance().gameSettings.keyBindForward);
+    public static KeyMapController.KeyBindingEntry BACK_KEY = KeyMapController.KeyBindingEntry.create(false, ()->()->Minecraft.getInstance().gameSettings.keyBindBack);
+    public static KeyMapController.KeyBindingEntry RIGHT_KEY = KeyMapController.KeyBindingEntry.create(false, ()->()->Minecraft.getInstance().gameSettings.keyBindRight);
+    public static KeyMapController.KeyBindingEntry LEFT_KEY = KeyMapController.KeyBindingEntry.create(false, ()->()->Minecraft.getInstance().gameSettings.keyBindLeft);
+    public static KeyMapController.KeyBindingEntry USE_KEY = KeyMapController.KeyBindingEntry.create(false, ()->()->Minecraft.getInstance().gameSettings.keyBindUseItem);
+    public static KeyMapController.KeyBindingEntry ATTACK_KEY = KeyMapController.KeyBindingEntry.create(false, ()->()->Minecraft.getInstance().gameSettings.keyBindAttack);
 
     public static final String MOD_ID = "dim_bag";
     public static final Logger LOGGER = LogManager.getLogger();
@@ -81,5 +98,10 @@ public class DimBag {
         runLogicalSide(null,
                 ()->()->{com.limachi.dimensional_bags.client.EventManager.delayedTask(ticksToWait, run); return null;},
                 ()->()->{com.limachi.dimensional_bags.common.EventManager.delayedTask(ticksToWait, run); return null;});
+    }
+
+    public static void breakPoint() {
+        LOGGER.error("breakpoint reached, please debug this error ASAP");
+        int noop = 0; //put a breakpoint there
     }
 }

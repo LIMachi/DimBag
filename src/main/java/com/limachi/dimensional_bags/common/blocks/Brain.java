@@ -29,7 +29,7 @@ public class Brain extends Block implements ITileEntityProvider {
     public static final IntegerProperty TICK_RATE = IntegerProperty.create("tick_rate", 1, /*1200*/20);
 
     public Brain() {
-        super(Block.Properties.create(Material.ROCK).sound(SoundType.STONE));
+        super(Block.Properties.create(Material.ROCK).sound(SoundType.STONE).hardnessAndResistance(2.0F, 3.0F));
         this.setDefaultState(getDefaultState().with(POWER, 0).with(TICK_RATE, 2));
     }
 

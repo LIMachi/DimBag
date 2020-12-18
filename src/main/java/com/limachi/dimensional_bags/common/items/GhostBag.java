@@ -1,7 +1,6 @@
 package com.limachi.dimensional_bags.common.items;
 
 import com.limachi.dimensional_bags.DimBag;
-import com.limachi.dimensional_bags.KeyMapController;
 import com.limachi.dimensional_bags.common.Registries;
 import com.limachi.dimensional_bags.common.data.EyeDataMK2.ClientDataManager;
 import com.limachi.dimensional_bags.common.data.EyeDataMK2.SubRoomsManager;

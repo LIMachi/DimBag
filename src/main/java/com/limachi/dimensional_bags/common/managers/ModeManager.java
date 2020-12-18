@@ -17,7 +17,6 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.nbt.ListNBT;
 import net.minecraft.nbt.StringNBT;
-import net.minecraft.util.ActionResult;
 import net.minecraft.util.ActionResultType;
 import net.minecraft.util.math.BlockRayTraceResult;
 import net.minecraft.util.text.TranslationTextComponent;
@@ -31,10 +30,10 @@ public class ModeManager extends WorldSavedDataManager.EyeWorldSavedData {
     public static final Mode[] MODES = {
         new Default(),
         new Settings(),
-//        new Debug(),
         new PokeBall(),
         new Elytra(),
-        new Tank()
+        new Tank(),
+        new Automation()
     };
 
     public static void changeModeRequest(ServerPlayerEntity player, int slot, boolean up) {
@@ -46,7 +45,7 @@ public class ModeManager extends WorldSavedDataManager.EyeWorldSavedData {
         ClientDataManager dataC = ClientDataManager.getInstance(stack);
         ArrayList<String> modes = dataS.getInstalledModes();
         for (int i = 0; i < modes.size(); ++i) {
-            if (!modes.get(i).equals(dataS.getSelectedMode())) continue;
+            if (!modes.get(i).equals(dataS.getSelectedMode()) || dataS.getModesNBT().getCompound(modes.get(i)).getBoolean("Disabled")) continue;
             dataS.selectMode((i + (up ? 1 : modes.size() - 1)) % modes.size());
             dataC.getModeManager().selectMode(dataS.getSelectedMode());
             dataC.store(stack);
@@ -71,6 +70,7 @@ public class ModeManager extends WorldSavedDataManager.EyeWorldSavedData {
 
     private String selectedMode;
     private ArrayList<String> installedModes;
+    private CompoundNBT modesNBT;
 
     public ModeManager(int id) {
         this("mode_manager", id, true);
@@ -79,11 +79,14 @@ public class ModeManager extends WorldSavedDataManager.EyeWorldSavedData {
     public ModeManager(String suffix, int id, boolean client) {
         super(suffix, id, client);
         selectedMode = Default.ID;
+        modesNBT = new CompoundNBT();
         installedModes = new ArrayList<>();
         for (Mode mode : MODES)
             if (mode.IS_INSTALED_BY_DEFAULT)
-                installedModes.add(mode.NAME);
+                installModeNotDirty(mode.NAME);
     }
+
+    public CompoundNBT getModesNBT() { return modesNBT; }
 
     static public ModeManager getInstance(int id) {
         return WorldSavedDataManager.getInstance(ModeManager.class, null, id);
@@ -97,9 +100,16 @@ public class ModeManager extends WorldSavedDataManager.EyeWorldSavedData {
         return WorldSavedDataManager.execute(ModeManager.class, null, id, data->{executable.accept(data); return true;}, false);
     }
 
-    public void installMode(String name) {
+    private void installModeNotDirty(String name) {
         if (!installedModes.contains(name))
             installedModes.add(name);
+        CompoundNBT modeNBT = new CompoundNBT();
+        modeNBT.putBoolean("Disabled", false);
+        modesNBT.put(name, modeNBT);
+    }
+
+    public void installMode(String name) {
+        installModeNotDirty(name);
         markDirty();
     }
 
@@ -127,6 +137,7 @@ public class ModeManager extends WorldSavedDataManager.EyeWorldSavedData {
     }
 
     public CompoundNBT write(CompoundNBT nbt) {
+        nbt.put("ModesNBT", modesNBT);
         nbt.putString("Selected", selectedMode);
         ListNBT list = new ListNBT();
         for (String entry : installedModes)
@@ -136,6 +147,7 @@ public class ModeManager extends WorldSavedDataManager.EyeWorldSavedData {
     }
 
     public void read(CompoundNBT nbt) {
+        modesNBT = nbt.getCompound("ModesNBT");
         selectedMode = nbt.getString("Selected");
         if (selectedMode == null)
             selectedMode = "Default";

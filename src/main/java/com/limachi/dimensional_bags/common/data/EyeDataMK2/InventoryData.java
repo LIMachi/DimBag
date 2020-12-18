@@ -1,7 +1,9 @@
 package com.limachi.dimensional_bags.common.data.EyeDataMK2;
 
+import com.limachi.dimensional_bags.common.NBTUtils;
 import com.limachi.dimensional_bags.common.data.IMarkDirty;
-import com.limachi.dimensional_bags.common.inventory.Wrapper;
+import com.limachi.dimensional_bags.common.inventory.InventoryUtils;
+import com.limachi.dimensional_bags.common.inventory.NBTStoredItemHandler;
 import com.limachi.dimensional_bags.common.managers.UpgradeManager;
 import net.minecraft.nbt.CompoundNBT;
 
@@ -10,32 +12,34 @@ import java.util.function.Function;
 
 public class InventoryData extends WorldSavedDataManager.EyeWorldSavedData implements IMarkDirty {
 
-    private Wrapper inv;
-    private int rows;
-    private int columns;
+    private CompoundNBT localNBT;
+    private NBTStoredItemHandler inv;
 
     public InventoryData(String suffix, int id, boolean client) {
         super(suffix, id, client);
         UpgradeManager upgradeManager = UpgradeManager.getInstance(id);
-        inv = new Wrapper(UpgradeManager.getUpgrade("upgrade_slot").getCount(upgradeManager), this);
-        rows = UpgradeManager.getUpgrade("upgrade_row").getCount(upgradeManager);
-        columns = UpgradeManager.getUpgrade("upgrade_column").getCount(upgradeManager);
+        localNBT = new CompoundNBT();
+        localNBT.putInt("Size", UpgradeManager.getUpgrade("upgrade_slot").getCount(upgradeManager));
+        localNBT.putInt("Columns", UpgradeManager.getUpgrade("upgrade_column").getCount(upgradeManager));
+        localNBT.putInt("Rows", UpgradeManager.getUpgrade("upgrade_row").getCount(upgradeManager));
+        inv = NBTStoredItemHandler.createInPlace(localNBT);
     }
 
-    public Wrapper getInventory() { return inv; }
+    public InventoryUtils.IFormatAwareItemHandler getInventory() { return inv; }
 
-    public int getRows() { return rows; }
+    public int getRows() { return localNBT.getInt("Rows"); }
 
-    public int getColumns() { return columns; }
+    public int getColumns() { return localNBT.getInt("Columns"); }
 
     @Override
     public void read(CompoundNBT nbt) {
-        inv.read(nbt);
+        localNBT = nbt;
+        inv = NBTStoredItemHandler.createInPlace(localNBT);
     }
 
     @Override
     public CompoundNBT write(CompoundNBT nbt) {
-        return inv.write(nbt);
+        return (CompoundNBT)NBTUtils.deepMergeNBTInternal(nbt, localNBT);
     }
 
     static public InventoryData getInstance(int id) {

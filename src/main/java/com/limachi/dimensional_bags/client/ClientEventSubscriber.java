@@ -1,12 +1,10 @@
 package com.limachi.dimensional_bags.client;
 
-import com.limachi.dimensional_bags.KeyMapController;
 import com.limachi.dimensional_bags.client.entity.layer.BagLayer;
 import com.limachi.dimensional_bags.client.entity.render.BagEntityRender;
 import com.limachi.dimensional_bags.client.itemEntity.EntityItemRenderer;
 import com.limachi.dimensional_bags.client.render.screen.*;
 import com.limachi.dimensional_bags.common.Registries;
-import com.limachi.dimensional_bags.common.container.GhostHandContainer;
 import com.limachi.dimensional_bags.common.items.Bag;
 import com.limachi.dimensional_bags.common.items.GhostBag;
 import net.minecraft.client.Minecraft;
@@ -44,8 +42,6 @@ public class ClientEventSubscriber {
         RenderingRegistry.registerEntityRenderingHandler(Registries.BAG_ITEM_ENTITY.get(), EntityItemRenderer::new);
 
         RenderTypeLookup.setRenderLayer(Registries.CLOUD_BLOCK.get(), RenderType.getTranslucent());
-
-        KeyMapController.KeyBindings.registerKeybindings();
 
         ItemModelsProperties.registerProperty(Registries.BAG_ITEM.get(), new ResourceLocation(MOD_ID, "bag_mode_property"), Bag::getModeProperty);
         ItemModelsProperties.registerProperty(Registries.GHOST_BAG_ITEM.get(), new ResourceLocation(MOD_ID, "bag_mode_property"), GhostBag::getModeProperty);

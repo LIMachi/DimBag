@@ -4,9 +4,12 @@ import com.limachi.dimensional_bags.common.Registries;
 import com.limachi.dimensional_bags.common.data.EyeDataMK2.HolderData;
 import com.limachi.dimensional_bags.common.data.EyeDataMK2.SubRoomsManager;
 import com.limachi.dimensional_bags.common.data.IMarkDirty;
+import com.limachi.dimensional_bags.common.inventory.IORightsWrappedItemHandler;
+import com.limachi.dimensional_bags.common.inventory.InventoryUtils;
 import com.limachi.dimensional_bags.common.inventory.PlayerInvWrapper;
-import com.limachi.dimensional_bags.common.inventory.Wrapper;
 import net.minecraft.block.BlockState;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.nbt.ListNBT;
@@ -23,17 +26,16 @@ import java.lang.ref.WeakReference;
 
 public class PillarTileEntity extends TileEntity implements ITickableTileEntity, IMarkDirty {
 
-    private LazyOptional<IItemHandlerModifiable> invPtr = LazyOptional.empty();
+    private LazyOptional<InventoryUtils.IIORIghtItemHandler> invPtr = LazyOptional.empty();
     private WeakReference<HolderData> holderDataRef = new WeakReference<>(null);
-    private Wrapper.IORights[] rights;
+    private InventoryUtils.ItemStackIORights[] rights;
     private int tick;
 
     public PillarTileEntity() {
         super(Registries.PILLAR_TE.get());
-        rights = new Wrapper.IORights[41];
+        rights = new InventoryUtils.ItemStackIORights[41];
         for (int i = 0; i < 41; ++i) { //the default rights are 0-64 items of any kind and IO disabled
-            rights[i] = new Wrapper.IORights();
-            rights[i].flags = 0;
+            rights[i] = new InventoryUtils.ItemStackIORights(false, false, 0, 64);
         }
     }
 
@@ -41,7 +43,7 @@ public class PillarTileEntity extends TileEntity implements ITickableTileEntity,
     public CompoundNBT write(CompoundNBT compound) {
         ListNBT list = new ListNBT();
         for (int i = 0; i < 41; ++i)
-            list.add(rights[i].write(new CompoundNBT()));
+            list.add(rights[i].writeNBT(new CompoundNBT()));
         compound.put("IORights", list);
         return super.write(compound);
     }
@@ -51,12 +53,11 @@ public class PillarTileEntity extends TileEntity implements ITickableTileEntity,
         ListNBT list = compound.getList("IORights", 10);
         if (list.size() != 41)
             for (int i = 0; i < 41; ++i) {
-                rights[i] = new Wrapper.IORights();
-                rights[i].flags = 0;
+                rights[i] = new InventoryUtils.ItemStackIORights(false, false, 0, 64);
             }
         else
             for (int i = 0; i < 41; ++i)
-                rights[i].read(list.getCompound(i));
+                rights[i].readNBT(list.getCompound(i));
         super.read(state, compound);
     }
 
@@ -71,13 +72,13 @@ public class PillarTileEntity extends TileEntity implements ITickableTileEntity,
                     invPtr = LazyOptional.empty();
                 return;
             }
-            PlayerInventory inv = holderDataRef.get().getPlayerInventory();
-            if (inv != null) {
-                IItemHandlerModifiable handler = null;
+            Entity entity = holderDataRef.get().getEntity();
+            if (entity != null) {
+                InventoryUtils.IIORIghtItemHandler handler = null;
                 if (invPtr.isPresent())
                     handler = invPtr.orElse(null);
-                if (!invPtr.isPresent() || handler == null || ((PlayerInvWrapper) handler).getPlayerInventory() != inv)
-                    invPtr = LazyOptional.of(() -> new PlayerInvWrapper(inv, rights, this));
+                if (!invPtr.isPresent() || handler == null)
+                    invPtr = LazyOptional.of(() -> new IORightsWrappedItemHandler.WrappedEntityInventory(entity, rights));
             } else if (invPtr.isPresent())
                 invPtr = LazyOptional.empty();
         }

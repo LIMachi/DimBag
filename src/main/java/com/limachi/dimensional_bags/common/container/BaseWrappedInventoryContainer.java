@@ -1,6 +1,8 @@
 package com.limachi.dimensional_bags.common.container;
 
 import com.limachi.dimensional_bags.common.container.slot.InvWrapperSlot;
+import com.limachi.dimensional_bags.common.inventory.InventoryUtils;
+import com.limachi.dimensional_bags.common.inventory.NBTStoredItemHandler;
 import com.limachi.dimensional_bags.common.inventory.PlayerInvWrapper;
 import com.limachi.dimensional_bags.common.inventory.Wrapper;
 import net.minecraft.entity.player.PlayerEntity;
@@ -16,10 +18,10 @@ import java.util.ArrayList;
 
 import static com.limachi.dimensional_bags.common.references.GUIs.ScreenParts.*;
 
-public class BaseWrappedInventoryContainer extends Container {
+public class BaseWrappedInventoryContainer {}/*extends Container {
 
     protected PlayerInvWrapper playerInv;
-    protected Wrapper openInv;
+    protected InventoryUtils.IIORIghtItemHandler openInv;
     protected boolean client;
 
     public BaseWrappedInventoryContainer(ContainerType<? extends BaseWrappedInventoryContainer> type, int windowId) { //common constructor
@@ -29,24 +31,24 @@ public class BaseWrappedInventoryContainer extends Container {
     protected BaseWrappedInventoryContainer(ContainerType<? extends BaseWrappedInventoryContainer> type, int windowId, PlayerInventory playerInv, PacketBuffer extraData) { //client side/registry constructor
         super(type, windowId);
         this.playerInv = new PlayerInvWrapper(playerInv);
-        this.openInv = new Wrapper(extraData);
+        this.openInv = NBTStoredItemHandler.createInPlace(extraData.readCompoundTag());
         this.client = true;
     }
 
-    protected BaseWrappedInventoryContainer(ContainerType<? extends BaseWrappedInventoryContainer> type, int windowId, ServerPlayerEntity player, Wrapper openInv) { //server side constructor
+    protected BaseWrappedInventoryContainer(ContainerType<? extends BaseWrappedInventoryContainer> type, int windowId, ServerPlayerEntity player, InventoryUtils.IIORIghtItemHandler openInv) { //server side constructor
         super(type, windowId);
         this.playerInv = new PlayerInvWrapper(player.inventory);
         this.openInv = openInv;
         this.client = false;
     }
 
-    public Wrapper.IORights getRights(int slot) {
-        if (slot < 36 || slot >= inventorySlots.size()) return new Wrapper.IORights();
-        return openInv.getRights(slot - 36);
+    public InventoryUtils.ItemStackIORights getRights(int slot) {
+        if (slot < 36 || slot >= inventorySlots.size()) return new InventoryUtils.ItemStackIORights();
+        return openInv.getRightsInSlot(slot - 36);
     }
 
-    public void changeRights(int slot, Wrapper.IORights rights) {
-        openInv.setRights(slot, rights);
+    public void changeRights(int slot, InventoryUtils.ItemStackIORights rights) {
+        openInv.setRightsInSlot(slot, rights);
     }
 
     protected void addPlayerSlots(int px, int py) {
@@ -85,4 +87,4 @@ public class BaseWrappedInventoryContainer extends Container {
 
     @Override
     public boolean canInteractWith(PlayerEntity playerIn) { return true; }
-}
+}*/

@@ -2,7 +2,6 @@ package com.limachi.dimensional_bags.common;
 
 import com.google.common.collect.ArrayListMultimap;
 import com.limachi.dimensional_bags.DimBag;
-import com.limachi.dimensional_bags.KeyMapController;
 import com.limachi.dimensional_bags.common.data.DimBagData;
 import com.limachi.dimensional_bags.common.data.EyeDataMK2.HolderData;
 import com.limachi.dimensional_bags.common.entities.BagEntity;
@@ -10,6 +9,7 @@ import com.limachi.dimensional_bags.common.items.Bag;
 import com.limachi.dimensional_bags.common.items.GhostBag;
 import com.limachi.dimensional_bags.common.items.IDimBagCommonItem;
 import com.limachi.dimensional_bags.common.items.entity.BagEntityItem;
+import com.limachi.ducky_library.KeyMapController;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.FlowingFluidBlock;
@@ -129,7 +129,7 @@ public class EventManager {
                 event.setCanceled(true);
                 PlayerEntity player = event.getPlayer();
                 ItemStack new_bag = ItemStack.read(event.getTarget().getPersistentData().getCompound(BagEntity.ITEM_KEY));
-                if ((KeyMapController.KeyBindings.SNEAK_KEY.getState(player) && !(player.inventory.armorInventory.get(EquipmentSlotType.CHEST.getIndex()).getItem() instanceof Bag) && Bag.equipBagOnChestSlot(new_bag, player)) || player.addItemStackToInventory(new_bag))
+                if ((DimBag.SNEAK_KEY.getState(player) && !(player.inventory.armorInventory.get(EquipmentSlotType.CHEST.getIndex()).getItem() instanceof Bag) && Bag.equipBagOnChestSlot(new_bag, player)) || player.addItemStackToInventory(new_bag))
                     event.getTarget().remove();
             }
         }
@@ -195,8 +195,8 @@ public class EventManager {
     @SubscribeEvent
     public static void onKeyMapChanged(KeyMapController.KeyMapChangedEvent event) {
         if (!event.getPlayer().getEntityWorld().isRemote()) {
-            if (event.getChangedKeys()[KeyMapController.KeyBindings.BAG_KEY.ordinal()]) {
-                if (event.getKeys()[KeyMapController.KeyBindings.BAG_KEY.ordinal()]) {
+            if (event.getChangedKeys()[DimBag.BAG_KEY.getOrdinal()]) {
+                if (event.getKeys()[DimBag.BAG_KEY.getOrdinal()]) {
                     IDimBagCommonItem.ItemSearchResult res = IDimBagCommonItem.searchItem(event.getPlayer(), 0, Bag.class, o -> true, false);
                     if (!(event.getPlayer().getHeldItem(Hand.MAIN_HAND).getItem() instanceof Bag) && !(event.getPlayer().getHeldItem(Hand.MAIN_HAND).getItem() instanceof GhostBag) && !(event.getPlayer().getHeldItem(Hand.OFF_HAND).getItem() instanceof Bag) && !(event.getPlayer().getHeldItem(Hand.OFF_HAND).getItem() instanceof GhostBag))
                         event.getPlayer().replaceItemInInventory(IDimBagCommonItem.slotFromHand(event.getPlayer(), Hand.MAIN_HAND), GhostBag.ghostBagFromStack(event.getPlayer().getHeldItem(Hand.MAIN_HAND), event.getPlayer()));

@@ -40,7 +40,7 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
-import static com.limachi.dimensional_bags.common.inventory.Wrapper.IORights.*;
+//import static com.limachi.dimensional_bags.common.inventory.Wrapper.IORights.*;
 
 public interface IDimBagCommonItem {
     /*

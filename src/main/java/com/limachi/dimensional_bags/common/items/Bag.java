@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Multimap;
 import com.limachi.dimensional_bags.DimBag;
 import com.limachi.dimensional_bags.client.entity.model.NullModel;
+import com.limachi.dimensional_bags.common.Registries;
 import com.limachi.dimensional_bags.common.data.DimBagData;
 import com.limachi.dimensional_bags.common.data.EyeDataMK2.ClientDataManager;
 import com.limachi.dimensional_bags.common.data.EyeDataMK2.HolderData;
@@ -50,18 +51,26 @@ public class Bag extends ArmorItem implements IDimBagCommonItem {
 
     public Bag() { super(ArmorMaterial.LEATHER, EquipmentSlotType.CHEST, new Properties().group(DimBag.ITEM_GROUP).maxStackSize(1)); DispenserBlock.registerDispenseBehavior(this, ArmorItem.DISPENSER_BEHAVIOR); }
 
+    /**
+     * generate a bag item stack with only the id set
+     */
+    public static ItemStack createFakeBag(int id) {
+        ItemStack out = new ItemStack(Registries.BAG_ITEM.get());
+        if (out.getTag() == null)
+            out.setTag(new CompoundNBT());
+        out.getTag().putInt(IEyeIdHolder.EYE_ID_KEY, id);
+        return out;
+    }
+
     public static NBTStoredItemHandler getArmorStandUpgradeInventory(ItemStack bag) {
         if (bag.getTag() == null)
             bag.setTag(new CompoundNBT());
-        IMarkDirty syncEnchants = new IMarkDirty() {
-            @Override
-            public void markDirty() {
-                bag.getTag().put("Enchantments", new ListNBT()); //clears the enchantments and also make sure the list for the enchantments exists
-                bag.getEnchantmentTagList().addAll(getChestPlate(bag).getEnchantmentTagList()); //blunt copy of the enchantments of the chestplate
-                bag.getEnchantmentTagList().addAll(getElytra(bag).getEnchantmentTagList()); //blunt copy of the enchantments of the chestplate
-            }
-        };
-        return new NBTStoredItemHandler(()->bag.getTag().getCompound("ArmorStandUpgrade"), nbt->bag.getTag().put("ArmorStandUpgrade", nbt), syncEnchants).resize(2);
+        return new NBTStoredItemHandler(()->bag.getTag().getCompound("ArmorStandUpgrade"), nbt->{
+            bag.getTag().put("ArmorStandUpgrade", nbt);
+            bag.getTag().put("Enchantments", new ListNBT()); //clears the enchantments and also make sure the list for the enchantments exists
+            bag.getEnchantmentTagList().addAll(getChestPlate(bag).getEnchantmentTagList()); //blunt copy of the enchantments of the chestplate
+            bag.getEnchantmentTagList().addAll(getElytra(bag).getEnchantmentTagList()); //blunt copy of the enchantments of the chestplate
+        }).resize(2);
     }
 
     public static boolean equipBagOnChestSlot(ItemStack bag, PlayerEntity player) {

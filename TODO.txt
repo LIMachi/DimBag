@@ -26,3 +26,8 @@ example:
 
 -see how enchantments work to make some enchantments compatible with the armor stand upgrade
 -see how entities/the player interact with the world to create the functions of the ghost hand (for player, might have to simulate key presses, for entities, might have to inject AI goals)
+
+-automation upgrade:
+    ----left click: radial menu of 8 modes (left click mode: select, right click mode: change icon/name)
+    ----right click: activate the current mode (redstone signal in the 'brain')
+    for now: store in nbt the last state of the Automation mode (right click, right click on block, left click)

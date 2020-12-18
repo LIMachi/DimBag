@@ -2,6 +2,7 @@ package com.limachi.dimensional_bags.client.render.screen;
 
 import com.google.common.primitives.Ints;
 import com.limachi.dimensional_bags.common.container.BagContainer;
+import com.limachi.dimensional_bags.common.inventory.InventoryUtils;
 import com.limachi.dimensional_bags.common.inventory.Wrapper;
 import com.limachi.dimensional_bags.common.references.GUIs;
 import com.mojang.blaze3d.matrix.MatrixStack;
@@ -11,8 +12,8 @@ import net.minecraft.client.renderer.texture.TextureManager;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.util.text.ITextComponent;
 
-import static com.limachi.dimensional_bags.common.inventory.Wrapper.IORights.CANINPUT;
-import static com.limachi.dimensional_bags.common.inventory.Wrapper.IORights.CANOUTPUT;
+//import static com.limachi.dimensional_bags.common.inventory.Wrapper.IORights.CANINPUT;
+//import static com.limachi.dimensional_bags.common.inventory.Wrapper.IORights.CANOUTPUT;
 import static com.limachi.dimensional_bags.common.references.GUIs.ScreenParts.*;
 
 public class InventoryGUI extends ContainerScreen<BagContainer> {
@@ -50,13 +51,12 @@ public class InventoryGUI extends ContainerScreen<BagContainer> {
         this.blitGuiFull(matrixStack, x1, PART_SIZE_Y, PART_SIZE_X, PART_SIZE_Y);
     }
 
-    protected void drawAccessRectangle(MatrixStack matrixStack, TextureManager tm, int x, int y, Wrapper.IORights rights) {
+    protected void drawAccessRectangle(MatrixStack matrixStack, TextureManager tm, int x, int y, InventoryUtils.ItemStackIORights rights) {
         if (rights != null) {
-            int flags = rights.flags & (CANINPUT | CANOUTPUT);
-            if (flags == (CANINPUT | CANOUTPUT)) tm.bindTexture(SLOT);
-            if (flags == CANINPUT) tm.bindTexture(INPUT_SLOT);
-            if (flags == CANOUTPUT) tm.bindTexture(OUTPUT_SLOT);
-            if (flags == 0) tm.bindTexture(LOCKED_SLOT);
+            if (rights.canInput && rights.canOutput) tm.bindTexture(SLOT);
+            if (rights.canInput && !rights.canOutput) tm.bindTexture(INPUT_SLOT);
+            if (!rights.canInput && rights.canOutput) tm.bindTexture(OUTPUT_SLOT);
+            if (!rights.canInput && !rights.canOutput) tm.bindTexture(LOCKED_SLOT);
         }
         else
             tm.bindTexture(UNUSED_SLOT);
@@ -150,7 +150,7 @@ public class InventoryGUI extends ContainerScreen<BagContainer> {
     }
 
     private void blitGuiFull(MatrixStack matrixStack, int x, int y, int w, int h) {
-        this.blit(matrixStack, x + this.guiLeft, y + this.guiTop, 0, 0, w, h, w, h);
+        blit(matrixStack, x + this.guiLeft, y + this.guiTop, 0, 0, w, h, w, h);
     }
 
     public void render_player_inventory(MatrixStack matrixStack, TextureManager tm) {
@@ -159,24 +159,21 @@ public class InventoryGUI extends ContainerScreen<BagContainer> {
     }
 
     @Override
-//    public void render(final int mouseX, final int mouseY, final float partialTicks) {
     public void render(MatrixStack matrixStack, int mouseX, int mouseY, float partialTicks) {
         this.guiLeft = (this.width - this.xSize) / 2; //start of the gui in the x axis (this.width is the size of the screens on the x axis)
         this.guiTop = (this.height - this.ySize) / 2; //start of the gui in the y axis (this.height is the size of the screens on the y axis)
         this.renderBackground(matrixStack);
         super.render(matrixStack, mouseX, mouseY, partialTicks);
-//        this.renderHoveredToolTip(mouseX, mouseY);
         this.renderHoveredTooltip(matrixStack, mouseX, mouseY);
     }
 
     @Override
     protected void drawGuiContainerForegroundLayer(MatrixStack matrixStack, int mouseX, int mouseY) {
-//        super.drawGuiContainerForegroundLayer(matrixStack, mouseX, mouseY);
         if (this.columns < 9)
-            this.font.drawString(matrixStack, /*this.title.getFormattedText()*/title.getString(), PLAYER_INVENTORY_X / 2, this.ySize - PLAYER_INVENTORY_Y - PART_SIZE_Y / 2, 4210752);
+            this.font.drawString(matrixStack, title.getUnformattedComponentText(), PLAYER_INVENTORY_X / 2, this.ySize - PLAYER_INVENTORY_Y - PART_SIZE_Y / 2, 4210752);
         else
-            this.font.drawString(matrixStack, /*this.title.getFormattedText()*/title.getString(), PART_SIZE_X, PART_SIZE_Y / 2, 4210752);
-        this.font.drawString(matrixStack, /*this.playerInventory.getDisplayName().getFormattedText()*/playerInventory.getDisplayName().getString(), PART_SIZE_X + (this.columns_shift_left > 0 ? this.columns_shift_left * SLOT_SIZE_X : 0), this.ySize - PLAYER_INVENTORY_Y - PART_SIZE_Y / 2, 4210752);
+            this.font.drawString(matrixStack, title.getUnformattedComponentText(), PART_SIZE_X, PART_SIZE_Y / 2, 4210752);
+        this.font.drawString(matrixStack, playerInventory.getDisplayName().getUnformattedComponentText(), PART_SIZE_X + (this.columns_shift_left > 0 ? this.columns_shift_left * SLOT_SIZE_X : 0), this.ySize - PLAYER_INVENTORY_Y - PART_SIZE_Y / 2, 4210752);
     }
 
     @Override

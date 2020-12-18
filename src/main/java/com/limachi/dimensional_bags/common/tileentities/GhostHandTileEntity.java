@@ -13,7 +13,7 @@ import net.minecraft.tileentity.TileEntity;
 
 public class GhostHandTileEntity extends TileEntity implements ITickableTileEntity, IMarkDirty {
 
-    private String command = "jump_key true";
+    private String command = "set_velocity 0 10 0";
 
     public GhostHandTileEntity() {
         super(Registries.GHOST_HAND_TE.get());

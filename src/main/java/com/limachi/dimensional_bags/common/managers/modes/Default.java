@@ -1,6 +1,5 @@
 package com.limachi.dimensional_bags.common.managers.modes;
 
-import com.limachi.dimensional_bags.KeyMapController;
 import com.limachi.dimensional_bags.common.entities.BagEntity;
 import com.limachi.dimensional_bags.common.items.Bag;
 import com.limachi.dimensional_bags.common.managers.Mode;

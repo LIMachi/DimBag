@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableMultimap;
 import com.limachi.dimensional_bags.common.Registries;
 import com.limachi.dimensional_bags.common.data.EyeDataMK2.ClientDataManager;
 import com.limachi.dimensional_bags.common.data.EyeDataMK2.WorldSavedDataManager;
+import com.limachi.dimensional_bags.common.data.IEyeIdHolder;
 import com.limachi.dimensional_bags.common.items.Bag;
 import com.limachi.dimensional_bags.common.managers.upgrades.*;
 import com.limachi.dimensional_bags.common.recipes.Smithing;
@@ -115,6 +116,7 @@ public class UpgradeManager extends WorldSavedDataManager.EyeWorldSavedData {
         super(suffix, id, client);
         upgradesNBT = new CompoundNBT();
         upgradesCount = new HashMap<>();
+        ItemStack tmp = Bag.createFakeBag(id);
         for (String key : UPGRADES.keySet())
             upgradesCount.put(key, UPGRADES.get(key).getStart());
     }

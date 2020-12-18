@@ -1,7 +1,6 @@
 package com.limachi.dimensional_bags.common.data.EyeDataMK2;
 
 import com.limachi.dimensional_bags.common.inventory.Tank;
-import com.limachi.dimensional_bags.common.inventory.Wrapper;
 import net.minecraft.nbt.ByteArrayNBT;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.nbt.ListNBT;
@@ -14,6 +13,9 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 public class TankData extends WorldSavedDataManager.EyeWorldSavedData implements IFluidHandler {
+
+    public static final byte CANINPUT = 1;
+    public static final byte CANOUTPUT = 2;
 
     private ArrayList<Tank> tanks = new ArrayList<>();
     private ArrayList<Byte> rights = new ArrayList<>();
@@ -59,7 +61,7 @@ public class TankData extends WorldSavedDataManager.EyeWorldSavedData implements
 
     @Override
     public int fill(FluidStack resource, FluidAction action) {
-        if (resource.isEmpty() || (rights.get(selected) & Wrapper.IORights.CANINPUT) == 0) return 0;
+        if (resource.isEmpty() || (rights.get(selected) & CANINPUT) == 0) return 0;
         int consumed = tanks.get(selected).fill(resource, action);
         if (consumed > 0 && action.execute())
             markDirty();
@@ -69,7 +71,7 @@ public class TankData extends WorldSavedDataManager.EyeWorldSavedData implements
     @Nonnull
     @Override
     public FluidStack drain(FluidStack resource, FluidAction action) {
-        if (resource.isEmpty() || (rights.get(selected) & Wrapper.IORights.CANOUTPUT) == 0) return FluidStack.EMPTY;
+        if (resource.isEmpty() || (rights.get(selected) & CANOUTPUT) == 0) return FluidStack.EMPTY;
         FluidStack out = tanks.get(selected).drain(resource, action);
         if (!out.isEmpty() && action.execute())
             markDirty();
@@ -79,7 +81,7 @@ public class TankData extends WorldSavedDataManager.EyeWorldSavedData implements
     @Nonnull
     @Override
     public FluidStack drain(int maxDrain, FluidAction action) {
-        if (maxDrain == 0 || (rights.get(selected) & Wrapper.IORights.CANOUTPUT) == 0) return FluidStack.EMPTY;
+        if (maxDrain == 0 || (rights.get(selected) & CANOUTPUT) == 0) return FluidStack.EMPTY;
         FluidStack out = tanks.get(selected).drain(maxDrain, action);
         if (!out.isEmpty() && action.execute())
             markDirty();

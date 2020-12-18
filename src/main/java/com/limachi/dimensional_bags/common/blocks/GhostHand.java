@@ -27,7 +27,7 @@ public class GhostHand extends Block implements ITileEntityProvider {
     public static final BooleanProperty POWERED = BooleanProperty.create("powered");
 
     public GhostHand() {
-        super(Properties.create(Material.ROCK).sound(SoundType.STONE));
+        super(Properties.create(Material.ROCK).sound(SoundType.STONE).hardnessAndResistance(2.0F, 3.0F));
     }
 
     @Override

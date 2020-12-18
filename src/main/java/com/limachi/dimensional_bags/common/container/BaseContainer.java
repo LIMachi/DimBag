@@ -6,8 +6,7 @@ import com.limachi.dimensional_bags.common.WorldUtils;
 import com.limachi.dimensional_bags.common.container.slot.DisabledSlot;
 import com.limachi.dimensional_bags.common.container.slot.RemoteFluidSlot;
 import com.limachi.dimensional_bags.common.container.slot.IIORightsSlot;
-import com.limachi.dimensional_bags.common.container.slot.InvWrapperSlot;
-import com.limachi.dimensional_bags.common.inventory.Wrapper;
+import com.limachi.dimensional_bags.common.inventory.InventoryUtils;
 import com.limachi.dimensional_bags.common.network.PacketHandler;
 import com.limachi.dimensional_bags.common.network.packets.FluidSlotSyncMsg;
 import com.limachi.dimensional_bags.common.network.packets.TrackedStringSyncMsg;
@@ -288,11 +287,12 @@ public class BaseContainer extends Container {
         return out;
     }
 
+    /*
     protected int getSameSlotIndex(Slot slot) {
         for (Slot test : inventorySlots) {
             if (test.slotNumber == slot.slotNumber) continue;
-            if (test instanceof InvWrapperSlot) {
-                if (slot instanceof InvWrapperSlot) {
+            if (test instanceof SlotItemHandler && ((SlotItemHandler)test).getItemHandler() instanceof InventoryUtils.IIORIghtItemHandler) {
+                if (slot instanceof SlotItemHandler && ((SlotItemHandler)slot).getItemHandler() instanceof InventoryUtils.IIORIghtItemHandler) {
                     if (!((InvWrapperSlot)test).getWrapper().matchInventory(((InvWrapperSlot)slot).getWrapper().getInventory()))
                         continue;
                 } else {
@@ -308,7 +308,7 @@ public class BaseContainer extends Container {
                 return test.slotNumber;
         }
         return -1;
-    }
+    }*/
 
     @Override
     public ItemStack transferStackInSlot(PlayerEntity playerIn, int index) {
@@ -316,20 +316,15 @@ public class BaseContainer extends Container {
         Slot slot = index >= 0 && index < inventorySlots.size() ? inventorySlots.get(index) : null;
         if (slot != null && slot.getHasStack()) {
             ItemStack slotStack = slot.getStack();
-            itemStack = slotStack.copy();
             boolean playerSlot = isPlayerSlot(index);
             ArrayList<Integer> blackList = new ArrayList<>(disabledSlots());
-            blackList.add(getSameSlotIndex(slot));
+//            blackList.add(getSameSlotIndex(slot)); //FIXME: add back a protection for the wrapped slots
             if (playerSlot)
                 blackList.addAll(playerSlots());
             else
                 blackList.addAll(otherSlots());
-            if (!Wrapper.mergeItemStack(inventorySlots, slotStack, 0, inventorySlots.size(), false, blackList))
-                return ItemStack.EMPTY;
-            if (slotStack.getCount() == 0)
-                slot.putStack(ItemStack.EMPTY);
-            else
-                slot.onSlotChanged();
+            slot.putStack(itemStack = InventoryUtils.mergeItemStack(inventorySlots, slotStack, 0, inventorySlots.size(), false, blackList));
+            slot.onSlotChanged();
         }
         return itemStack;
     }
@@ -347,6 +342,7 @@ public class BaseContainer extends Container {
         return super.slotClick(slotId, dragType, clickTypeIn, player);
     }
 
+    /*
     public Wrapper.IORights getRights(int index) {
         if (index < 0 || index >= inventorySlots.size()) return new Wrapper.IORights();
         Slot slot = inventorySlots.get(index);
@@ -354,11 +350,14 @@ public class BaseContainer extends Container {
             return new Wrapper.IORights(((IIORightsSlot)slot).getRights(), (byte)0, (byte)64);
         return new Wrapper.IORights();
     }
+     */
 
+    /*
     public void changeRights(int index, Wrapper.IORights rights) {
         if (index < 0 || index >= inventorySlots.size()) return;
         Slot slot = inventorySlots.get(index);
         if (slot instanceof IIORightsSlot)
             ((IIORightsSlot)slot).setRights(rights);
     }
+     */
 }

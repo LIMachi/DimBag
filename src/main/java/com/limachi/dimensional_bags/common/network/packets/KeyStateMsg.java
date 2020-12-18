@@ -1,6 +1,5 @@
 package com.limachi.dimensional_bags.common.network.packets;
 
-import com.limachi.dimensional_bags.KeyMapController;
 import com.limachi.dimensional_bags.common.network.PacketHandler;
 import net.minecraft.client.Minecraft;
 import net.minecraft.entity.player.ServerPlayerEntity;

@@ -1,6 +1,5 @@
 package com.limachi.dimensional_bags.common.inventory;
 
-import com.limachi.dimensional_bags.common.EventManager;
 import com.limachi.dimensional_bags.common.container.slot.InvWrapperSlot;
 import com.limachi.dimensional_bags.common.data.IMarkDirty;
 import net.minecraft.entity.player.PlayerInventory;
@@ -20,13 +19,17 @@ import net.minecraftforge.items.ItemHandlerHelper;
 
 import javax.annotation.Nonnull;
 
-import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.limachi.dimensional_bags.common.inventory.Wrapper.IORights.*;
+//import static com.limachi.dimensional_bags.common.inventory.Wrapper.IORights.*;
 
-public class Wrapper implements IItemHandlerModifiable { //rewrite of InvWrapper to include IO limitations per slots
+public class Wrapper {/*implements IItemHandlerModifiable, InventoryUtils.IIORIghtItemHandler {
+    @Nonnull
+    @Override
+    public InventoryUtils.ItemStackIORights getRightsInSlot(int slot) {
+        return null;
+    } //rewrite of InvWrapper to include IO limitations per slots
 
     public static class IORights {
         public static final byte CANINPUT = 1;
@@ -161,19 +164,19 @@ public class Wrapper implements IItemHandlerModifiable { //rewrite of InvWrapper
         }
     }
 
-    protected IORights[] IO;
+    protected InventoryUtils.ItemStackIORights[] IO;
     protected IInventory inv;
     protected IMarkDirty dirt;
 
-    public Wrapper(IInventory inv, final IORights IO[], IMarkDirty dirt) {
+    public Wrapper(IInventory inv, final InventoryUtils.ItemStackIORights IO[], IMarkDirty dirt) {
         this.inv = inv;
         this.dirt = dirt;
         if (inv.getSizeInventory() == IO.length)
             this.IO = IO;
         else {
-            this.IO = new IORights[inv.getSizeInventory()];
+            this.IO = new InventoryUtils.ItemStackIORights[inv.getSizeInventory()];
             for (int i = 0; i < this.IO.length; ++i)
-                this.IO[i] = i < IO.length ? IO[i] : new IORights();
+                this.IO[i] = i < IO.length ? IO[i] : new InventoryUtils.ItemStackIORights();
         }
     }
 
@@ -183,9 +186,9 @@ public class Wrapper implements IItemHandlerModifiable { //rewrite of InvWrapper
         else
             this.inv = inv;
         assert (this.inv.getSizeInventory() == size);
-        this.IO = new IORights[size];
+        this.IO = new InventoryUtils.ItemStackIORights[size];
         for (int i = 0; i < this.inv.getSizeInventory(); ++i)
-            this.IO[i] = new IORights(buffer);
+            this.IO[i] = new InventoryUtils.ItemStackIORights(buffer);
         this.dirt = null;
     }
 
@@ -400,10 +403,6 @@ public class Wrapper implements IItemHandlerModifiable { //rewrite of InvWrapper
         }
     }
 
-    /**
-     * Merge provided ItemStack with the first available one in the inventory between slot minIndex (included) and
-     * maxIndex (excluded), do validation before inserting the items, based on Container#mergeItemStack
-     */
     public static boolean mergeItemStack(List<Slot> inventorySlots, ItemStack stack, int startIndex, int endIndex, boolean reverseDirection, ArrayList<Integer> blackListSlot) {
         boolean flag = false; //tell if something was put, return false if the stack in input wasn't shrinked/consumed
         int i = reverseDirection ? endIndex - 1 : startIndex;
@@ -498,4 +497,5 @@ public class Wrapper implements IItemHandlerModifiable { //rewrite of InvWrapper
         if (slot < 0 || slot >= IO.length) return false;
         return inv.isItemValidForSlot(slot, stack) && IO[slot].isItemValid(stack);
     }
+    */
 }

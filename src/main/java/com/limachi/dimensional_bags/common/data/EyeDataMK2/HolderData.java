@@ -34,7 +34,7 @@ public class HolderData extends WorldSavedDataManager.EyeWorldSavedData {
 
     public void setHolder(Entity entity) {
         boolean dirty = false;
-        if (entity != null && getEyeId() != SubRoomsManager.getEyeId(entity.getEntityWorld(), entity.getPosition(), false) && (!lastKnownPosition.equals(entity.getPositionVec()) || !lastKnownDimension.equals(entity.getEntityWorld().getDimensionKey()))) {
+        if (entity != null && getEyeId() != SubRoomsManager.getEyeId(entity.getEntityWorld(), entity.getPosition(), false) && (lastKnownPosition == null || !lastKnownPosition.equals(entity.getPositionVec()) || lastKnownDimension == null || !lastKnownDimension.equals(entity.getEntityWorld().getDimensionKey()))) {
             lastKnownPosition = entity.getPositionVec();
             lastKnownDimension = entity.getEntityWorld().getDimensionKey();
             dirty = true;

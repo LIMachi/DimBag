@@ -1,6 +1,5 @@
 package com.limachi.dimensional_bags.common.managers.modes;
 
-import com.limachi.dimensional_bags.KeyMapController;
 import com.limachi.dimensional_bags.client.render.Box2d;
 import com.limachi.dimensional_bags.client.render.RenderUtils;
 import com.limachi.dimensional_bags.common.data.EyeDataMK2.EnergyData;

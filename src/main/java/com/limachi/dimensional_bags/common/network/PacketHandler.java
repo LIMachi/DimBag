@@ -78,7 +78,7 @@ public class PacketHandler {
     static {
         index = 0;
         registerMsg(WorldSavedDataSyncMsg.class);
-        registerMsg(SlotIORightsChanged.class);
+//        registerMsg(SlotIORightsChanged.class);
         registerMsg(ChangeModeRequest.class);
         registerMsg(KeyStateMsg.class);
         registerMsg(TrackedStringSyncMsg.class);

@@ -1,54 +1,5 @@
 package com.limachi.dimensional_bags.common.data;
 
-import com.limachi.dimensional_bags.DimBag;
-import com.limachi.dimensional_bags.common.NBTUtils;
-import com.limachi.dimensional_bags.common.Registries;
-import com.limachi.dimensional_bags.common.WorldUtils;
-import com.limachi.dimensional_bags.common.inventory.BagInventory;
-import com.limachi.dimensional_bags.common.inventory.MultyTank;
-import com.limachi.dimensional_bags.common.managers.ModeManager;
-import com.limachi.dimensional_bags.common.managers.Upgrade;
-import com.limachi.dimensional_bags.common.managers.UpgradeManager;
-import com.mojang.blaze3d.matrix.MatrixStack;
-import javafx.util.Pair;
-import net.minecraft.client.MainWindow;
-import net.minecraft.client.renderer.IRenderTypeBuffer;
-import net.minecraft.client.renderer.entity.model.BipedModel;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.entity.player.PlayerInventory;
-import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.nbt.ListNBT;
-import net.minecraft.nbt.NBTUtil;
-import net.minecraft.server.MinecraftServer;
-import net.minecraft.util.Direction;
-import net.minecraft.util.RegistryKey;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.vector.Vector3d;
-import net.minecraft.world.World;
-import net.minecraft.world.server.ServerWorld;
-import net.minecraft.world.storage.WorldSavedData;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.common.capabilities.Capability;
-import net.minecraftforge.common.capabilities.ICapabilityProvider;
-import net.minecraftforge.common.util.LazyOptional;
-import net.minecraftforge.energy.CapabilityEnergy;
-import net.minecraftforge.energy.EnergyStorage;
-import net.minecraftforge.energy.IEnergyStorage;
-import net.minecraftforge.fluids.capability.CapabilityFluidHandler;
-import net.minecraftforge.items.CapabilityItemHandler;
-
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
-import java.lang.ref.WeakReference;
-import java.util.*;
-
-import static com.limachi.dimensional_bags.DimBag.MOD_ID;
-
 public class EyeData {}/*extends WorldSavedData { //TODO: make EyeData a WorldSavedData (and change DimBagData to only hold global data, like id's), and no longer use the manager, the eye will manage itself (the get function will take an id in adition to the additional server), no longer use the DimensionSavedDataManager#getOrCreate, make the getter use get and return an error if not present, use the setter to create a new eye
     public static final String ID_KEY = "Id";
     private int id;

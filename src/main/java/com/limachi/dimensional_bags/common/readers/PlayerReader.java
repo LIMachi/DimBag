@@ -1,6 +1,5 @@
 package com.limachi.dimensional_bags.common.readers;
 
-import com.limachi.dimensional_bags.KeyMapController;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
 
