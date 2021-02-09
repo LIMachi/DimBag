@@ -1,32 +1,29 @@
 package com.limachi.dimensional_bags.common;
 
-import com.limachi.dimensional_bags.DimBag;
-import com.limachi.dimensional_bags.common.blocks.*;
-import com.limachi.dimensional_bags.common.container.*;
-import com.limachi.dimensional_bags.common.entities.BagEntity;
-import com.limachi.dimensional_bags.common.items.Bag;
-import com.limachi.dimensional_bags.common.items.GhostBag;
-import com.limachi.dimensional_bags.common.items.TunnelPlacer;
-import com.limachi.dimensional_bags.common.items.entity.BagEntityItem;
-import com.limachi.dimensional_bags.common.tileentities.BrainTileEntity;
-import com.limachi.dimensional_bags.common.tileentities.GhostHandTileEntity;
-import com.limachi.dimensional_bags.common.tileentities.PillarTileEntity;
-import com.limachi.dimensional_bags.common.tileentities.TheEyeTileEntity;
 import com.limachi.dimensional_bags.common.managers.UpgradeManager;
 import net.minecraft.block.Block;
-import net.minecraft.entity.EntityClassification;
 import net.minecraft.entity.EntityType;
 import net.minecraft.inventory.container.ContainerType;
 import net.minecraft.item.BlockItem;
 import net.minecraft.item.Item;
+import net.minecraft.tileentity.TileEntity;
 import net.minecraft.tileentity.TileEntityType;
-import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.common.extensions.IForgeContainerType;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.fml.RegistryObject;
 import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraft.inventory.container.Container;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.function.Supplier;
+
+import com.mojang.datafixers.types.Type;
+
+import javax.annotation.Nullable;
+
+import static com.limachi.dimensional_bags.DimBag.LOGGER;
 import static com.limachi.dimensional_bags.DimBag.MOD_ID;
 
 public class Registries {
@@ -36,42 +33,134 @@ public class Registries {
     public static final DeferredRegister<ContainerType<?>> CONTAINER_TYPE_REGISTER = DeferredRegister.create(ForgeRegistries.CONTAINERS, MOD_ID);
     public static final DeferredRegister<EntityType<?>> ENTITY_REGISTER = DeferredRegister.create(ForgeRegistries.ENTITIES, MOD_ID);
 
-    public static final RegistryObject<Block> BAG_EYE_BLOCK = BLOCK_REGISTER.register("bag_eye", TheEye::new);
-    public static final RegistryObject<Block> PILLAR_BLOCK = BLOCK_REGISTER.register("pillar", Pillar::new);
-    public static final RegistryObject<Block> TUNNEL_BLOCK = BLOCK_REGISTER.register("tunnel", Tunnel::new);
-    public static final RegistryObject<Block> WALL_BLOCK = BLOCK_REGISTER.register("wall", Wall::new);
-    public static final RegistryObject<Block> CLOUD_BLOCK = BLOCK_REGISTER.register("cloud", Cloud::new);
-    public static final RegistryObject<Block> BRAIN_BLOCK = BLOCK_REGISTER.register("brain", Brain::new);
-    public static final RegistryObject<Block> GHOST_HAND_BLOCK = BLOCK_REGISTER.register("ghost_hand", GhostHand::new);
+    public static final Map<String, RegistryObject<Block>> BLOCKS = new HashMap<>();
+    public static final Map<String, RegistryObject<Item>> ITEMS = new HashMap<>();
+    public static final Map<String, RegistryObject<net.minecraft.tileentity.TileEntityType<?>>> TILE_ENTITY_TYPES = new HashMap<>();
+    public static final Map<String, RegistryObject<ContainerType<?>>> CONTAINER_TYPES = new HashMap<>();
+    public static final Map<String, RegistryObject<EntityType<?>>> ENTITY_TYPES = new HashMap<>();
 
-    public static final RegistryObject<Item> BAG_ITEM = ITEM_REGISTER.register("bag", Bag::new);
-    public static final RegistryObject<Item> GHOST_BAG_ITEM = ITEM_REGISTER.register("ghost_bag", GhostBag::new);
-    public static final RegistryObject<Item> TUNNEL_ITEM = ITEM_REGISTER.register("tunnel_placer", TunnelPlacer::new);
+    protected static boolean initializationFinished = false;
 
-    public static RegistryObject<EntityType<BagEntityItem>> BAG_ITEM_ENTITY = ENTITY_REGISTER
-            .register("bag_item", () -> EntityType.Builder.<BagEntityItem>create(BagEntityItem::new, EntityClassification.MISC)
-                    .size(0.25F, 0.25F)
-                    .build("bag_item"));
+    /**
+     * helper function to generate a tile entity type and bind a tile entity to a block
+     */
+    public static void registerTileEntity(String name, Supplier<? extends TileEntity> teSup, Supplier<? extends Block> blockSup, @Nullable Type<?> fixer) {
+        registerTileEntityType(name, ()-> TileEntityType.Builder.create(teSup, blockSup.get()).build(fixer));
+    }
 
-    public static final RegistryObject<Item> EYE_ITEM = ITEM_REGISTER.register("bag_eye", () -> new BlockItem(BAG_EYE_BLOCK.get(), new Item.Properties().group(DimBag.ITEM_GROUP)));
-    public static final RegistryObject<Item> PILLAR_ITEM = ITEM_REGISTER.register("pillar", () -> new BlockItem(PILLAR_BLOCK.get(), new Item.Properties().group(DimBag.ITEM_GROUP)));
-    public static final RegistryObject<Item> CLOUD_ITEM = ITEM_REGISTER.register("cloud", () -> new BlockItem(CLOUD_BLOCK.get(), new Item.Properties().group(DimBag.ITEM_GROUP)));
-    public static final RegistryObject<Item> BRAIN_ITEM = ITEM_REGISTER.register("brain", () -> new BlockItem(BRAIN_BLOCK.get(), new Item.Properties().group(DimBag.ITEM_GROUP)));
-    public static final RegistryObject<Item> WALL_ITEM = ITEM_REGISTER.register("wall", () -> new BlockItem(WALL_BLOCK.get(), new Item.Properties().group(DimBag.ITEM_GROUP)));
-    public static final RegistryObject<Item> GHOST_HAND_ITEM = ITEM_REGISTER.register("ghost_hand", () -> new BlockItem(GHOST_HAND_BLOCK.get(), new Item.Properties().group(DimBag.ITEM_GROUP)));
+    /**
+     * helper function to generate block items
+     */
+    public static void registerBlockItem(String name, String blockName, Item.Properties properties) {
+        registerItem(name, ()->new BlockItem(getBlock(blockName), properties));
+    }
 
-    public static final RegistryObject<TileEntityType<TheEyeTileEntity>> BAG_EYE_TE = TILE_ENTITY_REGISTER.register("bag_eye", () -> TileEntityType.Builder.create(TheEyeTileEntity::new, BAG_EYE_BLOCK.get()).build(null));
-    public static final RegistryObject<TileEntityType<PillarTileEntity>> PILLAR_TE = TILE_ENTITY_REGISTER.register("pillar", () -> TileEntityType.Builder.create(PillarTileEntity::new, PILLAR_BLOCK.get()).build(null));
-    public static final RegistryObject<TileEntityType<BrainTileEntity>> BRAIN_TE = TILE_ENTITY_REGISTER.register("brain", () -> TileEntityType.Builder.create(BrainTileEntity::new, BRAIN_BLOCK.get()).build(null));
-    public static final RegistryObject<TileEntityType<GhostHandTileEntity>> GHOST_HAND_TE = TILE_ENTITY_REGISTER.register("ghost_hand", () -> TileEntityType.Builder.create(GhostHandTileEntity::new, GHOST_HAND_BLOCK.get()).build(null));
+    /**
+     * helper function to generate containers
+     */
+    public static void registerContainer(String name, net.minecraftforge.fml.network.IContainerFactory<? extends Container> factory) {
+        registerContainerType(name, () -> IForgeContainerType.create(factory));
+    }
 
-    public static final RegistryObject<ContainerType<BagContainer>> BAG_CONTAINER = CONTAINER_TYPE_REGISTER.register("inventory", () -> IForgeContainerType.create(BagContainer::CreateClient));
-    public static final RegistryObject<ContainerType<WrappedPlayerInventoryContainer>> PLAYER_CONTAINER = CONTAINER_TYPE_REGISTER.register("player", () -> IForgeContainerType.create(WrappedPlayerInventoryContainer::new));
-    public static final RegistryObject<ContainerType<BrainContainer>> BRAIN_CONTAINER = CONTAINER_TYPE_REGISTER.register("brain", () -> IForgeContainerType.create(BrainContainer::new));
-    public static final RegistryObject<ContainerType<SettingsContainer>> SETTINGS_CONTAINER = CONTAINER_TYPE_REGISTER.register("settings", () -> IForgeContainerType.create(SettingsContainer::new));
-    public static final RegistryObject<ContainerType<GhostHandContainer>> GHOST_HAND_CONTAINER = CONTAINER_TYPE_REGISTER.register("ghost_hand", () -> IForgeContainerType.create(GhostHandContainer::new));
+    /**
+     * should be called in a static block
+     */
+    public static void registerBlock(String name, Supplier<? extends Block> sup) {
+        LOGGER.info("Registering Block: " + name);
+        if (initializationFinished)
+            LOGGER.warn("Trying to register a block after initialization phase! Please move this registration to static phase: " + name);
+        else
+            BLOCKS.put(name, BLOCK_REGISTER.register(name, sup));
+    }
 
-    public static final RegistryObject<EntityType<BagEntity>> BAG_ENTITY = ENTITY_REGISTER.register("bag_entity", () -> EntityType.Builder.<BagEntity>create(BagEntity::new, EntityClassification.MISC).size(0.5f, 1f).build(new ResourceLocation(MOD_ID, "bag_entity").toString()));
+    /**
+     * should be called in a static block
+     */
+    public static void registerItem(String name, Supplier<? extends Item> sup) {
+        LOGGER.info("Registering Item: " + name);
+        if (initializationFinished)
+            LOGGER.error("Trying to register an item after initialization phase! Please move this registration to static phase: " + name);
+        else
+            ITEMS.put(name, ITEM_REGISTER.register(name, sup));
+    }
+
+    /**
+     * should be called in a static block
+     */
+    public static void registerTileEntityType(String name, Supplier<? extends net.minecraft.tileentity.TileEntityType<?>> sup) {
+        LOGGER.info("Registering TileEntityType: " + name);
+        if (initializationFinished)
+            LOGGER.error("Trying to register a tile entity type after initialization phase! Please move this registration to static phase: " + name);
+        else
+            TILE_ENTITY_TYPES.put(name, TILE_ENTITY_REGISTER.register(name, sup));
+    }
+
+    /**
+     * should be called in a static block
+     */
+    public static void registerContainerType(String name, Supplier<? extends ContainerType<?>> sup) {
+        LOGGER.info("Registering ContainerType: " + name);
+        if (initializationFinished)
+            LOGGER.error("Trying to register a container type after initialization phase! Please move this registration to static phase: " + name);
+        else
+            CONTAINER_TYPES.put(name, CONTAINER_TYPE_REGISTER.register(name, sup));
+    }
+
+    /**
+     * should be called in a static block
+     */
+    public static void registerEntityType(String name, Supplier<? extends EntityType<?>> sup) {
+        LOGGER.info("Registering EntityType: " + name);
+        if (initializationFinished)
+            LOGGER.error("Trying to register an entity type after initialization phase! Please move this registration to static phase: " + name);
+        else
+            ENTITY_TYPES.put(name, ENTITY_REGISTER.register(name, sup));
+    }
+
+    /**
+     * only valid after register phase
+     */
+    public static <B extends Block> B getBlock(String name) {
+        if (!initializationFinished)
+            LOGGER.warn("Trying to access a registry object (of type block) before finishing initialization! Please move this access after the registry phase: " + name);
+        return (B)BLOCKS.get(name).get();
+    }
+
+    /**
+     * only valid after register phase
+     */
+    public static <I extends Item> I getItem(String name) {
+        if (!initializationFinished)
+            LOGGER.warn("Trying to access a registry object (of type item) before finishing initialization! Please move this access after the registry phase: " + name);
+        return (I)ITEMS.get(name).get();
+    }
+
+    /**
+     * only valid after register phase
+     */
+    public static <T extends net.minecraft.tileentity.TileEntityType<?>> T getTileEntityType(String name) {
+        if (!initializationFinished)
+            LOGGER.warn("Trying to access a registry object (of type tile entity type) before finishing initialization! Please move this access after the registry phase: " + name);
+        return (T) TILE_ENTITY_TYPES.get(name).get();
+    }
+
+    /**
+     * only valid after register phase
+     */
+    public static <T extends ContainerType<?>> T getContainerType(String name) {
+        if (!initializationFinished)
+            LOGGER.warn("Trying to access a registry object (of type container type) before finishing initialization! Please move this access after the registry phase: " + name);
+        return (T)CONTAINER_TYPES.get(name).get();
+    }
+
+    /**
+     * only valid after register phase
+     */
+    public static <T extends EntityType<?>> T getEntityType(String name) {
+        if (!initializationFinished)
+            LOGGER.warn("Trying to access a registry object (of type entity type) before finishing initialization! Please move this access after the registry phase: " + name);
+        return (T) ENTITY_TYPES.get(name).get();
+    }
 
     public static void registerAll(IEventBus bus) {
         UpgradeManager.registerItems(ITEM_REGISTER);
@@ -80,5 +169,7 @@ public class Registries {
         TILE_ENTITY_REGISTER.register(bus);
         CONTAINER_TYPE_REGISTER.register(bus);
         ENTITY_REGISTER.register(bus);
+        LOGGER.info("Finished registration");
+        initializationFinished = true;
     }
 }

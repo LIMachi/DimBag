@@ -16,14 +16,23 @@ import net.minecraftforge.items.SlotItemHandler;
 
 import static com.limachi.dimensional_bags.common.references.GUIs.ScreenParts.*;
 
+import com.limachi.dimensional_bags.StaticInit;
+
+@StaticInit
 public class BagContainer extends BaseWrappedInventoryContainer {
+
+    public static final String NAME = "inventory";
+
+    static {
+        Registries.registerContainer(NAME, BagContainer::CreateClient);
+    }
 
     private int rows;
     private int columns;
     private InventoryData data;
 
     private BagContainer(int windowId, PlayerInventory playerInv, int rows, int columns, Wrapper openInv, InventoryData data) {
-        super(Registries.BAG_CONTAINER.get(), windowId);
+        super(Registries.getContainerType(BagContainer.NAME), windowId);
         this.playerInv = new PlayerInvWrapper(playerInv);
         this.openInv = openInv;
         this.rows = rows;

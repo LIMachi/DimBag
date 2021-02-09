@@ -30,7 +30,7 @@ public class PokeBall extends Mode {
 
     @Override
     public ActionResultType onAttack(int eyeId, PlayerEntity player, Entity entity) {
-        SubRoomsManager.execute(eyeId, subRoomsManager -> subRoomsManager.tpIn(entity)); //FIXME: add a condition for players/special entities (like the dragon)
+        SubRoomsManager.execute(eyeId, subRoomsManager -> subRoomsManager.enterBag(entity)); //FIXME: add a condition for players/special entities (like the dragon)
         return ActionResultType.SUCCESS;
     }
 
@@ -66,13 +66,17 @@ public class PokeBall extends Mode {
 
     @Override
     public ActionResultType onItemUse(int eyeId, World world, PlayerEntity player, BlockRayTraceResult ray) {
-        WorldUtils.teleportEntity(getClosestNonPlayerEntityNextToEye(eyeId), world.getDimensionKey(), ray.getPos().offset(Direction.UP));
+        Entity target = getClosestNonPlayerEntityNextToEye(eyeId);
+        if (target != null)
+            SubRoomsManager.execute(eyeId, sm->sm.leaveBag(target, false, ray.getPos().offset(Direction.UP), world.getDimensionKey()));
         return ActionResultType.SUCCESS;
     }
 
     @Override
     public ActionResultType onActivateItem(int eyeId, PlayerEntity player) {
-        WorldUtils.teleportEntity(getClosestNonPlayerEntityNextToEye(eyeId), player.world.getDimensionKey(), player.getPositionVec().add(0, 1, 0).add(player.getLookVec().scale(5)));
+        Entity target = getClosestNonPlayerEntityNextToEye(eyeId);
+        if (target != null)
+            SubRoomsManager.execute(eyeId, sm->sm.leaveBag(target, false, new BlockPos(player.getPositionVec().add(0, 1, 0).add(player.getLookVec().scale(5))), player.world.getDimensionKey()));
         return ActionResultType.SUCCESS;
     }
 

@@ -49,9 +49,9 @@ public class KeyMapController {
     public static void onScrollInput(InputEvent.MouseScrollEvent event) {
         PlayerEntity player = DimBag.getPlayer();
         if (player != null && KeyBindings.BAG_KEY.getState(player)) {
-            int p = IDimBagCommonItem.getFirstValidItemFromPlayer(player, Item.class, x->x.getItem() instanceof Bag || x.getItem() instanceof GhostBag);
-            if (p != -1) {
-                PacketHandler.toServer(new ChangeModeRequest(p, event.getScrollDelta() > 0));
+            int slot = IDimBagCommonItem.getFirstValidItemFromPlayer(player, Item.class, x->(x.getItem() instanceof Bag || x.getItem() instanceof GhostBag) && Bag.getEyeId(x) > 0);
+            if (slot != -1) {
+                PacketHandler.toServer(new ChangeModeRequest(Bag.getEyeId(IDimBagCommonItem.getItemFromPlayer(player, slot)), event.getScrollDelta() > 0));
                 event.setCanceled(true);
             }
         }

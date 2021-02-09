@@ -1,6 +1,7 @@
 package com.limachi.dimensional_bags.common.managers;
 
 import com.google.common.collect.ImmutableMultimap;
+import com.limachi.dimensional_bags.DimBag;
 import com.limachi.dimensional_bags.common.data.EyeDataMK2.ClientDataManager;
 import com.limachi.dimensional_bags.common.data.EyeDataMK2.WorldSavedDataManager;
 import com.limachi.dimensional_bags.common.items.Bag;
@@ -13,6 +14,7 @@ import net.minecraft.entity.ai.attributes.AttributeModifier;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.inventory.EquipmentSlotType;
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.nbt.ListNBT;
@@ -37,22 +39,30 @@ public class ModeManager extends WorldSavedDataManager.EyeWorldSavedData {
         new Tank()
     };
 
-    public static void changeModeRequest(ServerPlayerEntity player, int slot, boolean up) {
-        ItemStack stack = IDimBagCommonItem.getItemFromPlayer(player, slot);
-        int id;
-        if (stack == null || !(stack.getItem() instanceof Bag || stack.getItem() instanceof GhostBag) || (id = Bag.getEyeId(stack)) <= 0) return;
-        ModeManager dataS = getInstance(id);
+    public static void changeModeRequest(int eye, boolean up) { //should iterate over players and change all bags
+        ModeManager dataS = getInstance(eye);
         if (dataS == null) return;
-        ClientDataManager dataC = ClientDataManager.getInstance(stack);
+        ClientDataManager dataC = ClientDataManager.getInstance(eye);
         ArrayList<String> modes = dataS.getInstalledModes();
         for (int i = 0; i < modes.size(); ++i) {
             if (!modes.get(i).equals(dataS.getSelectedMode())) continue;
             dataS.selectMode((i + (up ? 1 : modes.size() - 1)) % modes.size());
             dataC.getModeManager().selectMode(dataS.getSelectedMode());
-            dataC.store(stack);
-            player.sendStatusMessage(new TranslationTextComponent("notification.bag.changed_mode", new TranslationTextComponent("bag.mode." + dataS.getSelectedMode())), true);
-            return;
+            break;
         }
+        for (PlayerEntity player : DimBag.getPlayers()) {
+            IDimBagCommonItem.ItemSearchResult res = IDimBagCommonItem.searchItem(player, 3, Item.class, i->{
+                if ((i.getItem() instanceof Bag || i.getItem() instanceof GhostBag) && Bag.getEyeId(i) == eye) {
+                    dataC.store(i);
+                    return true;
+                }
+                return false;
+            }, true);
+            if (res != null && res.index != -1)
+                player.sendStatusMessage(new TranslationTextComponent("notification.bag.changed_mode", new TranslationTextComponent("bag.mode." + dataS.getSelectedMode())), true);
+        }
+//            dataC.store(stack);
+//            player.sendStatusMessage(new TranslationTextComponent("notification.bag.changed_mode", new TranslationTextComponent("bag.mode." + dataS.getSelectedMode())), true);
     }
 
     public static int getModeIndex(String name) {

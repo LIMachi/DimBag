@@ -7,6 +7,7 @@ import com.limachi.dimensional_bags.common.data.EyeDataMK2.WorldSavedDataManager
 import com.limachi.dimensional_bags.common.items.Bag;
 import com.limachi.dimensional_bags.common.managers.upgrades.*;
 import com.limachi.dimensional_bags.common.recipes.Smithing;
+import jdk.nashorn.internal.runtime.options.Option;
 import net.minecraft.entity.ai.attributes.Attribute;
 import net.minecraft.entity.ai.attributes.AttributeModifier;
 import net.minecraft.inventory.EquipmentSlotType;
@@ -22,10 +23,7 @@ import net.minecraftforge.common.ForgeConfigSpec;
 import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.IForgeRegistry;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -84,7 +82,7 @@ public class UpgradeManager extends WorldSavedDataManager.EyeWorldSavedData {
     public static void registerRecipes(IForgeRegistry<IRecipeSerializer<?>> registry) {
         new Smithing(
                 new ResourceLocation(MOD_ID, "upgrade_application"),
-                ()-> NonNullList.from(Ingredient.EMPTY, Ingredient.fromItems(Registries.BAG_ITEM.get()), Ingredient.fromItems(allUpgradesAsItem())),
+                ()-> NonNullList.from(Ingredient.EMPTY, Ingredient.fromItems(Registries.getItem(Bag.NAME)), Ingredient.fromItems(allUpgradesAsItem())),
                 NonNullList.create(),
                 (IInventory inv, World world) -> {
                     if (inv.getStackInSlot(0).getItem() instanceof Bag && Bag.getEyeId(inv.getStackInSlot(0)) > 0 && inv.getStackInSlot(1).getItem() instanceof Upgrade.UpgradeItem) {
@@ -122,6 +120,10 @@ public class UpgradeManager extends WorldSavedDataManager.EyeWorldSavedData {
     public CompoundNBT getUpgradesNBT() { return upgradesNBT; }
 
     public static Set<String> getUpgradesNames() { return UPGRADES.keySet(); }
+
+    public static Optional<CompoundNBT> isUpgradeInstalled(int eyeId, String upgradeName) {
+        return execute(eyeId, um -> um.getInstalledUpgrades().contains(upgradeName) ? Optional.of(um.getUpgradesNBT().getCompound(upgradeName)) : Optional.empty(), Optional.empty());
+    }
 
     public ArrayList<String> getInstalledUpgrades() {
         ArrayList<String> out = new ArrayList<>();

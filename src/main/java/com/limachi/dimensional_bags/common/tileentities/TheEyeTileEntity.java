@@ -1,6 +1,7 @@
 package com.limachi.dimensional_bags.common.tileentities;
 
 import com.limachi.dimensional_bags.common.Registries;
+import com.limachi.dimensional_bags.common.blocks.TheEye;
 import com.limachi.dimensional_bags.common.inventory.Wrapper;
 import net.minecraft.tileentity.ITickableTileEntity;
 import net.minecraft.tileentity.TileEntity;
@@ -14,12 +15,21 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import com.limachi.dimensional_bags.StaticInit;
+
+@StaticInit
 public class TheEyeTileEntity extends TileEntity implements ITickableTileEntity {
+
+    public static final String NAME = "bag_eye";
+
+    static {
+        Registries.registerTileEntity(NAME, BrainTileEntity::new, ()->Registries.getBlock(TheEye.NAME), null);
+    }
 
     private LazyOptional<Wrapper> invPtr = LazyOptional.empty();
 
     public TheEyeTileEntity() {
-        super(Registries.BAG_EYE_TE.get());
+        super(Registries.getTileEntityType(NAME));
     }
 
     public <T> List<T> getSurroundingCapabilities(Capability<T> capability){

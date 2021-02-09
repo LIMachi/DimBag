@@ -1,6 +1,9 @@
 package com.limachi.dimensional_bags.common;
 
 import com.limachi.dimensional_bags.DimBag;
+import com.limachi.dimensional_bags.common.blocks.TheEye;
+import com.limachi.dimensional_bags.common.blocks.Tunnel;
+import com.limachi.dimensional_bags.common.blocks.Wall;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.entity.CreatureEntity;
@@ -36,6 +39,8 @@ public class WorldUtils { //TODO: remove bloat once MCP/Forge mappings are bette
 
     public static ServerWorld getRiftWorld() { return DimBag.getServer() != null ? DimBag.getServer().getWorld(DimBagRiftKey) : null; }
     public static ServerWorld getOverWorld() { return DimBag.getServer() != null ? DimBag.getServer().getWorld(World.OVERWORLD) : null; }
+
+    public static Iterable<ServerWorld> getAllWorlds() { return DimBag.getServer() != null ? DimBag.getServer().getWorlds() : null; }
 
     public static ServerWorld getWorld(MinecraftServer server, String regName) {
         if (server == null) return null;
@@ -125,10 +130,10 @@ public class WorldUtils { //TODO: remove bloat once MCP/Forge mappings are bette
     }
 
     public static void buildRoom(World world, BlockPos center, int radius, int prevRad) { //build a new main room or expand it by tearing down walls a adding new ones further TODO: add code to keep doors and covers on walls
-        BlockState wall = Registries.WALL_BLOCK.get().getDefaultState();
-        BlockState eye = Registries.BAG_EYE_BLOCK.get().getDefaultState();
+        BlockState wall = Registries.getBlock(Wall.NAME).getDefaultState();
+        BlockState eye = Registries.getBlock(TheEye.NAME).getDefaultState();
         BlockState air = Blocks.AIR.getDefaultState();
-        BlockState tunnel = Registries.TUNNEL_BLOCK.get().getDefaultState();
+        BlockState tunnel = Registries.getBlock(Tunnel.NAME).getDefaultState();
         int dx = center.getX();
         int dy = center.getY();
         int dz = center.getZ();

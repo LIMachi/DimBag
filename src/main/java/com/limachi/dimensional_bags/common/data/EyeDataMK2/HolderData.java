@@ -34,7 +34,7 @@ public class HolderData extends WorldSavedDataManager.EyeWorldSavedData {
 
     public void setHolder(Entity entity) {
         boolean dirty = false;
-        if (entity != null && getEyeId() != SubRoomsManager.getEyeId(entity.getEntityWorld(), entity.getPosition(), false) && (!lastKnownPosition.equals(entity.getPositionVec()) || !lastKnownDimension.equals(entity.getEntityWorld().getDimensionKey()))) {
+        if (entity != null && getEyeId() != SubRoomsManager.getEyeId(entity.getEntityWorld(), entity.getPosition(), false) && (!entity.getPositionVec().equals(lastKnownPosition) || !entity.getEntityWorld().getDimensionKey().equals(lastKnownDimension))) {
             lastKnownPosition = entity.getPositionVec();
             lastKnownDimension = entity.getEntityWorld().getDimensionKey();
             dirty = true;
@@ -55,8 +55,9 @@ public class HolderData extends WorldSavedDataManager.EyeWorldSavedData {
     }
 
     public PlayerInventory getPlayerInventory() {
-        if (holderRef.get() instanceof PlayerEntity)
-            return ((PlayerEntity)holderRef.get()).inventory;
+        Entity e = holderRef.get();
+        if (e instanceof PlayerEntity)
+            return ((PlayerEntity)e).inventory;
         return null;
     }
 

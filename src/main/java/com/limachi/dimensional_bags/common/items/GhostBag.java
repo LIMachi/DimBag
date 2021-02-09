@@ -3,10 +3,13 @@ package com.limachi.dimensional_bags.common.items;
 import com.limachi.dimensional_bags.DimBag;
 import com.limachi.dimensional_bags.KeyMapController;
 import com.limachi.dimensional_bags.common.Registries;
+import com.limachi.dimensional_bags.common.data.EyeData;
 import com.limachi.dimensional_bags.common.data.EyeDataMK2.ClientDataManager;
+import com.limachi.dimensional_bags.common.data.EyeDataMK2.HolderData;
 import com.limachi.dimensional_bags.common.data.EyeDataMK2.SubRoomsManager;
 import com.limachi.dimensional_bags.common.managers.ModeManager;
 import com.limachi.dimensional_bags.common.managers.UpgradeManager;
+import com.limachi.dimensional_bags.common.managers.modes.Default;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.item.ItemEntity;
 import net.minecraft.entity.player.PlayerEntity;
@@ -20,7 +23,16 @@ import net.minecraft.world.World;
 
 import javax.annotation.Nullable;
 
+import com.limachi.dimensional_bags.StaticInit;
+
+@StaticInit
 public class GhostBag extends Item implements IDimBagCommonItem {
+
+    public static final String NAME = "ghost_bag";
+
+    static {
+        Registries.registerItem(NAME, GhostBag::new);
+    }
 
     public static final String ORIGINAL_STACK_KEY = "original_stack";
     public static final String TARGETED_BAG_INDEX_KEY = "targeted_bag_index";
@@ -47,7 +59,7 @@ public class GhostBag extends Item implements IDimBagCommonItem {
         else
             eyeId = Bag.getEyeId(res.stack);
         if (eyeId <= 0) return stack;
-        ItemStack out = new ItemStack(Registries.GHOST_BAG_ITEM.get());
+        ItemStack out = new ItemStack(Registries.getItem(NAME));
         if (!out.hasTag())
             out.setTag(new CompoundNBT());
         out.getTag().put(ORIGINAL_STACK_KEY, stack.write(new CompoundNBT()));
@@ -141,7 +153,14 @@ public class GhostBag extends Item implements IDimBagCommonItem {
             player.setHeldItem(hand, getOriginalStack(player.getHeldItem(hand)));
             return ActionResult.resultFail(player.getHeldItem(hand));
         }
-        ActionResult<ItemStack> out = Bag.onItemRightClick(world, player, IDimBagCommonItem.slotFromHand(player, hand), Bag.getEyeId(player.getHeldItem(hand)));
+        int id = Bag.getEyeId(player.getHeldItem(hand));
+        if (SubRoomsManager.getEyeId(player.world, player.getPosition(), false) == id && KeyMapController.KeyBindings.SNEAK_KEY.getState(player) && ClientDataManager.getInstance(player.getHeldItem(hand)).getModeManager().getSelectedMode().equals(Default.ID)) {
+//            HolderData.execute(id, holderData -> holderData.tpToHolder(player));
+            SubRoomsManager.execute(id, sm->sm.leaveBag(player, false, null, null));
+            player.setHeldItem(hand, getOriginalStack(player.getHeldItem(hand)));
+            return ActionResult.resultFail(player.getHeldItem(hand));
+        }
+        ActionResult<ItemStack> out = Bag.onItemRightClick(world, player, IDimBagCommonItem.slotFromHand(player, hand), id);
         return (out.getResult().getItem() instanceof Bag || out.getResult().getItem() instanceof GhostBag) ? new ActionResult<>(out.getType(), player.getHeldItem(hand)) : out;
     }
 

@@ -14,6 +14,9 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.BiConsumer;
 
+import com.limachi.dimensional_bags.StaticInit;
+
+@StaticInit
 public class EntityExecutor {
     protected static class ExecutorMao<O extends Entity> {
 

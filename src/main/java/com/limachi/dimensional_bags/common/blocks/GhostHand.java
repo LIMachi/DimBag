@@ -1,5 +1,6 @@
 package com.limachi.dimensional_bags.common.blocks;
 
+import com.limachi.dimensional_bags.DimBag;
 import com.limachi.dimensional_bags.common.Registries;
 import com.limachi.dimensional_bags.common.network.Network;
 import com.limachi.dimensional_bags.common.tileentities.GhostHandTileEntity;
@@ -10,6 +11,7 @@ import net.minecraft.block.SoundType;
 import net.minecraft.block.material.Material;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
+import net.minecraft.item.Item;
 import net.minecraft.state.BooleanProperty;
 import net.minecraft.state.StateContainer;
 import net.minecraft.tileentity.TileEntity;
@@ -22,7 +24,17 @@ import net.minecraft.world.World;
 
 import javax.annotation.Nullable;
 
+import com.limachi.dimensional_bags.StaticInit;
+
+@StaticInit
 public class GhostHand extends Block implements ITileEntityProvider {
+
+    public static final String NAME = "ghost_hand";
+
+    static {
+        Registries.registerBlock(NAME, GhostHand::new);
+        Registries.registerBlockItem(NAME, NAME, DimBag.DEFAULT_PROPERTIES);
+    }
 
     public static final BooleanProperty POWERED = BooleanProperty.create("powered");
 
@@ -38,7 +50,7 @@ public class GhostHand extends Block implements ITileEntityProvider {
 
     @Nullable
     @Override
-    public TileEntity createNewTileEntity(IBlockReader worldIn) { return Registries.GHOST_HAND_TE.get().create(); }
+    public TileEntity createNewTileEntity(IBlockReader worldIn) { return Registries.getTileEntityType(GhostHandTileEntity.NAME).create(); }
 
     @Override
     public void onReplaced(BlockState state, World worldIn, BlockPos pos, BlockState newState, boolean isMoving) {
@@ -53,7 +65,7 @@ public class GhostHand extends Block implements ITileEntityProvider {
 
     public static void setPowered(World world, BlockPos pos, boolean state) {
         if (world.getBlockState(pos).getBlock() instanceof GhostHand && isPowered(world.getBlockState(pos)) != state)
-            world.setBlockState(pos, Registries.GHOST_HAND_BLOCK.get().getDefaultState().with(POWERED, state));
+            world.setBlockState(pos, Registries.getBlock(NAME).getDefaultState().with(POWERED, state));
     }
 
     @Override

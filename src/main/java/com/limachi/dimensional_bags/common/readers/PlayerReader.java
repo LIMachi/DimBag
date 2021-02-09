@@ -4,6 +4,9 @@ import com.limachi.dimensional_bags.KeyMapController;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
 
+import com.limachi.dimensional_bags.StaticInit;
+
+@StaticInit
 public class PlayerReader {
 
     static {

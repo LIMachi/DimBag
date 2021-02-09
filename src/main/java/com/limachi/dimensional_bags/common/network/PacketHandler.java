@@ -13,6 +13,9 @@ import net.minecraftforge.fml.network.simple.SimpleChannel;
 
 import static com.limachi.dimensional_bags.DimBag.MOD_ID;
 
+import com.limachi.dimensional_bags.StaticInit;
+
+@StaticInit
 public class PacketHandler {
     public static abstract class Message {
         public Message() {}

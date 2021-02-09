@@ -17,7 +17,7 @@ public class EnergyUpgrade extends Upgrade {
     @Override
     public void installUpgrade(int eyeId, ItemStack stack, int amount, boolean simulate) {
         if (!simulate) {
-            EnergyData energyData = EnergyData.getInstance(eyeId);
+            EnergyData energyData = EnergyData.getInstance(eyeId); //FIXME: got null once in a modpack, reloading the world fixed the missing file
             int previousStorage = energyData.getMaxEnergyStored();
             if (previousStorage == 0 && amount > 0) {
                 energyData.changeBatterySize(65536);

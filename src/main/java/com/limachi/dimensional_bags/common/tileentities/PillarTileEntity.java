@@ -1,6 +1,7 @@
 package com.limachi.dimensional_bags.common.tileentities;
 
 import com.limachi.dimensional_bags.common.Registries;
+import com.limachi.dimensional_bags.common.blocks.Pillar;
 import com.limachi.dimensional_bags.common.data.EyeDataMK2.HolderData;
 import com.limachi.dimensional_bags.common.data.EyeDataMK2.SubRoomsManager;
 import com.limachi.dimensional_bags.common.data.IMarkDirty;
@@ -21,7 +22,16 @@ import net.minecraftforge.items.IItemHandlerModifiable;
 
 import java.lang.ref.WeakReference;
 
+import com.limachi.dimensional_bags.StaticInit;
+
+@StaticInit
 public class PillarTileEntity extends TileEntity implements ITickableTileEntity, IMarkDirty {
+
+    public static final String NAME = "pillar";
+
+    static {
+        Registries.registerTileEntity(NAME, BrainTileEntity::new, ()->Registries.getBlock(Pillar.NAME), null);
+    }
 
     private LazyOptional<IItemHandlerModifiable> invPtr = LazyOptional.empty();
     private WeakReference<HolderData> holderDataRef = new WeakReference<>(null);
@@ -29,7 +39,7 @@ public class PillarTileEntity extends TileEntity implements ITickableTileEntity,
     private int tick;
 
     public PillarTileEntity() {
-        super(Registries.PILLAR_TE.get());
+        super(Registries.getTileEntityType(NAME));
         rights = new Wrapper.IORights[41];
         for (int i = 0; i < 41; ++i) { //the default rights are 0-64 items of any kind and IO disabled
             rights[i] = new Wrapper.IORights();

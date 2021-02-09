@@ -1,5 +1,6 @@
 package com.limachi.dimensional_bags.common.blocks;
 
+import com.limachi.dimensional_bags.DimBag;
 import com.limachi.dimensional_bags.common.Registries;
 import com.limachi.dimensional_bags.common.network.Network;
 import com.limachi.dimensional_bags.common.tileentities.BrainTileEntity;
@@ -23,7 +24,17 @@ import net.minecraft.world.World;
 
 import javax.annotation.Nullable;
 
+import com.limachi.dimensional_bags.StaticInit;
+
+@StaticInit
 public class Brain extends Block implements ITileEntityProvider {
+
+    public static final String NAME = "brain";
+
+    static {
+        Registries.registerBlock(NAME, Brain::new);
+        Registries.registerBlockItem(NAME, NAME, DimBag.DEFAULT_PROPERTIES);
+    }
 
     public static final IntegerProperty POWER = IntegerProperty.create("power", 0, 15);
     public static final IntegerProperty TICK_RATE = IntegerProperty.create("tick_rate", 1, /*1200*/20);
@@ -47,7 +58,7 @@ public class Brain extends Block implements ITileEntityProvider {
 
     @Nullable
     @Override
-    public TileEntity createNewTileEntity(IBlockReader worldIn) { return Registries.BRAIN_TE.get().create(); }
+    public TileEntity createNewTileEntity(IBlockReader worldIn) { return Registries.getTileEntityType(NAME).create(); }
 
     @Override
     public void onReplaced(BlockState state, World worldIn, BlockPos pos, BlockState newState, boolean isMoving) {

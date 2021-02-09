@@ -3,30 +3,46 @@ package com.limachi.dimensional_bags;
 import com.google.common.reflect.Reflection;
 import com.limachi.dimensional_bags.common.Config;
 import com.limachi.dimensional_bags.common.Registries;
+import com.limachi.dimensional_bags.common.items.Bag;
 import com.limachi.dimensional_bags.common.network.PacketHandler;
 import net.minecraft.client.Minecraft;
+import net.minecraft.command.CommandSource;
+import net.minecraft.command.arguments.EntityAnchorArgument;
+import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.entity.player.ServerPlayerEntity;
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemGroup;
 import net.minecraft.item.ItemStack;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.util.math.vector.Vector2f;
+import net.minecraft.util.math.vector.Vector3d;
+import net.minecraft.util.text.StringTextComponent;
 import net.minecraft.world.World;
+import net.minecraft.world.server.ServerWorld;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.fml.LogicalSide;
+import net.minecraftforge.fml.ModList;
 import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.thread.EffectiveSide;
 import net.minecraftforge.fml.config.ModConfig;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.fml.server.ServerLifecycleHooks;
+import net.minecraftforge.forgespi.language.ModFileScanData;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.objectweb.asm.Type;
 
 import javax.annotation.Nullable;
 
+import java.util.Collection;
+import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 import static com.limachi.dimensional_bags.DimBag.MOD_ID;
 
@@ -38,11 +54,23 @@ public class DimBag {
     public static DimBag INSTANCE;
     public static final ItemGroup ITEM_GROUP = new ItemGroup(ItemGroup.GROUPS.length, "tab_" + MOD_ID) {
         @Override
-        public ItemStack createIcon() { return new ItemStack(Registries.BAG_ITEM.get()); }
+        public ItemStack createIcon() { return new ItemStack(Registries.getItem(Bag.NAME)); }
     };
 
+    public static final Item.Properties DEFAULT_PROPERTIES = new Item.Properties().group(DimBag.ITEM_GROUP);
+
+    static {
+        Type type = Type.getType(StaticInit.class);
+        for (ModFileScanData.AnnotationData data : ModList.get().getAllScanData().stream().map(ModFileScanData::getAnnotations).flatMap(Collection::stream).filter(a-> type.equals(a.getAnnotationType())).collect(Collectors.toList())) {
+            try {
+                Reflection.initialize(Class.forName(data.getClassType().getClassName()));
+            } catch (ClassNotFoundException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
     public DimBag() {
-        Reflection.initialize(PacketHandler.class);
         INSTANCE = this;
         IEventBus eventBus = FMLJavaModLoadingContext.get().getModEventBus();
         ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, Config.getSpec());
@@ -54,6 +82,12 @@ public class DimBag {
         if (world != null)
             return !world.isRemote();
         return EffectiveSide.get() == LogicalSide.SERVER;
+    }
+
+    public static CommandSource silentCommandSource() {
+        MinecraftServer server = getServer();
+        ServerWorld serverworld = server.func_241755_D_();
+        return new CommandSource(server, Vector3d.copy(serverworld.getSpawnPoint()), Vector2f.ZERO, serverworld, 4, "DimBag Silent Command", new StringTextComponent("DimBag Silent Command"), server, null).withFeedbackDisabled();
     }
 
     /** execute the first wrapped callable only on logical client + physical client, and the second wrapped callable on logical server (any physical side) */
@@ -69,6 +103,10 @@ public class DimBag {
     /** get the local minecraft player (only on client logical and physical side, returns null otherwise) */
     public static PlayerEntity getPlayer() {
         return runLogicalSide(null, ()->()->Minecraft.getInstance().player, ()->()->null);
+    }
+
+    public static List<ServerPlayerEntity> getPlayers() {
+        return runLogicalSide(null, ()->()->null, ()->()->getServer().getPlayerList().getPlayers());
     }
 
     /** try to get the current server we are connected on, return null if we aren't connected (hanging in main menu for example) */

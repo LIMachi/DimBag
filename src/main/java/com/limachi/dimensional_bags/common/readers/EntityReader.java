@@ -8,6 +8,9 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 
+import com.limachi.dimensional_bags.StaticInit;
+
+@StaticInit
 public class EntityReader {
 
     protected static class SuppliersMap<O extends Entity> {

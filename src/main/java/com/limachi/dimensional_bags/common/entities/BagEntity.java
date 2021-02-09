@@ -3,8 +3,8 @@ package com.limachi.dimensional_bags.common.entities;
 import com.limachi.dimensional_bags.DimBag;
 import com.limachi.dimensional_bags.KeyMapController;
 import com.limachi.dimensional_bags.common.Registries;
-import com.limachi.dimensional_bags.common.WorldUtils;
 import com.limachi.dimensional_bags.common.data.EyeDataMK2.HolderData;
+import com.limachi.dimensional_bags.common.data.EyeDataMK2.SubRoomsManager;
 import com.limachi.dimensional_bags.common.data.IEyeIdHolder;
 import com.limachi.dimensional_bags.common.items.Bag;
 import com.limachi.dimensional_bags.common.network.Network;
@@ -19,11 +19,23 @@ import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.util.ActionResultType;
 import net.minecraft.util.DamageSource;
 import net.minecraft.util.Hand;
+import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.world.World;
 
+import static com.limachi.dimensional_bags.DimBag.MOD_ID;
+
+import com.limachi.dimensional_bags.StaticInit;
+
+@StaticInit
 public class BagEntity extends MobEntity implements IEyeIdHolder {
+
+    public static final String NAME = "bag_entity";
+
+    static {
+        Registries.registerEntityType(NAME, () -> EntityType.Builder.<BagEntity>create(BagEntity::new, EntityClassification.MISC).size(0.5f, 1f).build(new ResourceLocation(MOD_ID, "bag_entity").toString()));
+    }
 
     public static String ITEM_KEY = "BagItemStack";
 
@@ -49,7 +61,7 @@ public class BagEntity extends MobEntity implements IEyeIdHolder {
     protected void outOfWorld() {}
 
     public static BagEntity spawn(World world, BlockPos position, ItemStack bag) {
-        BagEntity out = new BagEntity(Registries.BAG_ENTITY.get(), world);
+        BagEntity out = new BagEntity(Registries.getEntityType(NAME), world);
         out.setPosition(position.getX() + 0.5d, position.getY() + 0.5d, position.getZ() + 0.5d);
         out.setInvulnerable(true);
         out.enablePersistence();
@@ -117,10 +129,22 @@ public class BagEntity extends MobEntity implements IEyeIdHolder {
     @Override
     protected ActionResultType/*boolean processInteract*/func_230254_b_(PlayerEntity player, Hand hand) { //TODO: update mapping
         if (player.world.isRemote()) return ActionResultType.PASS;
-        if (getEyeId() == 0) return ActionResultType.PASS;
-        if (KeyMapController.KeyBindings.SNEAK_KEY.getState(player))
-            WorldUtils.teleportEntity(player, WorldUtils.DimBagRiftKey, new BlockPos(1024 * (getEyeId() - 1) + 8, 129, 8));
-        else
+        int id = getEyeId();
+        if (id == 0) return ActionResultType.PASS;
+        if (KeyMapController.KeyBindings.SNEAK_KEY.getState(player)) {
+            SubRoomsManager.execute(id, sm->sm.enterBag(player));
+//            CompoundNBT pp = player.getPersistentData().getCompound("DimBagData").getCompound("PreviousPosition");
+//            String sid = Integer.toString(id);
+//            BlockPos bp;
+//            TODO: add the code for the forced teleport on pad, move this code somewhere else (and make it common with the item version)
+//            if (pp.contains(sid)) {
+//                CompoundNBT t = pp.getCompound(sid);
+//                bp = new BlockPos(t.getInt("X"), t.getInt("Y"), t.getInt("Z"));
+//            } else {
+//                bp = new BlockPos(1024 * (getEyeId() - 1) + 8, 129, 8);
+//            }
+//            WorldUtils.teleportEntity(player, WorldUtils.DimBagRiftKey, new BlockPos(1024 * (getEyeId() - 1) + 8, 129, 8));
+        } else
             Network.openEyeInventory((ServerPlayerEntity)player, getEyeId());
         return ActionResultType.SUCCESS;
     }

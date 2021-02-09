@@ -3,9 +3,9 @@ package com.limachi.dimensional_bags.common.blocks;
 import com.limachi.dimensional_bags.DimBag;
 import com.limachi.dimensional_bags.KeyMapController;
 import com.limachi.dimensional_bags.common.Registries;
-import com.limachi.dimensional_bags.common.data.EyeDataMK2.HolderData;
 import com.limachi.dimensional_bags.common.data.EyeDataMK2.SubRoomsManager;
 import com.limachi.dimensional_bags.common.network.Network;
+import com.limachi.dimensional_bags.common.tileentities.TheEyeTileEntity;
 import net.minecraft.block.BlockRenderType;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.ContainerBlock;
@@ -23,7 +23,17 @@ import net.minecraft.world.World;
 
 import javax.annotation.Nullable;
 
+import com.limachi.dimensional_bags.StaticInit;
+
+@StaticInit
 public class TheEye extends ContainerBlock {
+
+    public static final String NAME = "bag_eye";
+
+    static {
+        Registries.registerBlock(NAME, TheEye::new);
+        Registries.registerBlockItem(NAME, NAME, DimBag.DEFAULT_PROPERTIES);
+    }
 
     public TheEye() {
         super(Properties.create(Material.REDSTONE_LIGHT).hardnessAndResistance(-1f, 3600000f).sound(SoundType.GLASS));
@@ -31,7 +41,7 @@ public class TheEye extends ContainerBlock {
 
     @Nullable
     @Override
-    public TileEntity createNewTileEntity(IBlockReader worldIn) { return Registries.BAG_EYE_TE.get().create(); }
+    public TileEntity createNewTileEntity(IBlockReader worldIn) { return Registries.getTileEntityType(TheEyeTileEntity.NAME).create(); }
 
     @Override
     public BlockRenderType getRenderType(BlockState state) { return BlockRenderType.MODEL; }
@@ -43,7 +53,7 @@ public class TheEye extends ContainerBlock {
         if (eyeId <= 0)
             return ActionResultType.FAIL;
         if (KeyMapController.KeyBindings.SNEAK_KEY.getState(player))
-            HolderData.execute(eyeId, holderData -> holderData.tpToHolder(player));
+            SubRoomsManager.execute(eyeId, sm->sm.leaveBag(player, false, null, null));
         else
             Network.openEyeInventory((ServerPlayerEntity) player, eyeId);
         return ActionResultType.SUCCESS;

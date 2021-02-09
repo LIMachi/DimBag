@@ -28,7 +28,7 @@ public class RecipeList {
             new Smithing(new ResourceLocation(MOD_ID, "add_armor_to_bag"),
                 ()->{
                     ITag test = ItemTags.getCollection().get(new ResourceLocation("dim_bag", "armor/chestplate"));
-                return NonNullList.from(Ingredient.EMPTY, Ingredient.fromItems(Registries.BAG_ITEM.get()), test != null ? Ingredient.fromTag(test) : Ingredient.fromItems(Items.IRON_CHESTPLATE, Items.DIAMOND_CHESTPLATE));
+                return NonNullList.from(Ingredient.EMPTY, Ingredient.fromItems(Registries.getItem(Bag.NAME)), test != null ? Ingredient.fromTag(test) : Ingredient.fromItems(Items.IRON_CHESTPLATE, Items.DIAMOND_CHESTPLATE));
                 },
                 NonNullList.create(),
                 (IInventory inv, World world)->{

@@ -6,9 +6,12 @@ import com.limachi.dimensional_bags.client.entity.render.BagEntityRender;
 import com.limachi.dimensional_bags.client.itemEntity.EntityItemRenderer;
 import com.limachi.dimensional_bags.client.render.screen.*;
 import com.limachi.dimensional_bags.common.Registries;
-import com.limachi.dimensional_bags.common.container.GhostHandContainer;
+import com.limachi.dimensional_bags.common.blocks.Cloud;
+import com.limachi.dimensional_bags.common.container.*;
+import com.limachi.dimensional_bags.common.entities.BagEntity;
 import com.limachi.dimensional_bags.common.items.Bag;
 import com.limachi.dimensional_bags.common.items.GhostBag;
+import com.limachi.dimensional_bags.common.items.entity.BagEntityItem;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.ScreenManager;
 import net.minecraft.client.renderer.RenderType;
@@ -35,20 +38,20 @@ public class ClientEventSubscriber {
 
     @SubscribeEvent
     public static void clientSetup(FMLClientSetupEvent event) {
-        ScreenManager.registerFactory(Registries.BAG_CONTAINER.get(), InventoryGUI::new);
-        ScreenManager.registerFactory(Registries.PLAYER_CONTAINER.get(), PlayerInterfaceGUI::new);
-        ScreenManager.registerFactory(Registries.BRAIN_CONTAINER.get(), BrainGUI::new);
-        ScreenManager.registerFactory(Registries.GHOST_HAND_CONTAINER.get(), GhostHandGUI::new);
-        ScreenManager.registerFactory(Registries.SETTINGS_CONTAINER.get(), SettingsGUI::new);
+        ScreenManager.registerFactory(Registries.getContainerType(BagContainer.NAME), InventoryGUI::new);
+        ScreenManager.registerFactory(Registries.getContainerType(WrappedPlayerInventoryContainer.NAME), PlayerInterfaceGUI::new);
+        ScreenManager.registerFactory(Registries.getContainerType(BrainContainer.NAME), BrainGUI::new);
+        ScreenManager.registerFactory(Registries.getContainerType(GhostHandContainer.NAME), GhostHandGUI::new);
+        ScreenManager.registerFactory(Registries.getContainerType(SettingsContainer.NAME), SettingsGUI::new);
 
-        RenderingRegistry.registerEntityRenderingHandler(Registries.BAG_ITEM_ENTITY.get(), EntityItemRenderer::new);
+        RenderingRegistry.registerEntityRenderingHandler(Registries.getEntityType(BagEntityItem.NAME), EntityItemRenderer::new);
 
-        RenderTypeLookup.setRenderLayer(Registries.CLOUD_BLOCK.get(), RenderType.getTranslucent());
+        RenderTypeLookup.setRenderLayer(Registries.getBlock(Cloud.NAME), RenderType.getTranslucent());
 
         KeyMapController.KeyBindings.registerKeybindings();
 
-        ItemModelsProperties.registerProperty(Registries.BAG_ITEM.get(), new ResourceLocation(MOD_ID, "bag_mode_property"), Bag::getModeProperty);
-        ItemModelsProperties.registerProperty(Registries.GHOST_BAG_ITEM.get(), new ResourceLocation(MOD_ID, "bag_mode_property"), GhostBag::getModeProperty);
+        ItemModelsProperties.registerProperty(Registries.getItem(Bag.NAME), new ResourceLocation(MOD_ID, "bag_mode_property"), Bag::getModeProperty);
+        ItemModelsProperties.registerProperty(Registries.getItem(GhostBag.NAME), new ResourceLocation(MOD_ID, "bag_mode_property"), GhostBag::getModeProperty);
 
         Map<String, PlayerRenderer> skin = Minecraft.getInstance().getRenderManager().getSkinMap();
         for (String key : skin.keySet()) {
@@ -61,6 +64,6 @@ public class ClientEventSubscriber {
 
     @SubscribeEvent
     public static void onModelRegistry(ModelRegistryEvent event) {
-        RenderingRegistry.registerEntityRenderingHandler(Registries.BAG_ENTITY.get(), BagEntityRender::new);
+        RenderingRegistry.registerEntityRenderingHandler(Registries.getEntityType(BagEntity.NAME), BagEntityRender::new);
     }
 }

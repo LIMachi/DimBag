@@ -34,6 +34,8 @@ import net.minecraftforge.items.ItemHandlerHelper;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -142,16 +144,25 @@ public interface IDimBagCommonItem {
         return hand == Hand.OFF_HAND ? player.inventory.getSizeInventory() - player.inventory.offHandInventory.size() : player.inventory.currentItem;
     }
 
-    static ItemSearchResult searchItem(PlayerEntity player, int depth, Class<? extends Item> clazz, Predicate<? super ItemStack> predicate, boolean continueAfterOne) {
+    static ItemSearchResult searchItem(Entity entity, int depth, Class<? extends Item> clazz, Predicate<? super ItemStack> predicate, boolean continueAfterOne) {
+        boolean isPlayer = entity instanceof PlayerEntity;
+        Iterator<ItemStack> it = Collections.emptyIterator();
+        PlayerEntity player = isPlayer ? (PlayerEntity) entity : null;
         ItemSearchResult search = new ItemSearchResult();
-        search.searchedEntity = player;
-        search.searchedInventory = player.inventory;
+        search.searchedEntity = entity;
+        if (isPlayer) {
+            search.searchedInventory = ((PlayerEntity) entity).inventory;
+            search.index = ((PlayerEntity) entity).inventory.currentItem;
+            search.stack = ((PlayerEntity) entity).inventory.mainInventory.get(((PlayerEntity) entity).inventory.currentItem);
+        } else {
+            search.searchedInventory = null;
+            search.index = 0;
+            search.stack = entity.getHeldEquipment().iterator().next();
+        }
         search.searchedItemHandler = null;
         search.stacks = new ItemStack[depth];
         search.stackList = new ArrayList<>();
         ArrayList<IItemHandler> pending = new ArrayList<>();
-        search.index = player.inventory.currentItem;
-        search.stack = player.inventory.mainInventory.get(player.inventory.currentItem);
         if (clazz.isInstance(search.stack.getItem()) && predicate.test(search.stack)) {
             if (continueAfterOne)
                 search.stackList.add(search.stack);
@@ -163,11 +174,21 @@ public interface IDimBagCommonItem {
             if (iItemHandler != null)
                 pending.add(iItemHandler);
         }
-        int s = player.inventory.offHandInventory.size();
-        int d = player.inventory.getSizeInventory() - s;
+        int s = 1;
+        int d = 5;
+        if (isPlayer) {
+            s = player.inventory.offHandInventory.size();
+            d = player.inventory.getSizeInventory() - s;
+        }
         for (int i = 0; i < s; ++i) {
             search.index = d + i;
-            search.stack = player.inventory.getStackInSlot(search.index);
+            if (isPlayer)
+                search.stack = player.inventory.getStackInSlot(search.index);
+            else {
+                it = entity.getHeldEquipment().iterator();
+                it.next();
+                search.stack = it.next();
+            }
             if (clazz.isInstance(search.stack.getItem()) && predicate.test(search.stack)) {
                 if (continueAfterOne)
                     search.stackList.add(search.stack);
@@ -180,11 +201,21 @@ public interface IDimBagCommonItem {
                     pending.add(iItemHandler);
             }
         }
-        s = player.inventory.armorInventory.size();
-        d = player.inventory.getSizeInventory() - player.inventory.offHandInventory.size() - s;
+        if (isPlayer) {
+            s = player.inventory.armorInventory.size();
+            d = player.inventory.getSizeInventory() - ((PlayerEntity) entity).inventory.offHandInventory.size() - s;
+        } else {
+            s = 4;
+            d = 1;
+            it = entity.getArmorInventoryList().iterator();
+        }
         for (int i = 0; i < s; ++i) {
             search.index = d + i;
-            search.stack = player.inventory.getStackInSlot(search.index);
+            if (isPlayer)
+                search.stack = player.inventory.getStackInSlot(search.index);
+            else {
+                search.stack = it.next();
+            }
             if (clazz.isInstance(search.stack.getItem()) && predicate.test(search.stack)) {
                 if (continueAfterOne)
                     search.stackList.add(search.stack);
@@ -197,21 +228,23 @@ public interface IDimBagCommonItem {
                     pending.add(iItemHandler);
             }
         }
-        s = player.inventory.mainInventory.size();
-        for (int i = 0; i < s; ++i) {
-            if (i == player.inventory.currentItem) continue;
-            search.index = i;
-            search.stack = player.inventory.getStackInSlot(search.index);
-            if (clazz.isInstance(search.stack.getItem()) && predicate.test(search.stack)) {
-                if (continueAfterOne)
-                    search.stackList.add(search.stack);
-                else
-                    return search;
-            }
-            if (depth > 0) {
-                IItemHandler iItemHandler = getItemHandlerFromStack(search.stack, search);
-                if (iItemHandler != null)
-                    pending.add(iItemHandler);
+        if (isPlayer) {
+            s = player.inventory.mainInventory.size();
+            for (int i = 0; i < s; ++i) {
+                if (i == player.inventory.currentItem) continue;
+                search.index = i;
+                search.stack = player.inventory.getStackInSlot(search.index);
+                if (clazz.isInstance(search.stack.getItem()) && predicate.test(search.stack)) {
+                    if (continueAfterOne)
+                        search.stackList.add(search.stack);
+                    else
+                        return search;
+                }
+                if (depth > 0) {
+                    IItemHandler iItemHandler = getItemHandlerFromStack(search.stack, search);
+                    if (iItemHandler != null)
+                        pending.add(iItemHandler);
+                }
             }
         }
         if (depth > 0)
@@ -384,7 +417,8 @@ public interface IDimBagCommonItem {
             if (searchedItemHandler != null) {
                 if (searchedItemHandler instanceof IMarkDirty)
                     ((IMarkDirty) searchedItemHandler).markDirty();
-            } else if (searchedInventory != null)
+            }
+            else if (searchedInventory != null)
                 searchedInventory.markDirty();
         }
     }

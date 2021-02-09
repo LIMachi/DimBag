@@ -26,3 +26,14 @@ example:
 
 -see how enchantments work to make some enchantments compatible with the armor stand upgrade
 -see how entities/the player interact with the world to create the functions of the ghost hand (for player, might have to simulate key presses, for entities, might have to inject AI goals)
+
+
+
+-store positions for entering/leaving the bag (I propose using names) -> when a player leaves the bag, entering again will put him back to where he was, the entry positions can be changed by a block (while redstone powered, all entities with the listed names spawn on the block instead of the default/previous positions)
+-add interaction with the ghost bag in the bag for leaving with shift-click
+-remember to redo the power system and remove the permanent energy coming from the eye
+
+-fix sleeping in the bag
+-rethink the inventory system of the bag
+-rework upgrade system (again)
+-nerf the tunnel placer (when you break a tunnel, give back a formated tunnel that only works on the same wall) to prevent infinite rooms with a single tunnel item

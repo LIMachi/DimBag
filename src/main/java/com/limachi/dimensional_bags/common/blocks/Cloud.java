@@ -1,5 +1,7 @@
 package com.limachi.dimensional_bags.common.blocks;
 
+import com.limachi.dimensional_bags.DimBag;
+import com.limachi.dimensional_bags.common.Registries;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
@@ -24,8 +26,17 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 
 import java.util.Random;
 
+import com.limachi.dimensional_bags.StaticInit;
+
+@StaticInit
 public class Cloud extends Block {
 
+    public static final String NAME = "cloud";
+
+    static {
+        Registries.registerBlock(NAME, Cloud::new);
+        Registries.registerBlockItem(NAME, NAME, DimBag.DEFAULT_PROPERTIES);
+    }
     public static final IntegerProperty AGE = IntegerProperty.create("age", 0, 6);
 
     public Cloud() {

@@ -75,6 +75,16 @@ public class NBTUtils {
         return null;
     }
 
+    public static CompoundNBT ensurePathExistence(CompoundNBT nbt, String ... nodes) {
+        CompoundNBT t = nbt;
+        for (String node : nodes) {
+            if (!t.contains(node))
+                t.put(node, new CompoundNBT());
+            t = t.getCompound(node);
+        }
+        return t;
+    }
+
     /*
     private static CompoundNBT internalGetNbt(Class<?> clazz, CompoundNBT nbt) {
         if (nbt == null) {

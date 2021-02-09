@@ -3,30 +3,54 @@ package com.limachi.dimensional_bags.common;
 import com.google.common.collect.ArrayListMultimap;
 import com.limachi.dimensional_bags.DimBag;
 import com.limachi.dimensional_bags.KeyMapController;
+import com.limachi.dimensional_bags.common.blocks.Cloud;
 import com.limachi.dimensional_bags.common.data.DimBagData;
+import com.limachi.dimensional_bags.common.data.EyeDataMK2.ClientDataManager;
 import com.limachi.dimensional_bags.common.data.EyeDataMK2.HolderData;
+import com.limachi.dimensional_bags.common.data.EyeDataMK2.SubRoomsManager;
+import com.limachi.dimensional_bags.common.data.EyeDataMK2.WorldSavedDataManager;
 import com.limachi.dimensional_bags.common.entities.BagEntity;
 import com.limachi.dimensional_bags.common.items.Bag;
 import com.limachi.dimensional_bags.common.items.GhostBag;
 import com.limachi.dimensional_bags.common.items.IDimBagCommonItem;
 import com.limachi.dimensional_bags.common.items.entity.BagEntityItem;
+import com.limachi.dimensional_bags.common.managers.Upgrade;
+import com.limachi.dimensional_bags.common.managers.UpgradeManager;
+import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.FlowingFluidBlock;
+import net.minecraft.command.CommandSource;
+import net.minecraft.command.impl.TimeCommand;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.LivingEntity;
+import net.minecraft.entity.item.ItemEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.inventory.EquipmentSlotType;
 import net.minecraft.item.ItemStack;
+import net.minecraft.potion.EffectInstance;
+import net.minecraft.potion.Effects;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.tags.BlockTags;
+import net.minecraft.tags.ITag;
+import net.minecraft.tags.ItemTags;
 import net.minecraft.util.*;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.GameRules;
 import net.minecraft.world.World;
 import net.minecraft.world.server.ServerWorld;
+import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.TickEvent;
+import net.minecraftforge.event.entity.living.LivingDamageEvent;
+import net.minecraftforge.event.entity.living.LivingDropsEvent;
 import net.minecraftforge.event.entity.living.LivingEquipmentChangeEvent;
 import net.minecraftforge.event.entity.player.AttackEntityEvent;
+import net.minecraftforge.event.entity.player.PlayerEvent;
+import net.minecraftforge.event.world.BlockEvent;
 import net.minecraftforge.event.world.SleepFinishedTimeEvent;
+import net.minecraftforge.eventbus.api.Event;
+import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
@@ -35,11 +59,28 @@ import java.util.*;
 @Mod.EventBusSubscriber
 public class EventManager {
 
+    private static int tick = 0;
+    private static ArrayListMultimap<Integer, Runnable> pendingTasks = ArrayListMultimap.create();
+
+    public static void delayedTask(int ticksToWait, Runnable run) { if (ticksToWait <= 0) ticksToWait = 1; pendingTasks.put(ticksToWait + tick, run); }
+
+    @SubscribeEvent
+    public static void onTick(TickEvent.ServerTickEvent event) {
+        if (event.phase == TickEvent.Phase.START) {
+            List<Runnable> tasks = pendingTasks.get(tick);
+            if (tasks != null)
+                for (Runnable task : tasks)
+                    task.run();
+        } else if (event.phase == TickEvent.Phase.END) {
+            pendingTasks.removeAll(tick);
+            ++tick;
+        }
+    }
+
     @SubscribeEvent
     public static void onSleepFinishedTime(SleepFinishedTimeEvent event) { //sync the sleep in the rift dimension with the sleep in the overworld
         if (event.getWorld() instanceof ServerWorld && ((ServerWorld)event.getWorld()).getDimensionKey().compareTo(WorldUtils.DimBagRiftKey) == 0) { //players just finished sleeping in the rift dimension
-            ServerWorld overworld = WorldUtils.getOverWorld();
-            overworld.func_241114_a_(net.minecraftforge.event.ForgeEventFactory.onSleepFinished(overworld, event.getNewTime(), overworld.getDayTime())); //sending the wakeup + time set in the overworld
+            TimeCommand.setTime(DimBag.silentCommandSource(), 0); //use a set time command instead
         }
     }
 
@@ -84,7 +125,7 @@ public class EventManager {
                         DimBag.LOGGER.info("Everybody's lava jumpin'! (" + i + ")");
 //                    DimBag.LOGGER.info("Ima load this chunk: (" + WorldUtils.worldRKToString(WorldUtils.worldRKFromWorld(user.getEntityWorld())) + ") " + user.getPosition().getX() + ", " + user.getPosition().getY() + ", " + user.getPosition().getZ() + " (" + i + ")");
                     dbd.loadChunk((ServerWorld) user.getEntityWorld(), user.getPosition().getX(), user.getPosition().getZ(), i);
-                    if ((user instanceof BagEntity || user instanceof BagEntityItem /*|| data.shouldCreateCloudInVoid()*/) && user.getPosY() <= 3) { //this bag might fall in the void, time to fix this asap
+                    if ((user instanceof BagEntity || user instanceof BagEntityItem /*|| data.shouldCreateCloudInVoid()*/) && user.getPosY() <= 3) { //this bag might fall in the void, time to fix this asap, FIXME: should be done in the IA of the bag entity/item
                         generateCloud(user.getEntityWorld(), new BlockPos(user.getPosition().getX(), 0, user.getPosition().getZ()), 2f, 1.5f);
                         if (user.getPosY() < 1) {
                             WorldUtils.teleportEntity(user, user.getEntityWorld().getDimensionKey(), user.getPosX(), 1, user.getPosZ());
@@ -106,7 +147,7 @@ public class EventManager {
             if (dir == Direction.UP) continue;
             BlockPos cloudTry = dir == Direction.DOWN ? pos : pos.offset(dir);
             if (dir == Direction.DOWN && world.getBlockState(cloudTry) == Blocks.AIR.getDefaultState())
-                world.setBlockState(cloudTry, Registries.CLOUD_BLOCK.get().getDefaultState());
+                world.setBlockState(cloudTry, Registries.getBlock(Cloud.NAME).getDefaultState());
             else if (Math.random() > 1D - treshold)
                 generateCloud(world, cloudTry, treshold / divider, divider);
         }
@@ -129,11 +170,85 @@ public class EventManager {
                 event.setCanceled(true);
                 PlayerEntity player = event.getPlayer();
                 ItemStack new_bag = ItemStack.read(event.getTarget().getPersistentData().getCompound(BagEntity.ITEM_KEY));
+                ClientDataManager.getInstance(Bag.getEyeId(new_bag)).store(new_bag); //resync the bag data
                 if ((KeyMapController.KeyBindings.SNEAK_KEY.getState(player) && !(player.inventory.armorInventory.get(EquipmentSlotType.CHEST.getIndex()).getItem() instanceof Bag) && Bag.equipBagOnChestSlot(new_bag, player)) || player.addItemStackToInventory(new_bag))
                     event.getTarget().remove();
             }
         }
     }
+
+//    public static class ForceEnterTheBag extends Event {
+//
+//    }
+//
+//    @SubscribeEvent
+//    public static void forceEnterTheBag(ForceEnterTheBag event) {
+//
+//    }
+
+    @SubscribeEvent
+    public static void turtleUpgrade(LivingDamageEvent event) { //protect and tp the player in the bag if it would take damage setting it's health below a threshold
+        LivingEntity entity = event.getEntityLiving();
+        if (!entity.isAlive() || event.getAmount() <= 0) return;
+        int id = Bag.getBag(entity, 0);
+        if (id == 0) return;
+        UpgradeManager up = UpgradeManager.getInstance(id);
+        if (!up.getInstalledUpgrades().contains("turtle")) return;
+        Upgrade turtle = UpgradeManager.getUpgrade("turtle");
+        int limit = turtle.getMemory(up).getInt("turtleUpBelow");
+        if (entity.getHealth() <= limit && entity.getHealth() - event.getAmount() / 4 > 0) {
+            event.setAmount(event.getAmount() / 4);
+            entity.addPotionEffect(new EffectInstance(Effects.MINING_FATIGUE, 100, 2, false, false, false));
+            entity.addPotionEffect(new EffectInstance(Effects.RESISTANCE, 100, 2, false, false, false));
+            delayedTask(0, ()->SubRoomsManager.execute(id,sm->sm.enterBag(entity)));
+        }
+    }
+
+    @SubscribeEvent(priority = EventPriority.LOWEST)
+    public static void deathHopperUpgrade(LivingDropsEvent event) { //collect the player item's on death and send them inside the bag (change the cooldown of the items so they don't despawn)
+        if (event.getDrops().isEmpty()) return;
+        SubRoomsManager sm = null;
+        for (ItemEntity item : event.getDrops())
+            if (item.getItem().getItem() instanceof Bag && Bag.getEyeId(item.getItem()) != 0) {
+                int id = Bag.getEyeId(item.getItem());
+                UpgradeManager up = UpgradeManager.getInstance(id);
+                if (!up.getInstalledUpgrades().contains("death_hopper")) continue;
+                sm = SubRoomsManager.getInstance(id);
+                if (sm != null) {
+                    BagEntity.spawn(event.getEntity().world, event.getEntity().getPosition(), item.getItem());
+                    item.remove();
+                    break;
+                }
+            }
+        if (sm != null) {
+            for (ItemEntity item : event.getDrops())
+                if (!item.removed) {
+                    item.setNoDespawn();
+                    sm.enterBag(item, false, true, false);
+                }
+            event.setCanceled(true);
+        }
+    }
+
+    @SubscribeEvent
+    public static void blockPlaceWatcher(BlockEvent.EntityPlaceEvent event) {
+        if (((World)event.getWorld()).getDimensionKey().compareTo(WorldUtils.DimBagRiftKey) != 0) { //we are outside the dimension
+            ITag<Block> bagDimOnly = BlockTags.getCollection().get(new ResourceLocation("dim_bag", "placement_restriction/only_place_in_bag_dimension"));
+            if (bagDimOnly != null && bagDimOnly.contains(event.getPlacedBlock().getBlock()))
+                event.setCanceled(true);
+        }
+    }
+
+//    @SubscribeEvent(priority = EventPriority.LOWEST)
+//    public static void tombstoneModule(LivingDamageEvent event) { //need to refine how the items will be stored/given back, also we need to look for compatibility with other mods
+//        LivingEntity entity = event.getEntityLiving();
+//        if (!entity.isAlive() || event.getAmount() <= 0 || entity.getHealth() - event.getAmount() > 0) return; //only work on entities that are about to die due to damage
+//        int id = Bag.getBag(entity, 0);
+//        if (id == 0) return;
+//        UpgradeManager up = UpgradeManager.getInstance(id);
+//        if (!up.getInstalledUpgrades().contains("tombstone")) return;
+//        Upgrade tombstone = UpgradeManager.getUpgrade("tombstone");
+//    }
 
     /*@SubscribeEvent
     public static void onItemRightClick(PlayerInteractEvent.RightClickItem event) {
@@ -225,6 +340,7 @@ public class EventManager {
             DimBag.LOGGER.info(event.toString());
     }*/
 
+    /*
     private static int tick = 0;
     private static ArrayListMultimap<Integer, Runnable> pendingTasks = ArrayListMultimap.create();
 
@@ -241,5 +357,5 @@ public class EventManager {
             pendingTasks.removeAll(tick);
             ++tick;
         }
-    }
+    }*/
 }

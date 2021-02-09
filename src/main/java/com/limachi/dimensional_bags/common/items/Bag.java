@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Multimap;
 import com.limachi.dimensional_bags.DimBag;
 import com.limachi.dimensional_bags.client.entity.model.NullModel;
+import com.limachi.dimensional_bags.common.Registries;
 import com.limachi.dimensional_bags.common.data.DimBagData;
 import com.limachi.dimensional_bags.common.data.EyeDataMK2.ClientDataManager;
 import com.limachi.dimensional_bags.common.data.EyeDataMK2.HolderData;
@@ -46,7 +47,16 @@ import javax.annotation.Nullable;
 import java.util.List;
 import java.util.function.Consumer;
 
+import com.limachi.dimensional_bags.StaticInit;
+
+@StaticInit
 public class Bag extends ArmorItem implements IDimBagCommonItem {
+
+    public static final String NAME = "bag";
+
+    static {
+        Registries.registerItem(NAME, Bag::new);
+    }
 
     public Bag() { super(ArmorMaterial.LEATHER, EquipmentSlotType.CHEST, new Properties().group(DimBag.ITEM_GROUP).maxStackSize(1)); DispenserBlock.registerDispenseBehavior(this, ArmorItem.DISPENSER_BEHAVIOR); }
 
@@ -207,7 +217,7 @@ public class Bag extends ArmorItem implements IDimBagCommonItem {
     public int getDamageReduceAmount() { return 0; } //seem to only be used by mobs to switch armor, the attributes are used by damage calculation
 
     @Override
-    public float func_234657_f_() { return 0; } //toughness, seem to only be used by mobs to switch armor
+    public float getToughness() { return 0; } //toughness, seem to only be used by mobs to switch armor
 
     @Override
     public Multimap<Attribute, AttributeModifier> getAttributeModifiers(EquipmentSlotType slot, ItemStack stack)
@@ -343,9 +353,14 @@ public class Bag extends ArmorItem implements IDimBagCommonItem {
         }
     }
 
-    public static int getBagSlot(PlayerEntity player, int eyeId) {
-        IDimBagCommonItem.ItemSearchResult res = IDimBagCommonItem.searchItem(player, 0, Bag.class, t->t.getTag().getInt(IEyeIdHolder.EYE_ID_KEY) == eyeId, false);
+    public static int getBagSlot(Entity entity, int eyeId) {
+        IDimBagCommonItem.ItemSearchResult res = IDimBagCommonItem.searchItem(entity, 0, Bag.class, t -> t.getTag() != null && t.getTag().getInt(IEyeIdHolder.EYE_ID_KEY) == eyeId, false);
         return res != null ? res.index : -1;
+    }
+
+    public static int getBag(Entity entity, int eyeId) {
+        IDimBagCommonItem.ItemSearchResult res = IDimBagCommonItem.searchItem(entity, 0, Bag.class, t-> t.getTag() != null && t.getTag().getInt(IEyeIdHolder.EYE_ID_KEY) != 0 && (eyeId == 0 || t.getTag().getInt(IEyeIdHolder.EYE_ID_KEY) == eyeId), false);
+        return res != null ? res.stack.getTag().getInt(IEyeIdHolder.EYE_ID_KEY) : 0;
     }
 
     @Override

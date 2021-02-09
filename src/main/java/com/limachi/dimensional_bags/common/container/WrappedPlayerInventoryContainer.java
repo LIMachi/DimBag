@@ -10,19 +10,28 @@ import net.minecraft.tileentity.TileEntity;
 import static com.limachi.dimensional_bags.common.references.GUIs.ScreenParts.*;
 import static com.limachi.dimensional_bags.common.references.GUIs.PlayerInterface.*;
 
+import com.limachi.dimensional_bags.StaticInit;
+
+@StaticInit
 public class WrappedPlayerInventoryContainer extends BaseContainer {
+
+    public static final String NAME = "pillar";
+
+    static {
+        Registries.registerContainer(NAME, WrappedPlayerInventoryContainer::new);
+    }
 
     private final PlayerInvWrapper targetInventory;
     private String localUserName;
 
     public WrappedPlayerInventoryContainer(int windowId, PlayerInventory playerInventory, TileEntity tileEntity, PlayerInvWrapper targetInventory) {
-        super(Registries.PLAYER_CONTAINER.get(), windowId, playerInventory, ContainerConnectionType.TILE_ENTITY, tileEntity, 0);
+        super(Registries.getContainerType(NAME), windowId, playerInventory, ContainerConnectionType.TILE_ENTITY, tileEntity, 0);
         this.targetInventory = targetInventory;
         init();
     }
 
     public WrappedPlayerInventoryContainer(int windowId, PlayerInventory playerInventory, PacketBuffer data) {
-        super(Registries.PLAYER_CONTAINER.get(), windowId, playerInventory, data);
+        super(Registries.getContainerType(NAME), windowId, playerInventory, data);
         targetInventory = data.readBoolean() ? new PlayerInvWrapper(player.inventory, data) : new PlayerInvWrapper(data);
         init();
     }

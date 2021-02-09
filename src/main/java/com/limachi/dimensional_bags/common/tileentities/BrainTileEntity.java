@@ -14,7 +14,16 @@ import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.tileentity.ITickableTileEntity;
 import net.minecraft.tileentity.TileEntity;
 
+import com.limachi.dimensional_bags.StaticInit;
+
+@StaticInit
 public class BrainTileEntity extends TileEntity implements ITickableTileEntity, IMarkDirty {
+
+    public static final String NAME = "brain";
+
+    static {
+        Registries.registerTileEntity(NAME, BrainTileEntity::new, ()->Registries.getBlock(Brain.NAME), null);
+    }
 
 //    private String command = EntityReader.Commands.COMPARE_KEY_CONSTANT.name() + ";is_bag_key_down;" + EntityReader.Comparator.EQUAL.name() + ";true"; //default test command: look if the player is holding the bag action key TODO: create an interface to edit this command
     private String command = EntityReader.Commands.RANGE.name() + ";fall_distance;-0.1;5;"; //test if the user is falling (the longer the distance, the stronger the signal)
@@ -22,7 +31,7 @@ public class BrainTileEntity extends TileEntity implements ITickableTileEntity, 
     private int tick = -1;
 
     public BrainTileEntity() {
-        super(Registries.BRAIN_TE.get());
+        super(Registries.getTileEntityType(NAME));
     }
 
     @Override
@@ -44,7 +53,7 @@ public class BrainTileEntity extends TileEntity implements ITickableTileEntity, 
     @Override
     public void tick() {
         ++tick;
-        if (!DimBag.isServer(world) || (tick % getBlockState().get(Brain.TICK_RATE)) != 0) return;
+        if (world == null || !DimBag.isServer(world) || (tick % getBlockState().get(Brain.TICK_RATE)) != 0) return;
         Entity holder = getHolder();
         if (holder != null && command.length() != 0 && EnergyData.execute(SubRoomsManager.getEyeId(world, pos, false), energyData -> energyData.extractEnergy(8, true) == 8, false)) {
             EnergyData.execute(SubRoomsManager.getEyeId(world, pos, false), energyData -> energyData.extractEnergy(8, false));

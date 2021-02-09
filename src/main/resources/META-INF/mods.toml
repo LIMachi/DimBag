@@ -4,7 +4,7 @@ license="Mozilla Public License 2.0"
 issueTrackerURL="http://my.issue.tracker/" #optional
 [[mods]] #mandatory
 modId="dim_bag" #mandatory
-version="1.16.3-0.1.0" #mandatory
+version="1.16.5-0.1.0" #mandatory
 displayName="Dimensional Bags" #mandatory
 #logoFile="dim_bag.png" #optional
 authors="LIMachi_" #optional
@@ -12,12 +12,12 @@ description=''''''
 [[dependencies.dim_bag]] #optional
     modId="forge" #mandatory
     mandatory=true #mandatory
-    versionRange="[34.0.9,)" #mandatory
+    versionRange="[36.0.1,)" #mandatory
     ordering="NONE"
     side="BOTH"
 [[dependencies.dim_bag]]
     modId="minecraft"
     mandatory=true
-    versionRange="[1.16.3]"
+    versionRange="[1.16.5,)"
     ordering="NONE"
     side="BOTH"

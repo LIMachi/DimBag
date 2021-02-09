@@ -6,24 +6,24 @@ import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.network.PacketBuffer;
 
 public class ChangeModeRequest extends PacketHandler.Message {
-    int slot;
+    int eye;
     boolean up;
 
     public ChangeModeRequest(PacketBuffer buffer) {
-        slot = buffer.readInt();
+        eye = buffer.readInt();
         up = buffer.readBoolean();
     }
 
     public ChangeModeRequest(int slot, boolean up) {
-        this.slot = slot;
+        this.eye = slot;
         this.up = up;
     }
 
     public void toBytes(PacketBuffer buffer) {
-        buffer.writeInt(slot);
+        buffer.writeInt(eye);
         buffer.writeBoolean(up);
     }
 
     @Override
-    public void serverWork(ServerPlayerEntity player) { ModeManager.changeModeRequest(player, slot, up); }
+    public void serverWork(ServerPlayerEntity player) { ModeManager.changeModeRequest(eye, up); }
 }

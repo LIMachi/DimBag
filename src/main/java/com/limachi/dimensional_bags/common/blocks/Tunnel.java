@@ -4,6 +4,7 @@ import com.limachi.dimensional_bags.DimBag;
 import com.limachi.dimensional_bags.KeyMapController;
 import com.limachi.dimensional_bags.common.Registries;
 import com.limachi.dimensional_bags.common.data.EyeDataMK2.SubRoomsManager;
+import com.limachi.dimensional_bags.common.items.TunnelPlacer;
 import net.minecraft.block.*;
 import net.minecraft.block.material.Material;
 import net.minecraft.entity.player.PlayerEntity;
@@ -15,7 +16,18 @@ import net.minecraft.util.math.BlockRayTraceResult;
 import net.minecraft.world.World;
 import net.minecraft.world.server.ServerWorld;
 
+import com.limachi.dimensional_bags.StaticInit;
+
+@StaticInit
 public class Tunnel extends Block {
+
+    public static final String NAME = "tunnel";
+
+    static {
+        Registries.registerBlock(NAME, Tunnel::new);
+        Registries.registerBlockItem(NAME, NAME, DimBag.DEFAULT_PROPERTIES);
+    }
+
     public Tunnel() { super(Properties.create(Material.ROCK).hardnessAndResistance(-1f, 3600000f).sound(SoundType.STONE)); }
 
     @Override
@@ -25,7 +37,7 @@ public class Tunnel extends Block {
     public ActionResultType onBlockActivated(BlockState state, World world, BlockPos pos, PlayerEntity player, Hand hand, BlockRayTraceResult ray) { //'right-click' behavior (use/interact)
         if (!DimBag.isServer(world)) return super.onBlockActivated(state, world, pos, player, hand, ray);
         if (KeyMapController.KeyBindings.SNEAK_KEY.getState(player))
-            SubRoomsManager.execute(SubRoomsManager.getEyeId(world, pos, false), subRoomsManager -> subRoomsManager.tpIn(player));
+            SubRoomsManager.execute(SubRoomsManager.getEyeId(world, pos, false), subRoomsManager -> subRoomsManager.enterBag(player, false, false, false));
         else
             SubRoomsManager.execute(SubRoomsManager.getEyeId(world, pos, false), subRoomsManager -> subRoomsManager.tpTunnel(player, pos));
         return ActionResultType.SUCCESS;
@@ -37,14 +49,14 @@ public class Tunnel extends Block {
             return;
         }
         if (KeyMapController.KeyBindings.SNEAK_KEY.getState(player)) {//shift-left-click, remove the tunnel (replace it by a wall) and give back the tunnel placer (item)
-            worldIn.setBlockState(pos, Registries.WALL_BLOCK.get().getDefaultState());
+            worldIn.setBlockState(pos, Registries.getBlock(NAME).getDefaultState());
             SubRoomsManager data = SubRoomsManager.getInstance(SubRoomsManager.getEyeId(worldIn, pos, false));
             if (data == null) {
                 super.onBlockClicked(state, worldIn, pos, player);
                 return;
             }
             SubRoomsManager.tunnel((ServerWorld)worldIn, pos, player, false, true);
-            player.addItemStackToInventory(new ItemStack(Registries.TUNNEL_ITEM.get()));
+            player.addItemStackToInventory(new ItemStack(Registries.getItem(TunnelPlacer.NAME)));
         }
     }
 }

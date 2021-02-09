@@ -2,6 +2,9 @@ package com.limachi.dimensional_bags.common.readers;
 
 import net.minecraft.entity.LivingEntity;
 
+import com.limachi.dimensional_bags.StaticInit;
+
+@StaticInit
 public abstract class LivingEntityReader {
 
     static {

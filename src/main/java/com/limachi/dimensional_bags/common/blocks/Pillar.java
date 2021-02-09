@@ -19,7 +19,17 @@ import net.minecraft.world.World;
 
 import javax.annotation.Nullable;
 
+import com.limachi.dimensional_bags.StaticInit;
+
+@StaticInit
 public class Pillar extends ContainerBlock {
+
+    public static final String NAME = "pillar";
+
+    static {
+        Registries.registerBlock(NAME, Pillar::new);
+        Registries.registerBlockItem(NAME, NAME, DimBag.DEFAULT_PROPERTIES);
+    }
 
     public Pillar() {
         super(Block.Properties.create(Material.ROCK).hardnessAndResistance(2f, 3600000f).sound(SoundType.STONE));
@@ -27,7 +37,7 @@ public class Pillar extends ContainerBlock {
 
     @Nullable
     @Override
-    public TileEntity createNewTileEntity(IBlockReader worldIn) { return Registries.PILLAR_TE.get().create(); }
+    public TileEntity createNewTileEntity(IBlockReader worldIn) { return Registries.getTileEntityType(PillarTileEntity.NAME).create(); }
 
     @Override
     public BlockRenderType getRenderType(BlockState state) { return BlockRenderType.MODEL; }

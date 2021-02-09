@@ -11,7 +11,6 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
 import static com.limachi.dimensional_bags.DimBag.MOD_ID;
-import static com.limachi.dimensional_bags.common.Registries.BAG_ENTITY;
 
 @Mod.EventBusSubscriber(modid = MOD_ID, bus = Mod.EventBusSubscriber.Bus.MOD)
 public class ModEventSubscriber {
@@ -28,7 +27,7 @@ public class ModEventSubscriber {
 
     @SubscribeEvent
     public static void registerEntity(RegistryEvent.Register<EntityType<?>> event) {
-        GlobalEntityTypeAttributes.put(BAG_ENTITY.get(), BagEntity.getAttributeMap().create());
+        GlobalEntityTypeAttributes.put(Registries.getEntityType(BagEntity.NAME), BagEntity.getAttributeMap().create());
     }
 
     @SubscribeEvent
