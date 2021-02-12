@@ -1,8 +1,12 @@
 package com.limachi.dimensional_bags.common;
 
 import com.google.common.collect.ArrayListMultimap;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonElement;
 import com.limachi.dimensional_bags.DimBag;
 import com.limachi.dimensional_bags.KeyMapController;
+import com.limachi.dimensional_bags.common.Config.ConfigEvents;
 import com.limachi.dimensional_bags.common.blocks.Cloud;
 import com.limachi.dimensional_bags.common.data.DimBagData;
 import com.limachi.dimensional_bags.common.data.EyeDataMK2.ClientDataManager;
@@ -20,6 +24,7 @@ import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.FlowingFluidBlock;
+import net.minecraft.client.resources.JsonReloadListener;
 import net.minecraft.command.CommandSource;
 import net.minecraft.command.impl.TimeCommand;
 import net.minecraft.entity.Entity;
@@ -29,8 +34,12 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.inventory.EquipmentSlotType;
 import net.minecraft.item.ItemStack;
+import net.minecraft.network.play.server.SEntityEquipmentPacket;
+import net.minecraft.network.play.server.SSetSlotPacket;
 import net.minecraft.potion.EffectInstance;
 import net.minecraft.potion.Effects;
+import net.minecraft.profiler.IProfiler;
+import net.minecraft.resources.IResourceManager;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.tags.ITag;
@@ -41,6 +50,7 @@ import net.minecraft.world.GameRules;
 import net.minecraft.world.World;
 import net.minecraft.world.server.ServerWorld;
 import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.event.AddReloadListenerEvent;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.living.LivingDamageEvent;
 import net.minecraftforge.event.entity.living.LivingDropsEvent;
@@ -76,6 +86,27 @@ public class EventManager {
             ++tick;
         }
     }
+
+    /*
+    public static class ReloadListenerConfig extends JsonReloadListener {
+
+        private static final Gson GSON = (new GsonBuilder()).create();
+
+        public ReloadListenerConfig() {
+            super(GSON, "fake_folder");
+        }
+
+        @Override
+        protected void apply(Map<ResourceLocation, JsonElement> objectIn, IResourceManager resourceManagerIn, IProfiler profilerIn) {
+            //virtually does nothing with json for now, only does a new bake
+            ConfigEvents.bakeAll();
+        }
+    }
+
+    @SubscribeEvent
+    public static void addReloadListenerEvent(AddReloadListenerEvent e) {
+        e.addListener(new ReloadListenerConfig());
+    }*/
 
     @SubscribeEvent
     public static void onSleepFinishedTime(SleepFinishedTimeEvent event) { //sync the sleep in the rift dimension with the sleep in the overworld
@@ -234,8 +265,18 @@ public class EventManager {
     public static void blockPlaceWatcher(BlockEvent.EntityPlaceEvent event) {
         if (((World)event.getWorld()).getDimensionKey().compareTo(WorldUtils.DimBagRiftKey) != 0) { //we are outside the dimension
             ITag<Block> bagDimOnly = BlockTags.getCollection().get(new ResourceLocation("dim_bag", "placement_restriction/only_place_in_bag_dimension"));
-            if (bagDimOnly != null && bagDimOnly.contains(event.getPlacedBlock().getBlock()))
+            if (bagDimOnly != null && bagDimOnly.contains(event.getPlacedBlock().getBlock())) {
+                DimBag.LOGGER.warn("placement of block " + event.getPlacedBlock() + " prevented in dimension " + event.getWorld() + " (" + event.getPos() + ")");
+                if (event.getEntity() instanceof ServerPlayerEntity) {
+                    SyncUtils.resyncPlayerHands((ServerPlayerEntity) event.getEntity(), true, true);
+                }
                 event.setCanceled(true);
+                return;
+            }
+        }
+        ITag<Block> kt = BlockTags.getCollection().get(new ResourceLocation(DimBag.MOD_ID, "keep_nbt_on_break"));
+        if (kt != null && kt.contains(event.getPlacedBlock().getBlock())) { //do nbt manipulation
+            DimBag.LOGGER.info("nbt storing block placement detected: " + event.getPlacedBlock());
         }
     }
 

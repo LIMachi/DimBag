@@ -35,5 +35,11 @@ example:
 
 -fix sleeping in the bag
 -rethink the inventory system of the bag
--rework upgrade system (again)
+-rework upgrade system (again) (and how about upgrading the bag is a craft?) (or better to prevent craft bugs: applying the upgrade by rightclicking the bag entity with an upgrade?)
 -nerf the tunnel placer (when you break a tunnel, give back a formated tunnel that only works on the same wall) to prevent infinite rooms with a single tunnel item
+
+-back to the original idea: make pillars the inventory of the bag (each pillar is a slot that can old more than a stack, similar to the dank)
+-pillars can be upgraded to player pillar (access to a single slot of the player inventory)
+-a new room spawns with a certain number of pillars (by default 9)
+-pillars can be upgraded (like barrels/drawers) to contain more items
+-player pillars can be automated using redstone (redstone power on 1 axis select the line/belt/armor/extra inventory, redstont on the other axis selects the column)

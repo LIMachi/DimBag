@@ -56,6 +56,13 @@ public class UpgradeManager extends WorldSavedDataManager.EyeWorldSavedData {
         return null;
     }
 
+    /**
+     * helper function to quickly test if an upgrade is installed for the given bag id
+     */
+    public static boolean hasUpgrade(int id, String upgradeName) {
+        return execute(id, um->um.getInstalledUpgrades().contains(upgradeName), false);
+    }
+
     public static void bakeConfig() {
         for (String key : UPGRADES.keySet())
             UPGRADES.get(key).bakeConfig();

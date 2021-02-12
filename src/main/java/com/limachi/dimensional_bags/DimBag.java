@@ -1,14 +1,12 @@
 package com.limachi.dimensional_bags;
 
 import com.google.common.reflect.Reflection;
-import com.limachi.dimensional_bags.common.Config;
+import com.limachi.dimensional_bags.common.Config.ConfigEvents;
+import com.limachi.dimensional_bags.common.EventManager;
 import com.limachi.dimensional_bags.common.Registries;
 import com.limachi.dimensional_bags.common.items.Bag;
-import com.limachi.dimensional_bags.common.network.PacketHandler;
 import net.minecraft.client.Minecraft;
 import net.minecraft.command.CommandSource;
-import net.minecraft.command.arguments.EntityAnchorArgument;
-import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.item.Item;
@@ -21,6 +19,7 @@ import net.minecraft.util.text.StringTextComponent;
 import net.minecraft.world.World;
 import net.minecraft.world.server.ServerWorld;
 import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.fml.LogicalSide;
@@ -73,8 +72,9 @@ public class DimBag {
     public DimBag() {
         INSTANCE = this;
         IEventBus eventBus = FMLJavaModLoadingContext.get().getModEventBus();
-        ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, Config.getSpec());
+        ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, ConfigEvents.getSpec());
         Registries.registerAll(eventBus);
+        MinecraftForge.EVENT_BUS.register(EventManager.class);
     }
 
     /** try by all means to know if the current invocation is on a logical client or logical server */

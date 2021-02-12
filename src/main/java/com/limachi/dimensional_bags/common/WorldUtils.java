@@ -9,6 +9,7 @@ import net.minecraft.block.Blocks;
 import net.minecraft.entity.CreatureEntity;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.network.play.server.SPlayerPositionLookPacket;
 import net.minecraft.server.MinecraftServer;
@@ -62,6 +63,7 @@ public class WorldUtils { //TODO: remove bloat once MCP/Forge mappings are bette
 
     private static void teleport(Entity entityIn, ServerWorld worldIn, double x, double y, double z, float yaw, float pitch) { //modified version of TeleportCommand.java: 123: TeleportCommand#teleport(CommandSource source, Entity entityIn, ServerWorld worldIn, double x, double y, double z, Set<SPlayerPositionLookPacket.Flags> relativeList, float yaw, float pitch, @Nullable TeleportCommand.Facing facing) throws CommandSyntaxException
         if (entityIn.removed) return;
+        SyncUtils.XPSnapShot xp = entityIn instanceof ServerPlayerEntity ? new SyncUtils.XPSnapShot(((PlayerEntity)entityIn).experience, ((PlayerEntity)entityIn).experienceLevel, ((PlayerEntity)entityIn).experienceTotal) : SyncUtils.XPSnapShot.ZERO;
         Set<SPlayerPositionLookPacket.Flags> set = EnumSet.noneOf(SPlayerPositionLookPacket.Flags.class);
         set.add(SPlayerPositionLookPacket.Flags.X_ROT);
         set.add(SPlayerPositionLookPacket.Flags.Y_ROT);
@@ -102,6 +104,9 @@ public class WorldUtils { //TODO: remove bloat once MCP/Forge mappings are bette
         }
         if (entityIn instanceof CreatureEntity) {
             ((CreatureEntity)entityIn).getNavigator().clearPath();
+        }
+        if (entityIn instanceof ServerPlayerEntity) {
+            SyncUtils.resyncXP((ServerPlayerEntity) entityIn, xp);
         }
     }
 

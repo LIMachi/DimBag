@@ -1,6 +1,7 @@
 package com.limachi.dimensional_bags.common.items;
 
 import com.limachi.dimensional_bags.DimBag;
+import com.limachi.dimensional_bags.common.Config.Config;
 import com.limachi.dimensional_bags.common.Registries;
 import com.limachi.dimensional_bags.common.blocks.Tunnel;
 import com.limachi.dimensional_bags.common.blocks.Wall;
@@ -17,6 +18,9 @@ import com.limachi.dimensional_bags.StaticInit;
 
 @StaticInit
 public class TunnelPlacer extends Item implements IDimBagCommonItem {
+
+    @Config.Boolean(def = true, cmt = "does breaking a tunnel give back a tunnel placer that only work on the same wall (false: give back a normal tunnel placer that can be used on any wall)")
+    public static boolean NERF_TUNNEL_PLACER = false;
 
     public static String NAME = "tunnel_placer";
 
