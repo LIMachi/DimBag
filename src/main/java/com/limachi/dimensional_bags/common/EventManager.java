@@ -4,6 +4,7 @@ import com.google.common.collect.ArrayListMultimap;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
+import com.limachi.dimensional_bags.CuriosIntegration;
 import com.limachi.dimensional_bags.DimBag;
 import com.limachi.dimensional_bags.KeyMapController;
 import com.limachi.dimensional_bags.common.Config.ConfigEvents;
@@ -46,6 +47,7 @@ import net.minecraft.tags.ITag;
 import net.minecraft.tags.ItemTags;
 import net.minecraft.util.*;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.vector.Vector3d;
 import net.minecraft.world.GameRules;
 import net.minecraft.world.World;
 import net.minecraft.world.server.ServerWorld;
@@ -57,6 +59,7 @@ import net.minecraftforge.event.entity.living.LivingDropsEvent;
 import net.minecraftforge.event.entity.living.LivingEquipmentChangeEvent;
 import net.minecraftforge.event.entity.player.AttackEntityEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
+import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.event.world.BlockEvent;
 import net.minecraftforge.event.world.SleepFinishedTimeEvent;
 import net.minecraftforge.eventbus.api.Event;
@@ -202,7 +205,7 @@ public class EventManager {
                 PlayerEntity player = event.getPlayer();
                 ItemStack new_bag = ItemStack.read(event.getTarget().getPersistentData().getCompound(BagEntity.ITEM_KEY));
                 ClientDataManager.getInstance(Bag.getEyeId(new_bag)).store(new_bag); //resync the bag data
-                if ((KeyMapController.KeyBindings.SNEAK_KEY.getState(player) && !(player.inventory.armorInventory.get(EquipmentSlotType.CHEST.getIndex()).getItem() instanceof Bag) && Bag.equipBagOnChestSlot(new_bag, player)) || player.addItemStackToInventory(new_bag))
+                if ((KeyMapController.KeyBindings.SNEAK_KEY.getState(player) && !(player.inventory.armorInventory.get(EquipmentSlotType.CHEST.getIndex()).getItem() instanceof Bag) && Bag.equipBagOnCuriosSlot(new_bag, player)) || player.addItemStackToInventory(new_bag))
                     event.getTarget().remove();
             }
         }
@@ -323,7 +326,6 @@ public class EventManager {
         }
     }*/
 
-    /*
     @SubscribeEvent
     public static void onEntityInteract(PlayerInteractEvent.EntityInteract event) {
         if (!event.getPlayer().getEntityWorld().isRemote()) {
@@ -336,30 +338,34 @@ public class EventManager {
                     //will now look if the target has a bag equiped (armor slot), and if the bag can be invaded
                     ItemStack stack = target.inventory.armorItemInSlot(EquipmentSlotType.CHEST.getIndex());
                     if (!stack.isEmpty() && stack.getItem() instanceof Bag) {
-                        EyeData data = EyeData.get(Bag.getId(stack));
-                        if (data != null && data.canInvade(player)) {
-                            event.setCanceled(true);
-                            data.tpIn(player);
-                        }
+                        event.setCanceled(true);
+                        SubRoomsManager.execute(Bag.getEyeId(stack), sm->sm.enterBag(player));
+//                        EyeData data = EyeData.get(Bag.getId(stack));
+//                        if (data != null && data.canInvade(player)) {
+//                            event.setCanceled(true);
+//                            data.tpIn(player);
+//                        }
                     }
                 }
             }
         }
     }
-     */
 
     @SubscribeEvent
-    public static void onKeyMapChanged(KeyMapController.KeyMapChangedEvent event) {
+    public static void ghostBagItemGiver(KeyMapController.KeyMapChangedEvent event) {
         if (!event.getPlayer().getEntityWorld().isRemote()) {
             if (event.getChangedKeys()[KeyMapController.KeyBindings.BAG_KEY.ordinal()]) {
                 if (event.getKeys()[KeyMapController.KeyBindings.BAG_KEY.ordinal()]) {
-                    IDimBagCommonItem.ItemSearchResult res = IDimBagCommonItem.searchItem(event.getPlayer(), 0, Bag.class, o -> true, false);
+//                    IDimBagCommonItem.ItemSearchResult res = IDimBagCommonItem.searchItem(event.getPlayer(), 0, Bag.class, o -> true, false);
+//                    List<CuriosIntegration.ProxyItemStackModifier> res = CuriosIntegration.searchItem(event.getPlayer(), Bag.class, o->true, false);
                     if (!(event.getPlayer().getHeldItem(Hand.MAIN_HAND).getItem() instanceof Bag) && !(event.getPlayer().getHeldItem(Hand.MAIN_HAND).getItem() instanceof GhostBag) && !(event.getPlayer().getHeldItem(Hand.OFF_HAND).getItem() instanceof Bag) && !(event.getPlayer().getHeldItem(Hand.OFF_HAND).getItem() instanceof GhostBag))
                         event.getPlayer().replaceItemInInventory(IDimBagCommonItem.slotFromHand(event.getPlayer(), Hand.MAIN_HAND), GhostBag.ghostBagFromStack(event.getPlayer().getHeldItem(Hand.MAIN_HAND), event.getPlayer()));
                 } else {
-                    IDimBagCommonItem.ItemSearchResult res = IDimBagCommonItem.searchItem(event.getPlayer(), 0, GhostBag.class, o -> true, false);
-                    if (res != null && res.index != -1)
-                        event.getPlayer().replaceItemInInventory(res.index, GhostBag.getOriginalStack(res.stack));
+//                    IDimBagCommonItem.ItemSearchResult res = IDimBagCommonItem.searchItem(event.getPlayer(), 0, GhostBag.class, o -> true, false);
+                    CuriosIntegration.ProxyItemStackModifier res = CuriosIntegration.searchItem(event.getPlayer(), GhostBag.class, o->true);
+                    if (res != null)
+//                        event.getPlayer().replaceItemInInventory(res.index, GhostBag.getOriginalStack(res.stack));
+                        res.set(GhostBag.getOriginalStack(res.get()));
                 }
             }
         }

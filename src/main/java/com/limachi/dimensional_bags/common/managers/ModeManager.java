@@ -1,6 +1,7 @@
 package com.limachi.dimensional_bags.common.managers;
 
 import com.google.common.collect.ImmutableMultimap;
+import com.limachi.dimensional_bags.CuriosIntegration;
 import com.limachi.dimensional_bags.DimBag;
 import com.limachi.dimensional_bags.common.data.EyeDataMK2.ClientDataManager;
 import com.limachi.dimensional_bags.common.data.EyeDataMK2.WorldSavedDataManager;
@@ -35,7 +36,7 @@ public class ModeManager extends WorldSavedDataManager.EyeWorldSavedData {
         new Settings(),
 //        new Debug(),
         new PokeBall(),
-        new Elytra(),
+//        new Elytra(),
         new Tank()
     };
 
@@ -51,14 +52,14 @@ public class ModeManager extends WorldSavedDataManager.EyeWorldSavedData {
             break;
         }
         for (PlayerEntity player : DimBag.getPlayers()) {
-            IDimBagCommonItem.ItemSearchResult res = IDimBagCommonItem.searchItem(player, 3, Item.class, i->{
-                if ((i.getItem() instanceof Bag || i.getItem() instanceof GhostBag) && Bag.getEyeId(i) == eye) {
-                    dataC.store(i);
+            List<CuriosIntegration.ProxyItemStackModifier> res = CuriosIntegration.searchItem(player, Item.class, s->{
+                if ((s.getItem() instanceof Bag || s.getItem() instanceof GhostBag) && Bag.getEyeId(s) == eye) {
+                    dataC.store(s);
                     return true;
                 }
                 return false;
             }, true);
-            if (res != null && res.index != -1)
+            if (res.size() != 0)
                 player.sendStatusMessage(new TranslationTextComponent("notification.bag.changed_mode", new TranslationTextComponent("bag.mode." + dataS.getSelectedMode())), true);
         }
 //            dataC.store(stack);

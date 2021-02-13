@@ -8,15 +8,15 @@ import java.util.function.Function;
 
 public class EnergyData extends WorldSavedDataManager.EyeWorldSavedData implements IEnergyStorage {
 
-    private int energy;
-    private int capacity;
+    private long energy;
+    private long capacity;
     private int tickCursor;
     public static final int ENERGY = 0;
     public static final int RECEIVED = 1;
     public static final int EXTRACTED = 2;
-    private final int[] extractedLastMinute = new int[1200];
-    private final int[] receivedLastMinute = new int[1200];
-    private final int[] energyStateLastMinute = new int[1200];
+    private final long[] extractedLastMinute = new long[1200];
+    private final long[] receivedLastMinute = new long[1200];
+    private final long[] energyStateLastMinute = new long[1200];
 
     public EnergyData(String suffix, int id, boolean client) {
         super(suffix, id, client);
@@ -25,7 +25,7 @@ public class EnergyData extends WorldSavedDataManager.EyeWorldSavedData implemen
         tickCursor = 0;
     }
 
-    public void changeBatterySize(int newSize) {
+    public void changeBatterySize(long newSize) {
         capacity = newSize;
         if (energy > newSize)
             energy = newSize;
@@ -41,8 +41,8 @@ public class EnergyData extends WorldSavedDataManager.EyeWorldSavedData implemen
         energyStateLastMinute[tickCursor] = energy;
     }
 
-    public int[][] getLastMinuteGraph() {
-        int[][] out = new int[1200][3];
+    public long[][] getLastMinuteGraph() {
+        long[][] out = new long[1200][3];
         for (int i = 0; i < 1200; ++i) {
             int j = (i + tickCursor) % 1200;
             out[i][ENERGY] = energyStateLastMinute[j];
@@ -60,8 +60,8 @@ public class EnergyData extends WorldSavedDataManager.EyeWorldSavedData implemen
 
     @Override
     public CompoundNBT write(CompoundNBT nbt) {
-        nbt.putInt("Capacity", capacity);
-        nbt.putInt("Energy", energy);
+        nbt.putLong("Capacity", capacity);
+        nbt.putLong("Energy", energy);
         return nbt;
     }
 
@@ -79,33 +79,33 @@ public class EnergyData extends WorldSavedDataManager.EyeWorldSavedData implemen
 
     @Override
     public int receiveEnergy(int receive, boolean simulate) {
-        int energyReceived = Math.min(capacity - energy, receive);
+        long energyReceived = Math.min(capacity - energy, receive);
         if (!simulate && energyReceived != 0) {
             energy += energyReceived;
             receivedLastMinute[tickCursor] += energyReceived;
             energyStateLastMinute[tickCursor] = energy;
             markDirty();
         }
-        return energyReceived;
+        return (int)energyReceived;
     }
 
     @Override
     public int extractEnergy(int extract, boolean simulate) {
-        int energyExtracted = Math.min(energy, extract);
+        long energyExtracted = Math.min(energy, extract);
         if (!simulate && energyExtracted != 0) {
             energy -= energyExtracted;
             extractedLastMinute[tickCursor] += energyExtracted;
             energyStateLastMinute[tickCursor] = energy;
             markDirty();
         }
-        return energyExtracted;
+        return (int)energyExtracted;
     }
 
     @Override
-    public int getEnergyStored() { return energy; }
+    public int getEnergyStored() { return (int)energy; }
 
     @Override
-    public int getMaxEnergyStored() { return capacity; }
+    public int getMaxEnergyStored() { return (int)capacity; }
 
     @Override
     public boolean canExtract() { return true; }

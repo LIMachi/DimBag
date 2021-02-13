@@ -61,6 +61,7 @@ minecraft {
 
 repositories {
     maven { url = 'http://dvs1.progwml6.com/files/maven/' } //jei
+    maven { url = "https://maven.theillusivec4.top/" } //Curios
 //    maven { url = "https://repo.refinedmods.com" } //RS
 //    maven { url = "https://maven.tehnut.info" } //WAILA
 //    maven { url = 'https://modmaven.k-4u.nl/' } //mekanism
@@ -68,6 +69,8 @@ repositories {
 
 dependencies {
     minecraft 'net.minecraftforge:forge:1.16.5-36.0.1'
+    runtimeOnly fg.deobf("top.theillusivec4.curios:curios-forge:1.16.5-4.0.4.0") //Curios
+    compileOnly fg.deobf("top.theillusivec4.curios:curios-forge:1.16.5-4.0.4.0:api") //Curios
 //    runtimeOnly fg.deobf("mezz.jei:jei-1.16.2:7.1.3.19") //jei
 //    compileOnly fg.deobf("mezz.jei:jei-1.16.2:7.1.3.19:api") //jei
 //    fg.deobf("com.refinedmods:refinedstorage:1.9.4+56") //refined storage

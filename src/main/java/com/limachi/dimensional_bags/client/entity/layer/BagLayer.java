@@ -1,6 +1,7 @@
 package com.limachi.dimensional_bags.client.entity.layer;
 
 import com.limachi.dimensional_bags.client.entity.model.BagLayerModel;
+import com.limachi.dimensional_bags.common.Registries;
 import com.limachi.dimensional_bags.common.data.EyeDataMK2.ClientDataManager;
 import com.limachi.dimensional_bags.common.items.Bag;
 import com.mojang.blaze3d.matrix.MatrixStack;
@@ -17,8 +18,13 @@ import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerModelPart;
 import net.minecraft.inventory.EquipmentSlotType;
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.ResourceLocation;
+import org.apache.commons.lang3.tuple.ImmutableTriple;
+import top.theillusivec4.curios.api.CuriosApi;
+
+import java.util.Optional;
 
 import static com.limachi.dimensional_bags.DimBag.MOD_ID;
 
@@ -64,7 +70,9 @@ public class BagLayer<T extends LivingEntity, M extends BipedModel<T>, A extends
 
     @Override
     public void render(MatrixStack matrix, IRenderTypeBuffer buffer, int packedLight, T entity, float limbSwing, float limbSwingAmount, float partialTicks, float ageInTicks, float netHeadYaw, float headPitch) {
-        ItemStack itemstack = entity.getItemStackFromSlot(EquipmentSlotType.CHEST);
+//        ItemStack itemstack = entity.getItemStackFromSlot(EquipmentSlotType.CHEST);
+        Optional<ImmutableTriple<String, Integer, ItemStack>> s = CuriosApi.getCuriosHelper().findEquippedCurio((Item)Registries.getItem(Bag.NAME), entity);
+        ItemStack itemstack = s.isPresent() ? s.get().getRight() : ItemStack.EMPTY;
         int eyeId;
         if (itemstack.getItem() instanceof Bag && (eyeId = Bag.getEyeId(itemstack)) > 0)
         {
@@ -74,12 +82,12 @@ public class BagLayer<T extends LivingEntity, M extends BipedModel<T>, A extends
             IVertexBuilder builder = ItemRenderer.getBuffer(buffer, this.model.getRenderType(TEXTURE_BAG), false, false); //IRenderTypeBuffer bufferIn, RenderType renderTypeIn, boolean isItemIn, boolean glintIn
             this.model.render(matrix, builder, packedLight, OverlayTexture.NO_OVERLAY, 1f, 1f, 1f, 1f); //FIXME: light and color calculation
             matrix.pop();
-            ItemStack chestPlate = Bag.getChestPlate(itemstack);
-            if (!chestPlate.isEmpty())
-                super.render(matrix, buffer, packedLight, entity, limbSwing, limbSwingAmount, partialTicks, ageInTicks, netHeadYaw, headPitch);
-            ItemStack elytra = Bag.getElytra(itemstack);
-            if (!elytra.isEmpty())
-                renderElytra(getEntityModel(), matrix, buffer, packedLight, entity, limbSwing, limbSwingAmount, partialTicks, ageInTicks, netHeadYaw, headPitch);
+//            ItemStack chestPlate = Bag.getChestPlate(itemstack);
+//            if (!chestPlate.isEmpty())
+//                super.render(matrix, buffer, packedLight, entity, limbSwing, limbSwingAmount, partialTicks, ageInTicks, netHeadYaw, headPitch);
+//            ItemStack elytra = Bag.getElytra(itemstack);
+//            if (!elytra.isEmpty())
+//                renderElytra(getEntityModel(), matrix, buffer, packedLight, entity, limbSwing, limbSwingAmount, partialTicks, ageInTicks, netHeadYaw, headPitch);
             ClientDataManager dataManager = ClientDataManager.getInstance(itemstack);
             dataManager.onRenderEquippedBag(getEntityModel(), matrix, buffer, packedLight, entity, limbSwing, limbSwingAmount, partialTicks, ageInTicks, netHeadYaw, headPitch);
         }

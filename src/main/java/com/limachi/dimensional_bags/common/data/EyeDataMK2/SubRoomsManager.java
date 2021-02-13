@@ -1,5 +1,6 @@
 package com.limachi.dimensional_bags.common.data.EyeDataMK2;
 
+import com.limachi.dimensional_bags.CuriosIntegration;
 import com.limachi.dimensional_bags.DimBag;
 import com.limachi.dimensional_bags.common.NBTUtils;
 import com.limachi.dimensional_bags.common.Registries;
@@ -141,23 +142,28 @@ public class SubRoomsManager extends WorldSavedDataManager.EyeWorldSavedData {
         //previous known position second
         //default eye tp last
         if (checkForBag) {
-            int slot = Bag.getBagSlot(entity, getEyeId());
-            if (slot != -1) {
+//            int slot = Bag.getBagSlot(entity, getEyeId());
+            List<CuriosIntegration.ProxyItemStackModifier> res = CuriosIntegration.searchItem(entity, Bag.class, o->Bag.getEyeId(o) == getEyeId(), true);
+            if (!res.isEmpty()) {
                 Optional<CompoundNBT> n = UpgradeManager.isUpgradeInstalled(getEyeId(), "inception"); //FIXME: change this string to a real upgrade id
                 if (!n.isPresent()) { //this bag is not inception compatible, we should remove the item and spawn the bag entity
-                    if (entity instanceof PlayerEntity) {
-                        if (slot == 38)
-                            BagEntity.spawn(entity.world, entity.getPosition(), Bag.unequipBagOnChestSlot((PlayerEntity) entity));
-                        else {
-                            BagEntity.spawn(entity.world, entity.getPosition(), ((PlayerEntity) entity).inventory.getStackInSlot(slot));
-                            ((PlayerEntity) entity).inventory.setInventorySlotContents(slot, ItemStack.EMPTY);
-                        }
-                    } else {
-                        EquipmentSlotType s = Helper.slotTypeFromIndex(slot);
-                        if (s != null) {
-                            BagEntity.spawn(entity.world, entity.getPosition(), Helper.getItemStack(s, entity));
-                            entity.setItemStackToSlot(s, ItemStack.EMPTY);
-                        }
+//                    if (entity instanceof PlayerEntity) {
+//                        if (slot == 38)
+//                            BagEntity.spawn(entity.world, entity.getPosition(), Bag.unequipBagOnChestSlot((PlayerEntity) entity));
+//                        else {
+//                            BagEntity.spawn(entity.world, entity.getPosition(), ((PlayerEntity) entity).inventory.getStackInSlot(slot));
+//                            ((PlayerEntity) entity).inventory.setInventorySlotContents(slot, ItemStack.EMPTY);
+//                        }
+//                    } else {
+//                        EquipmentSlotType s = Helper.slotTypeFromIndex(slot);
+//                        if (s != null) {
+//                            BagEntity.spawn(entity.world, entity.getPosition(), Helper.getItemStack(s, entity));
+//                            entity.setItemStackToSlot(s, ItemStack.EMPTY);
+//                        }
+//                    }
+                    for (CuriosIntegration.ProxyItemStackModifier p : res) {
+                        BagEntity.spawn(entity.world, entity.getPosition(), p.get());
+                        p.set(ItemStack.EMPTY);
                     }
                 }
             }

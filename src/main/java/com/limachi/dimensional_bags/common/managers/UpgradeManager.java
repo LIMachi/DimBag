@@ -40,10 +40,10 @@ public class UpgradeManager extends WorldSavedDataManager.EyeWorldSavedData {
         new SlotUpgrade(1).attach(UPGRADES);
         new SlotUpgrade(4).attach(UPGRADES);
         new SlotUpgrade(9).attach(UPGRADES);
-        new ElytraUpgrade().attach(UPGRADES);
-        new TankUpgrade().attach(UPGRADES);
-        new TankCapacityUpgrade().attach(UPGRADES);
-        new EnergyUpgrade().attach(UPGRADES);
+//        new ElytraUpgrade().attach(UPGRADES);
+//        new TankUpgrade().attach(UPGRADES);
+//        new TankCapacityUpgrade().attach(UPGRADES);
+//        new EnergyUpgrade().attach(UPGRADES);
         new KineticGeneratorUpgrade().attach(UPGRADES);
     }
 

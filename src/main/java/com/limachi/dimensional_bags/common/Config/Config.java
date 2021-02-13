@@ -36,6 +36,22 @@ public class Config {
 
     @Retention(RetentionPolicy.RUNTIME)
     @Target(ElementType.FIELD)
+    public @interface Long {
+        long def() default 0L;
+        long[] valid() default {};
+        java.lang.String cmt() default "";
+    }
+
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target(ElementType.FIELD)
+    public @interface Int {
+        int def() default 0;
+        int[] valid() default {};
+        java.lang.String cmt() default "";
+    }
+
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target(ElementType.FIELD)
     public @interface Enum {
         /**
          * index of the enum (enumVar.val.ordinal()), as java does not allow enum directly inside of annotations

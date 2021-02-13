@@ -1,5 +1,6 @@
 package com.limachi.dimensional_bags.common.items;
 
+import com.limachi.dimensional_bags.CuriosIntegration;
 import com.limachi.dimensional_bags.DimBag;
 import com.limachi.dimensional_bags.KeyMapController;
 import com.limachi.dimensional_bags.common.Registries;
@@ -7,6 +8,7 @@ import com.limachi.dimensional_bags.common.data.EyeData;
 import com.limachi.dimensional_bags.common.data.EyeDataMK2.ClientDataManager;
 import com.limachi.dimensional_bags.common.data.EyeDataMK2.HolderData;
 import com.limachi.dimensional_bags.common.data.EyeDataMK2.SubRoomsManager;
+import com.limachi.dimensional_bags.common.data.IEyeIdHolder;
 import com.limachi.dimensional_bags.common.managers.ModeManager;
 import com.limachi.dimensional_bags.common.managers.UpgradeManager;
 import com.limachi.dimensional_bags.common.managers.modes.Default;
@@ -26,47 +28,56 @@ import javax.annotation.Nullable;
 import com.limachi.dimensional_bags.StaticInit;
 
 @StaticInit
-public class GhostBag extends Item implements IDimBagCommonItem {
+public class GhostBag extends Item {
 
     public static final String NAME = "ghost_bag";
+    public static final String BAG_ID_KEY = "targeted_bag_id";
 
     static {
         Registries.registerItem(NAME, GhostBag::new);
     }
 
+
     public static final String ORIGINAL_STACK_KEY = "original_stack";
-    public static final String TARGETED_BAG_INDEX_KEY = "targeted_bag_index";
+//    public static final String TARGETED_BAG_INDEX_KEY = "targeted_bag_index";
 
     public static float getModeProperty(ItemStack stack, World world, Entity entity) {
         return Bag.getModeProperty(stack, world, entity);
     }
 
     public static ItemStack getTargetedBag(ItemStack stack, Entity holder) {
-        if (!(holder instanceof PlayerEntity) || stack.getTag() == null || stack.getTag().getInt(TARGETED_BAG_INDEX_KEY) == -1) return null;
-        ItemStack bag = ((PlayerEntity)holder).inventory.getStackInSlot(stack.getTag().getInt(TARGETED_BAG_INDEX_KEY));
-        if (bag.getItem() instanceof Bag)
-            return bag;
-        return null;
+        if (!(holder instanceof PlayerEntity) || stack.getTag() == null || stack.getTag().getInt(BAG_ID_KEY) == 0) return ItemStack.EMPTY;
+//        ItemStack bag = ((PlayerEntity)holder).inventory.getStackInSlot(stack.getTag().getInt(TARGETED_BAG_INDEX_KEY));
+//        Bag.getBag(holder, stack.getTag().getInt(BAG_ID_KEY));
+        CuriosIntegration.ProxyItemStackModifier res = CuriosIntegration.searchItem(holder, Bag.class, o->Bag.getEyeId(o) == stack.getTag().getInt(BAG_ID_KEY));
+//        if (bag.getItem() instanceof Bag)
+//            return bag;
+        if (res != null)
+            return res.get();
+        return ItemStack.EMPTY;
     }
 
     public GhostBag() { super(new Properties().group(DimBag.ITEM_GROUP).maxStackSize(1)); }
 
     public static ItemStack ghostBagFromStack(ItemStack stack, PlayerEntity holder) {
-        IDimBagCommonItem.ItemSearchResult res = IDimBagCommonItem.searchItem(holder, 0, Bag.class, o->true, false);
-        int eyeId = 0;
-        if (res == null || res.index == -1)
+//        IDimBagCommonItem.ItemSearchResult res = IDimBagCommonItem.searchItem(holder, 0, Bag.class, o->true, false);
+//        CuriosIntegration.ProxyItemStackModifier res = CuriosIntegration.searchItem(holder, Bag.class, o->true);
+        int eyeId = Bag.getBag(holder, 0);
+//        if (res == null || res.index == -1)
+        if (eyeId == 0)
             eyeId = SubRoomsManager.getEyeId(holder.world, holder.getPosition(), false);
-        else
-            eyeId = Bag.getEyeId(res.stack);
+//        else
+//            eyeId = Bag.getEyeId(res.stack);
         if (eyeId <= 0) return stack;
         ItemStack out = new ItemStack(Registries.getItem(NAME));
         if (!out.hasTag())
             out.setTag(new CompoundNBT());
         out.getTag().put(ORIGINAL_STACK_KEY, stack.write(new CompoundNBT()));
-        if (res == null || res.index == -1)
-            out.getTag().putInt(TARGETED_BAG_INDEX_KEY, -1);
-        else
-            out.getTag().putInt(TARGETED_BAG_INDEX_KEY, res.index);
+        out.getTag().putInt(BAG_ID_KEY, eyeId);
+//        if (res == null || res.index == -1)
+//            out.getTag().putInt(TARGETED_BAG_INDEX_KEY, -1);
+//        else
+//            out.getTag().putInt(TARGETED_BAG_INDEX_KEY, res.index);
         ClientDataManager.getInstance(eyeId).store(out);
         if (!stack.isEmpty()) {
             String name = out.getDisplayName().getString() + "(" + (stack.getCount() != 1 ? stack.getCount() + "x " : "") + stack.getDisplayName().getString() + ")";
@@ -125,13 +136,17 @@ public class GhostBag extends Item implements IDimBagCommonItem {
             entityIn.replaceItemInInventory(itemSlot, getOriginalStack(stack));
             return;
         }
-        if (stack.getTag().getInt(TARGETED_BAG_INDEX_KEY) != -1 && !(((PlayerEntity)entityIn).inventory.getStackInSlot(stack.getTag().getInt(TARGETED_BAG_INDEX_KEY)).getItem() instanceof Bag)) {
-            IDimBagCommonItem.ItemSearchResult res = IDimBagCommonItem.searchItem((PlayerEntity) entityIn, 0, Bag.class, o -> true, false);
-            if (res == null || res.index == -1) {
-                entityIn.replaceItemInInventory(itemSlot, getOriginalStack(stack));
-                return;
-            }
+        if (getTargetedBag(stack, entityIn).isEmpty()) {
+            entityIn.replaceItemInInventory(itemSlot, getOriginalStack(stack));
+            return;
         }
+//        if (stack.getTag().getInt(TARGETED_BAG_INDEX_KEY) != -1 && !(((PlayerEntity)entityIn).inventory.getStackInSlot(stack.getTag().getInt(TARGETED_BAG_INDEX_KEY)).getItem() instanceof Bag)) {
+//            IDimBagCommonItem.ItemSearchResult res = IDimBagCommonItem.searchItem((PlayerEntity) entityIn, 0, Bag.class, o -> true, false);
+//            if (res == null || res.index == -1) {
+//                entityIn.replaceItemInInventory(itemSlot, getOriginalStack(stack));
+//                return;
+//            }
+//        }
         ClientDataManager.getInstance(stack).syncToServer(stack);
         int eyeId = Bag.getEyeId(stack);
         ModeManager.execute(eyeId, modeManager -> modeManager.inventoryTick(worldIn, entityIn, isSelected));
@@ -149,7 +164,7 @@ public class GhostBag extends Item implements IDimBagCommonItem {
 
     @Override
     public ActionResult<ItemStack> onItemRightClick(World world, PlayerEntity player, Hand hand) {
-        if (player.getHeldItem(hand).getTag().getInt(TARGETED_BAG_INDEX_KEY) != -1 && getTargetedBag(player.getHeldItem(hand), player) == null) {
+        if (/*player.getHeldItem(hand).getTag().getInt(TARGETED_BAG_INDEX_KEY) != -1 &&*/ getTargetedBag(player.getHeldItem(hand), player).isEmpty() /*== null*/) {
             player.setHeldItem(hand, getOriginalStack(player.getHeldItem(hand)));
             return ActionResult.resultFail(player.getHeldItem(hand));
         }

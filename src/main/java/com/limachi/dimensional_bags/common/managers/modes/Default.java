@@ -26,15 +26,16 @@ public class Default extends Mode {
         int z = Math.abs(ray.getPos().getZ() - player.getPosition().getZ());
         if (x > 1 || y > 2 || z > 1) return ActionResultType.PASS; //only validate if the click is close enough to the player
         //spawn the entity instead of oppening the upgrade GUI
-        int slot = Bag.getBagSlot(player, eyeId);
-        if (slot == -1)
-            return ActionResultType.PASS; //missing tag
-        if (slot == 38) //armor slot
-            BagEntity.spawn(world, ray.getPos().up(1), Bag.unequipBagOnChestSlot(player)); //spawn the bag entity and attach the bag item to it
-        else {
-            BagEntity.spawn(world, ray.getPos().up(1), player.inventory.getStackInSlot(slot)); //spawn the bag entity and attach the bag item to it
-            player.inventory.setInventorySlotContents(slot, ItemStack.EMPTY);
-        }
+//        int slot = Bag.getBagSlot(player, eyeId);
+//        if (slot == -1)
+//            return ActionResultType.PASS; //missing tag
+//        if (slot == 38) //armor slot
+//            BagEntity.spawn(world, ray.getPos().up(1), Bag.unequipBagOnChestSlot(player)); //spawn the bag entity and attach the bag item to it
+//        else {
+//            BagEntity.spawn(world, ray.getPos().up(1), player.inventory.getStackInSlot(slot)); //spawn the bag entity and attach the bag item to it
+//            player.inventory.setInventorySlotContents(slot, ItemStack.EMPTY);
+//        }
+        Bag.unequipBags(player, eyeId, ray.getPos().up(1));
         return ActionResultType.SUCCESS;
     }
 

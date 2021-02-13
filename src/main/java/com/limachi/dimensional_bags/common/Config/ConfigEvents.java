@@ -48,7 +48,7 @@ import static com.limachi.dimensional_bags.DimBag.MOD_ID;
 
 @Mod.EventBusSubscriber(modid = MOD_ID, bus = Mod.EventBusSubscriber.Bus.MOD)
 public class ConfigEvents {
-    protected static final Class<?>[] configAnnotations = {Config.IntRange.class, Config.String.class, Config.Enum.class, Config.Boolean.class};
+    protected static final Class<?>[] configAnnotations = {Config.IntRange.class, Config.String.class, Config.Enum.class, Config.Boolean.class, Config.Int.class, Config.Long.class};
     private static final ConfigBuilder CONFIG;
     private static final ForgeConfigSpec SPEC;
     protected static boolean isBuilt = false;
@@ -84,6 +84,8 @@ public class ConfigEvents {
                             case 3: value(targetPath, (boolean)data.getOrDefault("def", false), Arrays.asList(((Boolean[]) data.getOrDefault("valid", new Boolean[]{true, false})).clone()), (String)data.getOrDefault("cmt", "")); break;
                             case 2: //for now, virtually impossible to ensure any type safety TODO: do the missing states
                                 break;
+                            case 4: value(targetPath, (int)data.getOrDefault("def", 0), Arrays.asList(((Integer[])data.getOrDefault("valid", new Integer[]{})).clone()), (String)data.getOrDefault("cmt", "")); break;
+                            case 5: value(targetPath, (long)data.getOrDefault("def", 0), Arrays.asList(((Long[])data.getOrDefault("valid", new Long[]{})).clone()), (String)data.getOrDefault("cmt", "")); break;
                         }
                     }
         }

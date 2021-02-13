@@ -60,6 +60,7 @@ public class KeyMapController {
     public enum KeyBindings {
         BAG_KEY(true, ()->()->new KeyBinding("key.open_gui", KeyConflictContext.IN_GAME, InputMappings.Type.KEYSYM, GLFW.GLFW_KEY_I, KEY_CATEGORY)),
         SNEAK_KEY(false, ()->()->Minecraft.getInstance().gameSettings.keyBindSneak),
+        SPRINT_KEY(false, ()->()->Minecraft.getInstance().gameSettings.keyBindSprint),
         JUMP_KEY(false, ()->()->Minecraft.getInstance().gameSettings.keyBindJump),
         FORWARD_KEY(false, ()->()->Minecraft.getInstance().gameSettings.keyBindForward),
         BACK_KEY(false, ()->()->Minecraft.getInstance().gameSettings.keyBindBack),

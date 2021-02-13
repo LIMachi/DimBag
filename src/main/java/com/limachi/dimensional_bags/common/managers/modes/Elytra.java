@@ -25,7 +25,7 @@ import net.minecraft.world.World;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
-public class Elytra extends Mode {
+public class Elytra {} /*extends Mode {
     public static final ItemStack ENERGY_FIREWORK_ROCKET = new ItemStack(Items.FIREWORK_ROCKET);
 
     public Elytra() { super("Elytra", false, false); }
@@ -91,4 +91,4 @@ public class Elytra extends Mode {
             }
         }
     }
-}
+}*/

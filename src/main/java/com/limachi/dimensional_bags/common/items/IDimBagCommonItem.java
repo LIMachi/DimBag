@@ -109,6 +109,7 @@ public interface IDimBagCommonItem {
 //        return -1;
 //    }
 
+    /*
     static boolean _recursiveSearchItem(ItemSearchResult search, int depth, Class<? extends Item> clazz, Predicate<? super ItemStack> predicate, boolean continueAfterOne) {
         int ls = search.stackList.size();
         ArrayList<IItemHandler> pending = new ArrayList<>();
@@ -134,16 +135,18 @@ public interface IDimBagCommonItem {
                 return true;
         }
         return search.stackList.size() != ls;
-    }
+    }*/
 
+    /*
     static IItemHandler getItemHandlerFromStack(ItemStack stack, ItemSearchResult search) {
         return stack.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY).orElse(stack.getItem() instanceof BlockItem && ((BlockItem)stack.getItem()).getBlock() instanceof ShulkerBoxBlock ? new NBTStoredItemHandler.ShulkerBoxItemHandler(stack, (search.searchedItemHandler instanceof IMarkDirty) ? (IMarkDirty)search.searchedItemHandler : null) : null);
-    }
+    }*/
 
     static int slotFromHand(PlayerEntity player, Hand hand) {
         return hand == Hand.OFF_HAND ? player.inventory.getSizeInventory() - player.inventory.offHandInventory.size() : player.inventory.currentItem;
     }
 
+    /*
     static ItemSearchResult searchItem(Entity entity, int depth, Class<? extends Item> clazz, Predicate<? super ItemStack> predicate, boolean continueAfterOne) {
         boolean isPlayer = entity instanceof PlayerEntity;
         Iterator<ItemStack> it = Collections.emptyIterator();
@@ -255,7 +258,7 @@ public interface IDimBagCommonItem {
                     return search;
             }
         return search.stackList.size() != 0 ? search : null;
-    }
+    }*/
 
     /*class ShulkerBoxItemHandler implements IItemHandler, IMarkDirty {
 
@@ -404,6 +407,7 @@ public interface IDimBagCommonItem {
         }
     }*/
 
+    /*
     class ItemSearchResult {
         public Entity searchedEntity;
         public IInventory searchedInventory;
@@ -421,7 +425,7 @@ public interface IDimBagCommonItem {
             else if (searchedInventory != null)
                 searchedInventory.markDirty();
         }
-    }
+    }*/
 
     /*
     static void resetStringList(ItemStack stack, String key) {

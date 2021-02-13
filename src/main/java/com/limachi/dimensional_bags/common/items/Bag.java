@@ -2,6 +2,7 @@ package com.limachi.dimensional_bags.common.items;
 
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Multimap;
+import com.limachi.dimensional_bags.CuriosIntegration;
 import com.limachi.dimensional_bags.DimBag;
 import com.limachi.dimensional_bags.client.entity.model.NullModel;
 import com.limachi.dimensional_bags.common.Registries;
@@ -11,6 +12,7 @@ import com.limachi.dimensional_bags.common.data.EyeDataMK2.HolderData;
 import com.limachi.dimensional_bags.common.data.EyeDataMK2.OwnerData;
 import com.limachi.dimensional_bags.common.data.IEyeIdHolder;
 import com.limachi.dimensional_bags.common.data.IMarkDirty;
+import com.limachi.dimensional_bags.common.entities.BagEntity;
 import com.limachi.dimensional_bags.common.inventory.NBTStoredItemHandler;
 import com.limachi.dimensional_bags.common.items.entity.BagEntityItem;
 import com.limachi.dimensional_bags.common.managers.ModeManager;
@@ -31,6 +33,7 @@ import net.minecraft.item.*;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.nbt.ListNBT;
 import net.minecraft.util.*;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockRayTraceResult;
 import net.minecraft.util.math.RayTraceContext;
 import net.minecraft.util.text.ITextComponent;
@@ -45,12 +48,16 @@ import net.minecraftforge.common.util.LazyOptional;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Consumer;
 
 import com.limachi.dimensional_bags.StaticInit;
+import org.apache.commons.lang3.tuple.ImmutableTriple;
+import top.theillusivec4.curios.api.CuriosApi;
+import top.theillusivec4.curios.api.type.capability.ICuriosItemHandler;
 
 @StaticInit
-public class Bag extends ArmorItem implements IDimBagCommonItem {
+public class Bag extends Item {
 
     public static final String NAME = "bag";
 
@@ -58,107 +65,130 @@ public class Bag extends ArmorItem implements IDimBagCommonItem {
         Registries.registerItem(NAME, Bag::new);
     }
 
-    public Bag() { super(ArmorMaterial.LEATHER, EquipmentSlotType.CHEST, new Properties().group(DimBag.ITEM_GROUP).maxStackSize(1)); DispenserBlock.registerDispenseBehavior(this, ArmorItem.DISPENSER_BEHAVIOR); }
+    public Bag() { super(/*ArmorMaterial.LEATHER, EquipmentSlotType.CHEST,*/ new Properties().group(DimBag.ITEM_GROUP).maxStackSize(1)); DispenserBlock.registerDispenseBehavior(this, ArmorItem.DISPENSER_BEHAVIOR); }
 
-    public static NBTStoredItemHandler getArmorStandUpgradeInventory(ItemStack bag) {
-        if (bag.getTag() == null)
-            bag.setTag(new CompoundNBT());
-        IMarkDirty syncEnchants = new IMarkDirty() {
-            @Override
-            public void markDirty() {
-                bag.getTag().put("Enchantments", new ListNBT()); //clears the enchantments and also make sure the list for the enchantments exists
-                bag.getEnchantmentTagList().addAll(getChestPlate(bag).getEnchantmentTagList()); //blunt copy of the enchantments of the chestplate
-                bag.getEnchantmentTagList().addAll(getElytra(bag).getEnchantmentTagList()); //blunt copy of the enchantments of the chestplate
-            }
-        };
-        return new NBTStoredItemHandler(()->bag.getTag().getCompound("ArmorStandUpgrade"), nbt->bag.getTag().put("ArmorStandUpgrade", nbt), syncEnchants).resize(2);
+//    public static NBTStoredItemHandler getArmorStandUpgradeInventory(ItemStack bag) {
+//        if (bag.getTag() == null)
+//            bag.setTag(new CompoundNBT());
+//        IMarkDirty syncEnchants = new IMarkDirty() {
+//            @Override
+//            public void markDirty() {
+//                bag.getTag().put("Enchantments", new ListNBT()); //clears the enchantments and also make sure the list for the enchantments exists
+//                bag.getEnchantmentTagList().addAll(getChestPlate(bag).getEnchantmentTagList()); //blunt copy of the enchantments of the chestplate
+//                bag.getEnchantmentTagList().addAll(getElytra(bag).getEnchantmentTagList()); //blunt copy of the enchantments of the chestplate
+//            }
+//        };
+//        return new NBTStoredItemHandler(()->bag.getTag().getCompound("ArmorStandUpgrade"), nbt->bag.getTag().put("ArmorStandUpgrade", nbt), syncEnchants).resize(2);
+//    }
+
+    public static boolean equipBagOnCuriosSlot(ItemStack bag, PlayerEntity player) {
+        return CuriosIntegration.equipOnFirstValidSlot(player, CuriosIntegration.BAG_CURIOS_SLOT, bag);
     }
 
-    public static boolean equipBagOnChestSlot(ItemStack bag, PlayerEntity player) {
-        ItemStack chestplate = player.getItemStackFromSlot(EquipmentSlotType.CHEST);
-        if (!chestplate.isEmpty()) {
-            NBTStoredItemHandler handler = getArmorStandUpgradeInventory(bag);
-            if (chestplate.getItem() instanceof ElytraItem) {
-                if (!handler.insertItem(1, chestplate, true).isEmpty())
-                    return false;
-                else
-                    handler.insertItem(1, chestplate, false);
-            } else {
-                if (!handler.insertItem(0, chestplate, true).isEmpty())
-                    return false;
-                else
-                    handler.insertItem(0, chestplate, false);
+    public static int isEquipedOnCuriosSlot(LivingEntity entity, int eye_id) {
+        Optional<ImmutableTriple<String, Integer, ItemStack>> ois = CuriosApi.getCuriosHelper().findEquippedCurio(stack->
+            stack.getItem() instanceof Bag && Bag.getEyeId(stack) != 0 && (eye_id == 0 || Bag.getEyeId(stack) == eye_id)
+        , entity);
+        return ois.isPresent() ? Bag.getEyeId(ois.get().getRight()) : 0;
+    }
+
+    public static boolean unequipBags(LivingEntity entity, int eyeId, @Nullable BlockPos pos) {
+        List<CuriosIntegration.ProxyItemStackModifier> res = CuriosIntegration.searchItem(entity, Bag.class, o->Bag.getEyeId(o) == eyeId, true);
+        boolean did_unequip = false;
+        if (!res.isEmpty()) {
+            for (CuriosIntegration.ProxyItemStackModifier p : res) {
+                BagEntity.spawn(entity.world, pos == null ? entity.getPosition() : pos, p.get());
+                p.set(ItemStack.EMPTY);
+                did_unequip = true;
             }
-            handler.markDirty();
         }
-        player.setItemStackToSlot(EquipmentSlotType.CHEST, bag);
-        return true;
+        return did_unequip;
     }
+//    public static boolean equipBagOnChestSlot(ItemStack bag, PlayerEntity player) {
+//        ItemStack chestplate = player.getItemStackFromSlot(EquipmentSlotType.CHEST);
+//        if (!chestplate.isEmpty()) {
+//            NBTStoredItemHandler handler = getArmorStandUpgradeInventory(bag);
+//            if (chestplate.getItem() instanceof ElytraItem) {
+//                if (!handler.insertItem(1, chestplate, true).isEmpty())
+//                    return false;
+//                else
+//                    handler.insertItem(1, chestplate, false);
+//            } else {
+//                if (!handler.insertItem(0, chestplate, true).isEmpty())
+//                    return false;
+//                else
+//                    handler.insertItem(0, chestplate, false);
+//            }
+//            handler.markDirty();
+//        }
+//        player.setItemStackToSlot(EquipmentSlotType.CHEST, bag);
+//        return true;
+//    }
 
-    public static ItemStack unequipBagOnChestSlot(PlayerEntity player) {
-        ItemStack bag = player.getItemStackFromSlot(EquipmentSlotType.CHEST).copy();
-        if (!(bag.getItem() instanceof Bag)) return ItemStack.EMPTY;
-        NBTStoredItemHandler handler = getArmorStandUpgradeInventory(bag);
-        for (int i = 0; i < handler.getSlots(); ++i)
-            if (!handler.extractItem(i, 1, true).isEmpty()) {
-                player.setItemStackToSlot(EquipmentSlotType.CHEST, handler.extractItem(i, 1, false));
-                return bag;
-            }
-        player.setItemStackToSlot(EquipmentSlotType.CHEST, ItemStack.EMPTY);
-        return bag;
-    }
+//    public static ItemStack unequipBagOnChestSlot(PlayerEntity player) {
+//        ItemStack bag = player.getItemStackFromSlot(EquipmentSlotType.CHEST).copy();
+//        if (!(bag.getItem() instanceof Bag)) return ItemStack.EMPTY;
+//        NBTStoredItemHandler handler = getArmorStandUpgradeInventory(bag);
+//        for (int i = 0; i < handler.getSlots(); ++i)
+//            if (!handler.extractItem(i, 1, true).isEmpty()) {
+//                player.setItemStackToSlot(EquipmentSlotType.CHEST, handler.extractItem(i, 1, false));
+//                return bag;
+//            }
+//        player.setItemStackToSlot(EquipmentSlotType.CHEST, ItemStack.EMPTY);
+//        return bag;
+//    }
 
     /*
      * elytra behavior
      */
-    @Override
-    public boolean canElytraFly(ItemStack stack, LivingEntity entity) {
-        return getArmorStandUpgradeInventory(stack).getStackInSlot(1).canElytraFly(entity);
-    }
+//    @Override
+//    public boolean canElytraFly(ItemStack stack, LivingEntity entity) {
+//        return getArmorStandUpgradeInventory(stack).getStackInSlot(1).canElytraFly(entity);
+//    }
 
-    @Override
-    public boolean elytraFlightTick(ItemStack stack, LivingEntity entity, int flightTicks) {
-        NBTStoredItemHandler handler = getArmorStandUpgradeInventory(stack);
-        ItemStack elytra = handler.getStackInSlot(1);
-        boolean out = elytra.elytraFlightTick(entity, flightTicks);
-        handler.markDirty();
-        return out;
-    }
+//    @Override
+//    public boolean elytraFlightTick(ItemStack stack, LivingEntity entity, int flightTicks) {
+//        NBTStoredItemHandler handler = getArmorStandUpgradeInventory(stack);
+//        ItemStack elytra = handler.getStackInSlot(1);
+//        boolean out = elytra.elytraFlightTick(entity, flightTicks);
+//        handler.markDirty();
+//        return out;
+//    }
 
     /*
      * armor behavior
      */
 
-    @Override
-    public boolean canEquip(ItemStack stack, EquipmentSlotType armorType, Entity entity) {
-        return entity instanceof PlayerEntity && super.canEquip(stack, armorType, entity); //only a player can equip the bag
-    }
+//    @Override
+//    public boolean canEquip(ItemStack stack, EquipmentSlotType armorType, Entity entity) {
+//        return entity instanceof PlayerEntity && super.canEquip(stack, armorType, entity); //only a player can equip the bag
+//    }
 
-    public static ItemStack getChestPlate(ItemStack stack) {
-        return getArmorStandUpgradeInventory(stack).getStackInSlot(0);
-    }
+//    public static ItemStack getChestPlate(ItemStack stack) {
+//        return getArmorStandUpgradeInventory(stack).getStackInSlot(0);
+//    }
 
-    public static ItemStack getElytra(ItemStack stack) {
-        return getArmorStandUpgradeInventory(stack).getStackInSlot(1);
-    }
+//    public static ItemStack getElytra(ItemStack stack) {
+//        return getArmorStandUpgradeInventory(stack).getStackInSlot(1);
+//    }
 
-    @OnlyIn(Dist.CLIENT)
-    @Nullable
-    @Override
-    public <A extends BipedModel<?>> A getArmorModel(LivingEntity entityLiving, ItemStack stack, EquipmentSlotType armorSlot, A _default) {
-        ItemStack chestPlate = getChestPlate(stack);
-        if (!chestPlate.isEmpty())
-            return chestPlate.getItem().getArmorModel(entityLiving, chestPlate, armorSlot, _default);
-        return (A)new /*BagLayerModel(false)*/NullModel<>();
-    }
+//    @OnlyIn(Dist.CLIENT)
+//    @Nullable
+//    @Override
+//    public <A extends BipedModel<?>> A getArmorModel(LivingEntity entityLiving, ItemStack stack, EquipmentSlotType armorSlot, A _default) {
+//        ItemStack chestPlate = getChestPlate(stack);
+//        if (!chestPlate.isEmpty())
+//            return chestPlate.getItem().getArmorModel(entityLiving, chestPlate, armorSlot, _default);
+//        return (A)new /*BagLayerModel(false)*/NullModel<>();
+//    }
 
-    @Override
-    public boolean makesPiglinsNeutral(ItemStack stack, LivingEntity wearer) {
-        ItemStack chestPlate = getChestPlate(stack);
-        if (!chestPlate.isEmpty())
-            return chestPlate.makesPiglinsNeutral(wearer);
-        return false;
-    }
+//    @Override
+//    public boolean makesPiglinsNeutral(ItemStack stack, LivingEntity wearer) {
+//        ItemStack chestPlate = getChestPlate(stack);
+//        if (!chestPlate.isEmpty())
+//            return chestPlate.makesPiglinsNeutral(wearer);
+//        return false;
+//    }
 
     @Override
     public boolean hasContainerItem(ItemStack stack) { return true; } //will not be consumed by a craft
@@ -168,66 +198,66 @@ public class Bag extends ArmorItem implements IDimBagCommonItem {
         return stack.copy();
     }
 
-    @Override
-    public void onArmorTick(ItemStack stack, World world, PlayerEntity player) {
-        NBTStoredItemHandler handler = getArmorStandUpgradeInventory(stack);
-        handler.getStackInSlot(0).onArmorTick(world, player);
-        handler.markDirty();
-    }
+//    @Override
+//    public void onArmorTick(ItemStack stack, World world, PlayerEntity player) {
+//        NBTStoredItemHandler handler = getArmorStandUpgradeInventory(stack);
+//        handler.getStackInSlot(0).onArmorTick(world, player);
+//        handler.markDirty();
+//    }
 
-    @OnlyIn(Dist.CLIENT)
-    @Nullable
-    @Override
-    public String getArmorTexture(ItemStack stack, Entity entity, EquipmentSlotType slot, String type) {
-        ItemStack chestPlate = getChestPlate(stack);
-        if (!chestPlate.isEmpty()) {
-            String test = chestPlate.getItem().getArmorTexture(chestPlate, entity, slot, type);
-            if (test == null) { //if the item did not use the forge hook to provide the texture, it might be a vanilla item
-                //try the vanilla method
-                String texture = ((ArmorItem)chestPlate.getItem()).getArmorMaterial().getName();
-                test = String.format("%s:textures/models/armor/%s_layer_%d%s.png", "minecraft", texture, 1, type == null ? "" : String.format("_%s", type));
-            }
-            return test;
-        }
-        return null; //default armor texture (usually the white leather armor)
-    }
+//    @OnlyIn(Dist.CLIENT)
+//    @Nullable
+//    @Override
+//    public String getArmorTexture(ItemStack stack, Entity entity, EquipmentSlotType slot, String type) {
+//        ItemStack chestPlate = getChestPlate(stack);
+//        if (!chestPlate.isEmpty()) {
+//            String test = chestPlate.getItem().getArmorTexture(chestPlate, entity, slot, type);
+//            if (test == null) { //if the item did not use the forge hook to provide the texture, it might be a vanilla item
+//               ;// try the vanilla method
+//                String texture = ((ArmorItem)chestPlate.getItem()).getArmorMaterial().getName();
+//                test = String.format("%s:textures/models/armor/%s_layer_%d%s.png", "minecraft", texture, 1, type == null ? "" : String.format("_%s", type));
+//            }
+//            return test;
+//        }
+//        return null; //default armor texture (usually the white leather armor)
+//    }
 
-    @OnlyIn(Dist.CLIENT)
-    @Override
-    public void renderHelmetOverlay(ItemStack stack, PlayerEntity player, int width, int height, float partialTicks) {} //might be usefull someday, but for now only works on helmets
+//    @OnlyIn(Dist.CLIENT)
+//    @Override
+//    public void renderHelmetOverlay(ItemStack stack, PlayerEntity player, int width, int height, float partialTicks) {} //might be usefull someday, but for now only works on helmets
 
     @Override
     public int getItemEnchantability(ItemStack stack) { return 0; } //the bag might render the enchantments of the equiped chest plate, but is not itself enchentable
 
-    @Override
-    public <T extends LivingEntity> int damageItem(ItemStack stack, int amount, T entity, Consumer<T> onBroken) {
-        NBTStoredItemHandler handler = getArmorStandUpgradeInventory(stack);
-        ItemStack chestplate = handler.getStackInSlot(0);
-        chestplate.damageItem(amount, entity, onBroken);
-        handler.markDirty();
-        return 0;
-    } //prevent damage to the bag
+//    @Override
+//    public <T extends LivingEntity> int damageItem(ItemStack stack, int amount, T entity, Consumer<T> onBroken) {
+//        NBTStoredItemHandler handler = getArmorStandUpgradeInventory(stack);
+//        ItemStack chestplate = handler.getStackInSlot(0);
+//        chestplate.damageItem(amount, entity, onBroken);
+//        handler.markDirty();
+//        return 0;
+//    } //prevent damage to the bag
 
-    @Override
-    public int getMaxDamage(ItemStack stack) {
-        return getChestPlate(stack).getMaxDamage();
-    }
+//    @Override
+//    public int getMaxDamage(ItemStack stack) {
+//        return getChestPlate(stack).getMaxDamage();
+//    }
 
-    @Override
-    public int getDamageReduceAmount() { return 0; } //seem to only be used by mobs to switch armor, the attributes are used by damage calculation
+//    @Override
+//    public int getDamageReduceAmount() { return 0; } //seem to only be used by mobs to switch armor, the attributes are used by damage calculation
 
-    @Override
-    public float getToughness() { return 0; } //toughness, seem to only be used by mobs to switch armor
+//    @Override
+//    public float getToughness() { return 0; } //toughness, seem to only be used by mobs to switch armor
 
     @Override
     public Multimap<Attribute, AttributeModifier> getAttributeModifiers(EquipmentSlotType slot, ItemStack stack)
     {
         ImmutableMultimap.Builder<Attribute, AttributeModifier> builder = ImmutableMultimap.builder();
-        if (slot == this.slot) {
-            ItemStack chestplate = getChestPlate(stack);
-            if (!chestplate.isEmpty())
-                builder.putAll(((ArmorItem)chestplate.getItem()).getAttributeModifiers(slot));
-        }
+//        if (slot == this.slot) {
+//            ItemStack chestplate = getChestPlate(stack);
+//            if (!chestplate.isEmpty())
+//                builder.putAll(((ArmorItem)chestplate.getItem()).getAttributeModifiers(slot));
+//        }
         int eyeId = getEyeId(stack);
         if (eyeId > 0) {
             UpgradeManager.getAttributeModifiers(eyeId, slot, builder);
@@ -321,13 +351,13 @@ public class Bag extends ArmorItem implements IDimBagCommonItem {
 //        IDimBagCommonItem.sInventoryTick(stack, worldIn, entityIn, itemSlot, isSelected);
         if (DimBag.isServer(worldIn)) {
 
-            if (entityIn instanceof PlayerEntity && itemSlot < 4) { //recalculate the itemslot because the player inventory is cut in 3 parts: main, armor, offhand
-                for (int d : itemSlot == 0 ? new int[]{0, 36, 40} : new int[]{0, 36})
-                    if (((PlayerEntity)entityIn).inventory.getStackInSlot(itemSlot + d) == stack) {
-                        itemSlot += d;
-                        break;
-                    }
-            }
+//            if (entityIn instanceof PlayerEntity && itemSlot < 4) { //recalculate the itemslot because the player inventory is cut in 3 parts: main, armor, offhand
+//                for (int d : itemSlot == 0 ? new int[]{0, 36, 40} : new int[]{0, 36})
+//                    if (((PlayerEntity)entityIn).inventory.getStackInSlot(itemSlot + d) == stack) {
+//                        itemSlot += d;
+//                        break;
+//                    }
+//            }
 
             int eyeId;
             if ((eyeId = getEyeId(stack)) == 0 && entityIn instanceof PlayerEntity) {
@@ -353,47 +383,49 @@ public class Bag extends ArmorItem implements IDimBagCommonItem {
         }
     }
 
-    public static int getBagSlot(Entity entity, int eyeId) {
-        IDimBagCommonItem.ItemSearchResult res = IDimBagCommonItem.searchItem(entity, 0, Bag.class, t -> t.getTag() != null && t.getTag().getInt(IEyeIdHolder.EYE_ID_KEY) == eyeId, false);
-        return res != null ? res.index : -1;
-    }
+//    public static int getBagSlot(Entity entity, int eyeId) {
+//        IDimBagCommonItem.ItemSearchResult res = IDimBagCommonItem.searchItem(entity, 0, Bag.class, t -> t.getTag() != null && t.getTag().getInt(IEyeIdHolder.EYE_ID_KEY) == eyeId, false);
+//        return res != null ? res.index : -1;
+//    }
 
     public static int getBag(Entity entity, int eyeId) {
-        IDimBagCommonItem.ItemSearchResult res = IDimBagCommonItem.searchItem(entity, 0, Bag.class, t-> t.getTag() != null && t.getTag().getInt(IEyeIdHolder.EYE_ID_KEY) != 0 && (eyeId == 0 || t.getTag().getInt(IEyeIdHolder.EYE_ID_KEY) == eyeId), false);
-        return res != null ? res.stack.getTag().getInt(IEyeIdHolder.EYE_ID_KEY) : 0;
+        CuriosIntegration.ProxyItemStackModifier res = CuriosIntegration.searchItem(entity, Bag.class, t->t.getTag() != null && t.getTag().getInt(IEyeIdHolder.EYE_ID_KEY) != 0 && (eyeId == 0 || t.getTag().getInt(IEyeIdHolder.EYE_ID_KEY) == eyeId));
+//        IDimBagCommonItem.ItemSearchResult res = IDimBagCommonItem.searchItem(entity, 0, Bag.class, t-> t.getTag() != null && t.getTag().getInt(IEyeIdHolder.EYE_ID_KEY) != 0 && (eyeId == 0 || t.getTag().getInt(IEyeIdHolder.EYE_ID_KEY) == eyeId), false);
+        return res != null ? res.get().getTag().getInt(IEyeIdHolder.EYE_ID_KEY) : 0;
+//        return res != null ? res.stack.getTag().getInt(IEyeIdHolder.EYE_ID_KEY) : 0;
     }
 
     @Override
     public boolean isDamageable() { return true; } //set to true by default since damage are meant to be sent to the chestplate
 
-    @Override
-    public boolean isDamaged(ItemStack stack) {
-        return getChestPlate(stack).isDamaged();
-    }
+//    @Override
+//    public boolean isDamaged(ItemStack stack) {
+//        return getChestPlate(stack).isDamaged();
+//    }
 
-    @Override
-    public int getDamage(ItemStack stack) {
-        return getChestPlate(stack).getDamage();
-    }
+//    @Override
+//    public int getDamage(ItemStack stack) {
+//        return getChestPlate(stack).getDamage();
+//    }
 
-    @Override
-    public float getXpRepairRatio(ItemStack stack) {
-        return getChestPlate(stack).getXpRepairRatio();
-    }
+//    @Override
+//    public float getXpRepairRatio(ItemStack stack) {
+//        return getChestPlate(stack).getXpRepairRatio();
+//    }
 
-    @Override
-    public boolean isDamageable(ItemStack stack) {
-        ItemStack chestplate = getChestPlate(stack);
-        return chestplate.getItem().isDamageable(chestplate);
-    }
+//    @Override
+//    public boolean isDamageable(ItemStack stack) {
+//        ItemStack chestplate = getChestPlate(stack);
+//        return chestplate.getItem().isDamageable(chestplate);
+//    }
 
-    @Override
-    public void setDamage(ItemStack stack, int damage) {
-        NBTStoredItemHandler handler = getArmorStandUpgradeInventory(stack);
-        ItemStack chestplate = handler.getStackInSlot(0);
-        chestplate.setDamage(damage);
-        handler.markDirty();
-    }
+//    @Override
+//    public void setDamage(ItemStack stack, int damage) {
+//        NBTStoredItemHandler handler = getArmorStandUpgradeInventory(stack);
+//        ItemStack chestplate = handler.getStackInSlot(0);
+//        chestplate.setDamage(damage);
+//        handler.markDirty();
+//    }
 
     @Override
     public boolean shouldCauseReequipAnimation(ItemStack oldStack, ItemStack newStack, boolean slotChanged) {

@@ -70,7 +70,7 @@ public class OwnerData extends WorldSavedDataManager.EyeWorldSavedData {
     public void read(CompoundNBT nbt) {
         id = nbt.getUniqueId("Id");
         name = nbt.getString("Name");
-        if (!id.equals(NULLID))
+        if (DimBag.isServer(null) && !id.equals(NULLID))
             playerRef = new WeakReference<>(DimBag.getServer().getPlayerList().getPlayerByUUID(id));
         else
             playerRef = new WeakReference<>(null);

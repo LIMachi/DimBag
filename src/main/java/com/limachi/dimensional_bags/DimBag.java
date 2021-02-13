@@ -21,19 +21,18 @@ import net.minecraft.world.server.ServerWorld;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.IEventBus;
-import net.minecraftforge.fml.DistExecutor;
-import net.minecraftforge.fml.LogicalSide;
-import net.minecraftforge.fml.ModList;
-import net.minecraftforge.fml.ModLoadingContext;
+import net.minecraftforge.fml.*;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.thread.EffectiveSide;
 import net.minecraftforge.fml.config.ModConfig;
+import net.minecraftforge.fml.event.lifecycle.InterModEnqueueEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.fml.server.ServerLifecycleHooks;
 import net.minecraftforge.forgespi.language.ModFileScanData;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.objectweb.asm.Type;
+import top.theillusivec4.curios.api.SlotTypeMessage;
 
 import javax.annotation.Nullable;
 
@@ -75,6 +74,7 @@ public class DimBag {
         ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, ConfigEvents.getSpec());
         Registries.registerAll(eventBus);
         MinecraftForge.EVENT_BUS.register(EventManager.class);
+        eventBus.addListener(CuriosIntegration::enqueueIMC);
     }
 
     /** try by all means to know if the current invocation is on a logical client or logical server */
