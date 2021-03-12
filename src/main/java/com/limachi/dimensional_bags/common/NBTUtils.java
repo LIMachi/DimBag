@@ -5,8 +5,11 @@ import net.minecraft.entity.Entity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.*;
 
+import javax.annotation.Nonnull;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -35,6 +38,101 @@ public class NBTUtils {
         return nbt;
     }
     */
+
+    /**
+     * ideally the correct way of making a diff would be to just extract 2 things: what keys to delete (first) and a mergeable compound
+     * the return would then be a compound with a special key for a list of sub-keys to delete
+     * and the merge would be donne by first removing the keys from the target
+     * cloning and removing the special list from the diff
+     * and finally merge the diff with the target
+     */
+
+//    public static CompoundNBT diff(@Nonnull CompoundNBT valid, @Nonnull CompoundNBT diff) {
+//        ListNBT rem = removedKeys(valid, diff);
+//        CompoundNBT out = removeKeys(valid.copy(), rem);
+//
+//    }
+
+    protected static CompoundNBT removeKeys(CompoundNBT nbt, ListNBT keys) {
+        for (int i = 0; i < keys.size(); ++i) {
+            INBT k = keys.get(i);
+            if (k.getId() == 10) {//compound
+                String s = ((CompoundNBT)k).getString("key");
+                ListNBT sk = (ListNBT)((CompoundNBT)k).get("list");
+                nbt.put(s, removeKeys(nbt.getCompound(s), sk));
+            } else
+                nbt.remove(((StringNBT)k).getString());
+        }
+        return nbt;
+    }
+
+    protected static ListNBT removedKeys(@Nonnull CompoundNBT valid, @Nonnull CompoundNBT diff) {
+        ListNBT list = new ListNBT();
+        for (String key : diff.keySet())
+            if (!valid.contains(key))
+                list.add(StringNBT.valueOf(key));
+            else {
+                INBT td = diff.get(key);
+                INBT tv = valid.get(key);
+                if (td instanceof CompoundNBT && tv instanceof CompoundNBT) {
+                    ListNBT sl = removedKeys((CompoundNBT) tv, (CompoundNBT) td);
+                    if (!sl.isEmpty()) {
+                        CompoundNBT entry = new CompoundNBT();
+                        entry.put("list", sl);
+                        entry.putString("key", key);
+                        list.add(entry);
+                    }
+                } else
+                    list.add(StringNBT.valueOf(key));
+            }
+        return list;
+    }
+
+    public static CompoundNBT extractDiff(@Nonnull CompoundNBT valid, @Nonnull CompoundNBT diff) {
+        CompoundNBT added = new CompoundNBT();
+        ListNBT removed = new ListNBT();
+        CompoundNBT changed = new CompoundNBT();
+        for (String key : valid.keySet())
+            if (diff.contains(key) && !diff.get(key).equals(valid.get(key))) {
+                INBT tv = valid.get(key);
+                INBT td = diff.get(key);
+                if (tv instanceof CompoundNBT && td instanceof CompoundNBT)
+                    changed.put(key, extractDiff((CompoundNBT) tv, (CompoundNBT) td));
+                else
+                    changed.put(key, tv);
+            }
+            else if (!diff.contains(key))
+                added.put(key, valid.get(key));
+        for (String key : diff.keySet())
+            if (!valid.contains(key))
+                removed.add(StringNBT.valueOf(key));
+        CompoundNBT out = new CompoundNBT();
+        if (!changed.isEmpty())
+            out.put("Diff_Changed", changed);
+        if (!added.isEmpty())
+            out.put("Diff_Added", added);
+        if (!removed.isEmpty())
+            out.put("Diff_Removed", removed);
+        return out;
+    }
+
+    public static CompoundNBT applyDiff(@Nonnull CompoundNBT toChange, @Nonnull CompoundNBT diff) {
+        ListNBT removed = diff.getList("Diff_Removed", 8);
+        for (int i = 0; i < removed.size(); ++i)
+            toChange.remove(removed.getString(i));
+        CompoundNBT added = diff.getCompound("Diff_Added");
+        for (String key : added.keySet())
+            toChange.put(key, added.get(key));
+        CompoundNBT changed = diff.getCompound("Diff_Changed");
+        for (String key : changed.keySet()) {
+            INBT c = changed.get(key);
+            if (toChange.contains(key) && c instanceof CompoundNBT && toChange.get(key) instanceof CompoundNBT)
+                toChange.put(key, applyDiff((CompoundNBT) toChange.get(key), (CompoundNBT) c));
+            else
+                toChange.put(key, c);
+        }
+        return toChange;
+    }
 
     public static INBT deepMergeNBTInternal(INBT to, INBT from) {
         if (from == null)

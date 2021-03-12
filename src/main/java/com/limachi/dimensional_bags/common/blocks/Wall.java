@@ -23,7 +23,7 @@ public class Wall extends Block {
         Registries.registerBlockItem(NAME, NAME, DimBag.DEFAULT_PROPERTIES);
     }
 
-    public Wall() { super(Properties.create(Material.ROCK).hardnessAndResistance(-1f, 3600000f).sound(SoundType.CLOTH)); }
+    public Wall() { super(Properties.create(Material.ROCK).hardnessAndResistance(-1f, 3600000f).sound(SoundType.CLOTH).setOpaque((s,r,p)->false).notSolid().setAllowsSpawn((s,r,p,a)->false).setLightLevel(i->8)); }
 
     @Override
     public void onFallenUpon(World worldIn, BlockPos pos, Entity entityIn, float fallDistance) {

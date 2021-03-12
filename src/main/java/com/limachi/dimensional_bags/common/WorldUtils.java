@@ -4,6 +4,7 @@ import com.limachi.dimensional_bags.DimBag;
 import com.limachi.dimensional_bags.common.blocks.TheEye;
 import com.limachi.dimensional_bags.common.blocks.Tunnel;
 import com.limachi.dimensional_bags.common.blocks.Wall;
+import com.limachi.dimensional_bags.common.data.EyeDataMK2.SubRoomsManager;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.entity.CreatureEntity;
@@ -14,6 +15,7 @@ import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.network.play.server.SPlayerPositionLookPacket;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.ClassInheritanceMultiMap;
+import net.minecraft.util.Direction;
 import net.minecraft.util.RegistryKey;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.AxisAlignedBB;
@@ -21,16 +23,17 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.vector.Vector3d;
+import net.minecraft.util.math.vector.Vector3i;
 import net.minecraft.util.registry.Registry;
 import net.minecraft.world.World;
 import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.server.ServerWorld;
 import net.minecraft.world.server.TicketType;
 
-import java.util.EnumSet;
-import java.util.List;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
+import java.util.function.Function;
+import java.util.function.Predicate;
+import java.util.function.Supplier;
 
 public class WorldUtils { //TODO: remove bloat once MCP/Forge mappings are better/more stable
 
@@ -132,6 +135,47 @@ public class WorldUtils { //TODO: remove bloat once MCP/Forge mappings are bette
         else
             world = (ServerWorld)entity.getEntityWorld();
         teleport(entity, world, x, y, z, entity.rotationYaw, entity.rotationPitch);
+    }
+
+    private static void pushWallRec(World world, Direction dir, BlockPos pos, BlockState bs_wall, BlockState bs_tunnel, BlockState bs_air, List<Vector3i> rec, List<BlockPos> rebuildWalls) {
+        BlockState bs = world.getBlockState(pos);
+        if (bs == bs_tunnel || bs == bs_wall) {
+            world.setBlockState(pos.add(dir.getDirectionVec()), bs == bs_tunnel ? bs_tunnel : bs_wall, 10);
+            BlockState bb = world.getBlockState(pos.subtract(dir.getDirectionVec()));
+            if (bb == bs_tunnel || bb == bs_wall)
+                rebuildWalls.add(pos);
+            world.setBlockState(pos, bs_air, 10);
+            for (Vector3i delta : rec)
+                pushWallRec(world, dir, pos.add(delta), bs_wall, bs_tunnel, bs_air, rec, rebuildWalls);
+        }
+    }
+
+    /**
+     * use a flood fill system to push a wall and rebuild his edges
+     */
+    public static void pushWall(World world, BlockPos start, Direction dir) {
+        BlockState wall = Registries.getBlock(Wall.NAME).getDefaultState();
+        BlockState air = Blocks.AIR.getDefaultState();
+        BlockState tunnel = Registries.getBlock(Tunnel.NAME).getDefaultState();
+
+        ArrayList<Vector3i> rec = new ArrayList<>();
+        Direction.Axis doNotInclude = dir.getAxis();
+        if (doNotInclude != Direction.Axis.X) {
+            rec.add(new Vector3i(1, 0, 0));
+            rec.add(new Vector3i(-1, 0, 0));
+        }
+        if (doNotInclude != Direction.Axis.Y) {
+            rec.add(new Vector3i(0, 1, 0));
+            rec.add(new Vector3i(0, -1, 0));
+        }
+        if (doNotInclude != Direction.Axis.Z) {
+            rec.add(new Vector3i(0, 0, 1));
+            rec.add(new Vector3i(0, 0, -1));
+        }
+        ArrayList<BlockPos> rebuildWalls = new ArrayList<>();
+        pushWallRec(world, dir, start, wall, tunnel, air, rec, rebuildWalls);
+        for (BlockPos newWall : rebuildWalls)
+            world.setBlockState(newWall, wall, 10);
     }
 
     public static void buildRoom(World world, BlockPos center, int radius, int prevRad) { //build a new main room or expand it by tearing down walls a adding new ones further TODO: add code to keep doors and covers on walls

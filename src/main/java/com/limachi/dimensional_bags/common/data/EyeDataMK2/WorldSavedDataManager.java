@@ -1,6 +1,7 @@
 package com.limachi.dimensional_bags.common.data.EyeDataMK2;
 
 import com.limachi.dimensional_bags.DimBag;
+import com.limachi.dimensional_bags.common.EventManager;
 import com.limachi.dimensional_bags.common.WorldUtils;
 import com.limachi.dimensional_bags.common.data.DimBagData;
 import com.limachi.dimensional_bags.common.managers.ModeManager;
@@ -59,7 +60,8 @@ public class WorldSavedDataManager {
         @Override
         public void markDirty() {
             super.markDirty();
-            WorldSavedDataManager.toClientsUpdate(this);
+            if (!isClient)
+                EventManager.delayedTask(1, () -> WorldSavedDataManager.toClientsUpdate(this));
         }
     }
 

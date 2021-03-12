@@ -1,7 +1,7 @@
 package com.limachi.dimensional_bags.client.render.screen;
 
 import com.google.common.primitives.Ints;
-import com.limachi.dimensional_bags.common.container.BagContainer;
+//import com.limachi.dimensional_bags.common.container.BagContainer;
 import com.limachi.dimensional_bags.common.container.BaseContainer;
 import com.limachi.dimensional_bags.common.inventory.Wrapper;
 import com.limachi.dimensional_bags.common.references.GUIs;

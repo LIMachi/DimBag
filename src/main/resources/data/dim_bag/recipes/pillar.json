@@ -7,13 +7,13 @@
   ],
   "key": {
     "#": {
-      "item": "minecraft:quartz_stairs"
+      "item": "minecraft:end_stone_brick_stairs"
     },
     "P": {
       "item": "minecraft:piston"
     },
     "Q": {
-      "item": "minecraft:quartz_pillar"
+      "item": "minecraft:end_stone_brick"
     },
     "E": {
       "item": "minecraft:ender_chest"

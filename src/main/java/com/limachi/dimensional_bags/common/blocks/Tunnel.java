@@ -49,14 +49,15 @@ public class Tunnel extends Block {
             return;
         }
         if (KeyMapController.KeyBindings.SNEAK_KEY.getState(player)) {//shift-left-click, remove the tunnel (replace it by a wall) and give back the tunnel placer (item)
-            worldIn.setBlockState(pos, Registries.getBlock(NAME).getDefaultState());
             SubRoomsManager data = SubRoomsManager.getInstance(SubRoomsManager.getEyeId(worldIn, pos, false));
             if (data == null) {
                 super.onBlockClicked(state, worldIn, pos, player);
                 return;
             }
-            SubRoomsManager.tunnel((ServerWorld)worldIn, pos, player, false, true);
-            player.addItemStackToInventory(new ItemStack(Registries.getItem(TunnelPlacer.NAME)));
+            if (SubRoomsManager.tunnel((ServerWorld)worldIn, pos, player, false, true)) {
+                worldIn.setBlockState(pos, Registries.getBlock(Wall.NAME).getDefaultState());
+                player.addItemStackToInventory(new ItemStack(Registries.getItem(TunnelPlacer.NAME)));
+            }
         }
     }
 }

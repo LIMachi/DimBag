@@ -23,10 +23,10 @@ public class SlotUpgrade extends Upgrade {
     public void installUpgrade(int eyeId, ItemStack stack, int amount, boolean preview) {
         if (!preview) {
             InventoryData data = InventoryData.getInstance(eyeId);
-            int rows = data.getRows();
-            int columns = data.getColumns();
-            int size = data.getInventory().getSlots();
-            data.getInventory().resizeInventory(size + amount, rows, columns, rows, columns);
+//            int rows = data.getRows();
+//            int columns = data.getColumns();
+//            int size = data.getUserInventory().getSlots();
+//            data.getUserInventory().resizeInventory(size + amount, rows, columns, rows, columns);
         }
     }
 

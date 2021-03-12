@@ -4,10 +4,7 @@ import com.limachi.dimensional_bags.DimBag;
 import com.limachi.dimensional_bags.common.Registries;
 import com.limachi.dimensional_bags.common.network.Network;
 import com.limachi.dimensional_bags.common.tileentities.BrainTileEntity;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.ITileEntityProvider;
-import net.minecraft.block.SoundType;
+import net.minecraft.block.*;
 import net.minecraft.block.material.Material;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
@@ -25,6 +22,7 @@ import net.minecraft.world.World;
 import javax.annotation.Nullable;
 
 import com.limachi.dimensional_bags.StaticInit;
+import net.minecraftforge.common.ToolType;
 
 @StaticInit
 public class Brain extends Block implements ITileEntityProvider {
@@ -40,7 +38,7 @@ public class Brain extends Block implements ITileEntityProvider {
     public static final IntegerProperty TICK_RATE = IntegerProperty.create("tick_rate", 1, /*1200*/20);
 
     public Brain() {
-        super(Block.Properties.create(Material.ROCK).sound(SoundType.STONE));
+        super(Block.Properties.create(Material.ROCK).sound(SoundType.STONE).setRequiresTool().hardnessAndResistance(1.5F, 180000000).harvestTool(ToolType.PICKAXE).harvestLevel(2).doesNotBlockMovement().setAllowsSpawn((s, r, p, e)->false));
         this.setDefaultState(getDefaultState().with(POWER, 0).with(TICK_RATE, 2));
     }
 

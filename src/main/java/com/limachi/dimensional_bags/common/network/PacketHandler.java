@@ -5,6 +5,7 @@ import com.limachi.dimensional_bags.common.network.packets.*;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.util.ResourceLocation;
+import net.minecraftforge.common.util.FakePlayer;
 import net.minecraftforge.fml.LogicalSide;
 import net.minecraftforge.fml.network.NetworkDirection;
 import net.minecraftforge.fml.network.NetworkEvent;
@@ -86,6 +87,7 @@ public class PacketHandler {
         registerMsg(KeyStateMsg.class);
         registerMsg(TrackedStringSyncMsg.class);
         registerMsg(FluidSlotSyncMsg.class);
+        registerMsg(SetSlotPacket.class);
     }
 
     public static <T extends Message> void toServer(T msg) { HANDLER.sendToServer(msg); }
@@ -93,5 +95,5 @@ public class PacketHandler {
         for (ServerPlayerEntity player : DimBag.getServer().getPlayerList().getPlayers())
             toClient(player, msg);
     }
-    public static <T extends Message> void toClient(ServerPlayerEntity player, T msg) { HANDLER.sendTo(msg, player.connection.netManager, NetworkDirection.PLAY_TO_CLIENT); }
+    public static <T extends Message> void toClient(ServerPlayerEntity player, T msg) { if (!(player instanceof FakePlayer)) HANDLER.sendTo(msg, player.connection.netManager, NetworkDirection.PLAY_TO_CLIENT); }
 }

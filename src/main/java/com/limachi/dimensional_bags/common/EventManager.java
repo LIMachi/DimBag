@@ -283,6 +283,15 @@ public class EventManager {
         }
     }
 
+    @SubscribeEvent
+    public static void blockBreakWatcher(BlockEvent.BreakEvent event) {
+        ITag<Block> kt = BlockTags.getCollection().get(new ResourceLocation(DimBag.MOD_ID, "keep_nbt_on_break"));
+        if (kt != null && kt.contains(event.getState().getBlock())) { //do nbt manipulation
+            DimBag.LOGGER.info("nbt storing block break detected: " + event.getState());
+//            event.
+        }
+    }
+
 //    @SubscribeEvent(priority = EventPriority.LOWEST)
 //    public static void tombstoneModule(LivingDamageEvent event) { //need to refine how the items will be stored/given back, also we need to look for compatibility with other mods
 //        LivingEntity entity = event.getEntityLiving();

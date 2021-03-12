@@ -1,107 +1,67 @@
 package com.limachi.dimensional_bags.common.tileentities;
 
+import com.limachi.dimensional_bags.DimBag;
+import com.limachi.dimensional_bags.StaticInit;
 import com.limachi.dimensional_bags.common.Registries;
 import com.limachi.dimensional_bags.common.blocks.Pillar;
-import com.limachi.dimensional_bags.common.data.EyeDataMK2.HolderData;
-import com.limachi.dimensional_bags.common.data.EyeDataMK2.SubRoomsManager;
+import com.limachi.dimensional_bags.common.data.EyeDataMK2.InventoryData;
 import com.limachi.dimensional_bags.common.data.IMarkDirty;
-import com.limachi.dimensional_bags.common.inventory.PlayerInvWrapper;
-import com.limachi.dimensional_bags.common.inventory.Wrapper;
+import com.limachi.dimensional_bags.common.inventory.PillarInventory;
 import net.minecraft.block.BlockState;
-import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.nbt.ListNBT;
-import net.minecraft.tileentity.ITickableTileEntity;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.Direction;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.items.CapabilityItemHandler;
 
-import net.minecraftforge.items.IItemHandlerModifiable;
-
-import java.lang.ref.WeakReference;
-
-import com.limachi.dimensional_bags.StaticInit;
+import java.util.UUID;
 
 @StaticInit
-public class PillarTileEntity extends TileEntity implements ITickableTileEntity, IMarkDirty {
+public class PillarTileEntity extends TileEntity implements IMarkDirty {
 
     public static final String NAME = "pillar";
 
-    static {
-        Registries.registerTileEntity(NAME, BrainTileEntity::new, ()->Registries.getBlock(Pillar.NAME), null);
-    }
+    public static final String NBT_KEY_ID = "ID";
+    public static final String NBT_KEY_EYE = "EyeId";
 
-    private LazyOptional<IItemHandlerModifiable> invPtr = LazyOptional.empty();
-    private WeakReference<HolderData> holderDataRef = new WeakReference<>(null);
-    private Wrapper.IORights[] rights;
-    private int tick;
+    public UUID invId = UUID.randomUUID();
+    public int eyeId;
+
+    static {
+        Registries.registerTileEntity(NAME, PillarTileEntity::new, ()->Registries.getBlock(Pillar.NAME), null);
+    }
 
     public PillarTileEntity() {
         super(Registries.getTileEntityType(NAME));
-        rights = new Wrapper.IORights[41];
-        for (int i = 0; i < 41; ++i) { //the default rights are 0-64 items of any kind and IO disabled
-            rights[i] = new Wrapper.IORights();
-            rights[i].flags = 0;
-        }
     }
 
     @Override
     public CompoundNBT write(CompoundNBT compound) {
-        ListNBT list = new ListNBT();
-        for (int i = 0; i < 41; ++i)
-            list.add(rights[i].write(new CompoundNBT()));
-        compound.put("IORights", list);
+        compound.putUniqueId(NBT_KEY_ID, invId);
+        compound.putInt(NBT_KEY_EYE, eyeId);
         return super.write(compound);
     }
 
     @Override
     public void read(BlockState state, CompoundNBT compound) {
-        ListNBT list = compound.getList("IORights", 10);
-        if (list.size() != 41)
-            for (int i = 0; i < 41; ++i) {
-                rights[i] = new Wrapper.IORights();
-                rights[i].flags = 0;
-            }
-        else
-            for (int i = 0; i < 41; ++i)
-                rights[i].read(list.getCompound(i));
         super.read(state, compound);
-    }
-
-    @Override
-    public void tick() {
-        ++tick;
-        if ((tick & 7) == 0) {
-            if (holderDataRef.get() == null)
-                holderDataRef = new WeakReference<>(HolderData.getInstance(SubRoomsManager.getEyeId(this.world, this.pos, false)));
-            if (holderDataRef.get() == null) {
-                if (invPtr.isPresent())
-                    invPtr = LazyOptional.empty();
-                return;
-            }
-            PlayerInventory inv = holderDataRef.get().getPlayerInventory();
-            if (inv != null) {
-                IItemHandlerModifiable handler = null;
-                if (invPtr.isPresent())
-                    handler = invPtr.orElse(null);
-                if (!invPtr.isPresent() || handler == null || ((PlayerInvWrapper) handler).getPlayerInventory() != inv)
-                    invPtr = LazyOptional.of(() -> new PlayerInvWrapper(inv, rights, this));
-            } else if (invPtr.isPresent())
-                invPtr = LazyOptional.empty();
+        if (DimBag.isServer(world)) { //TODO: clean this hack, this is used to silence invalid id client side (ids are only used server side)
+            invId = compound.getUniqueId(NBT_KEY_ID);
+            eyeId = compound.getInt(NBT_KEY_EYE);
         }
     }
 
-    public PlayerInvWrapper getWrapper() { return (PlayerInvWrapper)invPtr.orElse(null); }
+    public PillarInventory getInventory() {
+        return (PillarInventory)InventoryData.execute(eyeId, invData->invData.getPillarInventory(invId), null);
+    }
+
+    private net.minecraftforge.common.util.LazyOptional<?> itemHandler = net.minecraftforge.common.util.LazyOptional.of(this::getInventory);
 
     @Override
     public <T> LazyOptional<T> getCapability(Capability<T> capability, Direction facing) {
-        if (holderDataRef.get() != null) {
-            if (capability == CapabilityItemHandler.ITEM_HANDLER_CAPABILITY) {
-                if (invPtr.isPresent())
-                    return invPtr.cast();
-            }
+        if (capability == CapabilityItemHandler.ITEM_HANDLER_CAPABILITY) {
+            return itemHandler.cast();
         }
         return super.getCapability(capability, facing);
     }

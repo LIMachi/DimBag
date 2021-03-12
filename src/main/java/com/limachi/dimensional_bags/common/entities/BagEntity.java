@@ -145,7 +145,7 @@ public class BagEntity extends MobEntity implements IEyeIdHolder {
 //            }
 //            WorldUtils.teleportEntity(player, WorldUtils.DimBagRiftKey, new BlockPos(1024 * (getEyeId() - 1) + 8, 129, 8));
         } else
-            Network.openEyeInventory((ServerPlayerEntity)player, getEyeId());
+            Network.openEyeInventory((ServerPlayerEntity)player, getEyeId(), null);
         return ActionResultType.SUCCESS;
     }
 

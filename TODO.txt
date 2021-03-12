@@ -43,3 +43,15 @@ example:
 -a new room spawns with a certain number of pillars (by default 9)
 -pillars can be upgraded (like barrels/drawers) to contain more items
 -player pillars can be automated using redstone (redstone power on 1 axis select the line/belt/armor/extra inventory, redstont on the other axis selects the column)
+
+(only when all else is finished, get back on track you dofus)
+->proto pearl branch:
+proto pearl (when consumed/eaten) will have a random effect in the following list:
++change your size (half or double for 1 minute, potion effect)
++throw a standard enderpearl
++summon an ender mite
+
+->size pearl branch:
+size pearl (stabilized proto pearl in size mode) will change your size when consumed
+-halve your size if you are sneaking (limited to 2 times or 1/2 of a block height)
+-double your size if you are standing (limited to 2 times or 8 blocks height)

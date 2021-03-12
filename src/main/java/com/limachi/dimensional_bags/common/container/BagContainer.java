@@ -4,11 +4,9 @@ import com.limachi.dimensional_bags.common.Registries;
 import com.limachi.dimensional_bags.common.data.EyeDataMK2.InventoryData;
 import com.limachi.dimensional_bags.common.inventory.PlayerInvWrapper;
 import com.limachi.dimensional_bags.common.inventory.Wrapper;
-import com.limachi.dimensional_bags.common.network.Network;
 import com.limachi.dimensional_bags.common.references.GUIs;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
-import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.inventory.container.ClickType;
 import net.minecraft.item.ItemStack;
 import net.minecraft.network.PacketBuffer;
@@ -18,7 +16,8 @@ import static com.limachi.dimensional_bags.common.references.GUIs.ScreenParts.*;
 
 import com.limachi.dimensional_bags.StaticInit;
 
-@StaticInit
+//@StaticInit
+/*
 public class BagContainer extends BaseWrappedInventoryContainer {
 
     public static final String NAME = "inventory";
@@ -29,25 +28,32 @@ public class BagContainer extends BaseWrappedInventoryContainer {
 
     private int rows;
     private int columns;
-    private InventoryData data;
+//    private int pillar;
+//    private InventoryData data;
 
-    private BagContainer(int windowId, PlayerInventory playerInv, int rows, int columns, Wrapper openInv, InventoryData data) {
+    private BagContainer(int windowId, PlayerInventory playerInv, int pillar, Wrapper openInv) {
         super(Registries.getContainerType(BagContainer.NAME), windowId);
         this.playerInv = new PlayerInvWrapper(playerInv);
         this.openInv = openInv;
-        this.rows = rows;
-        this.columns = columns;
-        this.data = data;
+//        this.pillar = pillar;
+        if (pillar != -1) { //if this is an identified pillar, only view the related slot
+            this.rows = 1;
+            this.columns = 1;
+        } else { //otherwise, show the entire inventory
+            this.rows = (int)Math.ceil((double)openInv.getSlots() / 9.);
+            this.columns = (int)Math.ceil((double)openInv.getSlots() / (double)this.rows);
+        }
+//        this.data = data;
         addSlots();
         trackIntArray(this.openInv.rightsAsIntArray());
     }
 
     public static BagContainer CreateClient(int windowId, PlayerInventory playerInv, PacketBuffer extraData) { //client
-        return new BagContainer(windowId, playerInv, extraData.readInt(), extraData.readInt(), new Wrapper(extraData), null);
+        return new BagContainer(windowId, playerInv, extraData.readInt(), new Wrapper(extraData), null);
     }
 
-    public static BagContainer CreateServer(int windowId, PlayerInventory playerInv, InventoryData data) { //server
-        return new BagContainer(windowId, playerInv, data.getRows(), data.getColumns(), data.getInventory(), data);
+    public static BagContainer CreateServer(int windowId, PlayerInventory playerInv, InventoryData data, int slot) { //server
+        return new BagContainer(windowId, playerInv, slot, data.getUserInventory(), data);
     }
 
     private void addSlots() {
@@ -68,13 +74,15 @@ public class BagContainer extends BaseWrappedInventoryContainer {
 
     public int getInventorySize() { return openInv.getSlots(); }
 
-    @Override
-    public void detectAndSendChanges() {
-        if (!client && data != null && (data.getColumns() != columns || data.getRows() != rows)) //size changed, should reopen the gui client side (via openGUI server side) to sync the new size/item position
-            Network.openEyeInventory((ServerPlayerEntity) playerInv.getPlayerInventory().player, data.getEyeId());
-        else
-            super.detectAndSendChanges();
-    }
+//    @Override
+//    public void detectAndSendChanges() {
+//        if (!client && data != null && data.getPillarDirtyState()) {//something changed with the pillar
+//            PillarState s = data.getPillarState(pillar);
+//            if (s == PillarState.)
+//            Network.openEyeInventory((ServerPlayerEntity) playerInv.getPlayerInventory().player, data.getEyeId(), pillar);
+//        } else
+//            super.detectAndSendChanges();
+//    }
 
     @Override
     public ItemStack slotClick(int slotId, int dragType, ClickType clickTypeIn, PlayerEntity player) {
@@ -89,4 +97,4 @@ public class BagContainer extends BaseWrappedInventoryContainer {
         }
         return super.slotClick(slotId, dragType, clickTypeIn, player);
     }
-}
+}*/

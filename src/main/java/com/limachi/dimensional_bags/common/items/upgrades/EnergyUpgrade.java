@@ -24,7 +24,7 @@ public class EnergyUpgrade extends BaseUpgrade {
     public static int MAX_UPGRADES;
     @Config.Int(def = 10, cmt = "each new upgrade past the first will multiply the current storage by this amount")
     public static int MULTIPLIER;
-    @Config.Long(def = 10000, cmt = "how much storage the first upgrade will add")
+    @Config.Int(def = 10000, cmt = "how much storage the first upgrade will add")
     public static int BASE_STORAGE;
 
     static { Registries.registerItem(NAME, EnergyUpgrade::new); }

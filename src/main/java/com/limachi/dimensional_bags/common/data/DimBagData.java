@@ -3,6 +3,7 @@ package com.limachi.dimensional_bags.common.data;
 import com.limachi.dimensional_bags.DimBag;
 import com.limachi.dimensional_bags.common.WorldUtils;
 import com.limachi.dimensional_bags.common.data.EyeDataMK2.SubRoomsManager;
+import com.limachi.dimensional_bags.common.managers.UpgradeManager;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.server.MinecraftServer;
@@ -39,7 +40,7 @@ public class DimBagData extends WorldSavedData { //server side only, client side
         ServerWorld world = WorldUtils.getRiftWorld();
         if (world != null) {
             BlockPos eyePos = SubRoomsManager.getEyePos(id);
-            WorldUtils.buildRoom(world, eyePos, roomsManager.getRadius(), 0);
+            WorldUtils.buildRoom(world, eyePos, SubRoomsManager.DEFAULT_RADIUS, 0);
             roomsManager.markDirty();
             chunkloadder.loadChunk(world, eyePos.getX(), eyePos.getZ(), 0);
         }

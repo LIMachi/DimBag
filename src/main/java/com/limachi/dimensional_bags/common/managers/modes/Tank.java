@@ -1,8 +1,6 @@
 package com.limachi.dimensional_bags.common.managers.modes;
 
-import com.limachi.dimensional_bags.common.data.EyeData;
 import com.limachi.dimensional_bags.common.data.EyeDataMK2.TankData;
-import com.limachi.dimensional_bags.common.inventory.MultyTank;
 import com.limachi.dimensional_bags.common.items.Bag;
 import com.limachi.dimensional_bags.common.managers.Mode;
 import net.minecraft.block.Block;
@@ -25,7 +23,6 @@ import net.minecraft.world.IWorld;
 import net.minecraft.world.World;
 import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.fluids.capability.IFluidHandler;
-import org.lwjgl.system.CallbackI;
 
 import javax.annotation.Nullable;
 

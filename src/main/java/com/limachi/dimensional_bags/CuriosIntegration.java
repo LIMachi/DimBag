@@ -45,9 +45,9 @@ public class CuriosIntegration {
         InterModComms.sendTo("curios", SlotTypeMessage.REGISTER_TYPE, ()->new SlotTypeMessage.Builder(BAG_CURIOS_SLOT).priority(-10).icon(ICON).size(1).build());
     }
 
-    public static Optional<ImmutableTriple<String, Integer, ItemStack>> getBag(LivingEntity livingEntity) {
-        return CuriosApi.getCuriosHelper().findEquippedCurio(stack->true, livingEntity);
-    }
+//    public static Optional<ImmutableTriple<String, Integer, ItemStack>> getBag(LivingEntity livingEntity) {
+//        return CuriosApi.getCuriosHelper().findEquippedCurio(stack->true, livingEntity);
+//    }
 
     public static boolean equipOnFirstValidSlot(LivingEntity entity, String slot_category, ItemStack stack) {
         Optional<ICuriosItemHandler> oih = CuriosApi.getCuriosHelper().getCuriosHandler(entity).resolve();
@@ -115,7 +115,6 @@ public class CuriosIntegration {
     /**
      * search item in following order (for a player): main hand, off hand, curios (all), armor (all), belt (all), inventory (all)
      * search item in following order (non player entity): main hand, off hand, curios (all, if living entity), armor (all)
-     * recursion is only valid for some inventories/itemproviders
      * @param entity the entity to search
      * @param clazz the type of itemclass to match (put 'Item.class' to test all item types)
      * @param predicate a predicate to do finer testing (put '()->true' to accept any item matching the class)

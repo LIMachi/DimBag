@@ -34,12 +34,12 @@ public class UpgradeManager extends WorldSavedDataManager.EyeWorldSavedData {
     public static final Map<String, Upgrade> UPGRADES = new HashMap<>();
 
     static {
-        new RowUpgrade().attach(UPGRADES);
-        new ColumnUpgrade().attach(UPGRADES);
-        new RadiusUpgrade().attach(UPGRADES);
-        new SlotUpgrade(1).attach(UPGRADES);
-        new SlotUpgrade(4).attach(UPGRADES);
-        new SlotUpgrade(9).attach(UPGRADES);
+//        new RowUpgrade().attach(UPGRADES);
+//        new ColumnUpgrade().attach(UPGRADES);
+//        new RadiusUpgrade().attach(UPGRADES);
+//        new SlotUpgrade(1).attach(UPGRADES);
+//        new SlotUpgrade(4).attach(UPGRADES);
+//        new SlotUpgrade(9).attach(UPGRADES);
 //        new ElytraUpgrade().attach(UPGRADES);
 //        new TankUpgrade().attach(UPGRADES);
 //        new TankCapacityUpgrade().attach(UPGRADES);

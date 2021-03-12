@@ -55,7 +55,7 @@ public class TheEye extends ContainerBlock {
         if (KeyMapController.KeyBindings.SNEAK_KEY.getState(player))
             SubRoomsManager.execute(eyeId, sm->sm.leaveBag(player, false, null, null));
         else
-            Network.openEyeInventory((ServerPlayerEntity) player, eyeId);
+            Network.openEyeInventory((ServerPlayerEntity) player, eyeId, null);
         return ActionResultType.SUCCESS;
     }
 }

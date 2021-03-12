@@ -42,7 +42,7 @@ public class Default extends Mode {
     @Override
     public ActionResultType onActivateItem(int eyeId, PlayerEntity player) {
         if (!KeyMapController.KeyBindings.SNEAK_KEY.getState(player)) {
-            Network.openEyeInventory((ServerPlayerEntity) player, eyeId);
+            Network.openEyeInventory((ServerPlayerEntity) player, eyeId, null);
             return ActionResultType.SUCCESS;
         }
         return ActionResultType.PASS;

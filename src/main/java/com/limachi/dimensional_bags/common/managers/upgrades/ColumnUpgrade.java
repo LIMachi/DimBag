@@ -13,10 +13,10 @@ public class ColumnUpgrade extends Upgrade {
     public void installUpgrade(int eyeId, ItemStack stack, int amount, boolean simulate) {
         if (!simulate) {
             InventoryData data = InventoryData.getInstance(eyeId);
-            int rows = data.getRows();
-            int columns = data.getColumns();
-            int size = data.getInventory().getSlots();
-            data.getInventory().resizeInventory(size + 3 * amount, rows, columns + amount, rows, columns);
+//            int rows = data.getRows();
+//            int columns = data.getColumns();
+//            int size = data.getUserInventory().getSlots();
+//            data.getUserInventory().resizeInventory(size + 3 * amount, rows, columns + amount, rows, columns);
         }
         UpgradeManager.installUpgrade("upgrade_slot", stack, 3 * amount, simulate);
     }

@@ -1,7 +1,7 @@
 package com.limachi.dimensional_bags.client.render.screen;
 
 import com.google.common.primitives.Ints;
-import com.limachi.dimensional_bags.common.container.BagContainer;
+//import com.limachi.dimensional_bags.common.container.BagContainer;
 import com.limachi.dimensional_bags.common.inventory.Wrapper;
 import com.limachi.dimensional_bags.common.references.GUIs;
 import com.mojang.blaze3d.matrix.MatrixStack;
@@ -15,6 +15,7 @@ import static com.limachi.dimensional_bags.common.inventory.Wrapper.IORights.CAN
 import static com.limachi.dimensional_bags.common.inventory.Wrapper.IORights.CANOUTPUT;
 import static com.limachi.dimensional_bags.common.references.GUIs.ScreenParts.*;
 
+/*
 public class InventoryGUI extends ContainerScreen<BagContainer> {
     private int rows;
     private int columns;
@@ -173,10 +174,10 @@ public class InventoryGUI extends ContainerScreen<BagContainer> {
     protected void drawGuiContainerForegroundLayer(MatrixStack matrixStack, int mouseX, int mouseY) {
 //        super.drawGuiContainerForegroundLayer(matrixStack, mouseX, mouseY);
         if (this.columns < 9)
-            this.font.drawString(matrixStack, /*this.title.getFormattedText()*/title.getString(), PLAYER_INVENTORY_X / 2, this.ySize - PLAYER_INVENTORY_Y - PART_SIZE_Y / 2, 4210752);
+            this.font.drawString(matrixStack, title.getString(), PLAYER_INVENTORY_X / 2, this.ySize - PLAYER_INVENTORY_Y - PART_SIZE_Y / 2, 4210752);
         else
-            this.font.drawString(matrixStack, /*this.title.getFormattedText()*/title.getString(), PART_SIZE_X, PART_SIZE_Y / 2, 4210752);
-        this.font.drawString(matrixStack, /*this.playerInventory.getDisplayName().getFormattedText()*/playerInventory.getDisplayName().getString(), PART_SIZE_X + (this.columns_shift_left > 0 ? this.columns_shift_left * SLOT_SIZE_X : 0), this.ySize - PLAYER_INVENTORY_Y - PART_SIZE_Y / 2, 4210752);
+            this.font.drawString(matrixStack, title.getString(), PART_SIZE_X, PART_SIZE_Y / 2, 4210752);
+        this.font.drawString(matrixStack, playerInventory.getDisplayName().getString(), PART_SIZE_X + (this.columns_shift_left > 0 ? this.columns_shift_left * SLOT_SIZE_X : 0), this.ySize - PLAYER_INVENTORY_Y - PART_SIZE_Y / 2, 4210752);
     }
 
     @Override
@@ -190,3 +191,4 @@ public class InventoryGUI extends ContainerScreen<BagContainer> {
         this.render_top(matrixStack, tm);
     }
 }
+*/

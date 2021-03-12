@@ -36,10 +36,13 @@ public class TunnelPlacer extends Item implements IDimBagCommonItem {
         if (!(world instanceof ServerWorld)) return ActionResultType.PASS;
         BlockPos pos = context.getPos();
         if (world.getBlockState(pos) != Registries.getBlock(Wall.NAME).getDefaultState()) return ActionResultType.PASS;
-        world.setBlockState(pos, Registries.getBlock(Tunnel.NAME).getDefaultState());
-        SubRoomsManager.tunnel((ServerWorld)world, pos, null, true, false);
-        ItemStack stack = context.getItem();
-        stack.shrink(1);
+
+        if (SubRoomsManager.tunnel((ServerWorld)world, pos, null, true, false)) {
+            world.setBlockState(pos, Registries.getBlock(Tunnel.NAME).getDefaultState());
+            ItemStack stack = context.getItem();
+            stack.shrink(1);
+        }
+
         return ActionResultType.SUCCESS;
     }
 }
