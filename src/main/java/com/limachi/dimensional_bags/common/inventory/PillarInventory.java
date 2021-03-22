@@ -1,7 +1,8 @@
 package com.limachi.dimensional_bags.common.inventory;
 
 import com.limachi.dimensional_bags.DimBag;
-import com.limachi.dimensional_bags.common.Config.Config;
+import com.limachi.dimensional_bags.client.rootWidgets.RootProvider;
+import com.limachi.dimensional_bags.ConfigManager.Config;
 import com.limachi.dimensional_bags.common.StackUtils;
 import com.limachi.dimensional_bags.common.container.SimpleContainer;
 import com.limachi.dimensional_bags.common.data.IMarkDirty;
@@ -21,8 +22,8 @@ import java.util.UUID;
 
 public class PillarInventory implements ISimpleItemHandler {
 
-    @Config.IntRange(def = 4, min = 1, max = 30_000_000, cmt = "initial size of a bag slot (pillar inside of the bag) in stacks")
-    public static int DEFAULT_SIZE_IN_STACKS;
+    @Config(min = "1", max = "30000000", cmt = "initial size of a bag slot (pillar inside of the bag) in stacks")
+    public static int DEFAULT_SIZE_IN_STACKS = 4;
 
     protected UUID id = UUID.randomUUID(); //unique id used to create a group of pillar
     protected int size = DEFAULT_SIZE_IN_STACKS; //how much items can be stored (in stacks, yes this means the real amount is dependent on 'referent.getMaxStackSize()')
@@ -67,7 +68,7 @@ public class PillarInventory implements ISimpleItemHandler {
     public void open(ServerPlayerEntity player) {
         ArrayList<Integer> list = new ArrayList<>();
         list.add(0);
-        SimpleContainer.open(player, new TranslationTextComponent("inventory.pillar.name"), this, list, 1, 1, t->true);
+        SimpleContainer.open(player, new TranslationTextComponent("inventory.pillar.name"), this, list, 1, 1, t->true, RootProvider.NULL_ID);
     }
 
     @Override

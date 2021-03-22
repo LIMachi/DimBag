@@ -39,11 +39,11 @@ public class ClientEventSubscriber {
     @SubscribeEvent
     public static void clientSetup(FMLClientSetupEvent event) {
 //        ScreenManager.registerFactory(Registries.getContainerType(BagContainer.NAME), InventoryGUI::new);
-        ScreenManager.registerFactory(Registries.getContainerType(SimpleContainer.NAME), SimpleContainerGUI::new);
-        ScreenManager.registerFactory(Registries.getContainerType(WrappedPlayerInventoryContainer.NAME), PlayerInterfaceGUI::new);
-        ScreenManager.registerFactory(Registries.getContainerType(BrainContainer.NAME), BrainGUI::new);
-        ScreenManager.registerFactory(Registries.getContainerType(GhostHandContainer.NAME), GhostHandGUI::new);
-        ScreenManager.registerFactory(Registries.getContainerType(SettingsContainer.NAME), SettingsGUI::new);
+        ScreenManager.registerFactory(Registries.getContainerType(SimpleContainer.NAME), SimpleContainerScreen::new); //FIXME:
+//        ScreenManager.registerFactory(Registries.getContainerType(WrappedPlayerInventoryContainer.NAME), PlayerInterfaceGUI::new);
+//        ScreenManager.registerFactory(Registries.getContainerType(BrainContainer.NAME), BrainGUI::new);
+//        ScreenManager.registerFactory(Registries.getContainerType(GhostHandContainer.NAME), GhostHandGUI::new);
+//        ScreenManager.registerFactory(Registries.getContainerType(SettingsContainer.NAME), SettingsGUI::new);
 
         RenderingRegistry.registerEntityRenderingHandler(Registries.getEntityType(BagEntityItem.NAME), EntityItemRenderer::new);
 

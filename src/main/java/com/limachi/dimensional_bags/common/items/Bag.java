@@ -15,6 +15,7 @@ import com.limachi.dimensional_bags.common.data.IMarkDirty;
 import com.limachi.dimensional_bags.common.entities.BagEntity;
 import com.limachi.dimensional_bags.common.inventory.NBTStoredItemHandler;
 import com.limachi.dimensional_bags.common.items.entity.BagEntityItem;
+import com.limachi.dimensional_bags.common.items.upgrades.BaseUpgrade;
 import com.limachi.dimensional_bags.common.managers.ModeManager;
 import com.limachi.dimensional_bags.common.managers.Upgrade;
 import com.limachi.dimensional_bags.common.managers.UpgradeManager;
@@ -249,22 +250,22 @@ public class Bag extends Item {
 //    @Override
 //    public float getToughness() { return 0; } //toughness, seem to only be used by mobs to switch armor
 
-    @Override
-    public Multimap<Attribute, AttributeModifier> getAttributeModifiers(EquipmentSlotType slot, ItemStack stack)
-    {
-        ImmutableMultimap.Builder<Attribute, AttributeModifier> builder = ImmutableMultimap.builder();
+//    @Override
+//    public Multimap<Attribute, AttributeModifier> getAttributeModifiers(EquipmentSlotType slot, ItemStack stack)
+//    {
+//        ImmutableMultimap.Builder<Attribute, AttributeModifier> builder = ImmutableMultimap.builder();
 //        if (slot == this.slot) {
 //            ItemStack chestplate = getChestPlate(stack);
 //            if (!chestplate.isEmpty())
 //                builder.putAll(((ArmorItem)chestplate.getItem()).getAttributeModifiers(slot));
 //        }
-        int eyeId = getEyeId(stack);
-        if (eyeId > 0) {
-            UpgradeManager.getAttributeModifiers(eyeId, slot, builder);
-            ModeManager.getAttributeModifiers(eyeId, slot, builder);
-        }
-        return builder.build();
-    }
+//        int eyeId = getEyeId(stack);
+//        if (eyeId > 0) {
+//            UpgradeManager.getAttributeModifiers(eyeId, slot, builder);
+//            ModeManager.getAttributeModifiers(eyeId, slot, builder);
+//        }
+//        return builder.build();
+//    }
 
     /*
      * bag behavior
@@ -289,12 +290,12 @@ public class Bag extends Item {
         return 0;
     }
 
-    @Override
-    public void onCreated(ItemStack stack, World worldIn, PlayerEntity playerIn) {
-        DimBag.LOGGER.info("onCreated: " + stack + ", world: " + worldIn + " player: " + playerIn);
-        super.onCreated(stack, worldIn, playerIn);
-        ClientDataManager.getInstance(stack).syncToServer(stack);
-    }
+//    @Override
+//    public void onCreated(ItemStack stack, World worldIn, PlayerEntity playerIn) {
+//        DimBag.LOGGER.info("onCreated: " + stack + ", world: " + worldIn + " player: " + playerIn);
+//        super.onCreated(stack, worldIn, playerIn);
+//        ClientDataManager.getInstance(stack).syncToServer(stack);
+//    }
 
     public static ClientDataManager getClientData(ItemStack stack) {
         return ClientDataManager.getInstance(stack);
@@ -338,8 +339,8 @@ public class Bag extends Item {
         if (Screen.hasShiftDown() && data != null) {
 //            tooltip.add(new TranslationTextComponent("tooltip.bag.usable_slots", Math.min(data.getColumns() * data.getRows(), data.getInventory().getSlots()), Math.max(data.getColumns() * data.getRows(), data.getInventory().getSlots())));
             for (String upgrade : data.getUpgradeManager().getInstalledUpgrades()) {
-                Upgrade up = UpgradeManager.getUpgrade(upgrade);
-                tooltip.add(new TranslationTextComponent("tooltip.bag.upgrade_count", up.getBaseName(), up.getCount(data.getUpgradeManager()), up.getLimit()));
+                BaseUpgrade up = UpgradeManager.getUpgrade(upgrade);
+                tooltip.add(new TranslationTextComponent("tooltip.bag.upgrade_count", up.upgradeName(), up.getCount(data.getUpgradeManager()), up.getMaxCount()));
             }
         }
         else
@@ -369,7 +370,7 @@ public class Bag extends Item {
                 }
             }
             if (eyeId > 0) {
-                ClientDataManager.getInstance(stack).syncToServer(stack);
+//                ClientDataManager.getInstance(stack).syncToServer(stack);
                 ModeManager.execute(eyeId, modeManager -> modeManager.inventoryTick(worldIn, entityIn, isSelected));
 
                 int finalEyeId = eyeId;

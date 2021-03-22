@@ -1,30 +1,5 @@
 package com.limachi.dimensional_bags.common.managers.modes;
 
-import com.limachi.dimensional_bags.KeyMapController;
-import com.limachi.dimensional_bags.client.render.Box2d;
-import com.limachi.dimensional_bags.client.render.RenderUtils;
-import com.limachi.dimensional_bags.common.data.EyeDataMK2.EnergyData;
-import com.limachi.dimensional_bags.common.items.IDimBagCommonItem;
-import com.limachi.dimensional_bags.common.managers.Mode;
-import com.limachi.dimensional_bags.common.managers.UpgradeManager;
-import com.mojang.blaze3d.matrix.MatrixStack;
-import net.minecraft.client.MainWindow;
-import net.minecraft.client.Minecraft;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.entity.projectile.FireworkRocketEntity;
-import net.minecraft.inventory.EquipmentSlotType;
-import net.minecraft.item.FireworkRocketItem;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.util.ActionResultType;
-import net.minecraft.util.math.BlockRayTraceResult;
-import net.minecraft.util.math.vector.Vector3d;
-import net.minecraft.world.World;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
-
 public class Elytra {} /*extends Mode {
     public static final ItemStack ENERGY_FIREWORK_ROCKET = new ItemStack(Items.FIREWORK_ROCKET);
 

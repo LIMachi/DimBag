@@ -4,7 +4,7 @@ import com.limachi.dimensional_bags.common.data.EyeDataMK2.InventoryData;
 import com.limachi.dimensional_bags.common.managers.Upgrade;
 import com.limachi.dimensional_bags.common.managers.UpgradeManager;
 import net.minecraft.item.ItemStack;
-
+/*
 public class ColumnUpgrade extends Upgrade {
 
     public ColumnUpgrade() { super("column", true, 9, 12, 1, 18); }
@@ -21,3 +21,4 @@ public class ColumnUpgrade extends Upgrade {
         UpgradeManager.installUpgrade("upgrade_slot", stack, 3 * amount, simulate);
     }
 }
+*/

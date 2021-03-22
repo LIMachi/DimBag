@@ -29,7 +29,7 @@ public class HolderData extends WorldSavedDataManager.EyeWorldSavedData {
     private RegistryKey<World> lastKnownDimension = null;
 
     public HolderData(String suffix, int id, boolean client) {
-        super(suffix, id, client);
+        super(suffix, id, client, false);
     }
 
     public void setHolder(Entity entity) {

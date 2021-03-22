@@ -32,7 +32,7 @@ public class ModEventSubscriber {
 
     @SubscribeEvent
     public static void registerRecipeSerializer(RegistryEvent.Register<IRecipeSerializer<?>> event) {
-        UpgradeManager.registerRecipes(event.getRegistry());
+//        UpgradeManager.registerRecipes(event.getRegistry());
         RecipeList.registerRecipes(event.getRegistry());
     }
 }

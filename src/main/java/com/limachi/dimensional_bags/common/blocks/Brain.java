@@ -35,18 +35,18 @@ public class Brain extends Block implements ITileEntityProvider {
     }
 
     public static final IntegerProperty POWER = IntegerProperty.create("power", 0, 15);
-    public static final IntegerProperty TICK_RATE = IntegerProperty.create("tick_rate", 1, /*1200*/20);
+//    public static final IntegerProperty TICK_RATE = IntegerProperty.create("tick_rate", 1, /*1200*/20);
 
     public Brain() {
         super(Block.Properties.create(Material.ROCK).sound(SoundType.STONE).setRequiresTool().hardnessAndResistance(1.5F, 180000000).harvestTool(ToolType.PICKAXE).harvestLevel(2).doesNotBlockMovement().setAllowsSpawn((s, r, p, e)->false));
-        this.setDefaultState(getDefaultState().with(POWER, 0).with(TICK_RATE, 2));
+        this.setDefaultState(getDefaultState().with(POWER, 0)/*.with(TICK_RATE, 2)*/);
     }
 
     @Override
     protected void fillStateContainer(StateContainer.Builder<Block, BlockState> builder) {
         super.fillStateContainer(builder);
         builder.add(POWER);
-        builder.add(TICK_RATE);
+//        builder.add(TICK_RATE);
     }
 
     @Override

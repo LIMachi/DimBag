@@ -2,7 +2,7 @@ package com.limachi.dimensional_bags.common.data.EyeDataMK2;
 
 import com.limachi.dimensional_bags.CuriosIntegration;
 import com.limachi.dimensional_bags.DimBag;
-import com.limachi.dimensional_bags.common.Config.Config;
+import com.limachi.dimensional_bags.ConfigManager.Config;
 import com.limachi.dimensional_bags.common.NBTUtils;
 import com.limachi.dimensional_bags.common.Registries;
 import com.limachi.dimensional_bags.common.WorldUtils;
@@ -13,7 +13,6 @@ import com.limachi.dimensional_bags.common.items.Bag;
 import com.limachi.dimensional_bags.common.managers.UpgradeManager;
 import com.limachi.dimensional_bags.common.tileentities.PadTileEntity;
 import javafx.util.Pair;
-import net.minecraft.block.Block;
 import net.minecraft.block.Blocks;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
@@ -36,13 +35,13 @@ import java.util.function.Function;
 
 public class SubRoomsManager extends WorldSavedDataManager.EyeWorldSavedData {
 
-    @Config.IntRange(def = 3, min = 3, max = 127, cmt = "default radius of a main room inside a bag, this includes the walls")
+    @Config(min = "3", max = "127", cmt = "default radius of a main room inside a bag, this includes the walls")
     public static int DEFAULT_RADIUS = 3;
 
-    @Config.IntRange(def = 2, min = 2, max = 127, cmt = "default radius of a sub room (created with a tunnel), this includes the walls")
+    @Config(min = "2", max = "127", cmt = "default radius of a sub room (created with a tunnel), this includes the walls")
     public static int DEFAULT_RADIUS_SUB_ROOMS = 2;
 
-    @Config.IntRange(def = 15, min = 3, max = 127, cmt = "maximum size of a room/subroom (how far can a wall be pushed), this includes walls")
+    @Config(min = "3", max = "127", cmt = "maximum size of a room/subroom (how far can a wall be pushed), this includes walls")
     public static int MAX_RADIUS = 15;
 
     public static final int ROOM_SPACING = 1024;
@@ -67,16 +66,26 @@ public class SubRoomsManager extends WorldSavedDataManager.EyeWorldSavedData {
         public int eastWall;
         public int westWall;
 
+        public boolean isInsideOrWall(BlockPos pos) {
+            return pos.getX() >= center.getX() - westWall
+                    && pos.getX() <= center.getX() + eastWall
+                    && pos.getY() >= center.getY() - downWall
+                    && pos.getY() <= center.getY() + upWall
+                    && pos.getZ() >= center.getZ() - northWall
+                    && pos.getZ() <= center.getZ() + southWall;
+        }
+
         public boolean isInside(BlockPos pos) {
             return pos.getX() > center.getX() - westWall
                 && pos.getX() < center.getX() + eastWall
                 && pos.getY() > center.getY() - downWall
                 && pos.getY() < center.getY() + upWall
-                && pos.getZ() < center.getZ() - northWall
-                && pos.getZ() > center.getZ() + southWall;
+                && pos.getZ() > center.getZ() - northWall
+                && pos.getZ() < center.getZ() + southWall;
         }
 
         public boolean isInWall(BlockPos pos) {
+            if (!isInsideOrWall(pos)) return false;
             return pos.getX() == center.getX() - westWall
                     || pos.getX() == center.getX() + eastWall
                     || pos.getY() == center.getY() - downWall
@@ -86,6 +95,7 @@ public class SubRoomsManager extends WorldSavedDataManager.EyeWorldSavedData {
         }
 
         public boolean isInWall(BlockPos pos, Direction wall) {
+            if (!isInsideOrWall(pos)) return false;
             switch (wall) {
                 case UP: return pos.getY() == center.getY() + upWall;
                 case DOWN: return pos.getY() == center.getY() - downWall;
@@ -98,6 +108,7 @@ public class SubRoomsManager extends WorldSavedDataManager.EyeWorldSavedData {
         }
 
         public boolean isOnlyInWall(BlockPos pos, Direction wall) {
+            if (!isInsideOrWall(pos)) return false;
             for (Direction test : Direction.values())
                 if ((test == wall) != isInWall(pos, test))
                     return false;
@@ -185,7 +196,7 @@ public class SubRoomsManager extends WorldSavedDataManager.EyeWorldSavedData {
     }
 
     public SubRoomsManager(String suffix, int id, boolean client) {
-        super(suffix, id, client);
+        super(suffix, id, client, false);
         posToSubRoomId.put(new Vector3i(0, 0, 0), 0);
         subRooms.add(0, new SubRoomData().setPos(new Vector3i(0, 0, 0)).setCenter(getEyePos(id)).setRadius(DEFAULT_RADIUS, null));
     }
@@ -216,13 +227,9 @@ public class SubRoomsManager extends WorldSavedDataManager.EyeWorldSavedData {
             int id = (x + half_room) / ROOM_SPACING + 1;
             SubRoomsManager manager = getInstance(id);
             if (manager != null) {
-                x = x - ROOM_SPACING * (id - 1);
-                int y = pos.getY() - half_room;
                 int guess = (z + half_room) / ROOM_SPACING;
                 if (guess >= manager.subRooms.size()) return Optional.empty();
-                z = z - ROOM_SPACING * guess;
-                SubRoomData room = manager.subRooms.get(guess);
-                if (x >= -room.westWall && x <= room.eastWall && y >= -room.downWall && y <= room.upWall && z >= -room.northWall && z <= room.southWall)
+                if (manager.subRooms.get(guess).isInsideOrWall(pos))
                     return Optional.of(new Pair<>(id, guess));
             }
         }
@@ -261,7 +268,7 @@ public class SubRoomsManager extends WorldSavedDataManager.EyeWorldSavedData {
      * @param checkForBag
      * @return true if the function succeeded
      */
-    public boolean enterBag(Entity entity, boolean checkForBag, boolean checkForPads, boolean defaultToPreviousPos) {
+    public Entity enterBag(Entity entity, boolean checkForBag, boolean checkForPads, boolean defaultToPreviousPos) {
         //if check for bag is true, might have to remove the bag from the inventory and drop it as an entity (if the inseption uprage ins't installed)
         //pad first
         //previous known position second
@@ -297,17 +304,12 @@ public class SubRoomsManager extends WorldSavedDataManager.EyeWorldSavedData {
         if (arrival == null) { //default position if all previous position weren't found
             arrival = getEyePos(getEyeId()).add(0, 1, 0);
         }
-        WorldUtils.teleportEntity(entity, WorldUtils.DimBagRiftKey, arrival);
-        return true;
+        return WorldUtils.teleportEntity(entity, WorldUtils.DimBagRiftKey, arrival);
     }
 
-    public boolean enterBag(Entity entity) {
+    public Entity enterBag(Entity entity) {
         return enterBag(entity, true, true, true);
     }
-
-//    protected void tpIn(Entity entity) { //teleport an entity to the eye of the bag, no check for pads, previous know position or whatnot
-//        WorldUtils.teleportEntity(entity, WorldUtils.DimBagRiftKey, new BlockPos(ROOM_SPACING * (getEyeId() - 1) + ROOM_OFFSET_X, ROOM_CENTER_Y + 1, ROOM_OFFSET_Z));
-//    }
 
     private static BlockPos calculateOutput(BlockPos tunnelIn, SubRoomData srdFrom, Direction direction, int deltaRoom, SubRoomData srdTarget) {
         switch (direction) {
@@ -398,6 +400,7 @@ public class SubRoomsManager extends WorldSavedDataManager.EyeWorldSavedData {
         if (off >= MAX_RADIUS) return false;
         WorldUtils.pushWall(world, pos, wall);
         srd.setWallOffset(wall, off + 1);
+        data.markDirty();
         return true;
     }
 

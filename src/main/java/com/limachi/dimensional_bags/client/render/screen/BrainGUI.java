@@ -1,7 +1,7 @@
 package com.limachi.dimensional_bags.client.render.screen;
 
-import com.limachi.dimensional_bags.client.render.widgets.Text;
-import com.limachi.dimensional_bags.client.render.widgets.TextField;
+import com.limachi.dimensional_bags.client.widgets.Text;
+import com.limachi.dimensional_bags.client.widgets.TextField;
 import com.limachi.dimensional_bags.common.container.BaseContainer;
 import com.limachi.dimensional_bags.common.container.BrainContainer;
 import com.limachi.dimensional_bags.common.readers.EntityReader;
@@ -13,6 +13,7 @@ import net.minecraft.util.text.ITextComponent;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
+/*
 @OnlyIn(Dist.CLIENT)
 public class BrainGUI extends BaseScreen<BrainContainer> {
 
@@ -54,3 +55,4 @@ public class BrainGUI extends BaseScreen<BrainContainer> {
 
     }
 }
+*/

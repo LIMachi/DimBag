@@ -1,8 +1,9 @@
 package com.limachi.dimensional_bags.common.network;
 
+import com.limachi.dimensional_bags.client.rootWidgets.RootProvider;
+import com.limachi.dimensional_bags.client.rootWidgets.Settings;
 import com.limachi.dimensional_bags.common.container.*;
 import com.limachi.dimensional_bags.common.data.EyeDataMK2.InventoryData;
-import com.limachi.dimensional_bags.common.inventory.IItemHandlerPacket;
 import com.limachi.dimensional_bags.common.inventory.ISimpleItemHandler;
 import com.limachi.dimensional_bags.common.inventory.PlayerInvWrapper;
 import com.limachi.dimensional_bags.common.tileentities.BrainTileEntity;
@@ -16,7 +17,6 @@ import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraftforge.fml.network.NetworkHooks;
-import net.minecraftforge.items.IItemHandlerModifiable;
 
 import javax.annotation.Nullable;
 import java.util.UUID;
@@ -25,7 +25,7 @@ public class Network {
     public static void openEyeInventory(ServerPlayerEntity player, int eyeId, UUID slot) {
         ISimpleItemHandler handler = InventoryData.execute(eyeId, d-> d.getPillarInventory(slot), null);
         if (handler != null)
-            SimpleContainer.open(player, new TranslationTextComponent("inventory.bag.name"), handler);
+            SimpleContainer.open(player, new TranslationTextComponent("inventory.bag.name"), handler, Settings.id);
 //        InventoryData data = InventoryData.getInstance(eyeId);
 //        NetworkHooks.openGui(player, new INamedContainerProvider() {
 //            @Override
@@ -90,7 +90,9 @@ public class Network {
         }, (buffer)-> BaseContainer.writeBaseParameters(buffer, BaseContainer.ContainerConnectionType.TILE_ENTITY, te, 0));
     }
 
-    public static void openSettingsGui(ServerPlayerEntity player, int eyeId, int slot) {
+    public static void openSettingsGui(ServerPlayerEntity player, int eyeId/*, int slot*/) {
+//        SimpleContainer.open(player, new TranslationTextComponent("inventory.bag.name"), handler);
+        /*
         NetworkHooks.openGui(player, new INamedContainerProvider() {
             @Override
             public ITextComponent getDisplayName() { return new TranslationTextComponent("inventory.settings.name"); }
@@ -101,5 +103,5 @@ public class Network {
                 return new SettingsContainer(windowId, playerInv, slot);
             }
         }, buffer->BaseContainer.writeBaseParameters(buffer, BaseContainer.ContainerConnectionType.ITEM, null, slot));
-    }
+    */}
 }

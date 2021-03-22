@@ -18,7 +18,7 @@ public class OwnerData extends WorldSavedDataManager.EyeWorldSavedData {
     private String name = "";
 
     public OwnerData(String suffix, int id, boolean client) {
-        super(suffix, id, client);
+        super(suffix, id, client, false);
     }
 
     /**

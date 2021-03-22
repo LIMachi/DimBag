@@ -20,6 +20,39 @@ public class Box2d {
 
     public static Box2d fromCorners(Vector2d topLeft, Vector2d bottomRight) { return fromCorners(topLeft.x, topLeft.y, bottomRight.x, bottomRight.y); }
 
+    public Box2d centerOn(double cx, double cy) {
+        return setX1(cx - getWidth() / 2).setY1(cy - getHeight() / 2);
+    }
+
+    public Box2d expandToContain(double px, double py) {
+        return expandToContain(px, py, 0, 0);
+    }
+
+    /**
+     * if the given point is outside the box, expand the box so the point fits inside
+     * @param px
+     * @param py
+     * @param xMargin
+     * @param yMargin
+     * @return
+     */
+
+    public Box2d expandToContain(double px, double py, double xMargin, double yMargin) {
+        if (px - xMargin < x) {
+            w += x - px + xMargin;
+            x = px - xMargin;
+        }
+        else if (px + xMargin > getX2())
+            setX2(px + xMargin);
+        if (py - yMargin < y) {
+            h += y - py + yMargin;
+            y = py - yMargin;
+        }
+        else if (py + yMargin > getY2())
+            setY2(py + yMargin);
+        return this;
+    }
+
     public Box2d transform(Matrix4f matrix) {
         Vector4f v1 = new Vector4f((float)x, (float)y, 0, 1);
         Vector4f v2 = new Vector4f((float)getX2(), (float)getY2(), 0, 1);

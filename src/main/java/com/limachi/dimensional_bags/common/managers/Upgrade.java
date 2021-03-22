@@ -16,7 +16,6 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.inventory.EquipmentSlotType;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.item.ItemUseContext;
 import net.minecraft.item.Items;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.util.*;
@@ -133,18 +132,18 @@ public abstract class Upgrade { //contain all information for config, item, upgr
 //        return t;
 //    }
 
-    public int getCount(UpgradeManager manager) {
-        if (manager == null) return 0;
-        return getCount(manager.getUpgradesCountMap());
-    }
+//    public int getCount(UpgradeManager manager) {
+//        if (manager == null) return 0;
+//        return getCount(manager.getUpgradesCountMap());
+//    }
 
-    public int getCount(HashMap<String, Integer> map) {
-        return map.get(sId);
-    }
+//    public int getCount(HashMap<String, Integer> map) {
+//        return map.get(sId);
+//    }
 
-    public void changeCount(HashMap<String, Integer> map, int count) {
-        map.put(sId, count);
-    }
+//    public void changeCount(HashMap<String, Integer> map, int count) {
+//        map.put(sId, count);
+//    }
 
     public CompoundNBT getMemory(UpgradeManager manager) { return manager.getUpgradesNBT().getCompound(this.sId); }
 

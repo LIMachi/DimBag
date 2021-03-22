@@ -7,20 +7,14 @@ import com.limachi.dimensional_bags.common.data.EyeDataMK2.ClientDataManager;
 import com.limachi.dimensional_bags.common.data.EyeDataMK2.WorldSavedDataManager;
 import com.limachi.dimensional_bags.common.items.Bag;
 import com.limachi.dimensional_bags.common.items.GhostBag;
-import com.limachi.dimensional_bags.common.items.IDimBagCommonItem;
 import com.limachi.dimensional_bags.common.managers.modes.*;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.ai.attributes.Attribute;
 import net.minecraft.entity.ai.attributes.AttributeModifier;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.inventory.EquipmentSlotType;
 import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.nbt.ListNBT;
-import net.minecraft.nbt.StringNBT;
-import net.minecraft.util.ActionResult;
 import net.minecraft.util.ActionResultType;
 import net.minecraft.util.math.BlockRayTraceResult;
 import net.minecraft.util.text.TranslationTextComponent;
@@ -34,9 +28,7 @@ public class ModeManager extends WorldSavedDataManager.EyeWorldSavedData {
     public static final Mode[] MODES = {
         new Default(),
         new Settings(),
-//        new Debug(),
         new PokeBall(),
-//        new Elytra(),
         new Tank()
     };
 
@@ -44,7 +36,7 @@ public class ModeManager extends WorldSavedDataManager.EyeWorldSavedData {
         ModeManager dataS = getInstance(eye);
         if (dataS == null) return;
         ClientDataManager dataC = ClientDataManager.getInstance(eye);
-        ArrayList<String> modes = dataS.getInstalledModes();
+        ArrayList<String> modes = new ArrayList<>(dataS.getInstalledModes());
         for (int i = 0; i < modes.size(); ++i) {
             if (!modes.get(i).equals(dataS.getSelectedMode())) continue;
             dataS.selectMode((i + (up ? 1 : modes.size() - 1)) % modes.size());
@@ -62,8 +54,6 @@ public class ModeManager extends WorldSavedDataManager.EyeWorldSavedData {
             if (res.size() != 0)
                 player.sendStatusMessage(new TranslationTextComponent("notification.bag.changed_mode", new TranslationTextComponent("bag.mode." + dataS.getSelectedMode())), true);
         }
-//            dataC.store(stack);
-//            player.sendStatusMessage(new TranslationTextComponent("notification.bag.changed_mode", new TranslationTextComponent("bag.mode." + dataS.getSelectedMode())), true);
     }
 
     public static int getModeIndex(String name) {
@@ -81,19 +71,19 @@ public class ModeManager extends WorldSavedDataManager.EyeWorldSavedData {
     }
 
     private String selectedMode;
-    private ArrayList<String> installedModes;
+    private CompoundNBT installedModesData;
 
     public ModeManager(int id) {
         this("mode_manager", id, true);
     }
 
     public ModeManager(String suffix, int id, boolean client) {
-        super(suffix, id, client);
+        super(suffix, id, client, false);
         selectedMode = Default.ID;
-        installedModes = new ArrayList<>();
+        installedModesData = new CompoundNBT();
         for (Mode mode : MODES)
             if (mode.IS_INSTALED_BY_DEFAULT)
-                installedModes.add(mode.NAME);
+                installedModesData.put(mode.NAME, new CompoundNBT());
     }
 
     static public ModeManager getInstance(int id) {
@@ -109,8 +99,8 @@ public class ModeManager extends WorldSavedDataManager.EyeWorldSavedData {
     }
 
     public void installMode(String name) {
-        if (!installedModes.contains(name))
-            installedModes.add(name);
+        if (!installedModesData.contains(name))
+            installedModesData.put(name, new CompoundNBT());
         markDirty();
     }
 
@@ -123,26 +113,25 @@ public class ModeManager extends WorldSavedDataManager.EyeWorldSavedData {
 
     public String getSelectedMode() { return selectedMode; }
 
-    public ArrayList<String> getInstalledModes() { return installedModes; }
+    public Set<String> getInstalledModes() { return installedModesData.keySet(); }
+
+    public String getInstalledMode(int i) { return (String)installedModesData.keySet().toArray()[i]; }
 
     public void selectMode(int i) {
-        if (i < 0 || i >= installedModes.size()) return;
-        selectedMode = installedModes.get(i);
+        if (i < 0 || i >= installedModesData.keySet().size()) return;
+        selectedMode = getInstalledMode(i);
         markDirty();
     }
 
     public void selectMode(String mode) {
-        if (installedModes.contains(mode))
+        if (installedModesData.contains(mode))
             selectedMode = mode;
         markDirty();
     }
 
     public CompoundNBT write(CompoundNBT nbt) {
         nbt.putString("Selected", selectedMode);
-        ListNBT list = new ListNBT();
-        for (String entry : installedModes)
-            list.add(StringNBT.valueOf(entry));
-        nbt.put("Installed", list);
+        nbt.put("Installed", installedModesData);
         return nbt;
     }
 
@@ -150,17 +139,14 @@ public class ModeManager extends WorldSavedDataManager.EyeWorldSavedData {
         selectedMode = nbt.getString("Selected");
         if (selectedMode == null)
             selectedMode = "Default";
-        ListNBT list = nbt.getList("Installed", 8);
-        installedModes = new ArrayList<>();
-        for (int i = 0; i < list.size(); ++i)
-            installedModes.add(list.getString(i));
+        installedModesData = nbt.getCompound("Installed");
     }
 
     public void inventoryTick(World world, Entity player, boolean isSelected) {
         ActionResultType res = getMode(selectedMode).onEntityTick(getEyeId(), world, player, isSelected);
         if (res != ActionResultType.PASS) return;
-        for (int i = installedModes.size() - 1; i >= 0; --i) {
-            String name = installedModes.get(i);
+        for (int i = getInstalledModes().size() - 1; i >= 0; --i) {
+            String name = getInstalledMode(i);
             if (name.equals(selectedMode) || name.equals("Default") || !getMode(name).CAN_BACKGROUND) continue;
             res = getMode(name).onEntityTick(getEyeId(), world, player, isSelected);
             if (res != ActionResultType.PASS) return;
@@ -171,8 +157,8 @@ public class ModeManager extends WorldSavedDataManager.EyeWorldSavedData {
     public ActionResultType onItemUse(World world, PlayerEntity player, BlockRayTraceResult ray) {
         ActionResultType res = getMode(selectedMode).onItemUse(getEyeId(), world, player, ray);
         if (res != ActionResultType.PASS) return res;
-        for (int i = installedModes.size() - 1; i >= 0; --i) {
-            String name = installedModes.get(i);
+        for (int i = getInstalledModes().size() - 1; i >= 0; --i) {
+            String name = getInstalledMode(i);
             if (name.equals(selectedMode) || name.equals("Default") || !getMode(name).CAN_BACKGROUND) continue;
             res = getMode(name).onItemUse(getEyeId(), world, player, ray);
             if (res != ActionResultType.PASS) return res;
@@ -183,8 +169,8 @@ public class ModeManager extends WorldSavedDataManager.EyeWorldSavedData {
     public ActionResultType onItemRightClick(World world, PlayerEntity player) {
         ActionResultType res = getMode(selectedMode).onItemRightClick(getEyeId(), world, player);
         if (res != ActionResultType.PASS) return res;
-        for (int i = installedModes.size() - 1; i >= 0; --i) {
-            String name = installedModes.get(i);
+        for (int i = getInstalledModes().size() - 1; i >= 0; --i) {
+            String name = getInstalledMode(i);
             if (name.equals(selectedMode) || name.equals("Default") || !getMode(name).CAN_BACKGROUND) continue;
             res = getMode(name).onItemRightClick(getEyeId(), world, player);
             if (res != ActionResultType.PASS) return res;
@@ -195,8 +181,8 @@ public class ModeManager extends WorldSavedDataManager.EyeWorldSavedData {
     public ActionResultType onAttack(PlayerEntity player, Entity entity) {
         ActionResultType res = getMode(selectedMode).onAttack(getEyeId(), player, entity);
         if (res != ActionResultType.PASS) return res;
-        for (int i = installedModes.size() - 1; i >= 0; --i) {
-            String name = installedModes.get(i);
+        for (int i = getInstalledModes().size() - 1; i >= 0; --i) {
+            String name = getInstalledMode(i);
             if (name.equals(selectedMode) || name.equals("Default") || !getMode(name).CAN_BACKGROUND) continue;
             res = getMode(name).onAttack(getEyeId(), player, entity);
             if (res != ActionResultType.PASS) return res;
@@ -207,8 +193,8 @@ public class ModeManager extends WorldSavedDataManager.EyeWorldSavedData {
     public ActionResultType onActivateItem(PlayerEntity player) {
         ActionResultType res = getMode(selectedMode).onActivateItem(getEyeId(), player);
         if (res != ActionResultType.PASS) return res;
-        for (int i = installedModes.size() - 1; i >= 0; --i) {
-            String name = installedModes.get(i);
+        for (int i = getInstalledModes().size() - 1; i >= 0; --i) {
+            String name = getInstalledMode(i);
             if (name.equals(selectedMode) || name.equals("Default") || !getMode(name).CAN_BACKGROUND) continue;
             res = getMode(name).onActivateItem(getEyeId(), player);
             if (res != ActionResultType.PASS) return res;

@@ -7,7 +7,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundNBT;
 
 import java.util.HashMap;
-
+/*
 public class SlotUpgrade extends Upgrade {
 
     private final int qty;
@@ -59,3 +59,4 @@ public class SlotUpgrade extends Upgrade {
             super.setMemory(manager, nbt);
     }
 }
+*/

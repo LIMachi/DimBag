@@ -16,7 +16,7 @@ import net.minecraft.util.ActionResultType;
 import net.minecraft.world.World;
 
 import java.util.UUID;
-
+/*
 public class KineticGeneratorUpgrade extends Upgrade {
 
     public static final AttributeModifier KINETIC_GENERATOR_SLOW_MODIFIER = new AttributeModifier(UUID.fromString("f9e786f8-0c69-11eb-adc1-0242ac120002"), "Kinetic Generator Slowness", -0.15, AttributeModifier.Operation.MULTIPLY_TOTAL);
@@ -54,8 +54,9 @@ public class KineticGeneratorUpgrade extends Upgrade {
 
     @Override
     public ActionResultType upgradeEntityTick(int eyeId, World world, Entity entity) {
-        if (entity instanceof LivingEntity && /*Bag.getBagSlot((PlayerEntity)entity, eyeId) == 38*/ Bag.isEquipedOnCuriosSlot((LivingEntity)entity, eyeId) == eyeId)
+        if (entity instanceof LivingEntity && Bag.getBagSlot((PlayerEntity)entity, eyeId) == 38)
             EnergyData.execute(eyeId, (energyData)->energyData.receiveEnergy(motionGeneration(eyeId, entity), false), 0);
         return ActionResultType.SUCCESS;
     }
 }
+*/

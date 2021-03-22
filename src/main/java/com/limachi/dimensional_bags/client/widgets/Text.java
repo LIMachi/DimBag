@@ -1,0 +1,33 @@
+package com.limachi.dimensional_bags.client.widgets;
+
+import com.limachi.dimensional_bags.client.render.RenderUtils;
+import com.mojang.blaze3d.matrix.MatrixStack;
+
+public class Text extends Base {
+
+    public String text = "";
+    public int color;
+    public boolean withShadow;
+
+    public Text(Base parent, double x, double y, double width, double height, String text, int color, boolean withShadow) {
+        super(parent, x, y, width, height, true);
+        if (text == null)
+            this.text = "";
+        else
+            this.text = text;
+        this.color = color;
+        this.withShadow = withShadow;
+    }
+
+    /**
+     * basic white text, to be used with vanilla buttons (size 200x20)
+     */
+    public Text(Base parent, double x, double y, String text) {
+        this(parent, x + 5, y + 5, 190, 10, text, 0xFFFFFFFF, true);
+    }
+
+    @Override
+    public void onRender(MatrixStack matrixStack, int mouseX, int mouseY, float partialTicks) {
+        RenderUtils.drawString(matrixStack, getFont(), text, coords, color, withShadow, true);
+    }
+}

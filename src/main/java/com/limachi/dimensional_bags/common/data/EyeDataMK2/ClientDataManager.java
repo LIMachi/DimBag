@@ -57,16 +57,16 @@ public class ClientDataManager {
     /**
      * sync the date from the stack to the worldsaveddate, overwritting and calling the upgrades that got changed
      */
-    public void syncToServer(ItemStack bagItem) {
-        UpgradeManager.execute(id, upgradeManager -> {
-            for (String name : localUpgrades.getInstalledUpgrades()) {
-                int d = localUpgrades.getUpgradeCount(name) - upgradeManager.getUpgradeCount(name);
-                if (d != 0)
-                    UpgradeManager.installUpgrade(name, bagItem, d, false);
-            }
-        });
-
-    }
+//    public void syncToServer(ItemStack bagItem) {
+//        UpgradeManager.execute(id, upgradeManager -> {
+//            for (String name : localUpgrades.getInstalledUpgrades()) {
+//                int d = localUpgrades.getUpgradeCount(name) - upgradeManager.getUpgradeCount(name);
+//                if (d != 0)
+//                    UpgradeManager.installUpgrade(name, bagItem, d, false);
+//            }
+//        });
+//
+//    }
 
     /**
      * reload the data from the worldsaveddatas, would be like `this = new ClientDataManager(id, UpgradeManager.getInstance(null, id), ModeManager.getInstance(null, id), OwnerData.getInstance(null, id))`

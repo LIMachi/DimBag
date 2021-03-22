@@ -1,12 +1,6 @@
 package com.limachi.dimensional_bags.common.items.upgrades;
 
-import com.limachi.dimensional_bags.DimBag;
-import com.limachi.dimensional_bags.StaticInit;
-import com.limachi.dimensional_bags.common.Config.Config;
-import com.limachi.dimensional_bags.common.Registries;
-import com.limachi.dimensional_bags.common.managers.UpgradeManager;
-import net.minecraft.item.ItemStack;
-
+/*
 @StaticInit
 public class SilverFishUpgrade extends BaseUpgrade {
 
@@ -35,3 +29,4 @@ public class SilverFishUpgrade extends BaseUpgrade {
         return qty;
     }
 }
+*/

@@ -1,8 +1,10 @@
 package com.limachi.dimensional_bags.common.items.upgrades;
 
+import com.limachi.dimensional_bags.CuriosIntegration;
 import com.limachi.dimensional_bags.DimBag;
 import com.limachi.dimensional_bags.KeyMapController;
 import com.limachi.dimensional_bags.common.data.EyeDataMK2.ClientDataManager;
+import com.limachi.dimensional_bags.common.data.EyeDataMK2.SettingsData;
 import com.limachi.dimensional_bags.common.entities.BagEntity;
 import com.limachi.dimensional_bags.common.items.Bag;
 import com.limachi.dimensional_bags.common.items.GhostBag;
@@ -10,12 +12,16 @@ import com.limachi.dimensional_bags.common.managers.UpgradeManager;
 import com.mojang.blaze3d.matrix.MatrixStack;
 import net.minecraft.client.MainWindow;
 import net.minecraft.client.entity.player.ClientPlayerEntity;
+import net.minecraft.client.renderer.IRenderTypeBuffer;
+import net.minecraft.client.renderer.entity.model.BipedModel;
 import net.minecraft.client.util.ITooltipFlag;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.inventory.EquipmentSlotType;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.ItemUseContext;
+import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.ActionResultType;
 import net.minecraft.util.Hand;
@@ -37,7 +43,56 @@ import java.util.List;
 @Mod.EventBusSubscriber
 public abstract class BaseUpgrade extends Item {
 
-    public BaseUpgrade(Item.Properties props) { super(props); }
+    public static final String SETTING_GROUP = "Upgrades";
+
+    public final SettingsData.Settings settings = new SettingsData.Settings(SETTING_GROUP, upgradeName()).bool("active", true);
+
+//    public static SettingsData.Settings getSettings(String name) { return UpgradeManager.getUpgrade(name).settings; }
+
+    public <T> T getSetting(int eye, String label) { return settings.get(label, SettingsData.getInstance(eye)); }
+
+    public <T> void setSetting(int eye, String label, T value) { settings.set(label, SettingsData.getInstance(eye), value); }
+
+//    public static <T> T getSetting(int eye, String name, String label, T def) { return SettingsData.execute(eye, sd->UpgradeManager.getUpgrade(name).settings.get(label, sd), def); }
+
+    public boolean isInstalled(int eyeId) { return UpgradeManager.execute(eyeId, um->um.getInstalledUpgrades().contains(upgradeName()), false); }
+
+    public boolean isActive(int eyeId) { return canBeInstalled() && isInstalled(eyeId) && SettingsData.execute(eyeId, sd->settings.get("active", sd)); }
+
+    public static BaseUpgrade getInstance(String name) { return UpgradeManager.getUpgrade(name); }
+
+    /**
+     * here you should use the settings method to populate the settings, reading and writing should be done elsewhere
+     * @param settings
+     */
+    public void initSettings(SettingsData.Settings settings) {}
+
+    public BaseUpgrade(Item.Properties props) { super(props); initSettings(settings); }
+
+    @OnlyIn(Dist.CLIENT)
+    public <T extends LivingEntity> void onRenderEquippedBag(int eyeId, BipedModel<T> entityModel, MatrixStack matrixStackIn, IRenderTypeBuffer bufferIn, int packedLightIn, T entity, float limbSwing, float limbSwingAmount, float partialTicks, float ageInTicks, float netHeadYaw, float headPitch) {}
+
+    @OnlyIn(Dist.CLIENT)
+    public void onRenderBagEntity(int eyeId, BagEntity entity, float yaw, float partialTicks, MatrixStack matrix, IRenderTypeBuffer buffer, int packedLight) {}
+
+    public ActionResultType upgradeEntityTick(int eyeId, World world, Entity entity) { return ActionResultType.PASS; } //called every X ticks by the bag manager
+
+    public int getMaxCount() { return 1; }
+
+    @Override
+    public int getItemStackLimit(ItemStack stack) { return getMaxCount(); }
+
+    public String getMemoryKey() { return upgradeName(); }
+
+    public CompoundNBT getMemory(UpgradeManager manager) { return manager.getMemory(getMemoryKey(), false); }
+    public int getCount(UpgradeManager manager) { return manager.getUpgradeCount(upgradeName()); }
+
+    public void addCount(UpgradeManager manager, int count) {
+        CompoundNBT nbt = manager.getMemory(getMemoryKey(), true);
+        int pc = nbt.getInt(UpgradeManager.COUNT_NBT_KEY);
+        nbt.putInt(UpgradeManager.COUNT_NBT_KEY, pc + count);
+        manager.markDirty();
+    }
 
     @SubscribeEvent
     public static void onEntityInteract(PlayerInteractEvent.EntityInteract event) {
@@ -85,12 +140,16 @@ public abstract class BaseUpgrade extends Item {
             player.sendStatusMessage(new TranslationTextComponent("items.upgrades.trying_to_install_disabled_upgrade").mergeStyle(TextFormatting.BOLD, TextFormatting.RED), true);
             return stack;
         }
+        UpgradeManager um = UpgradeManager.getInstance(eyeId);
         ItemStack out = stack.copy();
-        int nc = ((BaseUpgrade) stack.getItem()).installUpgrade(eyeId, stack.getCount());
-        if (nc != stack.getCount()) {
-            out.shrink(nc);
-            UpgradeManager.execute(eyeId, um->{um.getUpgradesCountMap().put(upgrade.upgradeName(), um.getUpgradesCountMap().getOrDefault(upgrade.upgradeName(), 0) + stack.getCount() - nc); um.markDirty();});
-            player.sendStatusMessage(new TranslationTextComponent("items.upgrades.installed_X_upgrades", stack.getCount() - nc, upgrade.upgradeName()), true);
+        if (um.getMemory(upgrade.getMemoryKey(), true).getInt(UpgradeManager.COUNT_NBT_KEY) < upgrade.getMaxCount()) {
+            int nc = ((BaseUpgrade) stack.getItem()).installUpgrade(um, stack.getCount());
+            if (nc > 0) {
+                out.shrink(nc);
+                upgrade.addCount(um, nc);
+                player.sendStatusMessage(new TranslationTextComponent("items.upgrades.installed_X_upgrades", stack.getCount() - nc, upgrade.upgradeName()), true);
+            } else
+                player.sendStatusMessage(new TranslationTextComponent("items.upgrades.max_upgrades_reached", upgrade.upgradeName()), true);
         } else
             player.sendStatusMessage(new TranslationTextComponent("items.upgrades.max_upgrades_reached", upgrade.upgradeName()), true);
         return out;
@@ -112,11 +171,11 @@ public abstract class BaseUpgrade extends Item {
     abstract public String upgradeName();
 
     /**
-     * @param eyeId on which bag the upgrades are too be installed
+     * @param manager the upgrade manager
      * @param qty how many of this upgrades the player is trying to install at once
-     * @return the number of upgrades left after installation
+     * @return the number of upgrades installed
      */
-    abstract public int installUpgrade(int eyeId, int qty);
+    abstract public int installUpgrade(UpgradeManager manager, int qty);
 
     /**
      * if this upgrade is installed and active, this function will be called every X ticks (by default every tick)
@@ -133,30 +192,16 @@ public abstract class BaseUpgrade extends Item {
     public static void onRenderGameOverlay(RenderGameOverlayEvent.Pre event) { //might be used at some point to add hud ellements
         if (event.getType() == RenderGameOverlayEvent.ElementType.ALL) {
             PlayerEntity player = DimBag.getPlayer();
-            ItemStack mainHand = player.getHeldItemMainhand();
-            if (!mainHand.isEmpty() && (mainHand.getItem() instanceof Bag || mainHand.getItem() instanceof GhostBag)) {
-                ClientDataManager data = GhostBag.getClientData(mainHand, player);
-                if (data != null) {
-                    data.onRenderHud((ClientPlayerEntity)player, event.getWindow(), event.getMatrixStack(), event.getPartialTicks());
-                    return;
+            ClientDataManager[] data = {null};
+            CuriosIntegration.searchItem(player, Item.class, s->{
+                if (s.getItem() instanceof Bag || s.getItem() instanceof GhostBag) {
+                    data[0] = ClientDataManager.getInstance(s);
+                    return true;
                 }
-            }
-            ItemStack offHand = player.getHeldItemOffhand();
-            if (!offHand.isEmpty() && (offHand.getItem() instanceof Bag || offHand.getItem() instanceof GhostBag)) {
-                ClientDataManager data = GhostBag.getClientData(offHand, player);
-                if (data != null) {
-                    data.onRenderHud((ClientPlayerEntity)player, event.getWindow(), event.getMatrixStack(), event.getPartialTicks());
-                    return;
-                }
-            }
-            ItemStack chestPlate = player.getItemStackFromSlot(EquipmentSlotType.CHEST);
-            if (!chestPlate.isEmpty() && (chestPlate.getItem() instanceof Bag || chestPlate.getItem() instanceof GhostBag)) {
-                ClientDataManager data = GhostBag.getClientData(chestPlate, player);
-                if (data != null) {
-                    data.onRenderHud((ClientPlayerEntity)player, event.getWindow(), event.getMatrixStack(), event.getPartialTicks());
-                    return;
-                }
-            }
+                return false;
+            });
+            if (data[0] != null)
+                data[0].onRenderHud((ClientPlayerEntity)player, event.getWindow(), event.getMatrixStack(), event.getPartialTicks());
         }
     }
 }

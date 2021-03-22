@@ -144,13 +144,13 @@ public class GhostBag extends Item {
 //                return;
 //            }
 //        }
-        ClientDataManager.getInstance(stack).syncToServer(stack);
-        int eyeId = Bag.getEyeId(stack);
-        ModeManager.execute(eyeId, modeManager -> modeManager.inventoryTick(worldIn, entityIn, isSelected));
-        UpgradeManager.execute(eyeId, upgradeManager -> {
-            for (String upgrade : upgradeManager.getInstalledUpgrades())
-                UpgradeManager.getUpgrade(upgrade).upgradeEntityTick(eyeId, worldIn, entityIn);
-        });
+//        ClientDataManager.getInstance(stack).syncToServer(stack);
+//        int eyeId = Bag.getEyeId(stack);
+//        ModeManager.execute(eyeId, modeManager -> modeManager.inventoryTick(worldIn, entityIn, isSelected));
+//        UpgradeManager.execute(eyeId, upgradeManager -> {
+//            for (String upgrade : upgradeManager.getInstalledUpgrades())
+//                UpgradeManager.getUpgrade(upgrade).upgradeEntityTick(eyeId, worldIn, entityIn);
+//        });
     }
 
     @Override

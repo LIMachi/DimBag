@@ -1,19 +1,33 @@
 package com.limachi.dimensional_bags.common;
 
-import javafx.util.Pair;
-import net.minecraft.entity.Entity;
+import com.limachi.dimensional_bags.DimBag;
+import com.limachi.dimensional_bags.StaticInit;
+import jdk.nashorn.internal.ir.annotations.Ignore;
 import net.minecraft.item.ItemStack;
+import net.minecraft.item.Items;
 import net.minecraft.nbt.*;
+import net.minecraft.util.UUIDCodec;
+import net.minecraftforge.common.util.INBTSerializable;
+import net.minecraftforge.fml.ModList;
+import net.minecraftforge.forgespi.language.ModFileScanData;
+import org.apache.http.client.utils.CloneUtils;
+import org.lwjgl.system.CallbackI;
+import org.objectweb.asm.Type;
 
 import javax.annotation.Nonnull;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.function.Consumer;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.*;
+import java.util.function.BiConsumer;
+import java.util.function.BiFunction;
 import java.util.function.Function;
-import java.util.function.Supplier;
+import java.lang.reflect.Field;
 
+//@StaticInit
 public class NBTUtils {
     /*
     private static final int NBT_VERSION = 1;
@@ -88,6 +102,7 @@ public class NBTUtils {
         return list;
     }
 
+    @SuppressWarnings("unused")
     public static CompoundNBT extractDiff(@Nonnull CompoundNBT valid, @Nonnull CompoundNBT diff) {
         CompoundNBT added = new CompoundNBT();
         ListNBT removed = new ListNBT();
@@ -116,6 +131,7 @@ public class NBTUtils {
         return out;
     }
 
+    @SuppressWarnings({"UnusedReturnValue", "unused"})
     public static CompoundNBT applyDiff(@Nonnull CompoundNBT toChange, @Nonnull CompoundNBT diff) {
         ListNBT removed = diff.getList("Diff_Removed", 8);
         for (int i = 0; i < removed.size(); ++i)
@@ -133,6 +149,31 @@ public class NBTUtils {
         }
         return toChange;
     }
+
+    /*
+    static {
+        CompoundNBT t1 = ItemStack.EMPTY.serializeNBT();
+        CompoundNBT t2 = new ItemStack(Items.CHAIN, 2).serializeNBT();
+        CompoundNBT t3 = new ItemStack(Items.CHAIN).serializeNBT();
+
+        CompoundNBT d1 = extractDiff(t1, t2);
+        CompoundNBT d2 = extractDiff(t2, t3);
+        CompoundNBT d3 = extractDiff(t3, t1);
+
+        DimBag.LOGGER.info("d1 " + d1 + " d2 " + d2 + " d3 " + d3);
+
+        CompoundNBT t1c = t2.copy();
+        t1c = applyDiff(t1c, d1);
+
+        CompoundNBT t2c = t3.copy();
+        t2c = applyDiff(t2c, d2);
+
+        CompoundNBT t3c = t1.copy();
+        t3c = applyDiff(t3c, d3);
+
+        DimBag.LOGGER.info("t1 " + t1 + "->" + t1c + "t2 " + t2 + "->" + t2c + "t3 " + t3 + "->" + t3c);
+        DimBag.LOGGER.info("we gud");
+    }*/
 
     public static INBT deepMergeNBTInternal(INBT to, INBT from) {
         if (from == null)
@@ -181,6 +222,271 @@ public class NBTUtils {
             t = t.getCompound(node);
         }
         return t;
+    }
+
+    public static final HashMap<Type, Function<Object, CompoundNBT>> NBT_SERIALIZERS = new HashMap<>();
+    public static final HashMap<Type, Function<CompoundNBT, Object>> NBT_DESERIALIZERS = new HashMap<>();
+
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target(ElementType.FIELD)
+    @interface NBT {
+        Type type = Type.getType(NBT.class);
+    }
+
+    public static class example {
+        @NBT
+        UUID id;
+//        @NBTCompound(key = Integer.class, value = Boolean.class)
+        HashMap<Integer, Boolean> triStateHashSet;
+//        @NBTCollection(ItemStack.class)
+//        List<ItemStack> inv;
+    }
+
+    /*
+    static {
+        HashMap<Type, ArrayList<ModFileScanData.AnnotationData>> constructionMap = new HashMap<>();
+        for (ModFileScanData mfsd : ModList.get().getAllScanData())
+            for (ModFileScanData.AnnotationData ad : mfsd.getAnnotations())
+                if (NBT.type.equals(ad.getAnnotationType()))
+                    constructionMap.compute(ad.getClassType(), (k, v)->{
+                        if (v == null)
+                            v = new ArrayList<>();
+                        v.add(ad);
+                        return v;
+                    });
+        for (Type ct : constructionMap.keySet()) {
+            ArrayList<ModFileScanData.AnnotationData> adl = constructionMap.get(ct);
+            final ArrayList<BiConsumer<Object, CompoundNBT>> ser = new ArrayList<>();
+            final ArrayList<BiConsumer<CompoundNBT, Object>> deser = new ArrayList<>();
+            for (ModFileScanData.AnnotationData ad : adl) {
+                try {
+                    final Field f = Class.forName(ad.getClassType().getClassName()).getDeclaredField(ad.getMemberName());
+                    ser.add((o, c)->{
+                        try {
+                            c.put(f.getName(), toNBT(f.get(o)));
+                        } catch (IllegalAccessException e) {
+                            DimBag.LOGGER.error("Aaaand, we failed");
+                            e.printStackTrace();
+                        }
+                    }); //all the magic should be done there
+                    deser.add((c, o)->{
+                        try {
+                            f.set(o, fromNBT(c.get(f.getName())));
+                        } catch (IllegalAccessException e) {
+                            DimBag.LOGGER.error("Aaaand, we failed");
+                            e.printStackTrace();
+                        }
+                    });
+                } catch (ClassNotFoundException | NoSuchFieldException e) {
+                    DimBag.LOGGER.error("did we just lost a field? how the heck? ");
+                }
+            }
+            NBT_SERIALIZERS.put(ct, o->{
+                CompoundNBT out = new CompoundNBT();
+                for (BiConsumer<Object, CompoundNBT> lser : ser)
+                    lser.accept(o, out);
+                return out;
+            });
+            NBT_DESERIALIZERS.put(ct, n->{
+                Object out;
+                try {
+                    out = Class.forName(ct.getClassName()).newInstance();
+                } catch (InstantiationException | IllegalAccessException | ClassNotFoundException e) {
+                    DimBag.LOGGER.error("Missing empty constructor for " + ct.getClassName() + " required for automatic nbt deserialization");
+                    return null;
+                }
+                for (BiConsumer<CompoundNBT, Object> ldeser : deser)
+                    ldeser.accept(n, out);
+                return out;
+            });
+        }
+    }*/
+
+    public static CompoundNBT serialize(Object o) {
+        Type t = Type.getType(o.getClass());
+        if (NBT_SERIALIZERS.containsKey(t))
+            return NBT_SERIALIZERS.get(t).apply(o);
+        DimBag.LOGGER.error("Unknown serializer for: '" + t + "' (" + o + ")");
+        return new CompoundNBT();
+    }
+
+    public static <T> T deserialize(CompoundNBT nbt, T ... typeReflection) {
+        Class<T> clazz = (Class<T>) typeReflection.getClass().getComponentType();
+        Type t = Type.getType(clazz);
+        if (NBT_DESERIALIZERS.containsKey(t))
+            return (T)NBT_DESERIALIZERS.get(t).apply(nbt);
+        DimBag.LOGGER.error("Unknown serializer for: '" + clazz + "' (" + nbt + ")");
+        return null;
+    }
+
+//    private static <T> ListNBT toListNBT(Iterable<T> l) {
+//        ListNBT list = new ListNBT();
+//        Object[] tl = (Object[])o;
+//        for (Object t : tl)
+//            list.add(toNBT(t));
+//        return list;
+//    }
+
+    /**
+     * will try to convert an object to an INBT
+     * @param o curretly valid types: INBT, INBTSerializable<\T>, string, uuid, bool, byte, short, int, long, float, double, Iterable<v>
+     * @return any of INBT (StringNBT, IntArrayNBT, ByteNBT, ShortNBT, IntNBT, LongNBT, FloatNBT, DoubleNBT, ListNBT)
+     */
+
+    public static INBT toNBT(Object o) {
+        if (o instanceof INBT)
+            return (INBT)o;
+        else if (o instanceof net.minecraftforge.common.util.INBTSerializable<?>)
+            return ((net.minecraftforge.common.util.INBTSerializable<?>)o).serializeNBT();
+        else if (o instanceof String)
+            return StringNBT.valueOf((String)o);
+        else if (o instanceof UUID)
+            return new IntArrayNBT(UUIDCodec.encodeUUID((UUID)o));
+        else if (o instanceof Boolean)
+            return ByteNBT.valueOf((Boolean)o);
+        else if (o instanceof Byte)
+            return ByteNBT.valueOf((Byte)o);
+        else if (o instanceof Short)
+            return ShortNBT.valueOf((Short)o);
+        else if (o instanceof Integer)
+            return IntNBT.valueOf((Integer)o);
+        else if (o instanceof Long)
+            return LongNBT.valueOf((Long)o);
+        else if (o instanceof Float)
+            return FloatNBT.valueOf((Float)o);
+        else if (o instanceof Double)
+            return DoubleNBT.valueOf((Double)o);
+        else if (o instanceof Iterable<?>) {
+            ListNBT list = new ListNBT();
+            Iterable<?> tl = (Iterable<?>)o;
+            tl.forEach(t->list.add(toNBT(t)));
+            return list;
+        } /*else if (o instanceof AbstractMap<?, ?>) { //beyond hacky, let's give up on maps for now
+            CompoundNBT compound = new CompoundNBT();
+            AbstractMap<?, ?> tm = (AbstractMap<?, ?>)o;
+            for (Object k : tm.keySet())
+                compound.put(k.toString(), toNBT(tm.get(k)));
+            return compound;
+        } else if (o.getClass().getComponentType() != null)
+            return toListNBT((Iterable<?>)o);*/ //too anoying
+//        DimBag.LOGGER.error("Missing toNBT implementation for type: " + o.getClass());
+        throw new IllegalArgumentException("Missing toNBT implementation for type: " + o.getClass());
+    }
+
+    private static <T> Iterable<T> fromListNBT(ListNBT nbt) {
+        List<T> out = new ArrayList<>();
+        for (INBT inbt : nbt) out.add((T)fromNBT(inbt));
+        return out;
+    }
+
+//    public static <T> T fromNBT(INBT nbt, T instance) {
+//        try {
+//            Method m = instance.getClass().getMethod("deserializeNBT", nbt.getClass());
+//            m.invoke(instance, nbt);
+//            return instance;
+//        } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException ignore) {}
+//        return fromNBT (nbt, (Class<T>)instance.getClass());
+//    }
+
+    /**
+     * alternative function where you can manually set the expected class
+     * @param nbt
+     * @param clazz
+     * @param <T>
+     * @return
+     */
+    public static <T> T fromNBT(INBT nbt, Class<T> clazz) {
+        try {
+            Method m = clazz.getMethod("deserializeNBT", nbt.getClass());
+            T out = ReflectionUtils.newInstance(clazz);
+            m.invoke(out, nbt);
+            return out;
+        } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException ignore) {}
+        if (clazz.isInstance(nbt))
+            return (T)nbt;
+        else if (clazz.isAssignableFrom(String.class) && nbt instanceof StringNBT)
+            return (T)((StringNBT)nbt).getString();
+        else if (clazz.isAssignableFrom(UUID.class) && nbt instanceof IntArrayNBT)
+            return (T)NBTUtil.readUniqueId(nbt); //do I have no shame? maybe
+        else if ((clazz.isAssignableFrom(Boolean.class) || clazz.isAssignableFrom(boolean.class)) && nbt instanceof ByteNBT)
+            return (T)(Boolean)ByteNBT.ONE.equals(nbt);
+        else if ((clazz.isAssignableFrom(Byte.class) || clazz.isAssignableFrom(byte.class)) && nbt instanceof ByteNBT)
+            return (T)(Byte)((ByteNBT)nbt).getByte();
+        else if ((clazz.isAssignableFrom(Short.class) || clazz.isAssignableFrom(short.class)) && nbt instanceof ShortNBT)
+            return (T)(Short)((ShortNBT)nbt).getShort();
+        else if ((clazz.isAssignableFrom(Integer.class) || clazz.isAssignableFrom(int.class)) && nbt instanceof IntNBT)
+            return (T)(Integer)((IntNBT)nbt).getInt();
+        else if ((clazz.isAssignableFrom(Long.class) || clazz.isAssignableFrom(long.class)) && nbt instanceof LongNBT)
+            return (T)(Long)((LongNBT)nbt).getLong();
+        else if ((clazz.isAssignableFrom(Float.class) || clazz.isAssignableFrom(float.class)) && nbt instanceof FloatNBT)
+            return (T)(Float)((FloatNBT)nbt).getFloat();
+        else if ((clazz.isAssignableFrom(Double.class) || clazz.isAssignableFrom(double.class)) && nbt instanceof DoubleNBT)
+            return (T)(Double)((DoubleNBT)nbt).getDouble();
+        else if (nbt instanceof ListNBT)
+            return (T) fromListNBT((ListNBT) nbt); //might go boum
+        throw new IllegalArgumentException("unknown fromNBT resolver for converting '" + nbt.getClass() + "' to '" + clazz + "'");
+    }
+
+    /**
+     * hacky function that will try to convert an INBT to a type T
+     * @param nbt
+     * @param typeReflection actually not required as it is actually a hack to get a valid instance of Class<\T>
+     * @param <T>
+     * @return
+     */
+    public static <T> T fromNBT(INBT nbt, T... typeReflection) {
+        Class<T> clazz = (Class<T>) typeReflection.getClass().getComponentType();
+        if (clazz.getComponentType() != null && nbt instanceof ListNBT) {
+            Iterable<?> tl = Arrays.asList(typeReflection);
+            tl = fromListNBT((ListNBT) nbt);
+            return (T)((List<?>)tl).toArray(); //we just went berserk
+        } else
+            return fromNBT(nbt, clazz);
+    }
+
+    /**
+     * convert an array of alternating string keys and Object to a compoundNBT
+     * @param l (the actual size of this array must be even and each even entry must be a string, and odd entries are to be converted using toNBT)
+     * @return a new CompoundNBT or throws IllegalArgumentException on non string key or impossible to convert values using toNBT
+     */
+    public static CompoundNBT toCompoundNBT(Object ... l) {
+        if ((l.length % 2) == 1) //odd length
+            throw new IllegalArgumentException("Odd number of parameters");
+        CompoundNBT out = new CompoundNBT();
+        for (int i = 0; i < l.length; i += 2) {
+            if (!(l[i] instanceof String)) {
+//                DimBag.LOGGER.error("invalid argument at position: " + i + " '" + l[i] + "' should have been a key/string");
+                throw new IllegalArgumentException("invalid argument at position: " + i + " '" + l[i] + "' should have been a key/string");
+            }
+            out.put((String)l[i], toNBT(l[i + 1]));
+        }
+        return out;
+    }
+
+    public static <K, V, T extends Map<K, V>> CompoundNBT toCompoundNBT(T map) { return toCompoundNBT(map, K::toString); }
+
+    public static <K, V, T extends Map<K, V>> CompoundNBT toCompoundNBT(T map, Function<K, String> kc) {
+        CompoundNBT out = new CompoundNBT();
+        for (K k : map.keySet())
+            out.put(kc.apply(k), toNBT(map.get(k)));
+        return out;
+    }
+
+    public static <K, V, T extends Map<K, V>> T fromCompoundNBT(CompoundNBT nbt, T ... typeReflection) {
+        return (T)fromCompoundNBTp(nbt, (Function<String, K>)s->(K)ReflectionUtils.fromString(s), typeReflection);
+    }
+
+    public static <K, V, T extends Map<K, V>> T fromCompoundNBTp(CompoundNBT nbt, Function<String, K> kc, T ... typeReflection) {
+        Class<T> clazz = (Class<T>) typeReflection.getClass().getComponentType();
+        T out;
+        try {
+            out = clazz.newInstance();
+        } catch (IllegalAccessException | InstantiationException e) {
+            out = (T)new HashMap<K, V>();
+        }
+        for (String k : nbt.keySet())
+            out.put((K)kc.apply(k), (V)fromNBT(nbt.get(k)));
+        return out;
     }
 
     /*
@@ -280,4 +586,67 @@ public class NBTUtils {
         return out;
     }
      */
+
+    public static <T> T getOrDefault(CompoundNBT nbt, String key, Function<String, T> method, T def) {
+        if (nbt.contains(key))
+            return method.apply(key);
+        return def;
+    }
+
+    /**
+     * for now, compatible with INBT, INBTSerializable<\?>, String, Boolean, Byte, Short, Integer, Long, Float, Double, UUID
+     * for others, please use alternative version that takes a method in
+     * @param nbt
+     * @param key
+     * @param def
+     * @param <T>
+     * @return
+     */
+    public static <T> T getOrDefault(CompoundNBT nbt, String key, T def) {
+        if (!nbt.contains(key)) return def;
+        INBT t = nbt.get(key);
+        if (t.getClass().isInstance(def)) return (T)t;
+        if (def instanceof net.minecraftforge.common.util.INBTSerializable<?> && def instanceof Cloneable) {
+            try {
+                T out = CloneUtils.cloneObject(def);
+                ((INBTSerializable) out).deserializeNBT(t);
+                return out;
+            } catch (CloneNotSupportedException rip) {
+                return def;
+            }
+        }
+        if (def instanceof String && t instanceof StringNBT) return (T)((StringNBT)t).getString();
+        if (def instanceof Boolean && t instanceof ByteNBT) return (T)(Boolean)(((ByteNBT)t).getByte() != (byte)0);
+        if (def instanceof Byte && t instanceof ByteNBT) return (T)(Byte)((ByteNBT)t).getByte();
+        if (def instanceof Short && t instanceof ShortNBT) return (T)(Short)((ShortNBT)t).getShort();
+        if (def instanceof Integer && t instanceof IntNBT) return (T)(Integer)((IntNBT)t).getInt();
+        if (def instanceof Long && t instanceof LongNBT) return (T)(Long)((LongNBT)t).getLong();
+        if (def instanceof Float && t instanceof FloatNBT) return (T)(Float)((FloatNBT)t).getFloat();
+        if (def instanceof Double && t instanceof DoubleNBT) return (T)(Double)((DoubleNBT)t).getDouble();
+        if (def instanceof UUID && t instanceof IntArrayNBT) return (T)NBTUtil.readUniqueId(t);
+        return def;
+    }
+
+    /**
+     * for now, compatible with INBT, INBTSerializable<\?>, String, Boolean, Byte, Short, Integer, Long, Float, Double, UUID
+     * for others, please use the methods in CompoundNBT
+     * @param nbt
+     * @param key
+     * @param val
+     * @param <T>
+     * @return
+     */
+    public static <T> void put(CompoundNBT nbt, String key, T val) {
+        if (val instanceof INBT) nbt.put(key, (INBT)val);
+        if (val instanceof net.minecraftforge.common.util.INBTSerializable<?>) nbt.put(key, ((INBTSerializable) val).serializeNBT());
+        if (val instanceof String) nbt.putString(key, (String)val);
+        if (val instanceof Boolean) nbt.putBoolean(key, (Boolean)val);
+        if (val instanceof Byte) nbt.putByte(key, (Byte)val);
+        if (val instanceof Short) nbt.putShort(key, (Short)val);
+        if (val instanceof Integer) nbt.putInt(key, (Integer)val);
+        if (val instanceof Long) nbt.putLong(key, (Long)val);
+        if (val instanceof Float) nbt.putFloat(key, (Float)val);
+        if (val instanceof Double) nbt.putDouble(key, (Double)val);
+        if (val instanceof UUID) nbt.putUniqueId(key, (UUID)val);
+    }
 }

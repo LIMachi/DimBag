@@ -64,8 +64,8 @@ public class WorldUtils { //TODO: remove bloat once MCP/Forge mappings are bette
         return reg.getLocation().toString();
     }
 
-    private static void teleport(Entity entityIn, ServerWorld worldIn, double x, double y, double z, float yaw, float pitch) { //modified version of TeleportCommand.java: 123: TeleportCommand#teleport(CommandSource source, Entity entityIn, ServerWorld worldIn, double x, double y, double z, Set<SPlayerPositionLookPacket.Flags> relativeList, float yaw, float pitch, @Nullable TeleportCommand.Facing facing) throws CommandSyntaxException
-        if (entityIn.removed) return;
+    private static Entity teleport(Entity entityIn, ServerWorld worldIn, double x, double y, double z, float yaw, float pitch) { //modified version of TeleportCommand.java: 123: TeleportCommand#teleport(CommandSource source, Entity entityIn, ServerWorld worldIn, double x, double y, double z, Set<SPlayerPositionLookPacket.Flags> relativeList, float yaw, float pitch, @Nullable TeleportCommand.Facing facing) throws CommandSyntaxException
+        if (entityIn.removed) return entityIn;
         SyncUtils.XPSnapShot xp = entityIn instanceof ServerPlayerEntity ? new SyncUtils.XPSnapShot(((PlayerEntity)entityIn).experience, ((PlayerEntity)entityIn).experienceLevel, ((PlayerEntity)entityIn).experienceTotal) : SyncUtils.XPSnapShot.ZERO;
         Set<SPlayerPositionLookPacket.Flags> set = EnumSet.noneOf(SPlayerPositionLookPacket.Flags.class);
         set.add(SPlayerPositionLookPacket.Flags.X_ROT);
@@ -93,7 +93,7 @@ public class WorldUtils { //TODO: remove bloat once MCP/Forge mappings are bette
                 Entity entity = entityIn;
                 entityIn = entityIn.getType().create(worldIn);
                 if (entityIn == null)
-                    return;
+                    return entityIn;
                 entityIn.copyDataFromOld(entity);
                 entityIn.setLocationAndAngles(x, y, z, f1, f);
                 entityIn.setRotationYawHead(f1);
@@ -111,16 +111,17 @@ public class WorldUtils { //TODO: remove bloat once MCP/Forge mappings are bette
         if (entityIn instanceof ServerPlayerEntity) {
             SyncUtils.resyncXP((ServerPlayerEntity) entityIn, xp);
         }
+        return entityIn;
     }
 
-    public static void teleportEntity(Entity entity, RegistryKey<World> destType, BlockPos destPos) {
-        if (entity == null || entity.world.isRemote()) return;
+    public static Entity teleportEntity(Entity entity, RegistryKey<World> destType, BlockPos destPos) {
+        if (entity == null || entity.world.isRemote()) return null;
         ServerWorld world;
         if (destType != null)
             world = entity.getServer().getWorld(destType);
         else
             world = (ServerWorld)entity.getEntityWorld();
-        teleport(entity, world, destPos.getX() + 0.5, destPos.getY(), destPos.getZ() + 0.5, entity.rotationYaw, entity.rotationPitch);
+        return teleport(entity, world, destPos.getX() + 0.5, destPos.getY(), destPos.getZ() + 0.5, entity.rotationYaw, entity.rotationPitch);
     }
 
     public static void teleportEntity(Entity entity, RegistryKey<World> destType, Vector3d vec) {

@@ -1,11 +1,13 @@
 package com.limachi.dimensional_bags.client.render.screen;
 
 import com.google.common.primitives.Ints;
+import com.limachi.dimensional_bags.client.widgets.Root;
 import com.limachi.dimensional_bags.common.container.SimpleContainer;
 import com.limachi.dimensional_bags.common.inventory.Wrapper;
 import com.limachi.dimensional_bags.common.references.GUIs;
 import com.mojang.blaze3d.matrix.MatrixStack;
 import com.mojang.blaze3d.systems.RenderSystem;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screen.inventory.ContainerScreen;
 import net.minecraft.client.renderer.texture.TextureManager;
 import net.minecraft.entity.player.PlayerInventory;
@@ -22,12 +24,35 @@ public class SimpleContainerGUI extends ContainerScreen<SimpleContainer> {
     private int columns_shift_left;
     private int columns_shift_right;
 
+    public final Root root;
+
+    @Override
+    public void tick() {
+        root.tick();
+        super.tick();
+    }
+
+    public int getTick() { return root.ticks; }
+
+    @Override
+    protected void init() {
+        Minecraft.getInstance().keyboardListener.enableRepeatEvents(true);
+        super.init();
+    }
+
+    @Override
+    public void onClose() {
+        super.onClose();
+        Minecraft.getInstance().keyboardListener.enableRepeatEvents(false);
+    }
+
     public SimpleContainerGUI(SimpleContainer screenContainer, PlayerInventory inv, ITextComponent titleIn) {
         super(screenContainer, inv, titleIn);
         this.rows = container.getRows();
         this.columns = container.getColumns();
         this.xSize = PLAYER_INVENTORY_X + (Ints.max(this.columns - PLAYER_INVENTORY_COLUMNS, 0)) * SLOT_SIZE_X; //total size of the gui x axis
         this.ySize = GUIs.BagScreen.calculateYSize(this.rows);
+        this.root = Root.getRoot(screenContainer.rootUUID);
         this.columns_shift_left = GUIs.BagScreen.calculateShiftLeft(this.columns);
         this.columns_shift_right = this.columns - this.columns_shift_left - PLAYER_INVENTORY_COLUMNS; //how many exta columns on the right of the gui
     }
@@ -160,15 +185,6 @@ public class SimpleContainerGUI extends ContainerScreen<SimpleContainer> {
     }
 
     @Override
-    public void render(MatrixStack matrixStack, int mouseX, int mouseY, float partialTicks) {
-        this.guiLeft = (this.width - this.xSize) / 2; //start of the gui in the x axis (this.width is the size of the screens on the x axis)
-        this.guiTop = (this.height - this.ySize) / 2; //start of the gui in the y axis (this.height is the size of the screens on the y axis)
-        this.renderBackground(matrixStack);
-        super.render(matrixStack, mouseX, mouseY, partialTicks);
-        this.renderHoveredTooltip(matrixStack, mouseX, mouseY);
-    }
-
-    @Override
     protected void drawGuiContainerForegroundLayer(MatrixStack matrixStack, int mouseX, int mouseY) {
         if (this.columns < 9)
             this.font.drawString(matrixStack, title.getString(), PLAYER_INVENTORY_X / 2, this.ySize - PLAYER_INVENTORY_Y - PART_SIZE_Y / 2, 4210752);
@@ -187,5 +203,84 @@ public class SimpleContainerGUI extends ContainerScreen<SimpleContainer> {
         this.render_separator(matrixStack, tm);
         this.render_rows(matrixStack, tm);
         this.render_top(matrixStack, tm);
+    }
+
+    @Override
+    public void render(MatrixStack matrixStack, int mouseX, int mouseY, float partialTicks) {
+        this.guiLeft = (this.width - this.xSize) / 2; //start of the gui in the x axis (this.width is the size of the screens on the x axis)
+        this.guiTop = (this.height - this.ySize) / 2; //start of the gui in the y axis (this.height is the size of the screens on the y axis)
+        renderBackground(matrixStack);
+        super.render(matrixStack, mouseX, mouseY, partialTicks);
+        root.render(matrixStack, mouseX, mouseY, partialTicks);
+        renderHoveredTooltip(matrixStack, mouseX, mouseY);
+    }
+
+    @Override
+    public boolean mouseDragged(double x, double y, int b, double px, double py) {
+        if (root.focusedWidget != null)
+            return root.focusedWidget.mouseDragged(x, y, b, px, py) || super.mouseDragged(x, y, b, px, py);
+        if (root.mouseDragged(x, y, b, px, py))
+            return true;
+        return super.mouseDragged(x, y, b, px, py);
+    }
+
+    @Override
+    public void mouseMoved(double mouseX, double mouseY) {
+        root.mouseMoved(mouseX, mouseY);
+        super.mouseMoved(mouseX, mouseY);
+    }
+
+    @Override
+    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+        if (root.focusedWidget != null)
+            return root.focusedWidget.mouseClicked(mouseX, mouseY, button) || super.mouseClicked(mouseX, mouseY, button);
+        if (root.mouseClicked(mouseX, mouseY, button))
+            return true;
+        return super.mouseClicked(mouseX,mouseY, button);
+    }
+
+    @Override
+    public boolean mouseReleased(double mouseX, double mouseY, int button) {
+        if (root.focusedWidget != null)
+            return root.focusedWidget.mouseReleased(mouseX, mouseY, button) || super.mouseReleased(mouseX, mouseY, button);
+        if (root.mouseReleased(mouseX, mouseY, button))
+            return true;
+        return super.mouseReleased(mouseX, mouseY, button);
+    }
+
+    @Override
+    public boolean mouseScrolled(double mouseX, double mouseY, double scrollAmount) {
+        if (root.focusedWidget != null)
+            return root.focusedWidget.mouseScrolled(mouseX, mouseY, scrollAmount) || super.mouseScrolled(mouseX, mouseY, scrollAmount);
+        if (root.mouseScrolled(mouseX, mouseY, scrollAmount))
+            return true;
+        return super.mouseScrolled(mouseX, mouseY, scrollAmount);
+    }
+
+    @Override
+    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+        if (root.focusedWidget != null)
+            return root.focusedWidget.keyPressed(keyCode, scanCode, modifiers) || super.keyPressed(keyCode, scanCode, modifiers);
+        if (root.keyPressed(keyCode, scanCode, modifiers))
+            return true;
+        return super.keyPressed(keyCode, scanCode, modifiers);
+    }
+
+    @Override
+    public boolean keyReleased(int keyCode, int scanCode, int modifiers) {
+        if (root.focusedWidget != null)
+            return root.focusedWidget.keyReleased(keyCode, scanCode, modifiers) || super.keyReleased(keyCode, scanCode, modifiers);
+        if (root.keyReleased(keyCode, scanCode, modifiers))
+            return true;
+        return super.keyReleased(keyCode, scanCode, modifiers);
+    }
+
+    @Override
+    public final boolean charTyped(char codePoint, int modifiers) {
+        if (root.focusedWidget != null)
+            return root.focusedWidget.charTyped(codePoint, modifiers) || super.charTyped(codePoint, modifiers);
+        if (root.charTyped(codePoint, modifiers))
+            return true;
+        return super.charTyped(codePoint, modifiers);
     }
 }

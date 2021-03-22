@@ -8,18 +8,25 @@ import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.WorldVertexBufferUploader;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.util.ResourceLocation;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
 
 public class TextureCutout {
+
+    @OnlyIn(Dist.CLIENT)
     public static Minecraft mc = Minecraft.getInstance();
+
     public ResourceLocation file;
     public Box2d corners;
     public int fileWidth;
     public int fileHeight;
+
     public enum TextureApplicationPattern {
         STRETCH, //default mode, fill the given coordinates by deforming the image
         MIDDLE_EXPANSION, //vanilla method for buttons, scale the image from the corners to the middle of the image
         TILE //vanilla method for background, repeat the image with it's original ratio to fill the coordinates
     }
+
 
     public TextureCutout(ResourceLocation file, int fileWidth, int fileHeight, double x, double y, double w, double h) {
         this(file, fileWidth, fileHeight, new Box2d(x, y, w, h));
@@ -36,12 +43,14 @@ public class TextureCutout {
         this.corners = cutout;
     }
 
+    @OnlyIn(Dist.CLIENT)
     public TextureCutout bindTexture() { mc.getTextureManager().bindTexture(file); return this; }
 
     public TextureCutout copy() { return new TextureCutout(file, fileWidth, fileHeight, corners.getX1(), corners.getY1(), corners.getWidth(), corners.getHeight()); }
 
     public TextureCutout setCorners(Box2d corners) { this.corners = corners; return this; }
 
+    @OnlyIn(Dist.CLIENT)
     private static void innerBlit(double x, double x2, double y, double y2, int blitOffset, float minU, float maxU, float minV, float maxV) {
         BufferBuilder bufferbuilder = Tessellator.getInstance().getBuffer();
         bufferbuilder.begin(7, DefaultVertexFormats.POSITION_TEX);
@@ -54,6 +63,7 @@ public class TextureCutout {
         WorldVertexBufferUploader.draw(bufferbuilder);
     }
 
+    @OnlyIn(Dist.CLIENT)
     public void blit(MatrixStack matrixStack, Box2d coords, int blitOffset, boolean withBind, TextureApplicationPattern pattern) {
         if (withBind)
             bindTexture();

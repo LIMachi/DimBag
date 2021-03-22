@@ -53,7 +53,7 @@ public class BrainTileEntity extends TileEntity implements ITickableTileEntity, 
     @Override
     public void tick() {
         ++tick;
-        if (world == null || !DimBag.isServer(world) || (tick % getBlockState().get(Brain.TICK_RATE)) != 0) return;
+        if (world == null || !DimBag.isServer(world) || (tick % /*getBlockState().get(Brain.TICK_RATE)*/4) != 0) return;
         Entity holder = getHolder();
         if (holder != null && command.length() != 0 && EnergyData.execute(SubRoomsManager.getEyeId(world, pos, false), energyData -> energyData.extractEnergy(8, true) == 8, false)) {
             EnergyData.execute(SubRoomsManager.getEyeId(world, pos, false), energyData -> energyData.extractEnergy(8, false));

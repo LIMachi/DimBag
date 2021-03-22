@@ -20,7 +20,7 @@ public class TankData extends WorldSavedDataManager.EyeWorldSavedData implements
     private int selected = 0;
 
     public TankData(String suffix, int id, boolean client) {
-        super(suffix, id, client);
+        super(suffix, id, client, false);
     }
 
     public void selectTank(int tank) {

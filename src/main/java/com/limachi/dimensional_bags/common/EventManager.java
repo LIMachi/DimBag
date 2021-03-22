@@ -1,69 +1,43 @@
 package com.limachi.dimensional_bags.common;
 
 import com.google.common.collect.ArrayListMultimap;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonElement;
 import com.limachi.dimensional_bags.CuriosIntegration;
 import com.limachi.dimensional_bags.DimBag;
 import com.limachi.dimensional_bags.KeyMapController;
-import com.limachi.dimensional_bags.common.Config.ConfigEvents;
 import com.limachi.dimensional_bags.common.blocks.Cloud;
 import com.limachi.dimensional_bags.common.data.DimBagData;
 import com.limachi.dimensional_bags.common.data.EyeDataMK2.ClientDataManager;
 import com.limachi.dimensional_bags.common.data.EyeDataMK2.HolderData;
 import com.limachi.dimensional_bags.common.data.EyeDataMK2.SubRoomsManager;
-import com.limachi.dimensional_bags.common.data.EyeDataMK2.WorldSavedDataManager;
 import com.limachi.dimensional_bags.common.entities.BagEntity;
 import com.limachi.dimensional_bags.common.items.Bag;
 import com.limachi.dimensional_bags.common.items.GhostBag;
 import com.limachi.dimensional_bags.common.items.IDimBagCommonItem;
 import com.limachi.dimensional_bags.common.items.entity.BagEntityItem;
-import com.limachi.dimensional_bags.common.managers.Upgrade;
-import com.limachi.dimensional_bags.common.managers.UpgradeManager;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.FlowingFluidBlock;
-import net.minecraft.client.resources.JsonReloadListener;
-import net.minecraft.command.CommandSource;
 import net.minecraft.command.impl.TimeCommand;
 import net.minecraft.entity.Entity;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.item.ItemEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.inventory.EquipmentSlotType;
 import net.minecraft.item.ItemStack;
-import net.minecraft.network.play.server.SEntityEquipmentPacket;
-import net.minecraft.network.play.server.SSetSlotPacket;
-import net.minecraft.potion.EffectInstance;
-import net.minecraft.potion.Effects;
-import net.minecraft.profiler.IProfiler;
-import net.minecraft.resources.IResourceManager;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.tags.ITag;
-import net.minecraft.tags.ItemTags;
 import net.minecraft.util.*;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.vector.Vector3d;
-import net.minecraft.world.GameRules;
 import net.minecraft.world.World;
 import net.minecraft.world.server.ServerWorld;
-import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.event.AddReloadListenerEvent;
 import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.event.entity.living.LivingDamageEvent;
-import net.minecraftforge.event.entity.living.LivingDropsEvent;
 import net.minecraftforge.event.entity.living.LivingEquipmentChangeEvent;
 import net.minecraftforge.event.entity.player.AttackEntityEvent;
-import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.event.world.BlockEvent;
 import net.minecraftforge.event.world.SleepFinishedTimeEvent;
-import net.minecraftforge.eventbus.api.Event;
-import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
@@ -72,7 +46,7 @@ import java.util.*;
 @Mod.EventBusSubscriber
 public class EventManager {
 
-    private static int tick = 0;
+    public static int tick = 0;
     private static ArrayListMultimap<Integer, Runnable> pendingTasks = ArrayListMultimap.create();
 
     public static void delayedTask(int ticksToWait, Runnable run) { if (ticksToWait <= 0) ticksToWait = 1; pendingTasks.put(ticksToWait + tick, run); }
@@ -220,49 +194,9 @@ public class EventManager {
 //
 //    }
 
-    @SubscribeEvent
-    public static void turtleUpgrade(LivingDamageEvent event) { //protect and tp the player in the bag if it would take damage setting it's health below a threshold
-        LivingEntity entity = event.getEntityLiving();
-        if (!entity.isAlive() || event.getAmount() <= 0) return;
-        int id = Bag.getBag(entity, 0);
-        if (id == 0) return;
-        UpgradeManager up = UpgradeManager.getInstance(id);
-        if (!up.getInstalledUpgrades().contains("turtle")) return;
-        Upgrade turtle = UpgradeManager.getUpgrade("turtle");
-        int limit = turtle.getMemory(up).getInt("turtleUpBelow");
-        if (entity.getHealth() <= limit && entity.getHealth() - event.getAmount() / 4 > 0) {
-            event.setAmount(event.getAmount() / 4);
-            entity.addPotionEffect(new EffectInstance(Effects.MINING_FATIGUE, 100, 2, false, false, false));
-            entity.addPotionEffect(new EffectInstance(Effects.RESISTANCE, 100, 2, false, false, false));
-            delayedTask(0, ()->SubRoomsManager.execute(id,sm->sm.enterBag(entity)));
-        }
-    }
 
-    @SubscribeEvent(priority = EventPriority.LOWEST)
-    public static void deathHopperUpgrade(LivingDropsEvent event) { //collect the player item's on death and send them inside the bag (change the cooldown of the items so they don't despawn)
-        if (event.getDrops().isEmpty()) return;
-        SubRoomsManager sm = null;
-        for (ItemEntity item : event.getDrops())
-            if (item.getItem().getItem() instanceof Bag && Bag.getEyeId(item.getItem()) != 0) {
-                int id = Bag.getEyeId(item.getItem());
-                UpgradeManager up = UpgradeManager.getInstance(id);
-                if (!up.getInstalledUpgrades().contains("death_hopper")) continue;
-                sm = SubRoomsManager.getInstance(id);
-                if (sm != null) {
-                    BagEntity.spawn(event.getEntity().world, event.getEntity().getPosition(), item.getItem());
-                    item.remove();
-                    break;
-                }
-            }
-        if (sm != null) {
-            for (ItemEntity item : event.getDrops())
-                if (!item.removed) {
-                    item.setNoDespawn();
-                    sm.enterBag(item, false, true, false);
-                }
-            event.setCanceled(true);
-        }
-    }
+
+
 
     @SubscribeEvent
     public static void blockPlaceWatcher(BlockEvent.EntityPlaceEvent event) {
@@ -313,23 +247,6 @@ public class EventManager {
                     ActionResult<ItemStack> res = ((Bag)src.stack.getItem()).onItemRightClick(player.world, player, src.index);
                     if (res.getType().isSuccessOrConsume())
                         event.setCanceled(true);
-                }
-            }
-        }
-    }*/
-
-    /*@SubscribeEvent
-    public static void onItemRightClickBlock(PlayerInteractEvent.RightClickBlock event) {
-        if (!event.getPlayer().getEntityWorld().isRemote()) {
-            if (KeyMapController.getKey(event.getPlayer(), KeyMapController.BAG_ACTION_KEY)) {
-                IDimBagCommonItem.ItemSearchResult src = IDimBagCommonItem.searchItem(event.getPlayer(), 0, Bag.class, (x)->true);
-                if (src != null) {
-                    ActionResultType res = ((Bag)src.stack.getItem()).onItemUse(event.getWorld(), event.getPlayer(), src.index, Bag.rayTrace(event.getWorld(), event.getPlayer(), RayTraceContext.FluidMode.ANY));
-                    if (res.isSuccessOrConsume()) {
-                        event.setUseBlock(Event.Result.DENY);
-                        event.setUseItem(Event.Result.DENY);
-                        event.setCanceled(true);
-                    }
                 }
             }
         }

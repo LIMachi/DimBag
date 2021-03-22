@@ -19,7 +19,7 @@ public class EnergyData extends WorldSavedDataManager.EyeWorldSavedData implemen
     private final long[] energyStateLastMinute = new long[1200];
 
     public EnergyData(String suffix, int id, boolean client) {
-        super(suffix, id, client);
+        super(suffix, id, client, false);
         energy = 0;
         capacity = 0;
         tickCursor = 0;

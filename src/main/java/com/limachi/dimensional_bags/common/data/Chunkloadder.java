@@ -4,7 +4,6 @@ import com.limachi.dimensional_bags.DimBag;
 import com.limachi.dimensional_bags.common.WorldUtils;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.nbt.ListNBT;
-import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.server.ServerWorld;
 
 import java.util.ArrayList;

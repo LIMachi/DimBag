@@ -1,7 +1,6 @@
 package com.limachi.dimensional_bags;
 
 import com.google.common.reflect.Reflection;
-import com.limachi.dimensional_bags.common.Config.ConfigEvents;
 import com.limachi.dimensional_bags.common.EventManager;
 import com.limachi.dimensional_bags.common.Registries;
 import com.limachi.dimensional_bags.common.items.Bag;
@@ -25,14 +24,12 @@ import net.minecraftforge.fml.*;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.thread.EffectiveSide;
 import net.minecraftforge.fml.config.ModConfig;
-import net.minecraftforge.fml.event.lifecycle.InterModEnqueueEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.fml.server.ServerLifecycleHooks;
 import net.minecraftforge.forgespi.language.ModFileScanData;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.objectweb.asm.Type;
-import top.theillusivec4.curios.api.SlotTypeMessage;
 
 import javax.annotation.Nullable;
 
@@ -71,7 +68,7 @@ public class DimBag {
     public DimBag() {
         INSTANCE = this;
         IEventBus eventBus = FMLJavaModLoadingContext.get().getModEventBus();
-        ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, ConfigEvents.getSpec());
+        ConfigManager.create(MOD_ID, ModConfig.Type.COMMON, "dimensional_bags", new String[]{".common", ".items", ".data"});
         Registries.registerAll(eventBus);
         MinecraftForge.EVENT_BUS.register(EventManager.class);
         eventBus.addListener(CuriosIntegration::enqueueIMC);

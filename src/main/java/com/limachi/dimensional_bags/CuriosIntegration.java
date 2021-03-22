@@ -1,6 +1,7 @@
 package com.limachi.dimensional_bags;
 
 import com.limachi.dimensional_bags.common.data.IMarkDirty;
+import com.limachi.dimensional_bags.common.items.Bag;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
@@ -48,6 +49,24 @@ public class CuriosIntegration {
 //    public static Optional<ImmutableTriple<String, Integer, ItemStack>> getBag(LivingEntity livingEntity) {
 //        return CuriosApi.getCuriosHelper().findEquippedCurio(stack->true, livingEntity);
 //    }
+
+    /**
+     * only find valid bags (eyeid > 0) in the CuriosIntegration.BAG_CURIOS_SLOT slots of the living entity
+     */
+    public static List<ProxyItemStackModifier> getEquippedBags(LivingEntity entity) {
+        List<ProxyItemStackModifier> out = new ArrayList<>();
+        Optional<ICuriosItemHandler> oih = CuriosApi.getCuriosHelper().getCuriosHandler(entity).resolve();
+        if (!oih.isPresent()) return out;
+        Optional<ICurioStacksHandler> osh = oih.get().getStacksHandler(CuriosIntegration.BAG_CURIOS_SLOT);
+        if (!osh.isPresent()) return out;
+        IDynamicStackHandler sh = osh.get().getStacks();
+        for (int i = 0; i < sh.getSlots(); ++i)
+            if (sh.getStackInSlot(i).getItem() instanceof Bag && Bag.getEyeId(sh.getStackInSlot(i)) > 0) {
+                int finalI = i;
+                out.add(new ProxyItemStackModifier(()->CuriosApi.getCuriosHelper().getCuriosHandler(entity).resolve().get().getStacksHandler(CuriosIntegration.BAG_CURIOS_SLOT).get().getStacks().getStackInSlot(finalI), s->CuriosApi.getCuriosHelper().getCuriosHandler(entity).resolve().get().getStacksHandler(CuriosIntegration.BAG_CURIOS_SLOT).get().getStacks().setStackInSlot(finalI, s)));
+            }
+        return out;
+    }
 
     public static boolean equipOnFirstValidSlot(LivingEntity entity, String slot_category, ItemStack stack) {
         Optional<ICuriosItemHandler> oih = CuriosApi.getCuriosHelper().getCuriosHandler(entity).resolve();

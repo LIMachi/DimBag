@@ -1,9 +1,9 @@
 package com.limachi.dimensional_bags.client.render.screen;
 
-import com.limachi.dimensional_bags.client.render.widgets.Button;
-import com.limachi.dimensional_bags.client.render.widgets.Scrollbar;
-import com.limachi.dimensional_bags.client.render.widgets.TextField;
-import com.limachi.dimensional_bags.client.render.widgets.ViewPort;
+import com.limachi.dimensional_bags.client.widgets.Button;
+import com.limachi.dimensional_bags.client.widgets.Scrollbar;
+import com.limachi.dimensional_bags.client.widgets.TextField;
+import com.limachi.dimensional_bags.client.widgets.ViewPort;
 import com.limachi.dimensional_bags.common.container.WrappedPlayerInventoryContainer;
 import com.limachi.dimensional_bags.common.inventory.Wrapper;
 import com.mojang.blaze3d.matrix.MatrixStack;
@@ -18,6 +18,7 @@ import static com.limachi.dimensional_bags.common.inventory.Wrapper.IORights.CAN
 import static com.limachi.dimensional_bags.common.references.GUIs.PlayerInterface.*;
 import static com.limachi.dimensional_bags.common.references.GUIs.ScreenParts.*;
 
+/*
 public class PlayerInterfaceGUI extends BaseScreen<WrappedPlayerInventoryContainer> {
 
     Button test;
@@ -46,8 +47,8 @@ public class PlayerInterfaceGUI extends BaseScreen<WrappedPlayerInventoryContain
 
     @Override
     protected void drawGuiContainerForegroundLayer(MatrixStack matrixStack, int mouseX, int mouseY) {
-        this.font.drawString(matrixStack, new TranslationTextComponent("inventory.player_interface.name", container.getLocalUserName())/*.getFormattedText()*/.getString(), TITLES_X, GUI_TITLE_Y, 4210752);
-        this.font.drawString(matrixStack, this.playerInventory.getDisplayName()/*.getFormattedText()*/.getString(), TITLES_X, INVENTORY_TITLE_Y, 4210752);
+        this.font.drawString(matrixStack, new TranslationTextComponent("inventory.player_interface.name", container.getLocalUserName()).getString(), TITLES_X, GUI_TITLE_Y, 4210752);
+        this.font.drawString(matrixStack, this.playerInventory.getDisplayName().getString(), TITLES_X, INVENTORY_TITLE_Y, 4210752);
     }
 
     protected void drawAccessRectangle(MatrixStack matrixStack, TextureManager tm, int x, int y, Wrapper.IORights rights) {
@@ -76,3 +77,4 @@ public class PlayerInterfaceGUI extends BaseScreen<WrappedPlayerInventoryContain
         drawAccessRectangle(matrixStack, tm, OFF_HAND_SLOT_X, SPECIAL_SLOTS_Y, container.getRights(76));
     }
 }
+*/

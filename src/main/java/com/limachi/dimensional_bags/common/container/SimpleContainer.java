@@ -4,11 +4,12 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.limachi.dimensional_bags.DimBag;
 import com.limachi.dimensional_bags.StaticInit;
+import com.limachi.dimensional_bags.common.EventManager;
 import com.limachi.dimensional_bags.common.Registries;
 import com.limachi.dimensional_bags.common.inventory.EmptySimpleHandler;
 import com.limachi.dimensional_bags.common.inventory.ISimpleItemHandler;
-import com.limachi.dimensional_bags.common.inventory.Wrapper;
 import com.limachi.dimensional_bags.common.network.PacketHandler;
+import com.limachi.dimensional_bags.common.network.SyncCompoundNBT;
 import com.limachi.dimensional_bags.common.network.packets.SetSlotPacket;
 import com.limachi.dimensional_bags.common.references.GUIs;
 import net.minecraft.crash.CrashReport;
@@ -20,6 +21,8 @@ import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.inventory.container.*;
 import net.minecraft.item.ItemStack;
+import net.minecraft.util.IIntArray;
+import net.minecraft.util.IntArray;
 import net.minecraft.util.IntReferenceHolder;
 import net.minecraft.util.NonNullList;
 import net.minecraft.util.registry.Registry;
@@ -32,6 +35,7 @@ import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 import java.util.function.Predicate;
 
 import static com.limachi.dimensional_bags.common.references.GUIs.ScreenParts.*;
@@ -46,6 +50,39 @@ public class SimpleContainer extends Container {
     protected final NonNullList<ItemStack> inventoryItemStacks = NonNullList.create();
     protected final List<IntReferenceHolder> trackedIntReferences = Lists.newArrayList();
 
+    private final UUIDIntArray sci = new UUIDIntArray();
+    public SyncCompoundNBT sc;
+    {
+        sci.set(UUID.randomUUID());
+        trackIntArray(sci);
+        EventManager.delayedTask(1, ()->sc = SyncCompoundNBT.create(sci.get(), true, true)); //mad scientist is back baby
+    }
+
+    public static class UUIDIntArray extends IntArray {
+        public UUIDIntArray() { super(8); }
+
+        public void set(UUID id) {
+            for (int i = 0; i < 8; ++i)
+                super.set(i, i < 4 ? (short)(id.getLeastSignificantBits() >> (16 * i)) : (short)(id.getMostSignificantBits() >> (16 * (i - 4))));
+        }
+
+        public UUID get() {
+            long least = 0;
+            long most = 0;
+            for (int i = 0; i < 8; ++i)
+                if (i < 4)
+                    least |= (long)get(i) << (16 * i);
+                else
+                    most |= (long)get(i) << (16 * (i - 4));
+            return new UUID(most, least);
+        }
+    }
+
+    @Override
+    protected void trackIntArray(IIntArray arrayIn) {
+        super.trackIntArray(arrayIn);
+    }
+
     public static final String NAME = "simple_container";
 
     static {
@@ -59,7 +96,7 @@ public class SimpleContainer extends Container {
                 DimBag.LOGGER.error("Failed to load inventory: " + invClassName + " for container, reason: " + e);
                 inv = new EmptySimpleHandler();
             }
-            return new SimpleContainer(windowId, playerInv, inv, extraData.readVarIntArray(), extraData.readInt(), extraData.readInt(), p->true);
+            return new SimpleContainer(windowId, playerInv, inv, extraData.readVarIntArray(), extraData.readInt(), extraData.readInt(), p->true, true, extraData.readUniqueId());
         });
     }
 
@@ -73,8 +110,10 @@ public class SimpleContainer extends Container {
     protected final int columns;
     protected final int rows;
     protected int scroll = 0;
+    protected final boolean isClient;
+    public final UUID rootUUID;
 
-    static public void open(ServerPlayerEntity playerEntity, ITextComponent name, ISimpleItemHandler handler, @Nullable ArrayList<Integer> slots, int columnLimit, int rowLimit, @Nonnull Predicate<PlayerEntity> canInteractWithPred) {
+    static public void open(ServerPlayerEntity playerEntity, ITextComponent name, ISimpleItemHandler handler, @Nullable ArrayList<Integer> slots, int columnLimit, int rowLimit, @Nonnull Predicate<PlayerEntity> canInteractWithPred, UUID rootUUID) {
         int[] slotArray = new int[slots != null ? slots.size() : 0];
         if (slots != null)
             for (int i = 0; i < slots.size(); ++i)
@@ -86,7 +125,7 @@ public class SimpleContainer extends Container {
             @Nullable
             @Override
             public Container createMenu(int windowId, PlayerInventory playerInv, PlayerEntity player) {
-                return new SimpleContainer(windowId, playerInv, handler, slotArray, columnLimit, rowLimit, canInteractWithPred);
+                return new SimpleContainer(windowId, playerInv, handler, slotArray, columnLimit, rowLimit, canInteractWithPred, false, rootUUID);
             }
         }, buffer->{
             buffer.writeString(handler.getClass().getName());
@@ -94,18 +133,21 @@ public class SimpleContainer extends Container {
             buffer.writeVarIntArray(slotArray);
             buffer.writeInt(columnLimit);
             buffer.writeInt(rowLimit);
+            buffer.writeUniqueId(rootUUID);
         });
     }
 
-    static public void open(ServerPlayerEntity playerEntity, ITextComponent name, ISimpleItemHandler handler) {
-        open(playerEntity, name, handler, null, 9, 6, p->true);
+    static public void open(ServerPlayerEntity playerEntity, ITextComponent name, ISimpleItemHandler handler, UUID rootUUID) {
+        open(playerEntity, name, handler, null, 9, 6, p->true, rootUUID);
     }
 
-    protected SimpleContainer(int windowId, PlayerInventory playerInv, ISimpleItemHandler inv, int[] slots, int columnLimit, int rowLimit, Predicate<PlayerEntity> canInteractWithPred) {
+    protected SimpleContainer(int windowId, PlayerInventory playerInv, ISimpleItemHandler inv, int[] slots, int columnLimit, int rowLimit, Predicate<PlayerEntity> canInteractWithPred, boolean isClient, UUID rootUUID) {
         super(Registries.getContainerType(SimpleContainer.NAME), windowId);
+        this.isClient = isClient;
         this.canInteractWithPred = canInteractWithPred;
         this.playerInv = playerInv;
         this.inv = inv;
+        this.rootUUID = rootUUID;
         if (slots.length > 0)
             this.slots = slots;
         else {
@@ -200,6 +242,14 @@ public class SimpleContainer extends Container {
                 }
             }
         }
+
+//        CompoundNBT diff = NBTUtils.extractDiff(widgetData, prevWidgetData);
+//        if (!diff.isEmpty()) {
+//            for (IContainerListener icontainerlistener : this.listeners)
+//                if (icontainerlistener instanceof ServerPlayerEntity) {
+//
+//                }
+//        }
     }
 
     /**

@@ -88,12 +88,17 @@ public class PacketHandler {
         registerMsg(TrackedStringSyncMsg.class);
         registerMsg(FluidSlotSyncMsg.class);
         registerMsg(SetSlotPacket.class);
+
+        registerMsg(SyncCompoundNBT.SCNBTC.class);
+        registerMsg(SyncCompoundNBT.SCNBTD.class);
+        registerMsg(SyncCompoundNBT.SCNBTU.class);
     }
 
-    public static <T extends Message> void toServer(T msg) { HANDLER.sendToServer(msg); }
+    public static <T extends Message> void toServer(T msg) { if (msg != null) HANDLER.sendToServer(msg); }
     public static <T extends Message> void toClients(T msg) {
-        for (ServerPlayerEntity player : DimBag.getServer().getPlayerList().getPlayers())
-            toClient(player, msg);
+        if (msg != null)
+            for (ServerPlayerEntity player : DimBag.getServer().getPlayerList().getPlayers())
+                toClient(player, msg);
     }
-    public static <T extends Message> void toClient(ServerPlayerEntity player, T msg) { if (!(player instanceof FakePlayer)) HANDLER.sendTo(msg, player.connection.netManager, NetworkDirection.PLAY_TO_CLIENT); }
+    public static <T extends Message> void toClient(ServerPlayerEntity player, T msg) { if (msg != null && !(player instanceof FakePlayer)) HANDLER.sendTo(msg, player.connection.netManager, NetworkDirection.PLAY_TO_CLIENT); }
 }

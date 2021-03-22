@@ -23,11 +23,11 @@ public class InventoryData extends WorldSavedDataManager.EyeWorldSavedData imple
     protected final ArrayList<PillarInventory> pillars = new ArrayList<>();
 
     public InventoryData() {
-        super("inventory_data", 0, true);
+        super("inventory_data", 0, true, false);
     }
 
     public InventoryData(String suffix, int id, boolean client) {
-        super(suffix, id, client);
+        super(suffix, id, client, false);
     }
 
     public void addPillar(PillarInventory inv) {

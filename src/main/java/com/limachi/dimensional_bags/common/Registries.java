@@ -163,7 +163,7 @@ public class Registries {
     }
 
     public static void registerAll(IEventBus bus) {
-        UpgradeManager.registerItems(ITEM_REGISTER);
+//        UpgradeManager.registerItems(ITEM_REGISTER);
         BLOCK_REGISTER.register(bus);
         ITEM_REGISTER.register(bus);
         TILE_ENTITY_REGISTER.register(bus);
