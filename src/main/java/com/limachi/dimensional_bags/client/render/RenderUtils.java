@@ -25,7 +25,7 @@ public class RenderUtils {
         return ((int)(color.getW() * 255) << 24) | ((int)(color.getX() * 255) << 16) | ((int)(color.getY() * 255) << 8) | (int)(color.getZ() * 255);
     }
 
-    public static void drawBox(MatrixStack matrixStack, Box2d box, int color) {
+    public static void drawBox(MatrixStack matrixStack, Box2d box, int color, int depth) {
         Matrix4f matrix = matrixStack.getLast().getMatrix();
         Vector4f ec = expandColor(color, false);
         BufferBuilder bufferbuilder = Tessellator.getInstance().getBuffer();
@@ -33,10 +33,10 @@ public class RenderUtils {
         RenderSystem.disableTexture();
         RenderSystem.defaultBlendFunc();
         bufferbuilder.begin(7, DefaultVertexFormats.POSITION_COLOR);
-        bufferbuilder.pos(matrix, (float)box.getX1(), (float)box.getY2(), 0.0F).color(ec.getX(), ec.getY(), ec.getZ(), ec.getW()).endVertex();
-        bufferbuilder.pos(matrix, (float)box.getX2(), (float)box.getY2(), 0.0F).color(ec.getX(), ec.getY(), ec.getZ(), ec.getW()).endVertex();
-        bufferbuilder.pos(matrix, (float)box.getX2(), (float)box.getY1(), 0.0F).color(ec.getX(), ec.getY(), ec.getZ(), ec.getW()).endVertex();
-        bufferbuilder.pos(matrix, (float)box.getX1(), (float)box.getY1(), 0.0F).color(ec.getX(), ec.getY(), ec.getZ(), ec.getW()).endVertex();
+        bufferbuilder.pos(matrix, (float)box.getX1(), (float)box.getY2(), depth).color(ec.getX(), ec.getY(), ec.getZ(), ec.getW()).endVertex();
+        bufferbuilder.pos(matrix, (float)box.getX2(), (float)box.getY2(), depth).color(ec.getX(), ec.getY(), ec.getZ(), ec.getW()).endVertex();
+        bufferbuilder.pos(matrix, (float)box.getX2(), (float)box.getY1(), depth).color(ec.getX(), ec.getY(), ec.getZ(), ec.getW()).endVertex();
+        bufferbuilder.pos(matrix, (float)box.getX1(), (float)box.getY1(), depth).color(ec.getX(), ec.getY(), ec.getZ(), ec.getW()).endVertex();
         bufferbuilder.finishDrawing();
         WorldVertexBufferUploader.draw(bufferbuilder);
         RenderSystem.enableTexture();

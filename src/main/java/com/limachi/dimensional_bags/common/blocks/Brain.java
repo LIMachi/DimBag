@@ -1,13 +1,12 @@
 package com.limachi.dimensional_bags.common.blocks;
 
 import com.limachi.dimensional_bags.DimBag;
+import com.limachi.dimensional_bags.StaticInit;
 import com.limachi.dimensional_bags.common.Registries;
-import com.limachi.dimensional_bags.common.network.Network;
-import com.limachi.dimensional_bags.common.tileentities.BrainTileEntity;
 import net.minecraft.block.*;
 import net.minecraft.block.material.Material;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.entity.player.ServerPlayerEntity;
+import net.minecraft.item.BlockItem;
 import net.minecraft.state.IntegerProperty;
 import net.minecraft.state.StateContainer;
 import net.minecraft.tileentity.TileEntity;
@@ -21,18 +20,17 @@ import net.minecraft.world.World;
 
 import javax.annotation.Nullable;
 
-import com.limachi.dimensional_bags.StaticInit;
 import net.minecraftforge.common.ToolType;
+
+import java.util.function.Supplier;
 
 @StaticInit
 public class Brain extends Block implements ITileEntityProvider {
 
     public static final String NAME = "brain";
 
-    static {
-        Registries.registerBlock(NAME, Brain::new);
-        Registries.registerBlockItem(NAME, NAME, DimBag.DEFAULT_PROPERTIES);
-    }
+    public static final Supplier<Brain> INSTANCE = Registries.registerBlock(NAME, Brain::new);
+    public static final Supplier<BlockItem> INSTANCE_ITEM = Registries.registerBlockItem(NAME, NAME, DimBag.DEFAULT_PROPERTIES);
 
     public static final IntegerProperty POWER = IntegerProperty.create("power", 0, 15);
 //    public static final IntegerProperty TICK_RATE = IntegerProperty.create("tick_rate", 1, /*1200*/20);
@@ -71,9 +69,9 @@ public class Brain extends Block implements ITileEntityProvider {
             return ActionResultType.SUCCESS;
         } else {
             TileEntity tileentity = worldIn.getTileEntity(pos);
-            if (tileentity instanceof BrainTileEntity)
-                Network.openBrainInterface((ServerPlayerEntity)player, (BrainTileEntity)tileentity);
-            return ActionResultType.CONSUME;
+//            if (tileentity instanceof BrainTileEntity)
+//                Network.openBrainInterface((ServerPlayerEntity)player, (BrainTileEntity)tileentity);
+            return ActionResultType.SUCCESS;
         }
     }
 }

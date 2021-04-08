@@ -1,0 +1,111 @@
+package com.limachi.dimensional_bags.common.blocks;
+
+import com.limachi.dimensional_bags.ConfigManager.Config;
+import com.limachi.dimensional_bags.DimBag;
+import com.limachi.dimensional_bags.StaticInit;
+import com.limachi.dimensional_bags.common.EventManager;
+import com.limachi.dimensional_bags.common.Registries;
+import com.limachi.dimensional_bags.common.container.FountainContainer;
+import com.limachi.dimensional_bags.common.data.EyeDataMK2.TankData;
+import com.limachi.dimensional_bags.common.data.EyeDataMK2.SubRoomsManager;
+import com.limachi.dimensional_bags.common.inventory.FountainTank;
+import com.limachi.dimensional_bags.common.managers.modes.Tank;
+import com.limachi.dimensional_bags.common.tileentities.FountainTileEntity;
+import net.minecraft.block.BlockState;
+import net.minecraft.block.SoundType;
+import net.minecraft.block.material.Material;
+import net.minecraft.entity.LivingEntity;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.entity.player.ServerPlayerEntity;
+import net.minecraft.item.BlockItem;
+import net.minecraft.item.BlockItemUseContext;
+import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.CompoundNBT;
+import net.minecraft.tileentity.TileEntity;
+import net.minecraft.util.ActionResultType;
+import net.minecraft.util.Hand;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.BlockRayTraceResult;
+import net.minecraft.world.World;
+
+import javax.annotation.Nullable;
+import java.util.function.Supplier;
+
+@StaticInit
+public class Fountain extends AbstractTileEntityBlock<FountainTileEntity> {
+
+    public static final String NAME = "fountain";
+    public static final Supplier<Fountain> INSTANCE = Registries.registerBlock(NAME, Fountain::new);
+    public static final Supplier<BlockItem> INSTANCE_ITEM = Registries.registerBlockItem(NAME, NAME, DimBag.DEFAULT_PROPERTIES);
+
+    public Fountain() {
+        super(NAME, Properties.create(Material.PISTON).hardnessAndResistance(1.5f, 3600000f).sound(SoundType.STONE), FountainTileEntity.class, FountainTileEntity.NAME);
+    }
+
+    @Override
+    public <B extends AbstractTileEntityBlock<FountainTileEntity>> B getInstance() { return (B)INSTANCE.get(); }
+
+    @Override
+    public BlockItem getItemInstance() { return INSTANCE_ITEM.get(); }
+
+    @Nullable
+    @Override //this block can only be placed in a subroom
+    public BlockState getStateForPlacement(BlockItemUseContext context) {
+        int eyeId = SubRoomsManager.getEyeId(context.getWorld(), context.getPos(), false);
+        if (eyeId <= 0) return null;
+        return super.getStateForPlacement(context);
+    }
+
+    @Override
+    public ItemStack asItem(BlockState state, FountainTileEntity fountain) {
+        ItemStack out = super.asItem(state, fountain);
+        if (fountain != null && DimBag.isServer(null)) { //only run this part serve side as fountain.invId is server only
+            FountainTank tank = (FountainTank) TankData.execute(fountain.getEyeId(), d -> d.getFountainTank(fountain.id), null);
+            if (out.getTag() == null)
+                out.setTag(new CompoundNBT());
+            out.getTag().remove("BlockEntityTag");
+            out.getTag().merge(tank.serializeNBT());
+        }
+        return out;
+    }
+
+    @Override
+    public void onValidPlace(World worldIn, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack stack, FountainTileEntity fountain) {
+        if (DimBag.isServer(worldIn)) { //only run this part server side as fountain.id is server only
+            CompoundNBT tags = stack.getTag();
+            FountainTank tank = new FountainTank();
+            if (tags != null && tags.contains("UUID"))
+                tank.deserializeNBT(tags);
+            fountain.id = tank.getId();
+            TankData.execute(fountain.getEyeId(), d -> d.addFountain(tank));
+        }
+    }
+
+    @Override
+    public void onRemove(BlockState state, World worldIn, BlockPos pos, BlockState newState, boolean isMoving, FountainTileEntity fountain) {
+        EventManager.delayedTask(0, ()->TankData.execute(fountain.getEyeId(), d->d.removeFountain(fountain.id))); //on remove is called before drops, rip
+    }
+
+    @Config(cmt = "does clicking a fountain with a tank item (bucket, glass bottle, etc...) should empty or fill it (set to false if you want players to be forced to use strict fluid mechanics)")
+    public static final boolean CAN_FILL_AND_EMPTY_ITEM_TANKS = true;
+
+    @Override
+    public ActionResultType onBlockActivated(BlockState state, World world, BlockPos pos, PlayerEntity player, Hand hand, BlockRayTraceResult ray) {
+        if (!DimBag.isServer(world)) return ActionResultType.SUCCESS;
+        int eyeId = DimBag.debug(SubRoomsManager.getEyeId(world, pos, false), "eye id");
+        if (eyeId <= 0) return ActionResultType.SUCCESS;
+        TileEntity te = DimBag.debug(world.getTileEntity(pos));
+        if (!(te instanceof FountainTileEntity)) return super.onBlockActivated(state, world, pos, player, hand, ray);
+        FountainTank tank = ((FountainTileEntity) te).getTank();
+        if (CAN_FILL_AND_EMPTY_ITEM_TANKS) {
+            ItemStack out = Tank.stackInteraction(player.getHeldItem(hand), tank, player.inventory);
+            if (!out.equals(player.getHeldItem(hand), false)) {
+                player.setHeldItem(hand, out);
+                return ActionResultType.SUCCESS;
+            }
+        }
+//        DimBag.debug(tank, "expected tank").open((ServerPlayerEntity) DimBag.debug(player));
+        new FountainContainer(0, player.inventory, eyeId, tank.getId()).open(player);
+        return ActionResultType.SUCCESS;
+    }
+}

@@ -1,6 +1,5 @@
 package com.limachi.dimensional_bags.common.inventory;
 
-import com.limachi.dimensional_bags.common.data.IMarkDirty;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.inventory.EquipmentSlotType;
 import net.minecraft.item.ArmorItem;
@@ -12,7 +11,7 @@ import javax.annotation.Nonnull;
 public class PlayerInvWrapper extends Wrapper {
     public PlayerInvWrapper(PlayerInventory inv) { super(inv); }
 
-    public PlayerInvWrapper(PlayerInventory inv, IORights[] IO, IMarkDirty dirt) { super(inv, IO, dirt); }
+    public PlayerInvWrapper(PlayerInventory inv, IORights[] IO, Runnable markDirty) { super(inv, IO, markDirty); }
 
     public PlayerInvWrapper(PlayerInventory inv, PacketBuffer buffer) { super(inv, buffer); }
 

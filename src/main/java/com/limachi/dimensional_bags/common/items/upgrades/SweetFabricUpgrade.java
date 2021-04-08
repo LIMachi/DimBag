@@ -3,8 +3,7 @@ package com.limachi.dimensional_bags.common.items.upgrades;
 import com.limachi.dimensional_bags.DimBag;
 import com.limachi.dimensional_bags.StaticInit;
 import com.limachi.dimensional_bags.ConfigManager.Config;
-import com.limachi.dimensional_bags.common.Registries;
-import com.limachi.dimensional_bags.common.WorldUtils;
+import com.limachi.dimensional_bags.utils.WorldUtils;
 import com.limachi.dimensional_bags.common.data.EyeDataMK2.SubRoomsManager;
 import com.limachi.dimensional_bags.common.managers.UpgradeManager;
 import net.minecraft.util.ResourceLocation;
@@ -25,8 +24,7 @@ public class SweetFabricUpgrade extends BaseUpgrade {
     public static String[] BLACK_LIST_UNLESS_SOFT_FABRIC = {"minecraft:.+_bed"};
 
     static {
-        Registries.registerItem(NAME, SweetFabricUpgrade::new);
-        UpgradeManager.registerUpgrade(NAME, new SweetFabricUpgrade());
+        UpgradeManager.registerUpgrade(NAME, SweetFabricUpgrade::new);
     }
 
     public SweetFabricUpgrade() { super(DimBag.DEFAULT_PROPERTIES); }

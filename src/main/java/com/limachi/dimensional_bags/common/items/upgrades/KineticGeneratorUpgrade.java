@@ -3,7 +3,6 @@ package com.limachi.dimensional_bags.common.items.upgrades;
 import com.limachi.dimensional_bags.DimBag;
 import com.limachi.dimensional_bags.StaticInit;
 import com.limachi.dimensional_bags.ConfigManager.Config;
-import com.limachi.dimensional_bags.common.Registries;
 import com.limachi.dimensional_bags.common.data.EyeDataMK2.EnergyData;
 import com.limachi.dimensional_bags.common.data.EyeDataMK2.HolderData;
 import com.limachi.dimensional_bags.common.items.Bag;
@@ -24,11 +23,10 @@ public class KineticGeneratorUpgrade extends BaseUpgrade {
     @Config(cmt = "can this upgrade be installed")
     public static boolean ACTIVE = true;
     @Config(min = "0", max = "3", cmt = "how much slowness should be applied on the entity when it generates energy")
-    public static int MULTIPLIER = 1;
+    public static int SLOWNESS_POWER = 1;
 
     static {
-        Registries.registerItem(NAME, KineticGeneratorUpgrade::new);
-        UpgradeManager.registerUpgrade(NAME, new KineticGeneratorUpgrade());
+        UpgradeManager.registerUpgrade(NAME, KineticGeneratorUpgrade::new);
     }
 
     public KineticGeneratorUpgrade() { super(DimBag.DEFAULT_PROPERTIES); }
@@ -62,8 +60,8 @@ public class KineticGeneratorUpgrade extends BaseUpgrade {
             generation *= 2D;
         if (isRiding)
             generation /= 4D;
-        if (entity instanceof LivingEntity && MULTIPLIER > 0)
-            ((LivingEntity)entity).addPotionEffect(new EffectInstance(Effects.SLOWNESS, 20, MULTIPLIER - 1, false, false, false));
+        if (entity instanceof LivingEntity && SLOWNESS_POWER > 0)
+            ((LivingEntity)entity).addPotionEffect(new EffectInstance(Effects.SLOWNESS, 20, SLOWNESS_POWER - 1, false, false, false));
         return (int)(generation * 10);
     }
 

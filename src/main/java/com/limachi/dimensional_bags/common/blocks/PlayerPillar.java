@@ -1,14 +1,14 @@
 package com.limachi.dimensional_bags.common.blocks;
 
 import com.limachi.dimensional_bags.DimBag;
+import com.limachi.dimensional_bags.StaticInit;
 import com.limachi.dimensional_bags.common.Registries;
 import com.limachi.dimensional_bags.common.inventory.PlayerInvWrapper;
-import com.limachi.dimensional_bags.common.network.Network;
 import com.limachi.dimensional_bags.common.tileentities.PlayerPillarTileEntity;
 import net.minecraft.block.*;
 import net.minecraft.block.material.Material;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.entity.player.ServerPlayerEntity;
+import net.minecraft.item.BlockItem;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.ActionResultType;
 import net.minecraft.util.Hand;
@@ -19,17 +19,15 @@ import net.minecraft.world.World;
 
 import javax.annotation.Nullable;
 
-import com.limachi.dimensional_bags.StaticInit;
+import java.util.function.Supplier;
 
 @StaticInit
 public class PlayerPillar extends ContainerBlock {
 
     public static final String NAME = "player_pillar";
 
-    static {
-        Registries.registerBlock(NAME, PlayerPillar::new);
-        Registries.registerBlockItem(NAME, NAME, DimBag.DEFAULT_PROPERTIES);
-    }
+    public static final Supplier<PlayerPillar> INSTANCE = Registries.registerBlock(NAME, PlayerPillar::new);
+    public static final Supplier<BlockItem> INSTANCE_ITEM = Registries.registerBlockItem(NAME, NAME, DimBag.DEFAULT_PROPERTIES);
 
     public PlayerPillar() {
         super(Block.Properties.create(Material.ROCK).hardnessAndResistance(2f, 3600000f).sound(SoundType.STONE));
@@ -49,8 +47,8 @@ public class PlayerPillar extends ContainerBlock {
         if (!(te instanceof PlayerPillarTileEntity)) return super.onBlockActivated(state, world, pos, player, hand, ray);
         PlayerInvWrapper inv = ((PlayerPillarTileEntity)te).getWrapper();
         LOGGER.info(inv);
-        if (inv != null)
-            Network.openWrappedPlayerInventory((ServerPlayerEntity) player, inv, te);
+//        if (inv != null)
+//            Network.openWrappedPlayerInventory((ServerPlayerEntity) player, inv, te);
         return ActionResultType.SUCCESS;
     }
 }

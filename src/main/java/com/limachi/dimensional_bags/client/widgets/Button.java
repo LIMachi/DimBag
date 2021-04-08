@@ -37,8 +37,8 @@ public class Button extends Base {
     /**
      * dynamic button that switch it's render and can call a function upon being pressed
      */
-    public Button(Base parent, double x, double y, double width, double height, TextureCutout background, TextureCutout hover, TextureCutout selected, Function<Integer, Boolean> onClick) {
-        super(parent, x, y, width, height, true);
+    public Button(double x, double y, double width, double height, TextureCutout background, TextureCutout hover, TextureCutout selected, Function<Integer, Boolean> onClick) {
+        super(x, y, width, height, true);
         this.background = background;
         this.hover = hover;
         this.selected = selected;
@@ -51,22 +51,22 @@ public class Button extends Base {
     /**
      * vanilla scaled button
      */
-    public Button(Base parent, double x, double y, double width, double height, Function<Integer, Boolean> onClick) {
-        this(parent, x, y, width, height, VANILLA_BACKGROUND, VANILLA_HOVER, VANILLA_SELECTED, onClick);
+    public Button(double x, double y, double width, double height, Function<Integer, Boolean> onClick) {
+        this(x, y, width, height, VANILLA_BACKGROUND, VANILLA_HOVER, VANILLA_SELECTED, onClick);
     }
 
     /**
      * vanilla full button
      */
-    public Button(Base parent, double x, double y, Function<Integer, Boolean> onClick) { this(parent, x, y, 200, 20, onClick); }
+    public Button(double x, double y, Function<Integer, Boolean> onClick) { this(x, y, 200, 20, onClick); }
 
     /**
      * my buttons used by scrollbar and viewport
      */
-    public static Button smallButton(Base parent, double x, double y, TextureCutout topper, Function<Integer, Boolean> onClick) {
-        Button b = new Button(parent, x, y, 11, 11, SMALL_BUTTON__BACKGROUND, SMALL_BUTTON__HOVER, SMALL_BUTTON__SELECTED, onClick);
+    public static Button smallButton(double x, double y, TextureCutout topper, Function<Integer, Boolean> onClick) {
+        Button b = new Button(x, y, 11, 11, SMALL_BUTTON__BACKGROUND, SMALL_BUTTON__HOVER, SMALL_BUTTON__SELECTED, onClick);
         if (topper != null)
-            new Image(b, 0, 0, 11, 11, topper);
+            b.attachChild(new Image(0, 0, 11, 11, topper));
         return b;
     }
 
@@ -74,15 +74,15 @@ public class Button extends Base {
 
         protected final BiFunction<Double, Double, Boolean> onDrag;
 
-        public DragButton(Base parent, double x, double y, BiFunction<Double, Double, Boolean> onDrag) {
-            super(parent, x, y, 11, 11, SMALL_BUTTON__BACKGROUND, SMALL_BUTTON__HOVER, SMALL_BUTTON__SELECTED, null);
+        public DragButton(double x, double y, BiFunction<Double, Double, Boolean> onDrag) {
+            super(x, y, 11, 11, SMALL_BUTTON__BACKGROUND, SMALL_BUTTON__HOVER, SMALL_BUTTON__SELECTED, null);
             this.onDrag = onDrag;
         }
 
         @Override
         public void onRender(MatrixStack matrixStack, int mouseX, int mouseY, float partialTicks) {
             super.onRender(matrixStack, mouseX, mouseY, partialTicks);
-            VIEW_DRAGGER.blit(matrixStack, coords, getBlitOffset(), true, TextureCutout.TextureApplicationPattern.STRETCH);
+            VIEW_DRAGGER.blit(matrixStack, coords, getScreen().getBlitOffset(), TextureCutout.TextureApplicationPattern.STRETCH);
         }
 
         @Override
@@ -102,7 +102,7 @@ public class Button extends Base {
             texture = selected;
         else if (isHovered())
             texture = hover;
-        texture.blit(matrixStack, coords, getBlitOffset(), true, TextureCutout.TextureApplicationPattern.MIDDLE_EXPANSION);
+        texture.blit(matrixStack, coords, getScreen().getBlitOffset(), TextureCutout.TextureApplicationPattern.MIDDLE_EXPANSION);
     }
 
     @Override

@@ -1,4 +1,4 @@
-package com.limachi.dimensional_bags.common;
+package com.limachi.dimensional_bags.utils;
 
 import com.mojang.datafixers.util.Pair;
 import net.minecraft.entity.player.ServerPlayerEntity;

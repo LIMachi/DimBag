@@ -13,14 +13,14 @@ import javax.annotation.Nonnull;
 import java.lang.ref.WeakReference;
 import java.util.*;
 import java.util.function.Function;
-
-public class DynamicMultiProxyInventory implements ISimpleItemHandler {
+/*
+public class DynamicMultiProxyInventory implements ISimpleMultiHandlerSerializable {
 
     protected final ArrayList<UUID> orderedProxiesUUID = new ArrayList<>();
-    protected final HashMap<UUID, WeakReference<ISimpleItemHandler>> proxies = new HashMap<>();
+    protected final HashMap<UUID, WeakReference<ISimpleMultiHandlerSerializable>> proxies = new HashMap<>();
     protected final HashSet<UUID> activeProxies = new HashSet<>();
-    protected ArrayList<WeakReference<ISimpleItemHandler>> sortedActiveProxies = null;
-    protected Function<UUID, ISimpleItemHandler> queryProxy; //how this inventory is supposed to repopulate proxies is left to the discretion of the creator of the instance
+    protected ArrayList<WeakReference<ISimpleMultiHandlerSerializable>> sortedActiveProxies = null;
+    protected Function<UUID, ISimpleMultiHandlerSerializable> queryProxy; //how this inventory is supposed to repopulate proxies is left to the discretion of the creator of the instance
 
     @Override
     public void readFromBuff(PacketBuffer buff) {
@@ -34,7 +34,7 @@ public class DynamicMultiProxyInventory implements ISimpleItemHandler {
 
     public DynamicMultiProxyInventory() {}
 
-    public DynamicMultiProxyInventory(@Nonnull Function<UUID, ISimpleItemHandler> queryProxy) {
+    public DynamicMultiProxyInventory(@Nonnull Function<UUID, ISimpleMultiHandlerSerializable> queryProxy) {
         this.queryProxy = queryProxy;
     }
 
@@ -68,7 +68,7 @@ public class DynamicMultiProxyInventory implements ISimpleItemHandler {
         ListNBT l2 = nbt.getList("ActiveProxies", 10);
         for (int i = 0; i < l2.size(); ++i) {
             UUID id = l2.getCompound(i).getUniqueId("UUID");
-            ISimpleItemHandler t = queryProxy.apply(id);
+            ISimpleMultiHandlerSerializable t = queryProxy.apply(id);
             if (t != null) {
                 activeProxies.add(id);
                 proxies.put(id, new WeakReference<>(t));
@@ -81,7 +81,7 @@ public class DynamicMultiProxyInventory implements ISimpleItemHandler {
         sortedActiveProxies = new ArrayList<>();
         for (UUID id : orderedProxiesUUID)
             if (activeProxies.contains(id)) {
-                WeakReference<ISimpleItemHandler> p = proxies.get(id);
+                WeakReference<ISimpleMultiHandlerSerializable> p = proxies.get(id);
                 if (p.get() == null)
                     activeProxies.remove(id);
                 else
@@ -89,7 +89,7 @@ public class DynamicMultiProxyInventory implements ISimpleItemHandler {
             }
     }
 
-    public void addProxy(UUID id, ISimpleItemHandler inventory) {
+    public void addProxy(UUID id, ISimpleMultiHandlerSerializable inventory) {
         if (!orderedProxiesUUID.contains(id))
             orderedProxiesUUID.add(orderedProxiesUUID.size(), id);
         activeProxies.add(id);
@@ -111,13 +111,13 @@ public class DynamicMultiProxyInventory implements ISimpleItemHandler {
         }
     }
 
-    public ISimpleItemHandler getProxy(UUID id) {
-        WeakReference<ISimpleItemHandler> t = proxies.get(id);
+    public ISimpleMultiHandlerSerializable getProxy(UUID id) {
+        WeakReference<ISimpleMultiHandlerSerializable> t = proxies.get(id);
         if (t == null) return null;
         return t.get();
     }
 
-    protected ArrayList<WeakReference<ISimpleItemHandler>> getProxies() {
+    protected ArrayList<WeakReference<ISimpleMultiHandlerSerializable>> getProxies() {
         if (sortedActiveProxies == null)
             rebuildSortedActiveInventories();
         return sortedActiveProxies;
@@ -126,8 +126,8 @@ public class DynamicMultiProxyInventory implements ISimpleItemHandler {
     protected Pair<Integer, Integer> getProxySlot(int slot) {
         if (slot < 0) return null;
         int t = 0;
-        for (WeakReference<ISimpleItemHandler> w : getProxies()) {
-            ISimpleItemHandler p = w.get();
+        for (WeakReference<ISimpleMultiHandlerSerializable> w : getProxies()) {
+            ISimpleMultiHandlerSerializable p = w.get();
             if (p != null) {
                 int s = p.getSlots();
                 if (slot < s)
@@ -158,7 +158,7 @@ public class DynamicMultiProxyInventory implements ISimpleItemHandler {
     @Override
     public int getSlots() {
         int c = 0;
-        for (WeakReference<ISimpleItemHandler> p : getProxies()) {
+        for (WeakReference<ISimpleMultiHandlerSerializable> p : getProxies()) {
             IItemHandlerModifiable h = p.get();
             if (h != null)
                 c += h.getSlots();
@@ -209,3 +209,4 @@ public class DynamicMultiProxyInventory implements ISimpleItemHandler {
         return false;
     }
 }
+*/

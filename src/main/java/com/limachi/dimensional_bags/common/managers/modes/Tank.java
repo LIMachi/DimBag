@@ -1,6 +1,10 @@
 package com.limachi.dimensional_bags.common.managers.modes;
 
+import com.limachi.dimensional_bags.DimBag;
+import com.limachi.dimensional_bags.common.container.FountainContainer;
 import com.limachi.dimensional_bags.common.data.EyeDataMK2.TankData;
+import com.limachi.dimensional_bags.common.inventory.BinaryStateSingleFluidHandler;
+import com.limachi.dimensional_bags.common.inventory.ISimpleFluidHandlerSerializable;
 import com.limachi.dimensional_bags.common.items.Bag;
 import com.limachi.dimensional_bags.common.managers.Mode;
 import net.minecraft.block.Block;
@@ -9,6 +13,7 @@ import net.minecraft.block.IBucketPickupHandler;
 import net.minecraft.block.ILiquidContainer;
 import net.minecraft.block.material.Material;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.fluid.FlowingFluid;
 import net.minecraft.fluid.Fluid;
 import net.minecraft.item.ItemStack;
@@ -22,7 +27,9 @@ import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.world.IWorld;
 import net.minecraft.world.World;
 import net.minecraftforge.fluids.FluidStack;
+import net.minecraftforge.fluids.capability.CapabilityFluidHandler;
 import net.minecraftforge.fluids.capability.IFluidHandler;
+import net.minecraftforge.fluids.capability.IFluidHandlerItem;
 
 import javax.annotation.Nullable;
 
@@ -30,7 +37,7 @@ public class Tank extends Mode {
 
     public static final String ID = "Tank";
 
-    public Tank() { super(ID, false, false); } //will always be called last (if no mode consumed the event first)
+    public Tank() { super(ID, false, true); }
 
     protected void playEmptySound(@Nullable PlayerEntity player, IWorld worldIn, BlockPos pos, Fluid fluid) {
         SoundEvent soundevent = fluid.getAttributes().getEmptySound();
@@ -81,9 +88,71 @@ public class Tank extends Mode {
     }
 
     @Override
+    public ActionResultType onItemUse(int eyeId, World world, PlayerEntity player, BlockRayTraceResult ray) {
+        return onItemRightClick(eyeId, world, player);
+    }
+
+    public static ItemStack stackInteraction(ItemStack stack, ISimpleFluidHandlerSerializable tanks, PlayerInventory playerinventory) {
+        ItemStack held = stack.copy();
+        ItemStack output = ItemStack.EMPTY;
+        FluidStack tmpFluid = FluidStack.EMPTY;
+        while(!held.isEmpty()) { //we iterate on the stack, to handle if the player has
+            ItemStack holding = held.copy();
+            if (!holding.isEmpty())
+                holding.setCount(1);
+            else break;
+            IFluidHandlerItem cap = holding.getCapability(CapabilityFluidHandler.FLUID_HANDLER_ITEM_CAPABILITY).orElse(BinaryStateSingleFluidHandler.getItemHandler(tanks.getFluidInTank(tanks.getSelectedTank()), holding));
+            if (cap == null) break; //held items is no longer valid, get the heck out (might be null if BinaryStateSingleFluidHandler.getItemHandler returns null)
+            boolean isFillingItem;
+            if (!cap.getFluidInTank(0).isEmpty()) { //stack contains fluid, dump it
+                isFillingItem = false;
+                tmpFluid = cap.drain(cap.getTankCapacity(0), IFluidHandler.FluidAction.SIMULATE);
+                tmpFluid = cap.drain(tanks.fill(tmpFluid, IFluidHandler.FluidAction.SIMULATE), IFluidHandler.FluidAction.EXECUTE);
+                holding = cap.getContainer();
+            } else { //stack does not contain fluid but can take fluid, fill it
+                isFillingItem = true;
+                tmpFluid = tanks.getFluidInTank(tanks.getSelectedTank()).copy();
+                if (!tmpFluid.isEmpty()) {
+                    tmpFluid.setAmount(cap.fill(tmpFluid, IFluidHandler.FluidAction.SIMULATE));
+                    tmpFluid = tanks.drain(tmpFluid, IFluidHandler.FluidAction.SIMULATE);
+                    if (!tmpFluid.isEmpty())
+                        tmpFluid.setAmount(cap.fill(tmpFluid, IFluidHandler.FluidAction.EXECUTE));
+                }
+                holding = cap.getContainer();
+            }
+            boolean cf = !holding.equals(held) && !holding.isEmpty(); //stack changed
+            if (cf) {
+                if (output.isEmpty())
+                    output = holding;
+                else if (output.isStackable() && output.getCount() < output.getMaxStackSize() && ItemStack.areItemStackTagsEqual(output, holding))
+                    output.grow(1);
+                else {
+                    int t = playerinventory.getFirstEmptyStack();
+                    if (t == -1)
+                        break; //hover fill, cancel the current try (only the copied itemstack was modified by the above actions, so we are good to leave)
+                    else
+                        playerinventory.setInventorySlotContents(t, output);
+                    output = holding;
+                }
+            }
+            if (isFillingItem)
+                tanks.drain(tmpFluid, IFluidHandler.FluidAction.EXECUTE);
+            else
+                tanks.fill(tmpFluid, IFluidHandler.FluidAction.EXECUTE);
+            if (holding.isEmpty() || cf) //the current stack was consumed (either changed or plain removed)
+                held.shrink(1);
+        }
+        if (held.isEmpty())
+            return output;
+        else if (!output.isEmpty())
+            DimBag.LOGGER.error("OUPS");
+        return held;
+    }
+
+    @Override
     public ActionResultType onItemRightClick(int eyeId, World world, PlayerEntity player) {
         TankData mt = TankData.getInstance(eyeId);
-        if (mt.getTanks() == 0) return ActionResultType.PASS;
+        if (mt == null || mt.getTanks() == 0) return ActionResultType.PASS;
         for (RayTraceContext.FluidMode mode : new RayTraceContext.FluidMode[]{RayTraceContext.FluidMode.SOURCE_ONLY, RayTraceContext.FluidMode.NONE}) {
             RayTraceResult ray = Bag.rayTrace(world, player, mode);
             if (ray.getType() == RayTraceResult.Type.BLOCK) { //we found a source block, first we try to take it, if we can't and the tank is of different fluid type, try to replace the fluid block
@@ -120,6 +189,7 @@ public class Tank extends Mode {
                     return ActionResultType.FAIL;
             }
         }
-        return ActionResultType.PASS;
+        new FountainContainer(0, player.inventory, eyeId, null).open(player);
+        return ActionResultType.SUCCESS;
     }
 }

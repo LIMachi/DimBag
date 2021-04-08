@@ -1,6 +1,7 @@
 package com.limachi.dimensional_bags.common.blocks;
 
 import com.limachi.dimensional_bags.DimBag;
+import com.limachi.dimensional_bags.StaticInit;
 import com.limachi.dimensional_bags.common.Registries;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
@@ -10,6 +11,7 @@ import net.minecraft.block.material.Material;
 import net.minecraft.block.material.MaterialColor;
 import net.minecraft.block.material.PushReaction;
 import net.minecraft.entity.Entity;
+import net.minecraft.item.BlockItem;
 import net.minecraft.state.IntegerProperty;
 import net.minecraft.state.StateContainer;
 import net.minecraft.util.math.BlockPos;
@@ -25,18 +27,16 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
 import java.util.Random;
-
-import com.limachi.dimensional_bags.StaticInit;
+import java.util.function.Supplier;
 
 @StaticInit
 public class Cloud extends Block {
 
     public static final String NAME = "cloud";
 
-    static {
-        Registries.registerBlock(NAME, Cloud::new);
-        Registries.registerBlockItem(NAME, NAME, DimBag.DEFAULT_PROPERTIES);
-    }
+    public static final Supplier<Cloud> INSTANCE = Registries.registerBlock(NAME, Cloud::new);
+    public static final Supplier<BlockItem> INSTANCE_ITEM = Registries.registerBlockItem(NAME, NAME, DimBag.DEFAULT_PROPERTIES);
+
     public static final IntegerProperty AGE = IntegerProperty.create("age", 0, 6);
 
     public Cloud() {

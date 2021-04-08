@@ -29,20 +29,29 @@ example:
 
 
 
--store positions for entering/leaving the bag (I propose using names) -> when a player leaves the bag, entering again will put him back to where he was, the entry positions can be changed by a block (while redstone powered, all entities with the listed names spawn on the block instead of the default/previous positions)
--add interaction with the ghost bag in the bag for leaving with shift-click
--remember to redo the power system and remove the permanent energy coming from the eye
+-store positions for entering/leaving the bag (I propose using names) -> when a player leaves the bag, entering again will put him back to where he was, the entry positions can be changed by a block (while redstone powered, all entities with the listed names spawn on the block instead of the default/previous positions) DONE
+-add interaction with the ghost bag in the bag for leaving with shift-click DONE (might also want to leave when shit-right-click a block, not done)
+-remember to redo the power system and remove the permanent energy coming from the eye DONE (the eye is no longer a tile entity, crystals can be moved and auto eject energy, might to make the auto eject of energy a redstone behavior)
 
--fix sleeping in the bag
--rethink the inventory system of the bag
--rework upgrade system (again) (and how about upgrading the bag is a craft?) (or better to prevent craft bugs: applying the upgrade by rightclicking the bag entity with an upgrade?)
+-fix sleeping in the bag DONE (need upgrade, still need to test with other mods dimensions, but the method should work)
+-rethink the inventory system of the bag DONE
+-rework upgrade system (again) (and how about upgrading the bag is a craft?) (or better to prevent craft bugs: applying the upgrade by rightclicking the bag entity with an upgrade?) DONE
 -nerf the tunnel placer (when you break a tunnel, give back a formated tunnel that only works on the same wall) to prevent infinite rooms with a single tunnel item
 
--back to the original idea: make pillars the inventory of the bag (each pillar is a slot that can old more than a stack, similar to the dank)
+-back to the original idea: make pillars the inventory of the bag (each pillar is a slot that can old more than a stack, similar to the dank) DONE
 -pillars can be upgraded to player pillar (access to a single slot of the player inventory)
 -a new room spawns with a certain number of pillars (by default 9)
 -pillars can be upgraded (like barrels/drawers) to contain more items
 -player pillars can be automated using redstone (redstone power on 1 axis select the line/belt/armor/extra inventory, redstont on the other axis selects the column)
+
+-similar to crystals and pillars, ponds store fluids inside the bag, which one is used for input is random, which one is used for output is selectable from the bag (or we could do the last one that received a redstone signal)
+
+-we could add a mode linked to a redstone block (adding the block inside the bag unlocks the mode) which allow the bag user to send redstone signals selecting the mode and on right clic open a radial menu to change the redtone signal (0-15, 16 radials? might be a little much)
+
+-add morphing abilities to wall blocks (https://www.youtube.com/watch?v=nIWmQCJ6TGs)
+
+-finish those goddamned models and guis (please, for the love of god, finish the settings/widget system)
+-btw: you might have to rethink the guis entirely, swallow up your pride and go back to the standard way of doing it (one screen for one container) (you can keep the good parts tho and make SimpleContainer and SimpleContainerScreen into abstract BaseContainer and abstract BaseScreen)
 
 (only when all else is finished, get back on track you dofus)
 ->proto pearl branch:

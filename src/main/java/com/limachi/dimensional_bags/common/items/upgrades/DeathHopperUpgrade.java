@@ -29,8 +29,7 @@ public class DeathHopperUpgrade extends BaseUpgrade {
     public static boolean ITEMS_DO_NOT_DESPAWN = true;
 
     static {
-        Registries.registerItem(NAME, DeathHopperUpgrade::new);
-        UpgradeManager.registerUpgrade(NAME, new DeathHopperUpgrade());
+        UpgradeManager.registerUpgrade(NAME, DeathHopperUpgrade::new);
     }
 
     public DeathHopperUpgrade() { super(DimBag.DEFAULT_PROPERTIES); }

@@ -1,17 +1,22 @@
 package com.limachi.dimensional_bags.client;
 
 import com.google.common.collect.ArrayListMultimap;
+import com.limachi.dimensional_bags.ConfigManager.Config;
 import com.limachi.dimensional_bags.DimBag;
+import com.limachi.dimensional_bags.utils.TextUtils;
 import com.limachi.dimensional_bags.common.data.EyeDataMK2.ClientDataManager;
 import com.limachi.dimensional_bags.common.items.Bag;
 import com.limachi.dimensional_bags.common.items.GhostBag;
 import net.minecraft.client.entity.player.ClientPlayerEntity;
+import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.inventory.EquipmentSlotType;
 import net.minecraft.item.ItemStack;
+import net.minecraft.util.text.ITextComponent;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.RenderGameOverlayEvent;
 import net.minecraftforge.event.TickEvent;
+import net.minecraftforge.event.entity.player.ItemTooltipEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
@@ -19,6 +24,25 @@ import java.util.List;
 
 @Mod.EventBusSubscriber(value = Dist.CLIENT)
 public class EventManager {
+
+    @Config
+    static boolean NBT_TOOLTIP = true;
+
+    @SubscribeEvent /** small helper event to add extra tooltip information on items with nbt (and remove the vanilla text for nbt) */
+    public static void onToolTip(ItemTooltipEvent event) {
+        if (NBT_TOOLTIP && event.getItemStack().getTag() != null && event.getFlags().isAdvanced() && event.getPlayer() instanceof ClientPlayerEntity && Screen.hasControlDown()) {
+            List<ITextComponent> tooltip = event.getToolTip();
+            ITextComponent remove = null;
+            for (ITextComponent t : tooltip)
+                if (t.getString().matches("NBT: [0-9]+ tag\\(s\\)")) {
+                    remove = t;
+                    break;
+                }
+            if (remove != null)
+                tooltip.remove(remove);
+            tooltip.add(TextUtils.prettyNBT(event.getItemStack().getTag()));
+        }
+    }
 
     @SubscribeEvent
     public static void onRenderGameOverlay(RenderGameOverlayEvent.Pre event) { //might be used at some point to add hud ellements

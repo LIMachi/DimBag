@@ -2,6 +2,7 @@ package com.limachi.dimensional_bags.common.blocks;
 
 import com.limachi.dimensional_bags.DimBag;
 import com.limachi.dimensional_bags.KeyMapController;
+import com.limachi.dimensional_bags.StaticInit;
 import com.limachi.dimensional_bags.common.Registries;
 import com.limachi.dimensional_bags.common.data.EyeDataMK2.SubRoomsManager;
 import com.limachi.dimensional_bags.common.tileentities.PadTileEntity;
@@ -10,6 +11,7 @@ import net.minecraft.block.ITileEntityProvider;
 import net.minecraft.block.SoundType;
 import net.minecraft.block.material.Material;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.item.BlockItem;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.ActionResultType;
 import net.minecraft.util.Hand;
@@ -20,17 +22,15 @@ import net.minecraft.world.World;
 
 import javax.annotation.Nullable;
 
-import com.limachi.dimensional_bags.StaticInit;
+import java.util.function.Supplier;
 
 @StaticInit
 public class Pad extends RSReactiveBlock implements ITileEntityProvider {
 
     public static final String NAME = "pad";
 
-    static {
-        Registries.registerBlock(NAME, Pad::new);
-        Registries.registerBlockItem(NAME, NAME, DimBag.DEFAULT_PROPERTIES);
-    }
+    public static final Supplier<Pad> INSTANCE = Registries.registerBlock(NAME, Pad::new);
+    public static final Supplier<BlockItem> INSTANCE_ITEM = Registries.registerBlockItem(NAME, NAME, DimBag.DEFAULT_PROPERTIES);
 
     public Pad() { super(Properties.create(Material.ROCK).sound(SoundType.STONE)); }
 

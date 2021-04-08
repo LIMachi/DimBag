@@ -16,6 +16,7 @@ import org.objectweb.asm.Type;
 
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.util.*;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -23,7 +24,7 @@ import java.util.function.Predicate;
 /** <pre>
  * single class handling configs using annotations and events
  *
- * for now compatible with public static fields of type (might become compatible with private and protected in the future):
+ * for now compatible with static fields of following types (works regardless of public/protected/private/final modifiers):
  *   boolean, Boolean, boolean[], Boolean[],
  *   byte, Byte, byte[], Byte[],
  *   short, Short, short[], Short[],
@@ -123,6 +124,15 @@ public class ConfigManager {
         return nr;
     }
 
+    private Field getUnlockedField(Class<?> clazz, String name) throws Exception {
+        Field out = clazz.getDeclaredField(name);
+        out.setAccessible(true);
+        Field modifiersField = Field.class.getDeclaredField("modifiers");
+        modifiersField.setAccessible(true);
+        modifiersField.setInt(out, out.getModifiers() & ~Modifier.FINAL);
+        return out;
+    }
+
     private class ConfigValueP<T> {
         private String path;
         private Function<ForgeConfigSpec.Builder, ? extends ForgeConfigSpec.ConfigValue<T>> build;
@@ -141,7 +151,7 @@ public class ConfigManager {
             if (getter != null) {
                 try {
                     int cut = path.lastIndexOf('.');
-                    Field f = Class.forName(path.substring(0, cut)).getDeclaredField(path.substring(cut + 1));
+                    Field f = getUnlockedField(Class.forName(path.substring(0, cut)), path.substring(cut + 1));
                     if (!f.getType().isArray())
                         f.set(null, getter.get());
                     else {
@@ -171,13 +181,20 @@ public class ConfigManager {
                     if (annotation.getAnnotationType().equals(ct)) {
                         Map<String, Object> data = annotation.getAnnotationData();
                         String targetPath = annotation.getClassType().getClassName() + "." + annotation.getMemberName();
-                        Field f = Class.forName(annotation.getClassType().getClassName()).getDeclaredField(annotation.getMemberName());
+                        Field f;
+                        try {
+                            f = getUnlockedField(Class.forName(annotation.getClassType().getClassName()), annotation.getMemberName());
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                            continue;
+                        }
                         Class<?> targetType = f.getType();
-                        String cmt = (String)data.getOrDefault("cmt", "");
+                        StringBuilder tcmt = new StringBuilder((String) data.getOrDefault("cmt", ""));
                         Class<?> compType = targetType.isArray() ? targetType.getComponentType() : targetType;
-                        Collection<?> valid = getValid(compType, data);
-                        Object min = getMin(compType, data);
-                        Object max = getMax(compType, data);
+                        List<?> valid = getValid(compType, data, tcmt);
+                        Object min = getMin(compType, data, tcmt);
+                        Object max = getMax(compType, data, tcmt);
+                        String cmt = tcmt.toString();
                         Predicate<Object> pred1 = valid != null && !valid.isEmpty() ? valid::contains : o->true;
                         Predicate<Object> pred2 = min instanceof Comparable && max instanceof Comparable && compType.isAssignableFrom(Comparable.class) ? o-> o instanceof Comparable && ((Comparable)o).compareTo(min) >= 0 && ((Comparable)o).compareTo(max) <= 0 : o->true;
                         Predicate<Object> pred = o->o != null && pred1.test(o) && pred2.test(o);
@@ -233,25 +250,41 @@ public class ConfigManager {
         defaultsEntry(String.class, null, new String[]{"", null, null}, s->s);
     }
 
-    private static <T> T getMin(Class<T> targetType, Map<String, Object> annotationData) {
+    private static <T> T getMin(Class<T> targetType, Map<String, Object> annotationData, StringBuilder tcmt) {
         Pair<Object[], Function<String, ?>> e = DEFAULTS.get(targetType);
-        if (annotationData.containsKey("min") && !((String)annotationData.get("min")).isEmpty())
-            return (T)e.getValue().apply((String)annotationData.get("min"));
+        if (annotationData.containsKey("min") && !((String)annotationData.get("min")).isEmpty()) {
+            if (tcmt.length() > 0)
+                tcmt.append('\n');
+            tcmt.append("Minimum value: '" + annotationData.get("min") + "'");
+            return (T) e.getValue().apply((String) annotationData.get("min"));
+        }
         return (T)e.getKey()[1];
     }
-    private static <T> T getMax(Class<T> targetType, Map<String, Object> annotationData) {
+    private static <T> T getMax(Class<T> targetType, Map<String, Object> annotationData, StringBuilder tcmt) {
         Pair<Object[], Function<String, ?>> e = DEFAULTS.get(targetType);
-        if (annotationData.containsKey("max") && !((String)annotationData.get("min")).isEmpty())
-            return (T)e.getValue().apply((String)annotationData.get("max"));
+        if (annotationData.containsKey("max") && !((String)annotationData.get("min")).isEmpty()) {
+            if (tcmt.length() > 0)
+                tcmt.append('\n');
+            tcmt.append("Maximum value: '" + annotationData.get("max") + "'");
+            return (T) e.getValue().apply((String) annotationData.get("max"));
+        }
         return (T)e.getKey()[2];
     }
-    private static <T> Collection<T> getValid(Class<T> compType, Map<String, Object> annotationData) {
+    private static <T> List<T> getValid(Class<T> compType, Map<String, Object> annotationData, StringBuilder tcmt) {
         Pair<Object[], Function<String, ?>> e = DEFAULTS.get(compType);
         if (annotationData.containsKey("valid")) {
             String[] v = (String[])annotationData.get("valid");
             T[] out = (T[]) Array.newInstance(compType, v.length);
-            for (int i = 0; i < v.length; ++i)
-                out[i] = (T)e.getValue().apply(v[i]);
+            if (tcmt.length() > 0)
+                tcmt.append('\n');
+            tcmt.append("Valid values: '");
+            for (int i = 0; i < v.length; ++i) {
+                out[i] = (T) e.getValue().apply(v[i]);
+                tcmt.append(v[i]);
+                if (i < v.length - 1)
+                    tcmt.append("', '");
+            }
+            tcmt.append("'");
             return Arrays.asList(out);
         }
         return null;

@@ -45,29 +45,29 @@ public abstract class BaseUpgrade extends Item {
 
     public static final String SETTING_GROUP = "Upgrades";
 
-    public final SettingsData.Settings settings = new SettingsData.Settings(SETTING_GROUP, upgradeName()).bool("active", true);
+    public final SettingsData.SettingsReader settingsReader = new SettingsData.SettingsReader(SETTING_GROUP, upgradeName(), ()->new ItemStack(getInstance(upgradeName()))).bool("active", true);
 
 //    public static SettingsData.Settings getSettings(String name) { return UpgradeManager.getUpgrade(name).settings; }
 
-    public <T> T getSetting(int eye, String label) { return settings.get(label, SettingsData.getInstance(eye)); }
+    public <T> T getSetting(int eye, String label) { return settingsReader.get(label, SettingsData.getInstance(eye)); }
 
-    public <T> void setSetting(int eye, String label, T value) { settings.set(label, SettingsData.getInstance(eye), value); }
+    public <T> void setSetting(int eye, String label, T value) { settingsReader.set(label, SettingsData.getInstance(eye), value); }
 
 //    public static <T> T getSetting(int eye, String name, String label, T def) { return SettingsData.execute(eye, sd->UpgradeManager.getUpgrade(name).settings.get(label, sd), def); }
 
     public boolean isInstalled(int eyeId) { return UpgradeManager.execute(eyeId, um->um.getInstalledUpgrades().contains(upgradeName()), false); }
 
-    public boolean isActive(int eyeId) { return canBeInstalled() && isInstalled(eyeId) && SettingsData.execute(eyeId, sd->settings.get("active", sd)); }
+    public boolean isActive(int eyeId) { return canBeInstalled() && isInstalled(eyeId) && SettingsData.execute(eyeId, sd-> settingsReader.get("active", sd)); }
 
     public static BaseUpgrade getInstance(String name) { return UpgradeManager.getUpgrade(name); }
 
     /**
      * here you should use the settings method to populate the settings, reading and writing should be done elsewhere
-     * @param settings
+     * @param settingsReader
      */
-    public void initSettings(SettingsData.Settings settings) {}
+    public void initSettings(SettingsData.SettingsReader settingsReader) {}
 
-    public BaseUpgrade(Item.Properties props) { super(props); initSettings(settings); }
+    public BaseUpgrade(Item.Properties props) { super(props); initSettings(settingsReader); settingsReader.build(); }
 
     @OnlyIn(Dist.CLIENT)
     public <T extends LivingEntity> void onRenderEquippedBag(int eyeId, BipedModel<T> entityModel, MatrixStack matrixStackIn, IRenderTypeBuffer bufferIn, int packedLightIn, T entity, float limbSwing, float limbSwingAmount, float partialTicks, float ageInTicks, float netHeadYaw, float headPitch) {}

@@ -62,20 +62,23 @@ minecraft {
 repositories {
     maven { url = 'http://dvs1.progwml6.com/files/maven/' } //jei
     maven { url = "https://maven.theillusivec4.top/" } //Curios
-    maven { url = "https://repo.refinedmods.com" } //RS
+//    maven { url = "https://repo.refinedmods.com" } //RS
     maven { url = "https://maven.tehnut.info" } //WAILA
 //    maven { url = 'https://modmaven.k-4u.nl/' } //mekanism
+    maven { url = "https://www.cursemaven.com" } //general curse maven, see https://www.cursemaven.com/ for more information
 }
 
 dependencies {
-    minecraft 'net.minecraftforge:forge:1.16.5-36.0.22'
+    minecraft 'net.minecraftforge:forge:1.16.5-36.1.2'
     runtimeOnly fg.deobf("top.theillusivec4.curios:curios-forge:1.16.5-4.0.4.0") //Curios
     compileOnly fg.deobf("top.theillusivec4.curios:curios-forge:1.16.5-4.0.4.0:api") //Curios
     runtimeOnly fg.deobf("mezz.jei:jei-1.16.4:7.6.1.71") //jei
     compileOnly fg.deobf("mezz.jei:jei-1.16.4:7.6.1.71:api") //jei
-    fg.deobf("com.refinedmods:refinedstorage:1.9.12+155") //refined storage
+//    fg.deobf("com.refinedmods:refinedstorage:1.9.12+155") //refined storage
     compileOnly fg.deobf("mcp.mobius.waila:Hwyla:1.10.11-B78_1.16.2:api") //waila
     runtimeOnly fg.deobf("mcp.mobius.waila:Hwyla:1.10.11-B78_1.16.2") //waila
+//    runtimeOnly "curse.maven:create-328085:3261455" //create (see https://www.cursemaven.com/)
+    runtimeOnly fg.deobf("curse.maven:refined_storage-243076:3196167")
 //    compileOnly "mekanism:Mekanism:1.16.1-10.0.9.432:api" //mekanism
 //    runtimeOnly fg.deobf("mekanism:Mekanism:1.16.1-10.0.9.432")//Mekanism: core
 //    runtimeOnly fg.deobf("mekanism:Mekanism:1.16.1-10.0.9.432:additions")// Mekanism: Additions
@@ -93,8 +96,7 @@ jar {
                 "Implementation-Title": project.name,
                 "Implementation-Version": "${version}",
                 "Implementation-Vendor" :"LIMachi_",
-                "Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ"),
-                "MixinConfigs": "experimental_settings.mixins.json"
+                "Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")
         ])
     }
 }

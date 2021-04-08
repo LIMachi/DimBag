@@ -8,6 +8,7 @@ import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.WorldVertexBufferUploader;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.math.vector.Vector4f;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
@@ -17,6 +18,7 @@ public class TextureCutout {
     public static Minecraft mc = Minecraft.getInstance();
 
     public ResourceLocation file;
+    public int tint;
     public Box2d corners;
     public int fileWidth;
     public int fileHeight;
@@ -27,6 +29,7 @@ public class TextureCutout {
         TILE //vanilla method for background, repeat the image with it's original ratio to fill the coordinates
     }
 
+    public void setTint(int tint) { this.tint = tint; }
 
     public TextureCutout(ResourceLocation file, int fileWidth, int fileHeight, double x, double y, double w, double h) {
         this(file, fileWidth, fileHeight, new Box2d(x, y, w, h));
@@ -64,9 +67,13 @@ public class TextureCutout {
     }
 
     @OnlyIn(Dist.CLIENT)
-    public void blit(MatrixStack matrixStack, Box2d coords, int blitOffset, boolean withBind, TextureApplicationPattern pattern) {
-        if (withBind)
-            bindTexture();
+    public void blit(MatrixStack matrixStack, Box2d coords, int blitOffset, TextureApplicationPattern pattern) {
+        if (file != null) bindTexture();
+        blitRec(matrixStack, coords, blitOffset, pattern);
+    }
+
+    @OnlyIn(Dist.CLIENT)
+    private void blitRec(MatrixStack matrixStack, Box2d coords, int blitOffset, TextureApplicationPattern pattern) {
         if (pattern == TextureApplicationPattern.MIDDLE_EXPANSION) {
             double mx = coords.getWidth() / corners.getWidth();
             double my = coords.getHeight() / corners.getHeight();
@@ -78,13 +85,13 @@ public class TextureCutout {
             TextureCutout rec = this.copy();
             Box2d tc = coords.copy().scaleWidthAndHeight(0.5, 0.5);
             rec.corners.scaleWidthAndHeight(mx / 2, my / 2);
-            rec.blit(matrixStack, tc, blitOffset, false, TextureApplicationPattern.STRETCH);
+            rec.blitRec(matrixStack, tc, blitOffset, TextureApplicationPattern.STRETCH);
             rec.corners.move(corners.getWidth() - rec.corners.getWidth(), 0);
-            rec.blit(matrixStack, tc.move(coords.getWidth() / 2, 0), blitOffset, false, TextureApplicationPattern.STRETCH);
+            rec.blitRec(matrixStack, tc.move(coords.getWidth() / 2, 0), blitOffset, TextureApplicationPattern.STRETCH);
             rec.corners.move(0, corners.getHeight() - rec.corners.getHeight());
-            rec.blit(matrixStack, tc.move(0, coords.getHeight() / 2), blitOffset, false, TextureApplicationPattern.STRETCH);
+            rec.blitRec(matrixStack, tc.move(0, coords.getHeight() / 2), blitOffset, TextureApplicationPattern.STRETCH);
             rec.corners.move(-(corners.getWidth() - rec.corners.getWidth()), 0);
-            rec.blit(matrixStack, tc.move(-coords.getWidth() / 2, 0), blitOffset, false, TextureApplicationPattern.STRETCH);
+            rec.blitRec(matrixStack, tc.move(-coords.getWidth() / 2, 0), blitOffset, TextureApplicationPattern.STRETCH);
             return;
         }
         float minU = (float)corners.getX1() / (float)fileWidth;
@@ -94,14 +101,19 @@ public class TextureCutout {
         if (pattern == TextureApplicationPattern.STRETCH) {
             Box2d c = coords.copy().transform(matrixStack.getLast().getMatrix());
             innerBlit(c.getX1(), c.getX2(), c.getY1(), c.getY2(), blitOffset, minU, maxU, minV, maxV);
+            if (tint != 0)
+                RenderUtils.drawBox(matrixStack, coords, tint, 0);
             return;
         }
         if (pattern == TextureApplicationPattern.TILE) {
             float ratioX = (float)coords.getWidth() / (float)corners.getWidth();
             float ratioY = (float)coords.getHeight() / (float)corners.getHeight();
             for (float y = 0; y < ratioY; y += 1)
-                for (float x = 0; x < ratioX; x += 1)
-                    innerBlit(coords.getX1() + x * coords.getHeight(), coords.getX2() + x * coords.getHeight(), coords.getY1() + y * coords.getHeight(), coords.getY2() + y * coords.getHeight(), blitOffset, minU, maxU, minV, maxV);
+                for (float x = 0; x < ratioX; x += 1) {
+                    innerBlit(coords.getX1() + x * coords.getWidth(), coords.getX2() + x * coords.getHeight(), coords.getY1() + y * coords.getHeight(), coords.getY2() + y * coords.getHeight(), blitOffset, minU, maxU, minV, maxV);
+                    if (tint != 0)
+                        RenderUtils.drawBox(matrixStack, coords.copy().move(x * coords.getWidth(), y * coords.getHeight()), tint, 0);
+                }
         }
     }
 }

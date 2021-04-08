@@ -17,6 +17,7 @@ import java.util.List;
 
 import com.limachi.dimensional_bags.StaticInit;
 
+/*
 @StaticInit
 public class TheEyeTileEntity extends TileEntity implements ITickableTileEntity {
 
@@ -69,3 +70,4 @@ public class TheEyeTileEntity extends TileEntity implements ITickableTileEntity 
         return super.getCapability(capability, facing);
     }
 }
+*/

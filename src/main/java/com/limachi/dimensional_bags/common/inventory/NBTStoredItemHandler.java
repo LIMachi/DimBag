@@ -1,6 +1,5 @@
 package com.limachi.dimensional_bags.common.inventory;
 
-import com.limachi.dimensional_bags.common.data.IMarkDirty;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.nbt.ListNBT;
@@ -12,16 +11,16 @@ import javax.annotation.Nullable;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
-public class NBTStoredItemHandler implements IItemHandler, IMarkDirty {
+public class NBTStoredItemHandler implements IItemHandler {
 
     public static class ShulkerBoxItemHandler extends NBTStoredItemHandler {
 
-        public ShulkerBoxItemHandler(@Nonnull ItemStack shulkerBox, @Nullable IMarkDirty makeDirty) {
+        public ShulkerBoxItemHandler(@Nonnull ItemStack shulkerBox, @Nullable Runnable makeDirty) {
             super(()->{
                 if (shulkerBox.getTag() == null) {
                     shulkerBox.setTag(new CompoundNBT());
                     if (makeDirty != null)
-                        makeDirty.markDirty();
+                        makeDirty.run();
                 }
                 return shulkerBox.getTag().getCompound("BlockEntityTag");
             }, nbt->shulkerBox.getTag().put("BlockEntityTag", nbt), makeDirty);
@@ -32,7 +31,7 @@ public class NBTStoredItemHandler implements IItemHandler, IMarkDirty {
     protected ItemStack[] stacks;
     protected final Consumer<CompoundNBT> write;
     protected final Supplier<CompoundNBT> read;
-    protected final IMarkDirty makeDirty;
+    protected final Runnable makeDirty;
     protected boolean wasSized;
 
     /**
@@ -40,7 +39,7 @@ public class NBTStoredItemHandler implements IItemHandler, IMarkDirty {
      * @param read: a lambda to read the nbt, the supplied value can be null (treated as an uninitialized inventory of `DEFAULT_SIZE` (27) slots, like a single chest/shulkerbox)
      * @param write: the parameter will contain the serialized inventory, merged on the compound returned by read (for easier assignation)
      */
-    public NBTStoredItemHandler(@Nonnull Supplier<CompoundNBT> read, @Nonnull Consumer<CompoundNBT> write, @Nullable IMarkDirty makeDirty) {
+    public NBTStoredItemHandler(@Nonnull Supplier<CompoundNBT> read, @Nonnull Consumer<CompoundNBT> write, @Nullable Runnable makeDirty) {
         this.read = read;
         this.write = write;
         this.makeDirty = makeDirty;
@@ -80,7 +79,6 @@ public class NBTStoredItemHandler implements IItemHandler, IMarkDirty {
         return this;
     }
 
-    @Override
     public void markDirty() {
         ListNBT list = new ListNBT();
         for (int i = 0; i < stacks.length; ++i)
@@ -95,7 +93,7 @@ public class NBTStoredItemHandler implements IItemHandler, IMarkDirty {
         out.put("Items", list);
         write.accept(out);
         if (makeDirty != null)
-            makeDirty.markDirty();
+            makeDirty.run();
     }
 
     @Override

@@ -14,8 +14,8 @@ public class ViewPort extends Base {
     double viewY;
     double viewScale;
 
-    public ViewPort(Base parent, double x, double y, double width, double height, double areaW, double areaH, double viewX, double viewY, double viewScale) {
-        super(parent, x, y, width, height, true);
+    public ViewPort(double x, double y, double width, double height, double areaW, double areaH, double viewX, double viewY, double viewScale) {
+        super(x, y, width, height, true);
         this.areaW = areaW;
         this.areaH = areaH;
         this.viewX = viewX;
@@ -77,12 +77,16 @@ public class ViewPort extends Base {
         public final Button.DragButton dragButtonWidget;
         private boolean init = false;
 
-        public ViewPortWithButtons(Base parent, double x, double y, double width, double height, double areaW, double areaH, double viewX, double viewY, double viewScale, boolean rightScrollbar, boolean bottomScrollbar, boolean dragButton) {
-            super(parent, x, y, width, height, true);
-            rightScrollbarWidget = rightScrollbar ? new Scrollbar.ScrollbarWithButtons(this, width - 11, 0, height - (bottomScrollbar || dragButton ? 11 : 0), false, 0, d->{view.moveToUV(view.getU(), d); return true;}, 0.03, getTransformedCoords()) : null;
-            bottomScrollbarWidget = bottomScrollbar ? new Scrollbar.ScrollbarWithButtons(this, 0, height - 11, width - (rightScrollbar || dragButton ? 11 : 0), true, 0, d->{view.moveToUV(d, view.getV()); return true;}, 0.03, getTransformedCoords()) : null;
-            dragButtonWidget = dragButton ? new Button.DragButton(this, width - 11, height - 11, (u, v)->{view.moveToUV(u, v); if (rightScrollbar) rightScrollbarWidget.setScroll(v); if (bottomScrollbar) bottomScrollbarWidget.setScroll(u); return true;}) : null;
-            view = new ViewPort(this, 0, 0, width - (rightScrollbar || dragButton ? 11 : 0), height - (bottomScrollbar || dragButton ? 11 : 0), areaW, areaH, viewX, viewY, viewScale);
+        public ViewPortWithButtons(double x, double y, double width, double height, double areaW, double areaH, double viewX, double viewY, double viewScale, boolean rightScrollbar, boolean bottomScrollbar, boolean dragButton) {
+            super(x, y, width, height, true);
+            rightScrollbarWidget = rightScrollbar ? new Scrollbar.ScrollbarWithButtons(width - 11, 0, height - (bottomScrollbar || dragButton ? 11 : 0), false, 0, d->{view.moveToUV(view.getU(), d); return true;}, 0.03, getTransformedCoords()) : null;
+            bottomScrollbarWidget = bottomScrollbar ? new Scrollbar.ScrollbarWithButtons(0, height - 11, width - (rightScrollbar || dragButton ? 11 : 0), true, 0, d->{view.moveToUV(d, view.getV()); return true;}, 0.03, getTransformedCoords()) : null;
+            dragButtonWidget = dragButton ? new Button.DragButton(width - 11, height - 11, (u, v)->{view.moveToUV(u, v); if (rightScrollbar) rightScrollbarWidget.setScroll(v); if (bottomScrollbar) bottomScrollbarWidget.setScroll(u); return true;}) : null;
+            view = new ViewPort(0, 0, width - (rightScrollbar || dragButton ? 11 : 0), height - (bottomScrollbar || dragButton ? 11 : 0), areaW, areaH, viewX, viewY, viewScale);
+            this.attachChild(rightScrollbarWidget);
+            this.attachChild(bottomScrollbarWidget);
+            this.attachChild(dragButtonWidget);
+            this.attachChild(view);
             init = true;
         }
 

@@ -3,9 +3,9 @@ package com.limachi.dimensional_bags.common.data.EyeDataMK2;
 import com.limachi.dimensional_bags.CuriosIntegration;
 import com.limachi.dimensional_bags.DimBag;
 import com.limachi.dimensional_bags.ConfigManager.Config;
-import com.limachi.dimensional_bags.common.NBTUtils;
+import com.limachi.dimensional_bags.utils.NBTUtils;
 import com.limachi.dimensional_bags.common.Registries;
-import com.limachi.dimensional_bags.common.WorldUtils;
+import com.limachi.dimensional_bags.utils.WorldUtils;
 import com.limachi.dimensional_bags.common.blocks.Tunnel;
 import com.limachi.dimensional_bags.common.blocks.Wall;
 import com.limachi.dimensional_bags.common.entities.BagEntity;
@@ -237,7 +237,7 @@ public class SubRoomsManager extends WorldSavedDataManager.EyeWorldSavedData {
     }
 
     public void tpTunnel(Entity entity, BlockPos portalPos) { //teleport an entity to the next room, the position of the portal determine the destination
-        tunnel((ServerWorld)entity.world, portalPos, entity, false, false);
+        tunnel((ServerWorld)entity.world, portalPos, entity, false, false, null);
     }
 
     /**
@@ -351,11 +351,15 @@ public class SubRoomsManager extends WorldSavedDataManager.EyeWorldSavedData {
         return room;
     }
 
-    public static boolean tunnel(ServerWorld world, BlockPos tunnel, Entity entity, boolean create, boolean destroy) { //create mode: build (if needed) a room and place a portal, !create mode: teleport the entity to the next portal
+    public static boolean tunnel(ServerWorld world, BlockPos tunnel, Entity entity, boolean create, boolean destroy, @Nullable CompoundNBT nbt) { //create mode: build (if needed) a room and place a portal, !create mode: teleport the entity to the next portal
         Optional<Pair<Integer, Integer>> req = getRoomIds(world, tunnel, false);
         if (!req.isPresent()) return false;
         int id = req.get().getKey();
         int room = req.get().getValue();
+        int nid = NBTUtils.getOrDefault(nbt, "Eye", -1);
+        int room1 = NBTUtils.getOrDefault(nbt, "Room1", -1);
+        int room2 = NBTUtils.getOrDefault(nbt, "Room2", -1);
+        if (nid != -1 && room1 != -1 && room2 != -1 && (nid != id || !(room1 == room || room2 == room))) return false; //nid, room1, room2 are valid, but either the bag or the current room is invalid
         SubRoomsManager data = getInstance(id);
         if (data == null) return false;
         Vector3i coord = data.subRooms.get(room).pos; //virtual coordinates of the current room
@@ -369,10 +373,16 @@ public class SubRoomsManager extends WorldSavedDataManager.EyeWorldSavedData {
             targetRoomId = data.posToSubRoomId.get(targetRoom);
         if (targetRoomId == null)
             return false;
+        if (room1 != -1 && room2 != -1 && !(room1 == targetRoomId || room2 == targetRoomId)) return false; //room1, room2 are valid, but the target room is invalid
         SubRoomData targetSrd = data.subRooms.get(targetRoomId);
         BlockPos output = calculateOutput(tunnel, data.subRooms.get(room), wall, targetRoomId - room, targetSrd); //calculate the position of the output portal
         if (!targetSrd.isOnlyInWall(output, wall.getOpposite()))
             return false;
+        if (nbt != null) {
+            nbt.putInt("Eye", id);
+            nbt.putInt("Room1", room);
+            nbt.putInt("Room2", targetRoomId);
+        }
         if (create)
             world.setBlockState(output, Registries.getBlock(Tunnel.NAME).getDefaultState()); //put the tunnel on the targeted room
         else if (destroy)

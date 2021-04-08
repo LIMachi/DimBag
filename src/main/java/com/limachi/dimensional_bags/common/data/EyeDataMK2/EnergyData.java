@@ -1,5 +1,7 @@
 package com.limachi.dimensional_bags.common.data.EyeDataMK2;
 
+import com.limachi.dimensional_bags.ConfigManager.Config;
+import com.limachi.dimensional_bags.common.blocks.Crystal;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraftforge.energy.IEnergyStorage;
 
@@ -8,15 +10,18 @@ import java.util.function.Function;
 
 public class EnergyData extends WorldSavedDataManager.EyeWorldSavedData implements IEnergyStorage {
 
-    private long energy;
-    private long capacity;
+    @Config
+    public static int MAX_STORAGE = 2147483647;
+
+    private int energy;
+    private int capacity;
     private int tickCursor;
     public static final int ENERGY = 0;
     public static final int RECEIVED = 1;
     public static final int EXTRACTED = 2;
-    private final long[] extractedLastMinute = new long[1200];
-    private final long[] receivedLastMinute = new long[1200];
-    private final long[] energyStateLastMinute = new long[1200];
+    private final int[] extractedLastMinute = new int[1200];
+    private final int[] receivedLastMinute = new int[1200];
+    private final int[] energyStateLastMinute = new int[1200];
 
     public EnergyData(String suffix, int id, boolean client) {
         super(suffix, id, client, false);
@@ -25,12 +30,13 @@ public class EnergyData extends WorldSavedDataManager.EyeWorldSavedData implemen
         tickCursor = 0;
     }
 
-    public void changeBatterySize(long newSize) {
-        capacity = newSize;
-        if (energy > newSize)
-            energy = newSize;
+    public EnergyData changeBatterySize(int newSize) {
+        capacity = Integer.max(0, Integer.min(newSize, MAX_STORAGE));
         markDirty();
+        return this;
     }
+
+    public int getSingleCrystalEnergy() { return (int)Math.round(getEnergyStored() * (Crystal.ENERGY_PER_CRYSTAL / (double)getMaxEnergyStored())); }
 
     public void tick() {
         ++tickCursor;
@@ -41,8 +47,8 @@ public class EnergyData extends WorldSavedDataManager.EyeWorldSavedData implemen
         energyStateLastMinute[tickCursor] = energy;
     }
 
-    public long[][] getLastMinuteGraph() {
-        long[][] out = new long[1200][3];
+    public int[][] getLastMinuteGraph() {
+        int[][] out = new int[1200][3];
         for (int i = 0; i < 1200; ++i) {
             int j = (i + tickCursor) % 1200;
             out[i][ENERGY] = energyStateLastMinute[j];
@@ -79,7 +85,7 @@ public class EnergyData extends WorldSavedDataManager.EyeWorldSavedData implemen
 
     @Override
     public int receiveEnergy(int receive, boolean simulate) {
-        long energyReceived = Math.min(capacity - energy, receive);
+        int energyReceived = Integer.max(0, Integer.min(capacity - energy, receive));
         if (!simulate && energyReceived != 0) {
             energy += energyReceived;
             receivedLastMinute[tickCursor] += energyReceived;
@@ -91,14 +97,14 @@ public class EnergyData extends WorldSavedDataManager.EyeWorldSavedData implemen
 
     @Override
     public int extractEnergy(int extract, boolean simulate) {
-        long energyExtracted = Math.min(energy, extract);
+        int energyExtracted = Math.min(energy, extract);
         if (!simulate && energyExtracted != 0) {
             energy -= energyExtracted;
             extractedLastMinute[tickCursor] += energyExtracted;
             energyStateLastMinute[tickCursor] = energy;
             markDirty();
         }
-        return (int)energyExtracted;
+        return energyExtracted;
     }
 
     @Override

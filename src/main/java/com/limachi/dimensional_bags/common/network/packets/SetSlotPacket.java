@@ -1,7 +1,7 @@
 package com.limachi.dimensional_bags.common.network.packets;
 
 import com.limachi.dimensional_bags.DimBag;
-import com.limachi.dimensional_bags.common.StackUtils;
+import com.limachi.dimensional_bags.utils.StackUtils;
 import com.limachi.dimensional_bags.common.network.PacketHandler;
 import net.minecraft.client.entity.player.ClientPlayerEntity;
 import net.minecraft.item.ItemStack;

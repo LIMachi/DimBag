@@ -1,8 +1,8 @@
 package com.limachi.dimensional_bags.common.data.EyeDataMK2;
 
-import com.limachi.dimensional_bags.common.data.IMarkDirty;
-import com.limachi.dimensional_bags.common.inventory.ISimpleItemHandler;
+import com.limachi.dimensional_bags.common.inventory.ISimpleItemHandlerSerializable;
 import com.limachi.dimensional_bags.common.inventory.PillarInventory;
+import com.limachi.dimensional_bags.utils.UUIDUtils;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.nbt.ListNBT;
@@ -17,14 +17,12 @@ import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-public class InventoryData extends WorldSavedDataManager.EyeWorldSavedData implements IMarkDirty, ISimpleItemHandler {
+public class InventoryData extends WorldSavedDataManager.EyeWorldSavedData implements ISimpleItemHandlerSerializable {
 
     protected final ArrayList<UUID> pillarsOrder = new ArrayList<>();
     protected final ArrayList<PillarInventory> pillars = new ArrayList<>();
 
-    public InventoryData() {
-        super("inventory_data", 0, true, false);
-    }
+    public InventoryData() { super("inventory_data", 0, true, false); }
 
     public InventoryData(String suffix, int id, boolean client) {
         super(suffix, id, client, false);
@@ -47,7 +45,7 @@ public class InventoryData extends WorldSavedDataManager.EyeWorldSavedData imple
             pillarsOrder.add(inv.getId());
             pillars.add(inv);
         }
-        inv.notifyDirt = this;
+        inv.notifyDirt = this::markDirty;
         markDirty();
     }
 
@@ -58,8 +56,8 @@ public class InventoryData extends WorldSavedDataManager.EyeWorldSavedData imple
         markDirty();
     }
 
-    public ISimpleItemHandler getPillarInventory(@Nullable UUID id) {
-        if (id == null) return this;
+    public ISimpleItemHandlerSerializable getPillarInventory(@Nullable UUID id) {
+        if (id == null || id.equals(UUIDUtils.NULL_UUID)) return this;
         for (PillarInventory inv : pillars)
             if (inv.getId().equals(id))
                 return inv;
@@ -89,7 +87,7 @@ public class InventoryData extends WorldSavedDataManager.EyeWorldSavedData imple
         for (int i = 0; i < np; ++i) {
             PillarInventory inv = new PillarInventory();
             inv.readFromBuff(buff);
-            inv.notifyDirt = this;
+            inv.notifyDirt = this::markDirty;
             pillars.add(inv);
         }
     }
@@ -115,7 +113,7 @@ public class InventoryData extends WorldSavedDataManager.EyeWorldSavedData imple
         for (int i = 0; i < pil.size(); ++i) {
             PillarInventory inv = new PillarInventory();
             inv.deserializeNBT(pil.getCompound(i));
-            inv.notifyDirt = this;
+            inv.notifyDirt = this::markDirty;
             pillars.add(inv);
         }
     }

@@ -1,7 +1,7 @@
 package com.limachi.dimensional_bags.common.managers;
 import com.google.common.collect.ImmutableMultimap;
 import com.limachi.dimensional_bags.DimBag;
-import com.limachi.dimensional_bags.common.NBTUtils;
+import com.limachi.dimensional_bags.utils.NBTUtils;
 import com.limachi.dimensional_bags.common.entities.BagEntity;
 import com.limachi.dimensional_bags.common.items.IDimBagCommonItem;
 import com.mojang.blaze3d.matrix.MatrixStack;
@@ -28,7 +28,6 @@ import net.minecraftforge.common.ForgeConfigSpec;
 import net.minecraftforge.fml.RegistryObject;
 import net.minecraftforge.registries.DeferredRegister;
 
-import java.util.HashMap;
 import java.util.Map;
 
 import static com.limachi.dimensional_bags.DimBag.MOD_ID;

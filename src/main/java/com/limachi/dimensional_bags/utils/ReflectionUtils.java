@@ -1,8 +1,9 @@
-package com.limachi.dimensional_bags.common;
+package com.limachi.dimensional_bags.utils;
 
 import com.limachi.dimensional_bags.DimBag;
 import com.limachi.dimensional_bags.StaticInit;
 import com.limachi.dimensional_bags.common.data.EyeDataMK2.EnergyData;
+import javafx.util.Pair;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.*;
 import net.minecraft.util.math.BlockPos;
@@ -10,15 +11,38 @@ import net.minecraft.util.math.vector.Vector3i;
 import org.apache.logging.log4j.util.TriConsumer;
 import org.objectweb.asm.Type;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.lang.annotation.*;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.*;
+import java.security.InvalidParameterException;
+import java.text.NumberFormat;
 import java.util.*;
 import java.util.function.Function;
 
 @StaticInit
 public class ReflectionUtils {
+
+    public static <K, V> HashMap<K, V> createMap(Object ... init) {
+        if (init.length % 2 == 1) throw new InvalidParameterException("init should be an even sized list of alternating key and values");
+        HashMap<K, V> out = new HashMap<>();
+        for (int i = 0; i < init.length; i += 2) {
+            K key;
+            try {
+                key = (K) init[i];
+            } catch (ClassCastException e) {
+                throw new InvalidParameterException("invalid key at position " + i + " : " + init[i]);
+            }
+            V value;
+            try {
+                value = (V) init[i + 1];
+            } catch (ClassCastException e) {
+                throw new InvalidParameterException("invalid value at position " + (i + 1) + " : " + init[i + 1]);
+            }
+            out.put(key, value);
+        }
+        return out;
+    }
 
     public static final HashMap<Class<?>, Function<Object, Object>> CAST_DOWN_MAP = new HashMap<>();
     public static final HashMap<Class<?>, Function<Object, Object>> CAST_UP_MAP = new HashMap<>();
@@ -86,17 +110,33 @@ public class ReflectionUtils {
     }
 
     /**
-     * try to assign the given 'field' in 'object' with the new 'value'
+     * try to assign the given 'field' in 'object' with the new 'value' (ignoring private, protected and final). This version is not compatible with obfuscated code (only use it on our own code)
      * @param object any object
-     * @param field a valid field name in 'object', does not require the field to be public
+     * @param field a valid field name in 'object'
      * @param value the new value of the field, must be of the corresponding type
      * @return true if the assignation succeeded, false if an error was caught
      */
     @SuppressWarnings({"UnusedReturnValue", "unused"})
-    public static boolean setField (Object object, String field, Object value) {
+    public static boolean setField (Object object, String field, Object value) { return setField(object, field, null, value); }
+
+    /**
+     * try to assign the given 'field' in 'object' with the new 'value' (ignoring private, protected and final)
+     * @param object any object
+     * @param field a valid field name in 'object'
+     * @param mcp_alternative a valid obfuscated field name to use as default alternative TODO: when upgrading, dont forget to update obfuscated names
+     * @param value the new value of the field, must be of the corresponding type
+     * @return true if the assignation succeeded, false if an error was caught
+     */
+    @SuppressWarnings({"UnusedReturnValue", "unused"})
+    public static boolean setField (Object object, String field, String mcp_alternative, Object value) {
+        DimBag.debug(object, 1, "accessing field " + field + " to set to " + value);
         try {
-            Field f = object.getClass().getDeclaredField(field);
+            Field f = classField(object.getClass(), field, mcp_alternative);
+            if (f == null) return false;
             f.setAccessible(true);
+            Field modifiersField = Field.class.getDeclaredField("modifiers");
+            modifiersField.setAccessible(true);
+            modifiersField.setInt(f, f.getModifiers() & ~Modifier.FINAL);
             f.set(object, value);
             return true;
         } catch (ReflectiveOperationException e) {
@@ -105,16 +145,21 @@ public class ReflectionUtils {
     }
 
     /**
-     * try to assign the given 'field' in 'object' with the new 'value'
+     * try to assign the given 'field' in 'object' with the new 'value' (ignoring private, protected and final)
      * @param object any object
-     * @param field a valid field in 'object', does not require to be public
+     * @param field a valid field in 'object'
      * @param value the new value of the field, must be of the corresponding type
      * @return true if the assignation succeeded, false if an error was caught
      */
     @SuppressWarnings({"UnusedReturnValue", "unused"})
     public static boolean setField (Object object, Field field, Object value) {
+        DimBag.debug(object, 1, "accessing field " + field + " to set to " + value);
+        if (field == null) return false;
         try {
             field.setAccessible(true);
+            Field modifiersField = Field.class.getDeclaredField("modifiers");
+            modifiersField.setAccessible(true);
+            modifiersField.setInt(field, field.getModifiers() & ~Modifier.FINAL);
             field.set(object, value);
             return true;
         } catch (ReflectiveOperationException e) {
@@ -123,34 +168,110 @@ public class ReflectionUtils {
     }
 
     /**
-     * try to get the given 'field' in 'object'
+     * try to get the given 'field' in 'object' (ignoring private and protected). This version is not compatible with obfuscated code (only use it on our own code)
      * @param object any object
      * @param field a valid field name in 'objet', does not require the field to be public
      * @return the accessed object (null on error or if the object is null)
      */
     @SuppressWarnings("unused")
-    public static Object getField(Object object, String field) {
+    public static Object getField(Object object, String field) { return getField(object, field, null); }
+
+    /**
+     * try to get the given 'field' in 'object' (ignoring private and protected)
+     * @param object any object
+     * @param field a valid field name in 'objet', does not require the field to be public
+     * @param mcp_alternative a valid obfuscated field name to use as default alternative TODO: when upgrading, dont forget to update obfuscated names
+     * @return the accessed object (null on error or if the object is null)
+     */
+    @SuppressWarnings("unused")
+    public static Object getField(Object object, String field, String mcp_alternative) {
+        DimBag.debug(object, 1, "accessing field " + field + " to read");
         try {
-            Field f = object.getClass().getDeclaredField(field);
+            Field f = classField(object.getClass(), field, mcp_alternative);
+            if (f == null) return null;
             f.setAccessible(true);
             return f.get(object);
-        } catch (ReflectiveOperationException e) {
+        } catch (ReflectiveOperationException | NullPointerException e) {
             return null;
         }
     }
 
     /**
-     * try to get the given 'field' in 'object'
+     * try to get the given 'field' in 'object' (ignoring private and protected)
      * @param object any object
      * @param field a valid 'field' in 'objet', does not require to be public
      * @return the accessed object (null on error or if the object is null)
      */
     @SuppressWarnings("unused")
     public static Object getField(Object object, Field field) {
+        DimBag.debug(object, 1, "accessing field " + field + " to read");
         try {
             field.setAccessible(true);
             return field.get(object);
         } catch (ReflectiveOperationException e) {
+            return null;
+        }
+    }
+
+    //use caching for frequent usage
+    private static final HashMap<Pair<Class<?>, String>, Field> FIELD_CACHE = new HashMap<>();
+    private static Field cacheField(Pair<Class<?>, String> key, Field field) {
+        if (field != null)
+            FIELD_CACHE.put(key, field);
+        return field;
+    }
+
+    //TODO: when upgrading, dont forget to update obfuscated names (mcp_alternative)
+    public static Field classField(@Nonnull Class<?> clazz, @Nonnull String field, @Nullable String mcp_alternative) {
+        Pair<Class<?>, String> key = new Pair<>(clazz, field);
+        Field t = FIELD_CACHE.get(key);
+        if (t != null) return t;
+        if (mcp_alternative != null)
+            try {
+                return cacheField(key, clazz.getDeclaredField(mcp_alternative));
+            } catch (NoSuchFieldException ignore) {}
+        try {
+            return cacheField(key, clazz.getDeclaredField(field));
+        } catch (NoSuchFieldException ignore) {}
+        Class<?> zuper = clazz.getSuperclass();
+        return zuper == null ? null : cacheField(key, classField(zuper, field, mcp_alternative));
+    }
+
+    //use caching for frequent usage
+    private static final HashMap<Pair<Class<?>, String>, Method> METHOD_CACHE = new HashMap<>();
+    private static Method cacheMethod(Pair<Class<?>, String> key, Method method) {
+        if (method != null)
+            METHOD_CACHE.put(key, method);
+        return method;
+    }
+
+    //TODO: when upgrading, dont forget to update obfuscated names (mcp_alternative)
+    public static Method classMethod(@Nonnull Class<?> clazz, @Nonnull String method, @Nullable String mcp_alternative, Class<?> ... params) {
+        Pair<Class<?>, String> key = new Pair<>(clazz, method);
+        Method t = METHOD_CACHE.get(key);
+        if (t != null) return t;
+        if (mcp_alternative != null)
+            try {
+                return cacheMethod(key, clazz.getDeclaredMethod(mcp_alternative, params));
+            } catch (NoSuchMethodException ignore) {}
+        try {
+            return cacheMethod(key, clazz.getDeclaredMethod(method, params));
+        } catch (NoSuchMethodException ignore) {}
+        Class<?> zuper = clazz.getSuperclass();
+        return zuper == null ? null : cacheMethod(key, classMethod(zuper, method, mcp_alternative));
+    }
+
+    //TODO: when upgrading, dont forget to update obfuscated names (mcp_alternative)
+    @SuppressWarnings({"UnusedReturnValue", "unused"})
+    public static Object runMethod(@Nonnull Object object, @Nonnull String method, @Nullable String mcp_alternative, Object ... params) {
+        Class<?>[] parameterTypes = new Class[params.length];
+        for (int i = 0; i < params.length; ++i)
+            parameterTypes[i] = params[i].getClass();
+        try {
+            Method m = classMethod(object.getClass(), method, mcp_alternative, parameterTypes);
+            m.setAccessible(true);
+            return m.invoke(object, params);
+        } catch (IllegalAccessException | InvocationTargetException | NullPointerException ignore) {
             return null;
         }
     }

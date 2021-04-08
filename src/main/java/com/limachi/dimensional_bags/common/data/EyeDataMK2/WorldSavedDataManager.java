@@ -2,8 +2,8 @@ package com.limachi.dimensional_bags.common.data.EyeDataMK2;
 
 import com.limachi.dimensional_bags.DimBag;
 import com.limachi.dimensional_bags.common.EventManager;
-import com.limachi.dimensional_bags.common.NBTUtils;
-import com.limachi.dimensional_bags.common.WorldUtils;
+import com.limachi.dimensional_bags.utils.NBTUtils;
+import com.limachi.dimensional_bags.utils.WorldUtils;
 import com.limachi.dimensional_bags.common.data.DimBagData;
 import com.limachi.dimensional_bags.common.managers.ModeManager;
 import com.limachi.dimensional_bags.common.managers.UpgradeManager;
@@ -19,7 +19,6 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
 import javax.annotation.Nullable;
-import java.io.File;
 import java.lang.reflect.Constructor;
 import java.util.HashMap;
 import java.util.function.Function;

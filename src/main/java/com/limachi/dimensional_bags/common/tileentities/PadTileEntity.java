@@ -4,7 +4,6 @@ import com.limachi.dimensional_bags.DimBag;
 import com.limachi.dimensional_bags.common.Registries;
 import com.limachi.dimensional_bags.common.blocks.Pad;
 import com.limachi.dimensional_bags.common.data.EyeDataMK2.SubRoomsManager;
-import com.limachi.dimensional_bags.common.data.IMarkDirty;
 import net.minecraft.block.BlockState;
 import net.minecraft.entity.Entity;
 import net.minecraft.nbt.CompoundNBT;
@@ -19,7 +18,7 @@ import java.util.HashSet;
 import com.limachi.dimensional_bags.StaticInit;
 
 @StaticInit
-public class PadTileEntity extends TileEntity implements ITickableTileEntity, IMarkDirty {
+public class PadTileEntity extends TileEntity implements ITickableTileEntity {
 
     public static final String NAME = "pad";
 

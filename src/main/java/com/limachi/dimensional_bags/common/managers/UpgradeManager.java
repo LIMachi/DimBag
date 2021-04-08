@@ -1,5 +1,6 @@
 package com.limachi.dimensional_bags.common.managers;
 
+import com.limachi.dimensional_bags.common.Registries;
 import com.limachi.dimensional_bags.common.data.EyeDataMK2.WorldSavedDataManager;
 import com.limachi.dimensional_bags.common.items.upgrades.BaseUpgrade;
 import net.minecraft.nbt.CompoundNBT;
@@ -7,16 +8,20 @@ import net.minecraft.nbt.CompoundNBT;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 public class UpgradeManager extends WorldSavedDataManager.EyeWorldSavedData {
 
     public static final String COUNT_NBT_KEY = "Count";
 
-    protected static final Map<String, BaseUpgrade> UPGRADES = new HashMap<>();
+    protected static final HashSet<String> UPGRADES = new HashSet<>();
 
-    public static void registerUpgrade(String id, BaseUpgrade upgrade) { UPGRADES.put(id, upgrade); }
+    public static void registerUpgrade(String id, Supplier<? extends BaseUpgrade> sup) {
+        UPGRADES.add(id);
+        Registries.registerItem(id, sup);
+    }
 
-    public static BaseUpgrade getUpgrade(String id) { return UPGRADES.get(id); }
+    public static BaseUpgrade getUpgrade(String id) { return Registries.getItem(id); }
 
     /**
      * helper function to quickly test if an upgrade is installed for the given bag id
@@ -38,7 +43,7 @@ public class UpgradeManager extends WorldSavedDataManager.EyeWorldSavedData {
 
     public CompoundNBT getUpgradesNBT() { return upgradesNBT; }
 
-    public static Set<String> getUpgradesNames() { return UPGRADES.keySet(); }
+    public static Set<String> getUpgradesNames() { return UPGRADES; }
 
     public static Optional<CompoundNBT> isUpgradeInstalled(int eyeId, String upgradeName) {
         return execute(eyeId, um -> um.getInstalledUpgrades().contains(upgradeName) ? Optional.of(um.getUpgradesNBT().getCompound(upgradeName)) : Optional.empty(), Optional.empty());
@@ -54,8 +59,8 @@ public class UpgradeManager extends WorldSavedDataManager.EyeWorldSavedData {
 
     public ArrayList<String> getInstalledUpgrades() {
         ArrayList<String> out = new ArrayList<>();
-        for (String key : UPGRADES.keySet())
-            if (getMemory(UPGRADES.get(key).getMemoryKey(), false).getInt(COUNT_NBT_KEY) > 0)
+        for (String key : UPGRADES)
+            if (getMemory(getUpgrade(key).getMemoryKey(), false).getInt(COUNT_NBT_KEY) > 0)
                 out.add(key);
         return out;
     }

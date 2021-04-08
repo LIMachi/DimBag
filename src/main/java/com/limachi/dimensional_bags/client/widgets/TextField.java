@@ -35,9 +35,9 @@ public class TextField extends Base {
     protected ArrayList<Pair<Integer, String>> history = new ArrayList<>(); //history only persist for this instance of the widget, for advanced history, a variant of this widget could be made
     protected int historyPage = -1;
 
-    public TextField(Base parent, double x, double y, double width, double height, @Nullable String initialText, @Nullable BiFunction<String, String, Boolean> validateText, @Nullable Consumer<String> onFinishInput) {
-        super(parent, x, y, width, height, true);
-        this.font = root.getFont();
+    public TextField(double x, double y, double width, double height, @Nullable String initialText, @Nullable BiFunction<String, String, Boolean> validateText, @Nullable Consumer<String> onFinishInput) {
+        super(x, y, width, height, true);
+        this.font = getScreen().getFont();
         if (initialText != null)
             setText(initialText);
         pushToHistory();
@@ -231,7 +231,7 @@ public class TextField extends Base {
 
     public FontRenderer getFont() {
         if (font == null)
-            font = root.getFont();
+            font = getScreen().getFont();
         return font;
     }
 
@@ -250,9 +250,9 @@ public class TextField extends Base {
     public boolean onMouseClicked(double mouseX, double mouseY, int button) {
         if (isHovered() && button == 0) {
             moveCursorToMouse(mouseX, mouseY);
-            if (root.ticks - lastClick < 5)
+            if (getScreen().ticks - lastClick < 5)
                 selectWord(true);
-            lastClick = root.ticks;
+            lastClick = getScreen().ticks;
             changeFocus(true);
         }
         else
@@ -283,10 +283,10 @@ public class TextField extends Base {
                 selectionPos = getFont().getStringWidth(text.substring(leftCorrection, selection));
             int start = Math.min(selectionPos, cursorPos);
             int end = Math.max(selectionPos, cursorPos);
-            RenderUtils.drawBox(matrixStack, new Box2d(start + 1, 0, end - start + 3, getFont().FONT_HEIGHT + 3), selectionColor);
+            RenderUtils.drawBox(matrixStack, new Box2d(start + 1, 0, end - start + 3, getFont().FONT_HEIGHT + 3), selectionColor, 0);
         }
         RenderUtils.drawString(matrixStack, getFont(), getVisibleText(), coords.copy().move(1, 1), textColor, true, false);
-        if (isFocused() && (root.getTicks() & 0x10) == 0x10 && leftCorrection <= cursor) {
+        if (isFocused() && (getScreen().ticks & 0x10) == 0x10 && leftCorrection <= cursor) {
             if (insertMode && cursor != text.length())
                 RenderUtils.drawString(matrixStack, getFont(), "|", coords.copy().move(cursorPos, 1), cursorColor, true, false);
             else

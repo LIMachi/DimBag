@@ -53,6 +53,8 @@ public class Box2d {
         return this;
     }
 
+    public Box2d expandToContain(Box2d other, double xMargin, double yMargin) { return expandToContain(other.x, other.y, xMargin, yMargin).expandToContain(other.getX2(), other.getY2(), xMargin, yMargin); }
+
     public Box2d transform(Matrix4f matrix) {
         Vector4f v1 = new Vector4f((float)x, (float)y, 0, 1);
         Vector4f v2 = new Vector4f((float)getX2(), (float)getY2(), 0, 1);
@@ -91,6 +93,7 @@ public class Box2d {
     public Box2d setHeight(double height) { h = height; return this; }
 
     public Box2d move(double dx, double dy) { x += dx; y += dy; return this; }
+    public Box2d expand(double x, double y) { w += x; h += y; return this; }
     public Box2d scaleWidthAndHeight(double fw, double fh) { w *= fw; h *= fh; return this; }
 
     public boolean isIn(double tx, double ty) { return tx >= x && tx <= x + w && ty >= y && ty <= y + h; }

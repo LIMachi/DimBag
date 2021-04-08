@@ -1,27 +1,27 @@
 package com.limachi.dimensional_bags.common.blocks;
 
 import com.limachi.dimensional_bags.DimBag;
+import com.limachi.dimensional_bags.StaticInit;
 import com.limachi.dimensional_bags.common.Registries;
 import net.minecraft.block.Block;
 import net.minecraft.block.SoundType;
 import net.minecraft.block.material.Material;
 import net.minecraft.entity.Entity;
+import net.minecraft.item.BlockItem;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.vector.Vector3d;
 import net.minecraft.world.IBlockReader;
 import net.minecraft.world.World;
 
-import com.limachi.dimensional_bags.StaticInit;
+import java.util.function.Supplier;
 
 @StaticInit
 public class Wall extends Block {
 
     public static final String NAME = "wall";
 
-    static {
-        Registries.registerBlock(NAME, Wall::new);
-        Registries.registerBlockItem(NAME, NAME, DimBag.DEFAULT_PROPERTIES);
-    }
+    public static final Supplier<Wall> INSTANCE = Registries.registerBlock(NAME, Wall::new);
+    public static final Supplier<BlockItem> INSTANCE_ITEM = Registries.registerBlockItem(NAME, NAME, DimBag.DEFAULT_PROPERTIES);
 
     public Wall() { super(Properties.create(Material.ROCK).hardnessAndResistance(-1f, 3600000f).sound(SoundType.CLOTH).setOpaque((s,r,p)->false).notSolid().setAllowsSpawn((s,r,p,a)->false).setLightLevel(i->8)); }
 

@@ -82,7 +82,7 @@ public class ModeManager extends WorldSavedDataManager.EyeWorldSavedData {
         selectedMode = Default.ID;
         installedModesData = new CompoundNBT();
         for (Mode mode : MODES)
-            if (mode.IS_INSTALED_BY_DEFAULT)
+            if (mode.IS_INSTALLED_BY_DEFAULT)
                 installedModesData.put(mode.NAME, new CompoundNBT());
     }
 

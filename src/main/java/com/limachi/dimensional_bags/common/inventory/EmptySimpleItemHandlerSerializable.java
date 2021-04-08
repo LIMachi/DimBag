@@ -4,7 +4,7 @@ import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.network.PacketBuffer;
 import net.minecraftforge.items.wrapper.EmptyHandler;
 
-public class EmptySimpleHandler extends EmptyHandler implements ISimpleItemHandler {
+public class EmptySimpleItemHandlerSerializable extends EmptyHandler implements ISimpleItemHandlerSerializable {
     @Override
     public void readFromBuff(PacketBuffer buff) {}
 

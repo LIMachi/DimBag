@@ -4,7 +4,6 @@ import com.limachi.dimensional_bags.common.Registries;
 import com.limachi.dimensional_bags.common.blocks.PlayerPillar;
 import com.limachi.dimensional_bags.common.data.EyeDataMK2.HolderData;
 import com.limachi.dimensional_bags.common.data.EyeDataMK2.SubRoomsManager;
-import com.limachi.dimensional_bags.common.data.IMarkDirty;
 import com.limachi.dimensional_bags.common.inventory.PlayerInvWrapper;
 import com.limachi.dimensional_bags.common.inventory.Wrapper;
 import net.minecraft.block.BlockState;
@@ -25,7 +24,7 @@ import java.lang.ref.WeakReference;
 import com.limachi.dimensional_bags.StaticInit;
 
 @StaticInit
-public class PlayerPillarTileEntity extends TileEntity implements ITickableTileEntity, IMarkDirty {
+public class PlayerPillarTileEntity extends TileEntity implements ITickableTileEntity {
 
     public static final String NAME = "player_pillar";
 
@@ -87,7 +86,7 @@ public class PlayerPillarTileEntity extends TileEntity implements ITickableTileE
                 if (invPtr.isPresent())
                     handler = invPtr.orElse(null);
                 if (!invPtr.isPresent() || handler == null || ((PlayerInvWrapper) handler).getPlayerInventory() != inv)
-                    invPtr = LazyOptional.of(() -> new PlayerInvWrapper(inv, rights, this));
+                    invPtr = LazyOptional.of(() -> new PlayerInvWrapper(inv, rights, this::markDirty));
             } else if (invPtr.isPresent())
                 invPtr = LazyOptional.empty();
         }

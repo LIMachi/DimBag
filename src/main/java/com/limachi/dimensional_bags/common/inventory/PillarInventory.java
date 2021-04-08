@@ -1,26 +1,23 @@
 package com.limachi.dimensional_bags.common.inventory;
 
 import com.limachi.dimensional_bags.DimBag;
-import com.limachi.dimensional_bags.client.rootWidgets.RootProvider;
 import com.limachi.dimensional_bags.ConfigManager.Config;
-import com.limachi.dimensional_bags.common.StackUtils;
-import com.limachi.dimensional_bags.common.container.SimpleContainer;
-import com.limachi.dimensional_bags.common.data.IMarkDirty;
+import com.limachi.dimensional_bags.common.container.BaseContainer;
+import com.limachi.dimensional_bags.common.container.PillarContainer;
+import com.limachi.dimensional_bags.utils.StackUtils;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.inventory.container.Slot;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.network.PacketBuffer;
-import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.SlotItemHandler;
 
 import javax.annotation.Nonnull;
-import java.util.ArrayList;
 import java.util.Objects;
 import java.util.UUID;
 
-public class PillarInventory implements ISimpleItemHandler {
+public class PillarInventory implements ISimpleItemHandlerSerializable {
 
     @Config(min = "1", max = "30000000", cmt = "initial size of a bag slot (pillar inside of the bag) in stacks")
     public static int DEFAULT_SIZE_IN_STACKS = 4;
@@ -29,7 +26,7 @@ public class PillarInventory implements ISimpleItemHandler {
     protected int size = DEFAULT_SIZE_IN_STACKS; //how much items can be stored (in stacks, yes this means the real amount is dependent on 'referent.getMaxStackSize()')
     protected ItemStack stack = ItemStack.EMPTY; //the count of this stack may go above a byte and should be communicated using StackUtils
     protected boolean locked = false; //does this pillar need to keep it's last item
-    public IMarkDirty notifyDirt;
+    public Runnable notifyDirt;
 
     @Override
     public boolean equals(Object o) {
@@ -44,7 +41,7 @@ public class PillarInventory implements ISimpleItemHandler {
 
     public void markDirty() {
         if (notifyDirt != null)
-            notifyDirt.markDirty();
+            notifyDirt.run();
     }
 
     private static class PillarSlot extends SlotItemHandler {
@@ -65,10 +62,11 @@ public class PillarInventory implements ISimpleItemHandler {
         return new PillarSlot(this, index, x, y);
     }
 
-    public void open(ServerPlayerEntity player) {
-        ArrayList<Integer> list = new ArrayList<>();
-        list.add(0);
-        SimpleContainer.open(player, new TranslationTextComponent("inventory.pillar.name"), this, list, 1, 1, t->true, RootProvider.NULL_ID);
+    public void open(ServerPlayerEntity player) { //FIXME
+//        ArrayList<Integer> list = new ArrayList<>();
+//        list.add(0);
+//        SimpleContainer.open(player, new TranslationTextComponent("inventory.pillar.name"), this, null, list, 1, 1, t->true);
+//        new PillarContainer(0, player.inventory, getEyeId(), null).open(player);
     }
 
     @Override
@@ -159,7 +157,7 @@ public class PillarInventory implements ISimpleItemHandler {
     public int getSlotLimit(int slot) { return size * stack.getMaxStackSize(); }
 
     @Override
-    public boolean isItemValid(int slot, @Nonnull ItemStack test) { return !test.isEmpty() && (stack.isEmpty() || SimpleContainer.areStackable(stack, test)); }
+    public boolean isItemValid(int slot, @Nonnull ItemStack test) { return !test.isEmpty() && (stack.isEmpty() || BaseContainer.areStackable(stack, test)); }
 
     @Override
     public void readFromBuff(PacketBuffer buff) {

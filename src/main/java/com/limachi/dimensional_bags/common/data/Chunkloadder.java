@@ -1,7 +1,7 @@
 package com.limachi.dimensional_bags.common.data;
 
 import com.limachi.dimensional_bags.DimBag;
-import com.limachi.dimensional_bags.common.WorldUtils;
+import com.limachi.dimensional_bags.utils.WorldUtils;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.nbt.ListNBT;
 import net.minecraft.world.server.ServerWorld;

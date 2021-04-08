@@ -10,7 +10,7 @@ import net.minecraft.util.math.BlockRayTraceResult;
 import net.minecraft.world.World;
 
 import static com.limachi.dimensional_bags.DimBag.LOGGER;
-
+/*
 public class Debug extends Mode {
     public Debug() { super("Debug", false, false); }
 
@@ -20,3 +20,4 @@ public class Debug extends Mode {
 //    public ActionResult<ItemStack> onItemRightClick(EyeData data, World world, PlayerEntity player, int slot) { LOGGER.info("onItemRightClick"); return new ActionResult<>(ActionResultType.SUCCESS, player.inventory.getStackInSlot(slot)); }
 //    public ActionResultType onAttack(EyeData data, ItemStack stack, PlayerEntity player, Entity entity) { LOGGER.info("onAttack"); return ActionResultType.SUCCESS; }
 }
+*/

@@ -1,24 +1,34 @@
 package com.limachi.dimensional_bags.common.data.EyeDataMK2;
 
-import com.limachi.dimensional_bags.common.NBTUtils;
+import com.limachi.dimensional_bags.DimBag;
+import com.limachi.dimensional_bags.utils.NBTUtils;
+import net.minecraft.inventory.Inventory;
+import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundNBT;
+import net.minecraft.util.text.TranslationTextComponent;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 
 public class SettingsData extends WorldSavedDataManager.EyeWorldSavedData {
 
     private CompoundNBT settingsNbt = new CompoundNBT();
 
-    public static class Settings {
+    private static final ArrayList<SettingsReader> READERS = new ArrayList<>();
+
+    public static class SettingsReader {
         protected final String group; //"Upgrades", "Modes", "Others", etc
         protected final String name; //"<upgrade_name>", "<mode_name>", "General", "Interact", etc
+        protected final Supplier<ItemStack> icon;
         protected final HashMap<String, SettingsEntry<?>> settings = new HashMap<>();
+        protected boolean isBuilt;
 
         protected static class SettingsEntry<T> {
             final private String label;
@@ -55,34 +65,64 @@ public class SettingsData extends WorldSavedDataManager.EyeWorldSavedData {
             public boolean validate(T value) { return validate.test(value); }
         }
 
-        public Settings(String group, String name) {
+        public SettingsReader(String group, String name, Supplier<ItemStack> icon) {
             this.group = group;
             this.name = name;
+            this.icon = icon;
+            this.isBuilt = false;
         }
 
         public <T> T get(String label, SettingsData data) {
-            SettingsEntry<T> se = (SettingsEntry<T>)settings.get(label);
-            if (se == null) return null;
-            if (data != null) {
-                CompoundNBT t = data.getSettings(group, name, false);
-                return se.get(t);
+            if (isBuilt) {
+                SettingsEntry<T> se = (SettingsEntry<T>) settings.get(label);
+                if (se == null) return null;
+                if (data != null) {
+                    CompoundNBT t = data.getSettings(group, name, false);
+                    return se.get(t);
+                }
+                return se.inputType.def;
             }
-            return se.inputType.def;
+            DimBag.LOGGER.error("Accessing settings before build finished (get): " + group + "." + name + "." + label);
+            return null;
         }
 
         public <T> void set(String label, SettingsData data, T value) {
-            SettingsEntry<T> se = (SettingsEntry<T>)settings.get(label);
-            CompoundNBT t = data.getSettings(group, name, true);
-            se.set(t, value);
-            data.markDirty();
+            if (isBuilt) {
+                SettingsEntry<T> se = (SettingsEntry<T>) settings.get(label);
+                CompoundNBT t = data.getSettings(group, name, true);
+                se.set(t, value);
+                data.markDirty();
+                return;
+            }
+            DimBag.LOGGER.error("Accessing settings before build finished (set): " + group + "." + name + "." + label);
         }
 
-        public Settings bool(String label, boolean def) { settings.put(label, new SettingsEntry<>(label, b->true, SettingsEntry.InputType.inputOnly(def))); return this; }
-        public Settings string(String label, String def, @Nullable Collection<String> valid) { settings.put(label, new SettingsEntry<>(label, s->valid == null || valid.contains(s), SettingsEntry.InputType.inputOnly(def))); return this; }
-        public Settings integer(String label, int def, int min, int max, boolean withInput) { settings.put(label, new SettingsEntry<>(label, i->i >= min && i <= max, withInput ? SettingsEntry.InputType.rangeAndInput(def, min, max) : SettingsEntry.InputType.rangeOnly(def, min, max))); return this; }
-        public Settings integer(String label, int def, @Nullable Collection<Integer> valid) { settings.put(label, new SettingsEntry<>(label, i->valid == null || valid.contains(i), SettingsEntry.InputType.inputOnly(def))); return this; }
-        public Settings real(String label, double def, double min, double max, boolean withInput) { settings.put(label, new SettingsEntry<>(label, d->d >= min && d <= max, withInput ? SettingsEntry.InputType.rangeAndInput(def, min, max) : SettingsEntry.InputType.rangeOnly(def, min, max))); return this; }
-        public Settings real(String label, double def, @Nullable Collection<Double> valid) { settings.put(label, new SettingsEntry<>(label, d->valid == null || valid.contains(d), SettingsEntry.InputType.inputOnly(def))); return this; }
+        public void build() {
+            isBuilt = true;
+            READERS.add(this);
+        }
+
+        public ItemStack getIcon() {
+            if (isBuilt)
+                return icon.get().setDisplayName(new TranslationTextComponent("settings." + group + "." + name));
+            DimBag.LOGGER.error("Accessing settings before build finished (icon): " + group + "." + name);
+            return ItemStack.EMPTY;
+        }
+
+        private SettingsReader val(String label, SettingsEntry entry) {
+            if (isBuilt)
+                DimBag.LOGGER.error("Creating settings after build finished: " + group + "." + name + "." + label);
+            else
+                settings.put(label, entry);
+            return this;
+        }
+
+        public SettingsReader bool(String label, boolean def) { return val(label, new SettingsEntry<>(label, b->true, SettingsEntry.InputType.inputOnly(def))); }
+        public SettingsReader string(String label, String def, @Nullable Collection<String> valid) { return val(label, new SettingsEntry<>(label, s->valid == null || valid.contains(s), SettingsEntry.InputType.inputOnly(def))); }
+        public SettingsReader integer(String label, int def, int min, int max, boolean withInput) { return val(label, new SettingsEntry<>(label, i->i >= min && i <= max, withInput ? SettingsEntry.InputType.rangeAndInput(def, min, max) : SettingsEntry.InputType.rangeOnly(def, min, max))); }
+        public SettingsReader integer(String label, int def, @Nullable Collection<Integer> valid) { return val(label, new SettingsEntry<>(label, i->valid == null || valid.contains(i), SettingsEntry.InputType.inputOnly(def))); }
+        public SettingsReader real(String label, double def, double min, double max, boolean withInput) { return val(label, new SettingsEntry<>(label, d->d >= min && d <= max, withInput ? SettingsEntry.InputType.rangeAndInput(def, min, max) : SettingsEntry.InputType.rangeOnly(def, min, max))); }
+        public SettingsReader real(String label, double def, @Nullable Collection<Double> valid) { return val(label, new SettingsEntry<>(label, d->valid == null || valid.contains(d), SettingsEntry.InputType.inputOnly(def))); }
     }
 
     public SettingsData(String suffix, int id, boolean client) { super(suffix, id, client, true); }
@@ -98,6 +138,13 @@ public class SettingsData extends WorldSavedDataManager.EyeWorldSavedData {
             markDirty();
         }
         return t.getCompound(name);
+    }
+
+    public Inventory getSettingsIcons() {
+        Inventory out = new Inventory(READERS.size());
+        for (int i = 0; i < READERS.size(); ++i)
+            out.setInventorySlotContents(i, READERS.get(i).getIcon());
+        return out;
     }
 
     public void writeSettings(String group, String name, CompoundNBT nbt, boolean isDiff) {

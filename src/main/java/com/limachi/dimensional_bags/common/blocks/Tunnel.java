@@ -2,13 +2,16 @@ package com.limachi.dimensional_bags.common.blocks;
 
 import com.limachi.dimensional_bags.DimBag;
 import com.limachi.dimensional_bags.KeyMapController;
+import com.limachi.dimensional_bags.StaticInit;
 import com.limachi.dimensional_bags.common.Registries;
 import com.limachi.dimensional_bags.common.data.EyeDataMK2.SubRoomsManager;
 import com.limachi.dimensional_bags.common.items.TunnelPlacer;
 import net.minecraft.block.*;
 import net.minecraft.block.material.Material;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.item.BlockItem;
 import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.util.ActionResultType;
 import net.minecraft.util.Hand;
 import net.minecraft.util.math.BlockPos;
@@ -16,17 +19,15 @@ import net.minecraft.util.math.BlockRayTraceResult;
 import net.minecraft.world.World;
 import net.minecraft.world.server.ServerWorld;
 
-import com.limachi.dimensional_bags.StaticInit;
+import java.util.function.Supplier;
 
 @StaticInit
 public class Tunnel extends Block {
 
     public static final String NAME = "tunnel";
 
-    static {
-        Registries.registerBlock(NAME, Tunnel::new);
-        Registries.registerBlockItem(NAME, NAME, DimBag.DEFAULT_PROPERTIES);
-    }
+    public static final Supplier<Tunnel> INSTANCE = Registries.registerBlock(NAME, Tunnel::new);
+    public static final Supplier<BlockItem> INSTANCE_ITEM = Registries.registerBlockItem(NAME, NAME, DimBag.DEFAULT_PROPERTIES);
 
     public Tunnel() { super(Properties.create(Material.ROCK).hardnessAndResistance(-1f, 3600000f).sound(SoundType.STONE)); }
 
@@ -54,9 +55,16 @@ public class Tunnel extends Block {
                 super.onBlockClicked(state, worldIn, pos, player);
                 return;
             }
-            if (SubRoomsManager.tunnel((ServerWorld)worldIn, pos, player, false, true)) {
+            CompoundNBT nbt = new CompoundNBT();
+            if (SubRoomsManager.tunnel((ServerWorld)worldIn, pos, player, false, true, nbt)) {
                 worldIn.setBlockState(pos, Registries.getBlock(Wall.NAME).getDefaultState());
-                player.addItemStackToInventory(new ItemStack(Registries.getItem(TunnelPlacer.NAME)));
+                ItemStack out = new ItemStack(Registries.getItem(TunnelPlacer.NAME));
+                if (TunnelPlacer.NERF_TUNNEL_PLACER) {
+                    if (!out.hasTag())
+                        out.setTag(new CompoundNBT());
+                    out.getTag().merge(nbt);
+                }
+                player.addItemStackToInventory(out);
             }
         }
     }

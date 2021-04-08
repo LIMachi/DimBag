@@ -3,11 +3,11 @@ package com.limachi.dimensional_bags.common.entities;
 import com.limachi.dimensional_bags.DimBag;
 import com.limachi.dimensional_bags.KeyMapController;
 import com.limachi.dimensional_bags.common.Registries;
+import com.limachi.dimensional_bags.common.container.PillarContainer;
 import com.limachi.dimensional_bags.common.data.EyeDataMK2.HolderData;
 import com.limachi.dimensional_bags.common.data.EyeDataMK2.SubRoomsManager;
 import com.limachi.dimensional_bags.common.data.IEyeIdHolder;
 import com.limachi.dimensional_bags.common.items.Bag;
-import com.limachi.dimensional_bags.common.network.Network;
 import net.minecraft.entity.*;
 import net.minecraft.entity.ai.attributes.AttributeModifierMap;
 import net.minecraft.entity.ai.attributes.Attributes;
@@ -145,7 +145,9 @@ public class BagEntity extends MobEntity implements IEyeIdHolder {
 //            }
 //            WorldUtils.teleportEntity(player, WorldUtils.DimBagRiftKey, new BlockPos(1024 * (getEyeId() - 1) + 8, 129, 8));
         } else
-            Network.openEyeInventory((ServerPlayerEntity)player, getEyeId(), null);
+            new PillarContainer(0, player.inventory, getEyeId(), null).open(player);
+//            Network.openEyeInventory((ServerPlayerEntity)player, getEyeId(), null);
+            ;//FIXME
         return ActionResultType.SUCCESS;
     }
 

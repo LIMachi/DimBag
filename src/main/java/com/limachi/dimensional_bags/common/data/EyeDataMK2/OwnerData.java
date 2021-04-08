@@ -1,6 +1,7 @@
 package com.limachi.dimensional_bags.common.data.EyeDataMK2;
 
 import com.limachi.dimensional_bags.DimBag;
+import com.limachi.dimensional_bags.utils.UUIDUtils;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.server.MinecraftServer;
@@ -12,8 +13,7 @@ import java.util.function.Function;
 
 public class OwnerData extends WorldSavedDataManager.EyeWorldSavedData {
 
-    public static final UUID NULLID = new UUID(0, 0);
-    private UUID id = NULLID;
+    private UUID id = UUIDUtils.NULL_UUID;
     private WeakReference<PlayerEntity> playerRef = new WeakReference<>(null);
     private String name = "";
 
@@ -31,7 +31,7 @@ public class OwnerData extends WorldSavedDataManager.EyeWorldSavedData {
             id = player.getUniqueID();
         } else {
             name = "";
-            id = NULLID;
+            id = UUIDUtils.NULL_UUID;
         }
         markDirty();
     }
@@ -40,7 +40,7 @@ public class OwnerData extends WorldSavedDataManager.EyeWorldSavedData {
      * @return if available (connected to the server and valid), return the stored player
      */
     public PlayerEntity getPlayer() {
-        if (id.equals(NULLID)) return null;
+        if (id.equals(UUIDUtils.NULL_UUID)) return null;
         PlayerEntity player = playerRef.get();
         if (player == null) {
             MinecraftServer server = DimBag.getServer();
@@ -62,7 +62,7 @@ public class OwnerData extends WorldSavedDataManager.EyeWorldSavedData {
     public String getPlayerName() { return name; }
 
     /**
-     * @return the uuid of the owner, the player isn't required to be connected/valid, return OwnerData.NULLID as an invalid/unset owner (aka new UUID(0,0))
+     * @return the uuid of the owner, the player isn't required to be connected/valid, return UUIDUtils.NULL_UUID as an invalid/unset owner (aka new UUID(0,0))
      */
     public UUID getPlayerUUID() { return id; }
 
@@ -70,7 +70,7 @@ public class OwnerData extends WorldSavedDataManager.EyeWorldSavedData {
     public void read(CompoundNBT nbt) {
         id = nbt.getUniqueId("Id");
         name = nbt.getString("Name");
-        if (DimBag.isServer(null) && !id.equals(NULLID))
+        if (DimBag.isServer(null) && !id.equals(UUIDUtils.NULL_UUID))
             playerRef = new WeakReference<>(DimBag.getServer().getPlayerList().getPlayerByUUID(id));
         else
             playerRef = new WeakReference<>(null);

@@ -1,8 +1,6 @@
 package com.limachi.dimensional_bags.common.inventory;
 
-import com.limachi.dimensional_bags.common.EventManager;
 import com.limachi.dimensional_bags.common.container.slot.InvWrapperSlot;
-import com.limachi.dimensional_bags.common.data.IMarkDirty;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.inventory.Inventory;
@@ -20,7 +18,6 @@ import net.minecraftforge.items.ItemHandlerHelper;
 
 import javax.annotation.Nonnull;
 
-import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -163,11 +160,11 @@ public class Wrapper implements IItemHandlerModifiable { //rewrite of InvWrapper
 
     protected IORights[] IO;
     protected IInventory inv;
-    protected IMarkDirty dirt;
+    protected Runnable markDirty;
 
-    public Wrapper(IInventory inv, final IORights IO[], IMarkDirty dirt) {
+    public Wrapper(IInventory inv, final IORights IO[], Runnable markDirty) {
         this.inv = inv;
-        this.dirt = dirt;
+        this.markDirty = markDirty;
         if (inv.getSizeInventory() == IO.length)
             this.IO = IO;
         else {
@@ -186,12 +183,12 @@ public class Wrapper implements IItemHandlerModifiable { //rewrite of InvWrapper
         this.IO = new IORights[size];
         for (int i = 0; i < this.inv.getSizeInventory(); ++i)
             this.IO[i] = new IORights(buffer);
-        this.dirt = null;
+        this.markDirty = null;
     }
 
     public Wrapper(IInventory inv) { this(inv, baseRights(inv.getSizeInventory()), null); }
-    public Wrapper(IInventory inv, IMarkDirty dirt) { this(inv, baseRights(inv.getSizeInventory()), dirt); }
-    public Wrapper(int size, IMarkDirty dirt) { this(new Inventory(size), baseRights(size), dirt); }
+    public Wrapper(IInventory inv, Runnable markDirty) { this(inv, baseRights(inv.getSizeInventory()), markDirty); }
+    public Wrapper(int size, Runnable markDirty) { this(new Inventory(size), baseRights(size), markDirty); }
     public Wrapper(int size) { this(new Inventory(size)); }
     public Wrapper(PacketBuffer buffer) { this(buffer.readInt(), null, buffer); }
     public Wrapper(IInventory inv, PacketBuffer buffer) { this(buffer.readInt(), inv, buffer); }
@@ -266,7 +263,7 @@ public class Wrapper implements IItemHandlerModifiable { //rewrite of InvWrapper
         }
         this.IO = newRights;
         this.inv = newInv;
-        this.dirt.markDirty();
+        this.markDirty.run();
     }
 
     public PacketBuffer sizeAndRightsToBuffer(PacketBuffer buff) {
@@ -279,8 +276,8 @@ public class Wrapper implements IItemHandlerModifiable { //rewrite of InvWrapper
     public void setRights(int slot, IORights rights) {
         if (slot < 0 || slot >= IO.length) return;
         IO[slot] = rights;
-        if (dirt != null)
-            dirt.markDirty();
+        if (markDirty != null)
+            markDirty.run();
     }
 
     public void setRights(int slot, int field, int data) {
@@ -310,8 +307,8 @@ public class Wrapper implements IItemHandlerModifiable { //rewrite of InvWrapper
 
     public void markDirty() {
         inv.markDirty();
-        if (dirt != null)
-            dirt.markDirty();
+        if (markDirty != null)
+            markDirty.run();
     }
 
     @Override

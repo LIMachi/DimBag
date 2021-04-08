@@ -1,6 +1,5 @@
 package com.limachi.dimensional_bags.common.items.entity;
 
-import com.limachi.dimensional_bags.common.NBTUtils;
 import com.limachi.dimensional_bags.common.Registries;
 import com.limachi.dimensional_bags.common.data.EyeDataMK2.HolderData;
 import com.limachi.dimensional_bags.common.data.IEyeIdHolder;

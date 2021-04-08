@@ -9,8 +9,8 @@ public class Text extends Base {
     public int color;
     public boolean withShadow;
 
-    public Text(Base parent, double x, double y, double width, double height, String text, int color, boolean withShadow) {
-        super(parent, x, y, width, height, true);
+    public Text(double x, double y, double width, double height, String text, int color, boolean withShadow) {
+        super(x, y, width, height, true);
         if (text == null)
             this.text = "";
         else
@@ -22,12 +22,12 @@ public class Text extends Base {
     /**
      * basic white text, to be used with vanilla buttons (size 200x20)
      */
-    public Text(Base parent, double x, double y, String text) {
-        this(parent, x + 5, y + 5, 190, 10, text, 0xFFFFFFFF, true);
+    public Text(double x, double y, String text) {
+        this(x + 5, y + 5, 190, 10, text, 0xFFFFFFFF, true);
     }
 
     @Override
     public void onRender(MatrixStack matrixStack, int mouseX, int mouseY, float partialTicks) {
-        RenderUtils.drawString(matrixStack, getFont(), text, coords, color, withShadow, true);
+        RenderUtils.drawString(matrixStack, getScreen().getFont(), text, coords, color, withShadow, true);
     }
 }

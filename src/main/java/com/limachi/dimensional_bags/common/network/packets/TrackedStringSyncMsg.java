@@ -7,6 +7,7 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.network.PacketBuffer;
 
+/*
 public class TrackedStringSyncMsg extends PacketHandler.Message {
 
     int windowId;
@@ -45,3 +46,4 @@ public class TrackedStringSyncMsg extends PacketHandler.Message {
             ((BaseContainer)player.openContainer).loadStringChange(stringId, data);
     }
 }
+*/

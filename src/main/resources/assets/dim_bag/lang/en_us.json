@@ -28,5 +28,9 @@
   "tooltip.bag.mode": "Selected mode: %s",
   "notification.bag.changed_mode": "Switched mode to: %s",
   "bag.mode.Default": "Default",
-  "entity_value_reader.printable": "%s->%s = '%s'(%s)"
+  "entity_value_reader.printable": "%s->%s = '%s'(%s)",
+  "item.fluid_item.empty_name": "Empty",
+  "item.fluid_item.append_qty_to_name": " (%dmb)",
+  "screen.fluid.bucket_acronym": "B",
+  "screen.milli_fluid.bucket_acronym": "mB"
 }

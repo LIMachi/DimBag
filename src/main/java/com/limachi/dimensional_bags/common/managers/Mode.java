@@ -1,8 +1,11 @@
 package com.limachi.dimensional_bags.common.managers;
 
 import com.google.common.collect.ImmutableMultimap;
+import com.limachi.dimensional_bags.common.Registries;
 import com.limachi.dimensional_bags.common.data.EyeDataMK2.ClientDataManager;
+import com.limachi.dimensional_bags.common.data.EyeDataMK2.SettingsData;
 import com.limachi.dimensional_bags.common.entities.BagEntity;
+import com.limachi.dimensional_bags.common.items.Bag;
 import com.mojang.blaze3d.matrix.MatrixStack;
 import net.minecraft.client.MainWindow;
 import net.minecraft.client.renderer.IRenderTypeBuffer;
@@ -14,6 +17,7 @@ import net.minecraft.entity.ai.attributes.AttributeModifier;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.inventory.EquipmentSlotType;
 import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.util.ActionResultType;
 import net.minecraft.util.math.BlockRayTraceResult;
 import net.minecraft.world.World;
@@ -28,15 +32,40 @@ import java.util.Map;
 
 public class Mode {
 
+    public static final String SETTING_GROUP = "Modes";
+
     public final boolean CAN_BACKGROUND;
     public final String NAME;
-    public final boolean IS_INSTALED_BY_DEFAULT;
+    public final boolean IS_INSTALLED_BY_DEFAULT;
+
+    public final SettingsData.SettingsReader settingsReader;
 
     public Mode(String name, boolean background, boolean installed) {
         this.CAN_BACKGROUND = background;
         this.NAME = name;
-        this.IS_INSTALED_BY_DEFAULT = installed;
+        this.IS_INSTALLED_BY_DEFAULT = installed;
+        settingsReader = new SettingsData.SettingsReader(SETTING_GROUP, NAME, ()->{
+            ItemStack out = new ItemStack(Registries.getItem(Bag.NAME));
+            if (out.getTag() == null)
+                out.setTag(new CompoundNBT());
+            out.getTag().putFloat("OVERRIDE_MODE_PROPERTY", ModeManager.getModeIndex(modeName()));
+            return out;
+        });
+        initSettings(settingsReader);
+        settingsReader.build();
     }
+
+    public <T> T getSetting(int eye, String label) { return settingsReader.get(label, SettingsData.getInstance(eye)); }
+
+    public <T> void setSetting(int eye, String label, T value) { settingsReader.set(label, SettingsData.getInstance(eye), value); }
+
+    /**
+     * here you should use the settings method to populate the settings, reading and writing should be done elsewhere
+     * @param settingsReader
+     */
+    public void initSettings(SettingsData.SettingsReader settingsReader) {}
+
+    public String modeName() { return NAME; }
 
     public final void attach(Map<String, Mode> col) { col.put(this.NAME, this); }
 

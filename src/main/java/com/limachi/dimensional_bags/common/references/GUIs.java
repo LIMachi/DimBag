@@ -24,6 +24,7 @@ public class GUIs { //common resources and size/position information for screens
         public static final ResourceLocation OUTPUT_SLOT = new ResourceLocation(MOD_ID, "textures/screens/parts/output_slot.png");
         public static final ResourceLocation LOCKED_SLOT = new ResourceLocation(MOD_ID, "textures/screens/parts/locked_slot.png");
         public static final ResourceLocation UNUSED_SLOT = new ResourceLocation(MOD_ID, "textures/screens/parts/no_slot.png");
+        public static final ResourceLocation SELECTED_FLUID_SLOT = new ResourceLocation(MOD_ID, "textures/screens/parts/selected_fluid_slot.png");
 
         public static final int PART_SIZE_X = 6;
         public static final int PART_SIZE_Y = 6;

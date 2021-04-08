@@ -1,7 +1,7 @@
 # eclipse
 bin
 *.launch
-.settings
+.settingsReader
 .metadata
 .classpath
 .project

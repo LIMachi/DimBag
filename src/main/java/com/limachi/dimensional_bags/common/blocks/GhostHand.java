@@ -1,8 +1,8 @@
 package com.limachi.dimensional_bags.common.blocks;
 
 import com.limachi.dimensional_bags.DimBag;
+import com.limachi.dimensional_bags.StaticInit;
 import com.limachi.dimensional_bags.common.Registries;
-import com.limachi.dimensional_bags.common.network.Network;
 import com.limachi.dimensional_bags.common.tileentities.GhostHandTileEntity;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
@@ -10,8 +10,7 @@ import net.minecraft.block.ITileEntityProvider;
 import net.minecraft.block.SoundType;
 import net.minecraft.block.material.Material;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraft.item.Item;
+import net.minecraft.item.BlockItem;
 import net.minecraft.state.BooleanProperty;
 import net.minecraft.state.StateContainer;
 import net.minecraft.tileentity.TileEntity;
@@ -24,17 +23,15 @@ import net.minecraft.world.World;
 
 import javax.annotation.Nullable;
 
-import com.limachi.dimensional_bags.StaticInit;
+import java.util.function.Supplier;
 
 @StaticInit
 public class GhostHand extends Block implements ITileEntityProvider {
 
     public static final String NAME = "ghost_hand";
 
-    static {
-        Registries.registerBlock(NAME, GhostHand::new);
-        Registries.registerBlockItem(NAME, NAME, DimBag.DEFAULT_PROPERTIES);
-    }
+    public static final Supplier<GhostHand> INSTANCE = Registries.registerBlock(NAME, GhostHand::new);
+    public static final Supplier<BlockItem> INSTANCE_ITEM = Registries.registerBlockItem(NAME, NAME, DimBag.DEFAULT_PROPERTIES);
 
     public static final BooleanProperty POWERED = BooleanProperty.create("powered");
 
@@ -91,9 +88,9 @@ public class GhostHand extends Block implements ITileEntityProvider {
             return ActionResultType.SUCCESS;
         } else {
             TileEntity tileentity = worldIn.getTileEntity(pos);
-            if (tileentity instanceof GhostHandTileEntity)
-                Network.openGhostHandInterface((ServerPlayerEntity)player, (GhostHandTileEntity)tileentity);
-            return ActionResultType.CONSUME;
+//            if (tileentity instanceof GhostHandTileEntity)
+//                Network.openGhostHandInterface((ServerPlayerEntity)player, (GhostHandTileEntity)tileentity);
+            return ActionResultType.SUCCESS;
         }
     }
 }

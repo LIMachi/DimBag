@@ -29,13 +29,12 @@ public class TurtleUpgrade extends BaseUpgrade {
     public static int GRACE_FACTOR = 4;
 
     static {
-        Registries.registerItem(NAME, TurtleUpgrade::new);
-        UpgradeManager.registerUpgrade(NAME, new TurtleUpgrade());
+        UpgradeManager.registerUpgrade(NAME, TurtleUpgrade::new);
     }
 
     @Override
-    public void initSettings(SettingsData.Settings settings) {
-        settings.integer("Threshold", 5, 2, 20, true);
+    public void initSettings(SettingsData.SettingsReader settingsReader) {
+        settingsReader.integer("Threshold", 5, 2, 20, true);
     }
 
     public TurtleUpgrade() { super(DimBag.DEFAULT_PROPERTIES); }

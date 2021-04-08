@@ -4,7 +4,6 @@ import com.limachi.dimensional_bags.common.Registries;
 import com.limachi.dimensional_bags.common.blocks.GhostHand;
 import com.limachi.dimensional_bags.common.data.EyeDataMK2.HolderData;
 import com.limachi.dimensional_bags.common.data.EyeDataMK2.SubRoomsManager;
-import com.limachi.dimensional_bags.common.data.IMarkDirty;
 import com.limachi.dimensional_bags.common.executors.EntityExecutor;
 import net.minecraft.block.BlockState;
 import net.minecraft.entity.Entity;
@@ -15,7 +14,7 @@ import net.minecraft.tileentity.TileEntity;
 import com.limachi.dimensional_bags.StaticInit;
 
 @StaticInit
-public class GhostHandTileEntity extends TileEntity implements ITickableTileEntity, IMarkDirty {
+public class GhostHandTileEntity extends TileEntity implements ITickableTileEntity {
 
     public static final String NAME = "ghost_hand";
 

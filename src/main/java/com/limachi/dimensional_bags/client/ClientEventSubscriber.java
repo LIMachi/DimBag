@@ -39,15 +39,17 @@ public class ClientEventSubscriber {
     @SubscribeEvent
     public static void clientSetup(FMLClientSetupEvent event) {
 //        ScreenManager.registerFactory(Registries.getContainerType(BagContainer.NAME), InventoryGUI::new);
-        ScreenManager.registerFactory(Registries.getContainerType(SimpleContainer.NAME), SimpleContainerScreen::new); //FIXME:
+//        ScreenManager.registerFactory(Registries.getContainerType(SimpleContainer.NAME), SimpleContainerScreen::new); //FIXME: go back to 1-1 (1 container -> 1 screen)
 //        ScreenManager.registerFactory(Registries.getContainerType(WrappedPlayerInventoryContainer.NAME), PlayerInterfaceGUI::new);
 //        ScreenManager.registerFactory(Registries.getContainerType(BrainContainer.NAME), BrainGUI::new);
 //        ScreenManager.registerFactory(Registries.getContainerType(GhostHandContainer.NAME), GhostHandGUI::new);
-//        ScreenManager.registerFactory(Registries.getContainerType(SettingsContainer.NAME), SettingsGUI::new);
+        ScreenManager.registerFactory(Registries.getContainerType(SettingsContainer.NAME), SettingsScreen::new);
+        ScreenManager.registerFactory(Registries.getContainerType(PillarContainer.NAME), SimpleContainerScreen<PillarContainer>::new);
+        ScreenManager.registerFactory(Registries.getContainerType(FountainContainer.NAME), SimpleContainerScreen<FountainContainer>::new);
 
         RenderingRegistry.registerEntityRenderingHandler(Registries.getEntityType(BagEntityItem.NAME), EntityItemRenderer::new);
 
-        RenderTypeLookup.setRenderLayer(Registries.getBlock(Cloud.NAME), RenderType.getTranslucent());
+        RenderTypeLookup.setRenderLayer(Cloud.INSTANCE.get(), RenderType.getTranslucent());
 
         KeyMapController.KeyBindings.registerKeybindings();
 

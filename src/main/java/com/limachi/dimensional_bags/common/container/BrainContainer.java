@@ -3,12 +3,15 @@ package com.limachi.dimensional_bags.common.container;
 import com.limachi.dimensional_bags.common.Registries;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.network.PacketBuffer;
-import net.minecraft.tileentity.TileEntity;
 
 import com.limachi.dimensional_bags.StaticInit;
+import net.minecraft.util.text.ITextComponent;
+import net.minecraft.util.text.TranslationTextComponent;
+
+import javax.annotation.Nonnull;
 
 @StaticInit
-public class BrainContainer extends BaseContainer {
+public class BrainContainer extends BaseEyeContainer {
 
     public static final String NAME = "brain";
 
@@ -22,12 +25,11 @@ public class BrainContainer extends BaseContainer {
         super(Registries.getContainerType(NAME), windowId, playerInv, extraData);
     }
 
-    public BrainContainer(int windowId, PlayerInventory playerInv, TileEntity te) {
-        super(Registries.getContainerType(NAME), windowId, playerInv, ContainerConnectionType.TILE_ENTITY, te, 0);
+    public BrainContainer(int windowId, PlayerInventory playerInv, int eye) {
+        super(Registries.getContainerType(NAME), windowId, playerInv, eye);
     }
 
+    @Nonnull
     @Override
-    public void detectAndSendChanges() {
-        super.detectAndSendChanges();
-    }
+    public ITextComponent getDisplayName() { return new TranslationTextComponent("container.display_name." + NAME); }
 }

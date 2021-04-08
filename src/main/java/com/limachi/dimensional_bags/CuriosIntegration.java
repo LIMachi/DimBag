@@ -1,13 +1,11 @@
 package com.limachi.dimensional_bags;
 
-import com.limachi.dimensional_bags.common.data.IMarkDirty;
 import com.limachi.dimensional_bags.common.items.Bag;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.inventory.EquipmentSlotType;
-import net.minecraft.inventory.IInventory;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.ResourceLocation;
@@ -17,7 +15,6 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.InterModComms;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.InterModEnqueueEvent;
-import net.minecraftforge.items.IItemHandler;
 import org.apache.commons.lang3.tuple.ImmutableTriple;
 import top.theillusivec4.curios.api.CuriosApi;
 import top.theillusivec4.curios.api.SlotTypeMessage;
@@ -80,25 +77,6 @@ public class CuriosIntegration {
                 return true;
             }
         return false;
-    }
-
-    static class ItemSearchResult {
-        public Entity searchedEntity;
-        public IInventory searchedInventory;
-        public IItemHandler searchedItemHandler;
-        public int index;
-        public ItemStack stack;
-        public ItemStack[] stacks;
-        public ArrayList<ItemStack> stackList;
-
-        public void setStackDirty() {
-            if (searchedItemHandler != null) {
-                if (searchedItemHandler instanceof IMarkDirty)
-                    ((IMarkDirty) searchedItemHandler).markDirty();
-            }
-            else if (searchedInventory != null)
-                searchedInventory.markDirty();
-        }
     }
 
     public static class ProxyItemStackModifier {

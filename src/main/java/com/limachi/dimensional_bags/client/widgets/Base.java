@@ -2,14 +2,15 @@ package com.limachi.dimensional_bags.client.widgets;
 
 import com.limachi.dimensional_bags.client.render.Box2d;
 import com.limachi.dimensional_bags.client.render.Vector2d;
+import com.limachi.dimensional_bags.client.render.screen.SimpleContainerScreen;
 import com.mojang.blaze3d.matrix.MatrixStack;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.util.math.vector.Matrix4f;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
 import java.util.ArrayList;
+import java.util.function.Consumer;
+import java.util.function.Function;
 
 public class Base {
 
@@ -17,16 +18,35 @@ public class Base {
 
     public boolean isCut;
     public Box2d coords;
+    private SimpleContainerScreen screen;
 
-    public Base(Base parent, Box2d coords, boolean isCut) {
-        this.parent = parent;
-        assert (parent != null || this instanceof Root);
-        if (parent != null) {
-            parent.attachChild(this);
-            this.root = parent.root;
-        }
-        else
-            this.root = (Root)this;
+    public void screen(Consumer<SimpleContainerScreen> run) {
+        SimpleContainerScreen ps = getScreen();
+        if (ps != null)
+            run.accept(ps);
+    }
+
+    public <T> T screen(Function<SimpleContainerScreen, T> run, T def) {
+        SimpleContainerScreen ps = getScreen();
+        if (ps != null)
+            return run.apply(ps);
+        return def;
+    }
+
+    private Matrix4f matrix = DEFAULT_TRANSFORM;
+    public Base parent;
+    private final ArrayList<Base> children = new ArrayList<>();
+
+    private boolean isHovered = false;
+    public boolean isActive = true;
+
+    private int drag = -1;
+    private double initialDragX = 0;
+    private double initialDragY = 0;
+
+    public void attachToScreen(SimpleContainerScreen screen) { this.screen = screen; }
+
+    public Base(Box2d coords, boolean isCut) {
         this.coords = coords;
         this.isCut = isCut;
         onNew();
@@ -34,8 +54,8 @@ public class Base {
 
     public void onNew() {}
 
-    public Base(Base parent, double x, double y, double width, double height, boolean isCut) {
-        this(parent, new Box2d(x, y, width, height), isCut);
+    public Base(double x, double y, double width, double height, boolean isCut) {
+        this(new Box2d(x, y, width, height), isCut);
     }
 
     public Matrix4f getTransform() {
@@ -58,28 +78,28 @@ public class Base {
     public boolean onKeyReleased(int keyCode, int scanCode, int modifiers) { return false; }
     public boolean onCharTyped(char codePoint, int modifiers) { return false; }
 
-    private Matrix4f matrix = DEFAULT_TRANSFORM;
-    public final Base parent;
-    public final Root root;
-    private final ArrayList<Base> children = new ArrayList<>();
-
-    private boolean isHovered = false;
-
-    public boolean isFocused() { return root.getFocusedWidget() == this; }
+    public boolean isFocused() { return screen(s->s.getFocusedWidget() == this, false); }
     public boolean isHovered() { return isHovered; }
-
-    public boolean isActive = true;
-
-    private int drag = -1;
-    private double initialDragX = 0;
-    private double initialDragY = 0;
 
     public double getInitialDragX() { return initialDragX; }
     public double getInitialDragY() { return initialDragY; }
     public int getDrag() { return drag; }
     public boolean isDragged() { return drag != -1; }
 
-    public void attachChild(Base child) { children.add(child); }
+    public void attachChild(Base child) {
+        if (child != null) {
+            children.add(child);
+            child.parent = this;
+        }
+
+    }
+
+    public SimpleContainerScreen getScreen() {
+        if (screen != null) return screen;
+        if (parent != null) return parent.getScreen();
+        return null;
+    }
+
     public void detachChild(Base child) { children.remove(child); }
 
     public final void tick(int tick) {
@@ -91,9 +111,10 @@ public class Base {
 
     @OnlyIn(Dist.CLIENT)
     public final void render(MatrixStack matrixStack, int mouseX, int mouseY, float partialTicks) {
-        if (!isActive) return;
+        SimpleContainerScreen ts = getScreen();
+        if (!isActive || ts == null) return;
         if (isCut)
-            root.scissor(matrixStack, coords.getX1(), coords.getY1(), coords.getX2(), coords.getY2());
+            ts.scissor(matrixStack, coords.getX1(), coords.getY1(), coords.getX2(), coords.getY2());
         onRender(matrixStack, mouseX, mouseY, partialTicks);
         matrix = matrixStack.getLast().getMatrix().copy();
         matrixStack.push();
@@ -101,15 +122,9 @@ public class Base {
         for (Base child : children)
             child.render(matrixStack, mouseX, mouseY, partialTicks);
         if (isCut)
-            root.removeScissor();
+            ts.removeScissor();
         matrixStack.pop();
     }
-
-    @OnlyIn(Dist.CLIENT)
-    public int getBlitOffset() { return root.getBlitOffset(); }
-
-    @OnlyIn(Dist.CLIENT)
-    public FontRenderer getFont() { return Minecraft.getInstance().fontRenderer; }
 
     public final Box2d getTransformedCoords() {
         Box2d b = this.coords.copy();
@@ -214,9 +229,9 @@ public class Base {
 
     public final boolean changeFocus(boolean isFocused) {
         if (isFocused)
-            root.setFocusedWidget(this);
+            screen(s->s.setFocusedWidget(this));
         else if (isFocused())
-            root.setFocusedWidget(null);
+            screen(s->s.setFocusedWidget(null));
         return isFocused;
     }
 

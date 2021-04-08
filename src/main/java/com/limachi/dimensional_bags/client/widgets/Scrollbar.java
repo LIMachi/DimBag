@@ -28,8 +28,8 @@ public class Scrollbar extends Base {
     protected Box2d scrollDetectionArea;
     public double mouseScrollFactor;
 
-    public Scrollbar(Base parent, double x, double y, double length, boolean isHorizontal, double initialScroll, Function<Double, Boolean> onChange, double mouseScrollFactor, @Nullable Box2d scrollDetectionArea) {
-        super(parent, x, y, isHorizontal ? length : 11, isHorizontal ? 11 : length, true);
+    public Scrollbar(double x, double y, double length, boolean isHorizontal, double initialScroll, Function<Double, Boolean> onChange, double mouseScrollFactor, @Nullable Box2d scrollDetectionArea) {
+        super(x, y, isHorizontal ? length : 11, isHorizontal ? 11 : length, true);
         this.mouseScrollFactor = mouseScrollFactor;
         this.horizontal = isHorizontal;
         this.scroll = initialScroll;
@@ -42,11 +42,14 @@ public class Scrollbar extends Base {
         public final Button button1;
         public final Button button2;
 
-        public ScrollbarWithButtons(Base parent, double x, double y, double length, boolean isHorizontal, double initialScroll, Function<Double, Boolean> onChange, double mouseScrollFactor, @Nullable Box2d scrollDetectionArea) {
-            super(parent, x, y, isHorizontal ? length : 11, isHorizontal ? 11 : length, true);
-            scrollbar = new Scrollbar(this, isHorizontal ? 11 : 0, isHorizontal ? 0 : 11, length - 22, isHorizontal, initialScroll, onChange, mouseScrollFactor, scrollDetectionArea);
-            button1 = Button.smallButton(this, 0, 0, isHorizontal ? Button.ARROW_LEFT : Button.ARROW_UP, b->scrollbar.setScroll(scrollbar.scroll - mouseScrollFactor * 3));
-            button2 = Button.smallButton(this, isHorizontal ? length - 11 : 0, isHorizontal ? 0 : length - 11, isHorizontal ? Button.ARROW_RIGHT : Button.ARROW_DOWN, b->scrollbar.setScroll(scrollbar.scroll + mouseScrollFactor * 3));
+        public ScrollbarWithButtons(double x, double y, double length, boolean isHorizontal, double initialScroll, Function<Double, Boolean> onChange, double mouseScrollFactor, @Nullable Box2d scrollDetectionArea) {
+            super(x, y, isHorizontal ? length : 11, isHorizontal ? 11 : length, true);
+            scrollbar = new Scrollbar(isHorizontal ? 11 : 0, isHorizontal ? 0 : 11, length - 22, isHorizontal, initialScroll, onChange, mouseScrollFactor, scrollDetectionArea);
+            button1 = Button.smallButton(0, 0, isHorizontal ? Button.ARROW_LEFT : Button.ARROW_UP, b->scrollbar.setScroll(scrollbar.scroll - mouseScrollFactor * 3));
+            button2 = Button.smallButton(isHorizontal ? length - 11 : 0, isHorizontal ? 0 : length - 11, isHorizontal ? Button.ARROW_RIGHT : Button.ARROW_DOWN, b->scrollbar.setScroll(scrollbar.scroll + mouseScrollFactor * 3));
+            attachChild(scrollbar);
+            attachChild(button1);
+            attachChild(button2);
         }
 
         public boolean setScroll(double scroll) {
@@ -73,11 +76,11 @@ public class Scrollbar extends Base {
     public void onRender(MatrixStack matrixStack, int mouseX, int mouseY, float partialTicks) {
         Box2d cursor = new Box2d(coords.getX1(), coords.getY1(), 11, 11);
         if (horizontal) {
-            HORIZONTAL_BACKGROUND.blit(matrixStack, coords, getBlitOffset(), true, TextureCutout.TextureApplicationPattern.MIDDLE_EXPANSION);
-            HORIZONTAL_SCROLLER.blit(matrixStack, cursor.setX1(coords.getX1() + 1.0d + (coords.getWidth() - 13.0d) * scroll), getBlitOffset(), true, TextureCutout.TextureApplicationPattern.MIDDLE_EXPANSION);
+            HORIZONTAL_BACKGROUND.blit(matrixStack, coords, getScreen().getBlitOffset(), TextureCutout.TextureApplicationPattern.MIDDLE_EXPANSION);
+            HORIZONTAL_SCROLLER.blit(matrixStack, cursor.setX1(coords.getX1() + 1.0d + (coords.getWidth() - 13.0d) * scroll), getScreen().getBlitOffset(), TextureCutout.TextureApplicationPattern.MIDDLE_EXPANSION);
         } else {
-            VERTICAL_BACKGROUND.blit(matrixStack, coords, getBlitOffset(), true, TextureCutout.TextureApplicationPattern.MIDDLE_EXPANSION);
-            VERTICAL_SCROLLER.blit(matrixStack, cursor.setY1(coords.getY1() + 1.0d + (coords.getHeight() - 13.0d) * scroll), getBlitOffset(), true, TextureCutout.TextureApplicationPattern.MIDDLE_EXPANSION);
+            VERTICAL_BACKGROUND.blit(matrixStack, coords, getScreen().getBlitOffset(), TextureCutout.TextureApplicationPattern.MIDDLE_EXPANSION);
+            VERTICAL_SCROLLER.blit(matrixStack, cursor.setY1(coords.getY1() + 1.0d + (coords.getHeight() - 13.0d) * scroll), getScreen().getBlitOffset(), TextureCutout.TextureApplicationPattern.MIDDLE_EXPANSION);
         }
     }
 

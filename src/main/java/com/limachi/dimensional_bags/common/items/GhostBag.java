@@ -4,11 +4,13 @@ import com.limachi.dimensional_bags.CuriosIntegration;
 import com.limachi.dimensional_bags.DimBag;
 import com.limachi.dimensional_bags.KeyMapController;
 import com.limachi.dimensional_bags.common.Registries;
+import com.limachi.dimensional_bags.common.blocks.IBagWrenchable;
 import com.limachi.dimensional_bags.common.data.EyeDataMK2.ClientDataManager;
 import com.limachi.dimensional_bags.common.data.EyeDataMK2.SubRoomsManager;
 import com.limachi.dimensional_bags.common.managers.ModeManager;
 import com.limachi.dimensional_bags.common.managers.UpgradeManager;
 import com.limachi.dimensional_bags.common.managers.modes.Default;
+import net.minecraft.block.BlockState;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.item.ItemEntity;
 import net.minecraft.entity.player.PlayerEntity;
@@ -34,6 +36,13 @@ public class GhostBag extends Item {
         Registries.registerItem(NAME, GhostBag::new);
     }
 
+    @Override
+    public ActionResultType onItemUseFirst(ItemStack stack, ItemUseContext context) {
+        BlockState state = context.getWorld().getBlockState(context.getPos());
+        if (state.getBlock() instanceof IBagWrenchable && KeyMapController.KeyBindings.SNEAK_KEY.getState(context.getPlayer())) //if the player is crouching and using the bag, then use it as a wrench
+            return ((IBagWrenchable) state.getBlock()).wrenchWithBag(context.getWorld(), context.getPos(), state, context.getFace());
+        return super.onItemUseFirst(stack, context);
+    }
 
     public static final String ORIGINAL_STACK_KEY = "original_stack";
 //    public static final String TARGETED_BAG_INDEX_KEY = "targeted_bag_index";

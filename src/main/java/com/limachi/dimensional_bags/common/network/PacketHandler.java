@@ -82,12 +82,14 @@ public class PacketHandler {
     static {
         index = 0;
         registerMsg(WorldSavedDataSyncMsg.class);
-        registerMsg(SlotIORightsChanged.class);
+//        registerMsg(SlotIORightsChanged.class);
         registerMsg(ChangeModeRequest.class);
         registerMsg(KeyStateMsg.class);
-        registerMsg(TrackedStringSyncMsg.class);
-        registerMsg(FluidSlotSyncMsg.class);
+//        registerMsg(TrackedStringSyncMsg.class);
+//        registerMsg(FluidSlotSyncMsg.class);
         registerMsg(SetSlotPacket.class);
+
+//        registerMsg(OpenSettingsMsg.class);
 
         registerMsg(SyncCompoundNBT.SCNBTC.class);
         registerMsg(SyncCompoundNBT.SCNBTD.class);

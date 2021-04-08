@@ -3,6 +3,7 @@ package com.limachi.dimensional_bags.common.container;
 import com.limachi.dimensional_bags.common.Registries;
 import com.limachi.dimensional_bags.common.container.slot.InvWrapperSlot;
 import com.limachi.dimensional_bags.common.inventory.PlayerInvWrapper;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.tileentity.TileEntity;
@@ -12,10 +13,11 @@ import static com.limachi.dimensional_bags.common.references.GUIs.PlayerInterfac
 
 import com.limachi.dimensional_bags.StaticInit;
 
+/*
 @StaticInit
 public class WrappedPlayerInventoryContainer extends BaseContainer {
 
-    public static final String NAME = "pillar";
+    public static final String NAME = "player_pillar";
 
     static {
         Registries.registerContainer(NAME, WrappedPlayerInventoryContainer::new);
@@ -72,4 +74,8 @@ public class WrappedPlayerInventoryContainer extends BaseContainer {
     }
 
     public String getLocalUserName() { return localUserName; }
+
+    @Override
+    public boolean canInteractWith(PlayerEntity playerIn) { return true; }
 }
+*/

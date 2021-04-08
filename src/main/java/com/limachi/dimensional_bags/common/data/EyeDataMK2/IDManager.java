@@ -2,7 +2,7 @@ package com.limachi.dimensional_bags.common.data.EyeDataMK2;
 
 import com.google.common.collect.Range;
 import com.limachi.dimensional_bags.DimBag;
-import com.limachi.dimensional_bags.common.WorldUtils;
+import com.limachi.dimensional_bags.utils.WorldUtils;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.world.server.ServerWorld;
 import net.minecraft.world.storage.WorldSavedData;

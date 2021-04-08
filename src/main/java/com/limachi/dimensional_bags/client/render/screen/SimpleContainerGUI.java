@@ -1,22 +1,6 @@
 package com.limachi.dimensional_bags.client.render.screen;
 
-import com.google.common.primitives.Ints;
-import com.limachi.dimensional_bags.client.widgets.Root;
-import com.limachi.dimensional_bags.common.container.SimpleContainer;
-import com.limachi.dimensional_bags.common.inventory.Wrapper;
-import com.limachi.dimensional_bags.common.references.GUIs;
-import com.mojang.blaze3d.matrix.MatrixStack;
-import com.mojang.blaze3d.systems.RenderSystem;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.screen.inventory.ContainerScreen;
-import net.minecraft.client.renderer.texture.TextureManager;
-import net.minecraft.entity.player.PlayerInventory;
-import net.minecraft.util.text.ITextComponent;
-
-import static com.limachi.dimensional_bags.common.inventory.Wrapper.IORights.CANINPUT;
-import static com.limachi.dimensional_bags.common.inventory.Wrapper.IORights.CANOUTPUT;
-import static com.limachi.dimensional_bags.common.references.GUIs.ScreenParts.*;
-
+/*
 public class SimpleContainerGUI extends ContainerScreen<SimpleContainer> {
 
     private int rows;
@@ -102,7 +86,7 @@ public class SimpleContainerGUI extends ContainerScreen<SimpleContainer> {
         tm.bindTexture(SLOT);
         for (int i = 0; i < this.columns; ++i)
             for (int y = 0; y < this.rows; ++y)
-                drawAccessRectangle(matrixStack, tm, x + i * SLOT_SIZE_X + PART_SIZE_X, sy + y * SLOT_SIZE_Y, i + y * this.columns < container.getSlotCount() ? /*FIXME container.getRights(i + y * this.columns + 36)*/new Wrapper.IORights() : null);
+                drawAccessRectangle(matrixStack, tm, x + i * SLOT_SIZE_X + PART_SIZE_X, sy + y * SLOT_SIZE_Y, i + y * this.columns < container.getSlotCount() ? new Wrapper.IORights() : null);
     }
 
     public void render_expander(MatrixStack matrixStack, TextureManager tm) { //render the part between the container inventory and the player inventory
@@ -284,3 +268,4 @@ public class SimpleContainerGUI extends ContainerScreen<SimpleContainer> {
         return super.charTyped(codePoint, modifiers);
     }
 }
+*/

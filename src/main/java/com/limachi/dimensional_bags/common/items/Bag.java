@@ -1,38 +1,30 @@
 package com.limachi.dimensional_bags.common.items;
 
-import com.google.common.collect.ImmutableMultimap;
-import com.google.common.collect.Multimap;
 import com.limachi.dimensional_bags.CuriosIntegration;
 import com.limachi.dimensional_bags.DimBag;
-import com.limachi.dimensional_bags.client.entity.model.NullModel;
+import com.limachi.dimensional_bags.KeyMapController;
 import com.limachi.dimensional_bags.common.Registries;
+import com.limachi.dimensional_bags.common.blocks.IBagWrenchable;
 import com.limachi.dimensional_bags.common.data.DimBagData;
 import com.limachi.dimensional_bags.common.data.EyeDataMK2.ClientDataManager;
 import com.limachi.dimensional_bags.common.data.EyeDataMK2.HolderData;
 import com.limachi.dimensional_bags.common.data.EyeDataMK2.OwnerData;
 import com.limachi.dimensional_bags.common.data.IEyeIdHolder;
-import com.limachi.dimensional_bags.common.data.IMarkDirty;
 import com.limachi.dimensional_bags.common.entities.BagEntity;
-import com.limachi.dimensional_bags.common.inventory.NBTStoredItemHandler;
 import com.limachi.dimensional_bags.common.items.entity.BagEntityItem;
 import com.limachi.dimensional_bags.common.items.upgrades.BaseUpgrade;
 import com.limachi.dimensional_bags.common.managers.ModeManager;
-import com.limachi.dimensional_bags.common.managers.Upgrade;
 import com.limachi.dimensional_bags.common.managers.UpgradeManager;
+import net.minecraft.block.BlockState;
 import net.minecraft.block.DispenserBlock;
 import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.renderer.entity.model.BipedModel;
 import net.minecraft.client.util.ITooltipFlag;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.ai.attributes.Attribute;
-import net.minecraft.entity.ai.attributes.AttributeModifier;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraft.inventory.EquipmentSlotType;
 import net.minecraft.item.*;
 import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.nbt.ListNBT;
 import net.minecraft.util.*;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockRayTraceResult;
@@ -50,12 +42,10 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Consumer;
 
 import com.limachi.dimensional_bags.StaticInit;
 import org.apache.commons.lang3.tuple.ImmutableTriple;
 import top.theillusivec4.curios.api.CuriosApi;
-import top.theillusivec4.curios.api.type.capability.ICuriosItemHandler;
 
 @StaticInit
 public class Bag extends Item {
@@ -81,6 +71,10 @@ public class Bag extends Item {
 //        };
 //        return new NBTStoredItemHandler(()->bag.getTag().getCompound("ArmorStandUpgrade"), nbt->bag.getTag().put("ArmorStandUpgrade", nbt), syncEnchants).resize(2);
 //    }
+
+    public static boolean hasBag(int id, Entity entity) {
+        return CuriosIntegration.searchItem(entity, Bag.class, stack->Bag.getEyeId(stack) == id) != null;
+    }
 
     public static boolean equipBagOnCuriosSlot(ItemStack bag, PlayerEntity player) {
         return CuriosIntegration.equipOnFirstValidSlot(player, CuriosIntegration.BAG_CURIOS_SLOT, bag);
@@ -190,6 +184,15 @@ public class Bag extends Item {
 //            return chestPlate.makesPiglinsNeutral(wearer);
 //        return false;
 //    }
+
+
+    @Override
+    public ActionResultType onItemUseFirst(ItemStack stack, ItemUseContext context) {
+        BlockState state = context.getWorld().getBlockState(context.getPos());
+        if (state.getBlock() instanceof IBagWrenchable && KeyMapController.KeyBindings.SNEAK_KEY.getState(context.getPlayer())) //if the player is crouching and using the bag, then use it as a wrench
+            return ((IBagWrenchable) state.getBlock()).wrenchWithBag(context.getWorld(), context.getPos(), state, context.getFace());
+        return super.onItemUseFirst(stack, context);
+    }
 
     @Override
     public boolean hasContainerItem(ItemStack stack) { return true; } //will not be consumed by a craft
@@ -302,6 +305,9 @@ public class Bag extends Item {
     }
 
     public static float getModeProperty(ItemStack stack, World world, Entity entity) {
+        CompoundNBT nbt = stack.getTag();
+        if (nbt != null && nbt.contains("OVERRIDE_MODE_PROPERTY"))
+            return nbt.getFloat("OVERRIDE_MODE_PROPERTY");
         ModeManager modeManager = ClientDataManager.getInstance(stack).getModeManager();
         if (modeManager != null)
             return ModeManager.getModeIndex(modeManager.getSelectedMode());
@@ -443,11 +449,11 @@ public class Bag extends Item {
     }
 
     public static ActionResultType onItemUse(World world, PlayerEntity player, int eyeId, BlockRayTraceResult ray) {
-        return !DimBag.isServer(world) ? ActionResultType.PASS : ModeManager.execute(eyeId, modeManager -> modeManager.onItemUse(world, player, ray), ActionResultType.PASS);
+        return ModeManager.execute(eyeId, modeManager -> modeManager.onItemUse(world, player, ray), ActionResultType.PASS);
     }
 
     public static ActionResult<ItemStack> onItemRightClick(World world, PlayerEntity player, int slot, int eyeId) {
-        return new ActionResult<>(!DimBag.isServer(world) ? ActionResultType.PASS : ModeManager.execute(eyeId, modeManager -> modeManager.onItemRightClick(world, player), ActionResultType.PASS), player.inventory.getStackInSlot(slot));
+        return new ActionResult<>(ModeManager.execute(eyeId, modeManager -> modeManager.onItemRightClick(world, player), ActionResultType.PASS), player.inventory.getStackInSlot(slot));
     }
 
     @Override
@@ -459,7 +465,7 @@ public class Bag extends Item {
      * static helper function that might also be called by a ghost bag
      */
     public static boolean onLeftClickEntity(int eyeId, PlayerEntity player, Entity entity) {
-        return DimBag.isServer(player.world) && ModeManager.execute(eyeId, modeManager -> modeManager.onAttack(player, entity).isSuccessOrConsume(), false);
+        return ModeManager.execute(eyeId, modeManager -> modeManager.onAttack(player, entity).isSuccessOrConsume(), false);
     }
 
     @Override

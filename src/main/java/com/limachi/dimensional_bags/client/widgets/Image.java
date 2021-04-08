@@ -8,8 +8,8 @@ public class Image extends Base {
     int frameRate;
     int currentFrame = 0;
 
-    public Image(Base parent, double x, double y, double w, double h, int frameRate, TextureCutout ...frames) {
-        super(parent, x, y, w, h, true);
+    public Image(double x, double y, double w, double h, int frameRate, TextureCutout ...frames) {
+        super(x, y, w, h, true);
         this.frames = frames;
         this.frameRate = frameRate;
     }
@@ -25,11 +25,11 @@ public class Image extends Base {
         return out;
     }
 
-    public Image(Base parent, double x, double y, double w, double h, int frameRate, TextureCutout area, int spriteWidth, int spriteHeight) {
-        this(parent, x, y, w, h, frameRate, framesFromSpriteArea(area, spriteWidth, spriteHeight));
+    public Image(double x, double y, double w, double h, int frameRate, TextureCutout area, int spriteWidth, int spriteHeight) {
+        this(x, y, w, h, frameRate, framesFromSpriteArea(area, spriteWidth, spriteHeight));
     }
 
-    public Image(Base parent, double x, double y, double w, double h, TextureCutout image) { this(parent, x, y, w, h, 0, image); }
+    public Image(double x, double y, double w, double h, TextureCutout image) { this(x, y, w, h, 0, image); }
 
     @Override
     public void onTick(int tick) {
@@ -39,6 +39,6 @@ public class Image extends Base {
 
     @Override
     public void onRender(MatrixStack matrixStack, int mouseX, int mouseY, float partialTicks) {
-        frames[currentFrame].blit(matrixStack, coords, getBlitOffset(), true, TextureCutout.TextureApplicationPattern.STRETCH);
+        frames[currentFrame].blit(matrixStack, coords, getScreen().getBlitOffset(), TextureCutout.TextureApplicationPattern.STRETCH);
     }
 }

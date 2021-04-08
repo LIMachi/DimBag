@@ -14,6 +14,8 @@ import com.limachi.dimensional_bags.common.items.Bag;
 import com.limachi.dimensional_bags.common.items.GhostBag;
 import com.limachi.dimensional_bags.common.items.IDimBagCommonItem;
 import com.limachi.dimensional_bags.common.items.entity.BagEntityItem;
+import com.limachi.dimensional_bags.utils.SyncUtils;
+import com.limachi.dimensional_bags.utils.WorldUtils;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
@@ -155,7 +157,7 @@ public class EventManager {
             if (dir == Direction.UP) continue;
             BlockPos cloudTry = dir == Direction.DOWN ? pos : pos.offset(dir);
             if (dir == Direction.DOWN && world.getBlockState(cloudTry) == Blocks.AIR.getDefaultState())
-                world.setBlockState(cloudTry, Registries.getBlock(Cloud.NAME).getDefaultState());
+                world.setBlockState(cloudTry, Cloud.INSTANCE.get().getDefaultState());
             else if (Math.random() > 1D - treshold)
                 generateCloud(world, cloudTry, treshold / divider, divider);
         }

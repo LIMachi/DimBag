@@ -1,7 +1,6 @@
 package com.limachi.dimensional_bags;
 
 import com.google.common.reflect.Reflection;
-import com.limachi.dimensional_bags.common.EventManager;
 import com.limachi.dimensional_bags.common.Registries;
 import com.limachi.dimensional_bags.common.items.Bag;
 import net.minecraft.client.Minecraft;
@@ -18,7 +17,6 @@ import net.minecraft.util.text.StringTextComponent;
 import net.minecraft.world.World;
 import net.minecraft.world.server.ServerWorld;
 import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.fml.*;
 import net.minecraftforge.fml.common.Mod;
@@ -36,6 +34,7 @@ import javax.annotation.Nullable;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.Callable;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -54,6 +53,24 @@ public class DimBag {
 
     public static final Item.Properties DEFAULT_PROPERTIES = new Item.Properties().group(DimBag.ITEM_GROUP);
 
+    /**
+     * will debug methods actually log something
+     */
+    public static final boolean DO_DEBUG = true;
+    /**
+     * how debug will be logged (LOGGER::info or LOGGER::debug)
+     */
+    public static final Consumer<String> DEBUG = LOGGER::info;
+
+    @SuppressWarnings({"UnusedReturnValue", "unused"})
+    public static <T> T debug(T v, String s) { if (DO_DEBUG) DEBUG.accept(Thread.currentThread().getStackTrace()[2].toString() + " V: " + v + " : "+ s); return v; }
+    @SuppressWarnings({"UnusedReturnValue", "unused"})
+    public static <T> T debug(T v) { if (DO_DEBUG) DEBUG.accept(Thread.currentThread().getStackTrace()[2].toString() + " V: " + v); return v; }
+    @SuppressWarnings({"UnusedReturnValue", "unused"})
+    public static <T> T debug(T v, int depth) { if (DO_DEBUG) DEBUG.accept(Thread.currentThread().getStackTrace()[2 + depth].toString() + " V: " + v); return v; }
+    @SuppressWarnings({"UnusedReturnValue", "unused"})
+    public static <T> T debug(T v, int depth, String s) { if (DO_DEBUG) DEBUG.accept(Thread.currentThread().getStackTrace()[2 + depth].toString() + " V: " + v + " : "+ s); return v; }
+
     static {
         Type type = Type.getType(StaticInit.class);
         for (ModFileScanData.AnnotationData data : ModList.get().getAllScanData().stream().map(ModFileScanData::getAnnotations).flatMap(Collection::stream).filter(a-> type.equals(a.getAnnotationType())).collect(Collectors.toList())) {
@@ -68,9 +85,8 @@ public class DimBag {
     public DimBag() {
         INSTANCE = this;
         IEventBus eventBus = FMLJavaModLoadingContext.get().getModEventBus();
-        ConfigManager.create(MOD_ID, ModConfig.Type.COMMON, "dimensional_bags", new String[]{".common", ".items", ".data"});
+        ConfigManager.create(MOD_ID, ModConfig.Type.COMMON, "dimensional_bags", new String[]{".common", ".items", ".data", ".EyeDataMK2"});
         Registries.registerAll(eventBus);
-        MinecraftForge.EVENT_BUS.register(EventManager.class);
         eventBus.addListener(CuriosIntegration::enqueueIMC);
     }
 

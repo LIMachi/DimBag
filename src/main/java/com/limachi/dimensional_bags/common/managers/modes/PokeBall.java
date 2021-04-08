@@ -2,7 +2,8 @@ package com.limachi.dimensional_bags.common.managers.modes;
 
 import com.limachi.dimensional_bags.client.render.Box2d;
 import com.limachi.dimensional_bags.client.render.RenderUtils;
-import com.limachi.dimensional_bags.common.WorldUtils;
+import com.limachi.dimensional_bags.utils.WorldUtils;
+import com.limachi.dimensional_bags.common.data.EyeDataMK2.SettingsData;
 import com.limachi.dimensional_bags.common.data.EyeDataMK2.SubRoomsManager;
 import com.limachi.dimensional_bags.common.managers.Mode;
 import com.limachi.dimensional_bags.common.managers.UpgradeManager;
@@ -26,6 +27,10 @@ import java.util.List;
 
 public class PokeBall extends Mode {
     public PokeBall() { super("PokeBall", false, true); }
+
+    @Override
+    public void initSettings(SettingsData.SettingsReader settingsReader) {
+    }
 
     @Override
     public ActionResultType onAttack(int eyeId, PlayerEntity player, Entity entity) {

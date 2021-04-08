@@ -1,7 +1,7 @@
 package com.limachi.dimensional_bags.common.network;
 
 import com.limachi.dimensional_bags.DimBag;
-import com.limachi.dimensional_bags.common.NBTUtils;
+import com.limachi.dimensional_bags.utils.NBTUtils;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.network.PacketBuffer;

@@ -1,10 +1,9 @@
 package com.limachi.dimensional_bags.common.executors;
 
-import com.limachi.dimensional_bags.ClassUtils;
+import com.limachi.dimensional_bags.utils.ClassUtils;
 import com.limachi.dimensional_bags.DimBag;
 import com.limachi.dimensional_bags.KeyMapController;
 import com.limachi.dimensional_bags.common.data.EyeDataMK2.EnergyData;
-import javafx.util.Pair;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
 

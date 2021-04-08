@@ -7,6 +7,7 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.network.PacketBuffer;
 import net.minecraftforge.fluids.FluidStack;
 
+/*
 public class FluidSlotSyncMsg extends PacketHandler.Message {
 
     int windowId;
@@ -38,3 +39,4 @@ public class FluidSlotSyncMsg extends PacketHandler.Message {
             ((BaseContainer)player.openContainer).loadFluidSlotChange(slot, data);
     }
 }
+*/
