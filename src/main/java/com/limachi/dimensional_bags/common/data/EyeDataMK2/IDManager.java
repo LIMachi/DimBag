@@ -36,7 +36,7 @@ public class IDManager extends WorldSavedData {
 
     static public IDManager getInstance(@Nullable ServerWorld world) {
         if (world == null)
-            world = WorldUtils.getOverWorld();
+            world = (ServerWorld)WorldUtils.getOverWorld();
         if (world != null)
             return world.getSavedData().getOrCreate(IDManager::new, DimBag.MOD_ID + "_id_manager");
         return null;

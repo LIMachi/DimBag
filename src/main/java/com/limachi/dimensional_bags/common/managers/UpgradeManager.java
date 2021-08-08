@@ -3,7 +3,10 @@ package com.limachi.dimensional_bags.common.managers;
 import com.limachi.dimensional_bags.common.Registries;
 import com.limachi.dimensional_bags.common.data.EyeDataMK2.WorldSavedDataManager;
 import com.limachi.dimensional_bags.common.items.upgrades.BaseUpgrade;
+import com.limachi.dimensional_bags.common.items.upgrades.HiddenUpgrade;
+import net.minecraft.entity.Entity;
 import net.minecraft.nbt.CompoundNBT;
+import net.minecraft.world.World;
 
 import java.util.*;
 import java.util.function.Consumer;
@@ -32,9 +35,7 @@ public class UpgradeManager extends WorldSavedDataManager.EyeWorldSavedData {
 
     private CompoundNBT upgradesNBT;
 
-    public UpgradeManager(int id) {
-        this("upgrade_manager", id, true);
-    }
+    public UpgradeManager(int id) { this("upgrade_manager", id, true); }
 
     public UpgradeManager(String suffix, int id, boolean client) {
         super(suffix, id, client, false);
@@ -72,10 +73,17 @@ public class UpgradeManager extends WorldSavedDataManager.EyeWorldSavedData {
         return 0;
     }
 
-    @Override
-    public void read(CompoundNBT nbt) {
-        upgradesNBT = nbt;
+    public void inventoryTick(World worldIn, Entity entityIn) {
+        for (String upgrade : getInstalledUpgrades()) {
+            BaseUpgrade up = getUpgrade(upgrade);
+            if (up.isActive(getEyeId()))
+                up.upgradeEntityTick(getEyeId(), worldIn, entityIn);
+        }
+        getUpgrade(HiddenUpgrade.NAME).upgradeEntityTick(getEyeId(), worldIn, entityIn);
     }
+
+    @Override
+    public void read(CompoundNBT nbt) { upgradesNBT = nbt; }
 
     @Override
     public CompoundNBT write(CompoundNBT nbt) {

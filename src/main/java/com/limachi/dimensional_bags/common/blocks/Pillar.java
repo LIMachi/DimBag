@@ -14,7 +14,6 @@ import net.minecraft.block.SoundType;
 import net.minecraft.block.material.Material;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.item.BlockItem;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundNBT;
@@ -29,7 +28,7 @@ import javax.annotation.Nullable;
 import java.util.function.Supplier;
 
 @StaticInit
-public class Pillar extends AbstractTileEntityBlock<PillarTileEntity> {
+public class Pillar extends AbstractTileEntityBlock<PillarTileEntity> implements IHasBagSettings {
 
     public static final String NAME = "pillar";
     public static final Supplier<Pillar> INSTANCE = Registries.registerBlock(NAME, Pillar::new);
@@ -49,7 +48,7 @@ public class Pillar extends AbstractTileEntityBlock<PillarTileEntity> {
     public ItemStack asItem(BlockState state, PillarTileEntity pillar) {
         ItemStack out = super.asItem(state, pillar);
         if (pillar != null && DimBag.isServer(null)) { //only run this part serve side as pillar.invId is server only
-            PillarInventory inv = (PillarInventory) InventoryData.execute(pillar.getEyeId(), d -> d.getPillarInventory(pillar.invId), null);
+            PillarInventory inv = (PillarInventory) InventoryData.execute(pillar.getEyeId(), d -> d.getPillarInventory(pillar.getId()), null);
             if (out.getTag() == null)
                 out.setTag(new CompoundNBT());
             out.getTag().remove("BlockEntityTag");
@@ -65,14 +64,14 @@ public class Pillar extends AbstractTileEntityBlock<PillarTileEntity> {
             PillarInventory inv = new PillarInventory();
             if (tags != null && tags.contains("UUID"))
                 inv.deserializeNBT(tags);
-            pillar.invId = inv.getId();
             InventoryData.execute(pillar.getEyeId(), d -> d.addPillar(inv));
+            pillar.setId(inv.getId());
         }
     }
 
     @Override
     public void onRemove(BlockState state, World worldIn, BlockPos pos, BlockState newState, boolean isMoving, PillarTileEntity pillar) {
-        EventManager.delayedTask(0, ()->InventoryData.execute(pillar.getEyeId(), d->d.removePillar(pillar.invId))); //on remove is called before drops, rip
+        EventManager.delayedTask(0, ()->InventoryData.execute(pillar.getEyeId(), d->d.removePillar(pillar.getId()))); //on remove is called before drops, rip
     }
 
     @Override
@@ -82,8 +81,10 @@ public class Pillar extends AbstractTileEntityBlock<PillarTileEntity> {
         if (eyeId <= 0) return ActionResultType.SUCCESS;
         TileEntity te = DimBag.debug(world.getTileEntity(pos));
         if (!(te instanceof PillarTileEntity)) return super.onBlockActivated(state, world, pos, player, hand, ray);
-//        DimBag.debug(((PillarTileEntity) te).getInventory(), "expected inventory").open((ServerPlayerEntity) DimBag.debug(player));
         new PillarContainer(0, player.inventory, eyeId, ((PillarTileEntity) te).getInventory().getId()).open(player);
         return ActionResultType.SUCCESS;
     }
+
+    @Override
+    public ActionResultType openSettings(PlayerEntity player) { return ActionResultType.SUCCESS; }
 }

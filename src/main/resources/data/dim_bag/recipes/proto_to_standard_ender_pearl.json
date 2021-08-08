@@ -1,9 +1,0 @@
-{
-  "type": "minecraft:smelting",
-  "ingredient": {
-    "item": "dim_bag:proto_ender_pearl"
-  },
-  "result": "minecraft:ender_pearl",
-  "experience": 1.0,
-  "cookingtime": 200
-}

@@ -57,9 +57,9 @@ public abstract class BaseUpgrade extends Item {
 
     public boolean isInstalled(int eyeId) { return UpgradeManager.execute(eyeId, um->um.getInstalledUpgrades().contains(upgradeName()), false); }
 
-    public boolean isActive(int eyeId) { return canBeInstalled() && isInstalled(eyeId) && SettingsData.execute(eyeId, sd-> settingsReader.get("active", sd)); }
+    public boolean isActive(int eyeId) { return canBeInstalled() && isInstalled(eyeId) && SettingsData.execute(eyeId, sd-> settingsReader.get("active", sd), false); }
 
-    public static BaseUpgrade getInstance(String name) { return UpgradeManager.getUpgrade(name); }
+    public static <T extends BaseUpgrade> T getInstance(String name) { return (T)UpgradeManager.getUpgrade(name); }
 
     /**
      * here you should use the settings method to populate the settings, reading and writing should be done elsewhere
@@ -137,7 +137,7 @@ public abstract class BaseUpgrade extends Item {
     private static ItemStack installUpgrades(PlayerEntity player, int eyeId, ItemStack stack) {
         BaseUpgrade upgrade = (BaseUpgrade) stack.getItem();
         if (!upgrade.canBeInstalled()) {
-            player.sendStatusMessage(new TranslationTextComponent("items.upgrades.trying_to_install_disabled_upgrade").mergeStyle(TextFormatting.BOLD, TextFormatting.RED), true);
+            player.sendStatusMessage(new TranslationTextComponent("notification.upgrade.trying_to_install_disabled_upgrade").mergeStyle(TextFormatting.BOLD, TextFormatting.RED), true);
             return stack;
         }
         UpgradeManager um = UpgradeManager.getInstance(eyeId);
@@ -147,18 +147,18 @@ public abstract class BaseUpgrade extends Item {
             if (nc > 0) {
                 out.shrink(nc);
                 upgrade.addCount(um, nc);
-                player.sendStatusMessage(new TranslationTextComponent("items.upgrades.installed_X_upgrades", stack.getCount() - nc, upgrade.upgradeName()), true);
+                player.sendStatusMessage(new TranslationTextComponent("notification.upgrade.installed_X_upgrades", nc, upgrade.upgradeName()), true);
             } else
-                player.sendStatusMessage(new TranslationTextComponent("items.upgrades.max_upgrades_reached", upgrade.upgradeName()), true);
+                player.sendStatusMessage(new TranslationTextComponent("notification.upgrade.max_upgrades_reached", upgrade.upgradeName()), true);
         } else
-            player.sendStatusMessage(new TranslationTextComponent("items.upgrades.max_upgrades_reached", upgrade.upgradeName()), true);
+            player.sendStatusMessage(new TranslationTextComponent("notification.upgrade.max_upgrades_reached", upgrade.upgradeName()), true);
         return out;
     }
 
     @Override
     public void addInformation(ItemStack stack, @Nullable World worldIn, List<ITextComponent> tooltip, ITooltipFlag flagIn) {
         if (stack.getItem() instanceof BaseUpgrade && !((BaseUpgrade)stack.getItem()).canBeInstalled())
-            tooltip.add(new TranslationTextComponent("items.upgrades.disable_upgrade").mergeStyle(TextFormatting.BOLD, TextFormatting.RED));
+            tooltip.add(new TranslationTextComponent("tooltip.upgrade.disabled").mergeStyle(TextFormatting.BOLD, TextFormatting.RED));
         super.addInformation(stack, worldIn, tooltip, flagIn);
     }
 

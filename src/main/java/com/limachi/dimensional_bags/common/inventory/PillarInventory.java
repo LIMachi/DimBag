@@ -3,7 +3,6 @@ package com.limachi.dimensional_bags.common.inventory;
 import com.limachi.dimensional_bags.DimBag;
 import com.limachi.dimensional_bags.ConfigManager.Config;
 import com.limachi.dimensional_bags.common.container.BaseContainer;
-import com.limachi.dimensional_bags.common.container.PillarContainer;
 import com.limachi.dimensional_bags.utils.StackUtils;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.inventory.container.Slot;
@@ -27,6 +26,9 @@ public class PillarInventory implements ISimpleItemHandlerSerializable {
     protected ItemStack stack = ItemStack.EMPTY; //the count of this stack may go above a byte and should be communicated using StackUtils
     protected boolean locked = false; //does this pillar need to keep it's last item
     public Runnable notifyDirt;
+
+    protected ItemStack[] upgrades = {ItemStack.EMPTY, ItemStack.EMPTY, ItemStack.EMPTY}; //addition upgrade (up to 64), multiplication upgrade (up to 64), void upgrade, creative
+    protected String filter; //regex on name of item (could implement a behavior of: dropping item there would extract the name)
 
     @Override
     public boolean equals(Object o) {

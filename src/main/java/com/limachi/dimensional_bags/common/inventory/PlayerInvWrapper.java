@@ -11,6 +11,10 @@ import javax.annotation.Nonnull;
 public class PlayerInvWrapper extends Wrapper {
     public PlayerInvWrapper(PlayerInventory inv) { super(inv); }
 
+    public PlayerInvWrapper(PlayerInventory inv, Runnable markDirty) {
+        super(inv, baseRights(inv.getSizeInventory()), markDirty);
+    }
+
     public PlayerInvWrapper(PlayerInventory inv, IORights[] IO, Runnable markDirty) { super(inv, IO, markDirty); }
 
     public PlayerInvWrapper(PlayerInventory inv, PacketBuffer buffer) { super(inv, buffer); }

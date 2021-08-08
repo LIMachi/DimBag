@@ -15,6 +15,7 @@ import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.ai.attributes.Attribute;
 import net.minecraft.entity.ai.attributes.AttributeModifier;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.inventory.EquipmentSlotType;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundNBT;
@@ -84,6 +85,8 @@ public class Mode {
                 clientDataManager.store(stack);
         }
     }
+
+    public boolean onScroll(PlayerEntity player, int eye, boolean up) { return false; }
 
     public void getAttributeModifiers(int eyeId, boolean selected, EquipmentSlotType slot, ImmutableMultimap.Builder<Attribute, AttributeModifier> builder) {}
 //    public ActionResultType onPlayerTick(int eyeId, ItemStack stack, World world, Entity player, int itemSlot, boolean isSelected) { return ActionResultType.CONSUME; } //called while the bag is ticking inside a player inventory

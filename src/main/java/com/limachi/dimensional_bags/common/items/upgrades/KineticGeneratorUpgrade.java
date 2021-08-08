@@ -40,7 +40,7 @@ public class KineticGeneratorUpgrade extends BaseUpgrade {
     @Override
     public int installUpgrade(UpgradeManager manager, int qty) { return qty; }
 
-    protected int motionGeneration(int eyeId, Entity entity) {
+    protected int motionGeneration(int eyeId, Entity entity) { //FIXME: use a better algorithm and make it configurable
 
         boolean isRiding = entity.getRidingEntity() != null;
         boolean isElytraFlying = entity instanceof PlayerEntity && ((PlayerEntity) entity).isElytraFlying();
@@ -67,7 +67,7 @@ public class KineticGeneratorUpgrade extends BaseUpgrade {
 
     @Override
     public ActionResultType upgradeEntityTick(int eyeId, World world, Entity entity) {
-        if (entity instanceof LivingEntity && Bag.isEquipedOnCuriosSlot((LivingEntity)entity, eyeId) == eyeId)
+        if (entity instanceof LivingEntity && Bag.isEquippedOnCuriosSlot((LivingEntity)entity, eyeId) == eyeId)
             EnergyData.execute(eyeId, (energyData)->energyData.receiveEnergy(motionGeneration(eyeId, entity), false), 0);
         return ActionResultType.SUCCESS;
     }

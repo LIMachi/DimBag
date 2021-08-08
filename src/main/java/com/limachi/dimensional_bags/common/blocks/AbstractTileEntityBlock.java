@@ -2,6 +2,7 @@ package com.limachi.dimensional_bags.common.blocks;
 
 import com.limachi.dimensional_bags.DimBag;
 import com.limachi.dimensional_bags.common.Registries;
+import com.limachi.dimensional_bags.common.tileentities.BaseTileEntity;
 import net.minecraft.block.*;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.item.ItemEntity;
@@ -24,7 +25,7 @@ import java.util.List;
  * helper class to create blocks that have tileentities linked to them and that use those tileentities to manipulate drops (by default copy the tile entity to "BlockEntityTag" on break, including creative break)
  * @param <T>
  */
-public abstract class AbstractTileEntityBlock<T extends TileEntity> extends ContainerBlock {
+public abstract class AbstractTileEntityBlock<T extends BaseTileEntity> extends ContainerBlock {
 
     public final Class<T> tileEntityClass;
     public final String tileEntityRegistryName;
@@ -98,7 +99,7 @@ public abstract class AbstractTileEntityBlock<T extends TileEntity> extends Cont
 
     @Override
     public void onReplaced(BlockState state, World worldIn, BlockPos pos, BlockState newState, boolean isMoving) {
-        if (!state.isIn(newState.getBlock()) && state.isIn((Block)getInstance())) {
+        if (state.getBlock() != newState.getBlock() && state.getBlock() == getInstance()) {
             TileEntity te = worldIn.getTileEntity(pos);
             if (tileEntityClass.isInstance(te))
                 onRemove(state, worldIn, pos, newState, isMoving, (T)te);

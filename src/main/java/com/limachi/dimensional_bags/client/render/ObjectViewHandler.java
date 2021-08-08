@@ -270,7 +270,7 @@ public class ObjectViewHandler {
 //        matrixStack.getLast().getMatrix().set(from(matrixStack.getLast().getMatrix())); //swap the new pushed matrix for one that is scaled/translated to the root widget view
         if (withWrap)
             while (r < string.length() && y + l * font.FONT_HEIGHT < coords.getY2()) {
-                tmpStr = font.func_238412_a_(string.substring(r), (int) coords.getWidth()); //trimStringToWidth
+                tmpStr = font.trimStringToWidth(string.substring(r), (int) coords.getWidth());
                 if (tmpStr.isEmpty())
                     tmpStr = string.substring(0, 1);
                 r += tmpStr.length();

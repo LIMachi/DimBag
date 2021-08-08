@@ -8,11 +8,13 @@ import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.WorldVertexBufferUploader;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.math.vector.Vector4f;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
 public class TextureCutout {
+
+    public static final int SELECTED = 1;
+    public static final int HOVERED = 2;
 
     @OnlyIn(Dist.CLIENT)
     public static Minecraft mc = Minecraft.getInstance();
@@ -70,6 +72,19 @@ public class TextureCutout {
     public void blit(MatrixStack matrixStack, Box2d coords, int blitOffset, TextureApplicationPattern pattern) {
         if (file != null) bindTexture();
         blitRec(matrixStack, coords, blitOffset, pattern);
+    }
+
+    @OnlyIn(Dist.CLIENT)
+    public void blitButton(MatrixStack matrixStack, Box2d coords, int blitOffset, TextureApplicationPattern pattern, int state) {
+        if (file != null) bindTexture();
+        if (state != 0) {
+            double dx = (state & SELECTED) == SELECTED ? corners.getWidth() : 0.;
+            double dy = (state & HOVERED) == HOVERED ? corners.getHeight() : 0.;
+            corners = corners.move(dx, dy);
+            blitRec(matrixStack, coords, blitOffset, pattern);
+            corners = corners.move(-dx, -dy);
+        } else
+            blitRec(matrixStack, coords, blitOffset, pattern);
     }
 
     @OnlyIn(Dist.CLIENT)

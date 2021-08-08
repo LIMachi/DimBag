@@ -15,18 +15,16 @@ import net.minecraft.entity.LivingEntity;
 import net.minecraft.item.BlockItem;
 import net.minecraft.item.BlockItemUseContext;
 import net.minecraft.item.ItemStack;
-import net.minecraft.state.EnumProperty;
+import net.minecraft.state.BooleanProperty;
 import net.minecraft.state.StateContainer;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.ActionResultType;
 import net.minecraft.util.Direction;
-import net.minecraft.util.IStringSerializable;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IBlockReader;
 import net.minecraft.world.World;
 
 import javax.annotation.Nullable;
-import java.util.HashMap;
 import java.util.function.Supplier;
 
 @StaticInit
@@ -46,36 +44,7 @@ public class Crystal extends AbstractTileEntityBlock<CrystalTileEntity> implemen
     public static final Supplier<Crystal> INSTANCE = Registries.registerBlock(NAME, Crystal::new);
     public static final Supplier<BlockItem> INSTANCE_ITEM = Registries.registerBlockItem(NAME, NAME, DimBag.DEFAULT_PROPERTIES);
 
-    public enum IOEnum implements IStringSerializable {
-        DISABLED(false, false),
-        PUSH(true, false),
-        PULL(false, true),
-        BOTH(true, true);
-
-        private final boolean push;
-        private final boolean pull;
-
-        IOEnum(boolean push, boolean pull) {
-            this.push = push;
-            this.pull = pull;
-        }
-
-        public boolean isPush() { return push; }
-        public boolean isPull() { return pull; }
-        public boolean isPushOrPull(boolean testPush) { return testPush ? push : pull; }
-        public IOEnum cycle() { return IOEnum.values()[(ordinal() + 1) % IOEnum.values().length]; }
-
-        @Override
-        public String getString() { return this.name().toLowerCase(); }
-    }
-
-    public static final HashMap<Direction, EnumProperty<IOEnum>> IOSTATES = new HashMap<>();
-//    public static final BooleanProperty ACTIVE_PUSH_PULL = BooleanProperty.create("active_push_pull");
-
-    static {
-        for (Direction dir : Direction.values())
-            IOSTATES.put(dir, EnumProperty.create(dir.getName2(), IOEnum.class));
-    }
+    public static final BooleanProperty PULL = BooleanProperty.create("pull");
 
     public Crystal() {
         super(NAME, Properties.create(Material.REDSTONE_LIGHT).hardnessAndResistance(1.5f, 3600000f).sound(SoundType.GLASS), CrystalTileEntity.class, CrystalTileEntity.NAME);
@@ -85,9 +54,7 @@ public class Crystal extends AbstractTileEntityBlock<CrystalTileEntity> implemen
 
     @Override
     protected void fillStateContainer(StateContainer.Builder<Block, BlockState> builder) {
-        for (Direction dir : Direction.values())
-            builder.add(IOSTATES.get(dir));
-//        builder.add(ACTIVE_PUSH_PULL);
+        builder.add(PULL);
     }
 
     @Nullable
@@ -127,7 +94,7 @@ public class Crystal extends AbstractTileEntityBlock<CrystalTileEntity> implemen
 
     @Override //cycle the face state (push, pull, both, none)
     public ActionResultType wrenchWithBag(World world, BlockPos pos, BlockState state, Direction face) {
-        world.setBlockState(pos, state.with(IOSTATES.get(face), state.get(IOSTATES.get(face)).cycle()));
+        world.setBlockState(pos, state.with(PULL, !state.get(PULL)));
         return ActionResultType.SUCCESS;
     }
 }

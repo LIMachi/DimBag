@@ -1,9 +1,15 @@
 package com.limachi.dimensional_bags.common.data;
 
 import com.limachi.dimensional_bags.DimBag;
+import com.limachi.dimensional_bags.common.data.EyeDataMK2.ClientDataManager;
+import com.limachi.dimensional_bags.common.data.EyeDataMK2.OwnerData;
+import com.limachi.dimensional_bags.common.data.EyeDataMK2.SettingsData;
+import com.limachi.dimensional_bags.common.managers.ModeManager;
+import com.limachi.dimensional_bags.common.managers.UpgradeManager;
 import com.limachi.dimensional_bags.utils.WorldUtils;
 import com.limachi.dimensional_bags.common.data.EyeDataMK2.SubRoomsManager;
 import net.minecraft.entity.player.ServerPlayerEntity;
+import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.math.BlockPos;
@@ -29,19 +35,26 @@ public class DimBagData extends WorldSavedData { //server side only, client side
 
     public int getLastId() { return lastId; }
 
-    public int newEye(ServerPlayerEntity player) {
+    public int newEye(ServerPlayerEntity player, ItemStack bag) {
         int id = ++lastId;
         SubRoomsManager roomsManager = SubRoomsManager.getInstance(id);
         if (roomsManager == null) {
             --lastId;
             return 0;
         }
-        ServerWorld world = WorldUtils.getRiftWorld();
-        if (world != null) {
+        World world = WorldUtils.getRiftWorld();
+        if (world instanceof ServerWorld) {
             BlockPos eyePos = SubRoomsManager.getEyePos(id);
-            WorldUtils.buildRoom(world, eyePos, SubRoomsManager.DEFAULT_RADIUS, 0);
+            WorldUtils.buildRoom(world, eyePos, SubRoomsManager.DEFAULT_RADIUS);
             roomsManager.markDirty();
-            chunkloadder.loadChunk(world, eyePos.getX(), eyePos.getZ(), 0);
+            chunkloadder.loadChunk((ServerWorld) world, eyePos.getX(), eyePos.getZ(), 0);
+        }
+        SettingsData.getInstance(id).initDefaultSettings();
+        ModeManager.getInstance(id).markDirty();
+        OwnerData ownerData = OwnerData.getInstance(id);
+        if (ownerData != null) {
+            ownerData.setPlayer(player);
+            new ClientDataManager(id, UpgradeManager.getInstance(id), ModeManager.getInstance(id), ownerData).store(bag);
         }
         markDirty();
         return id;

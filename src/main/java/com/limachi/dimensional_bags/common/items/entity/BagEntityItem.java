@@ -1,10 +1,10 @@
 package com.limachi.dimensional_bags.common.items.entity;
 
+import com.limachi.dimensional_bags.DimBag;
 import com.limachi.dimensional_bags.common.Registries;
 import com.limachi.dimensional_bags.common.data.EyeDataMK2.HolderData;
 import com.limachi.dimensional_bags.common.data.IEyeIdHolder;
 import com.limachi.dimensional_bags.common.items.Bag;
-import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityClassification;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.item.ItemEntity;
@@ -45,22 +45,16 @@ public class BagEntityItem extends ItemEntity implements IEyeIdHolder {
     protected void outOfWorld() {}
 
     @Override
-    public boolean isImmuneToExplosions() {
-        return true;
-    }
-
-    public void onItemPickup(Entity entityIn, int quantity) {
-
-    }
+    public boolean isImmuneToExplosions() { return true; }
 
     @Override
     public IPacket<?> createSpawnPacket() { return NetworkHooks.getEntitySpawningPacket(this); }
 
     @Override
     public void tick() {
-        if (!world.isRemote()) {
-            if (getPosition().getY() < 1)
-                setPosition(getPosX(), 1, getPosZ());
+        if (getPosition().getY() < 1)
+            setPosition(getPosX(), 1, getPosZ());
+        if (DimBag.isServer(world)) {
             int id = Bag.getEyeId(getItem());
             if (id <= 0) return;
             HolderData.execute(id, holderData -> holderData.setHolder(this));

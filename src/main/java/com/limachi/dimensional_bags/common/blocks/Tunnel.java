@@ -38,7 +38,7 @@ public class Tunnel extends Block {
     public ActionResultType onBlockActivated(BlockState state, World world, BlockPos pos, PlayerEntity player, Hand hand, BlockRayTraceResult ray) { //'right-click' behavior (use/interact)
         if (!DimBag.isServer(world)) return super.onBlockActivated(state, world, pos, player, hand, ray);
         if (KeyMapController.KeyBindings.SNEAK_KEY.getState(player))
-            SubRoomsManager.execute(SubRoomsManager.getEyeId(world, pos, false), subRoomsManager -> subRoomsManager.enterBag(player, false, false, false));
+            SubRoomsManager.execute(SubRoomsManager.getEyeId(world, pos, false), subRoomsManager -> subRoomsManager.enterBag(player, false, false, false, false));
         else
             SubRoomsManager.execute(SubRoomsManager.getEyeId(world, pos, false), subRoomsManager -> subRoomsManager.tpTunnel(player, pos));
         return ActionResultType.SUCCESS;
@@ -58,6 +58,7 @@ public class Tunnel extends Block {
             CompoundNBT nbt = new CompoundNBT();
             if (SubRoomsManager.tunnel((ServerWorld)worldIn, pos, player, false, true, nbt)) {
                 worldIn.setBlockState(pos, Registries.getBlock(Wall.NAME).getDefaultState());
+//                worldIn.setBlockState(pos, Blocks.BROWN_WOOL.getDefaultState()); //TODO
                 ItemStack out = new ItemStack(Registries.getItem(TunnelPlacer.NAME));
                 if (TunnelPlacer.NERF_TUNNEL_PLACER) {
                     if (!out.hasTag())

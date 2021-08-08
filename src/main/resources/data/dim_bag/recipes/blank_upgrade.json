@@ -1,0 +1,23 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "NPN",
+    "PBP",
+    "NPN"
+  ],
+  "key": {
+    "N": {
+      "item": "minecraft:iron_nugget"
+    },
+    "P": {
+      "item": "minecraft:paper"
+    },
+    "B": {
+      "item": "dim_bag:bag"
+    }
+  },
+  "result": {
+    "item": "dim_bag:blank_upgrade",
+    "count": 1
+  }
+}

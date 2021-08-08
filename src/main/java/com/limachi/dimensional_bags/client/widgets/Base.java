@@ -78,7 +78,7 @@ public class Base {
     public boolean onKeyReleased(int keyCode, int scanCode, int modifiers) { return false; }
     public boolean onCharTyped(char codePoint, int modifiers) { return false; }
 
-    public boolean isFocused() { return screen(s->s.getFocusedWidget() == this, false); }
+    public boolean isFocused() { return /*screen(s->s.getFocusedWidget() == this, false)*/false; }
     public boolean isHovered() { return isHovered; }
 
     public double getInitialDragX() { return initialDragX; }
@@ -227,11 +227,11 @@ public class Base {
         return !isFocused() && onCharTyped(codePoint, modifiers);
     }
 
-    public final boolean changeFocus(boolean isFocused) {
+    public final boolean changeFocus(boolean isFocused) {/*
         if (isFocused)
             screen(s->s.setFocusedWidget(this));
         else if (isFocused())
-            screen(s->s.setFocusedWidget(null));
+            screen(s->s.setFocusedWidget(null));*/
         return isFocused;
     }
 

@@ -3,6 +3,7 @@ package com.limachi.dimensional_bags;
 import com.limachi.dimensional_bags.common.items.Bag;
 import com.limachi.dimensional_bags.common.items.GhostBag;
 import com.limachi.dimensional_bags.common.items.IDimBagCommonItem;
+import com.limachi.dimensional_bags.common.managers.ModeManager;
 import com.limachi.dimensional_bags.common.network.PacketHandler;
 import com.limachi.dimensional_bags.common.network.packets.ChangeModeRequest;
 import com.limachi.dimensional_bags.common.network.packets.KeyStateMsg;
@@ -12,6 +13,8 @@ import net.minecraft.client.util.InputMappings;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
+import net.minecraft.util.Hand;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.client.event.InputEvent;
@@ -46,19 +49,23 @@ public class KeyMapController {
     }
 
     @SubscribeEvent
-    public static void onScrollInput(InputEvent.MouseScrollEvent event) {
+    public static void addScrollBehaviorToBag(InputEvent.MouseScrollEvent event) {
         PlayerEntity player = DimBag.getPlayer();
-        if (player != null && KeyBindings.BAG_KEY.getState(player)) {
-            int slot = IDimBagCommonItem.getFirstValidItemFromPlayer(player, Item.class, x->(x.getItem() instanceof Bag || x.getItem() instanceof GhostBag) && Bag.getEyeId(x) > 0);
-            if (slot != -1) {
-                PacketHandler.toServer(new ChangeModeRequest(Bag.getEyeId(IDimBagCommonItem.getItemFromPlayer(player, slot)), event.getScrollDelta() > 0));
+        ItemStack stack = player.getHeldItem(Hand.MAIN_HAND);
+        if (!(stack.getItem() instanceof Bag))
+            stack = player.getHeldItem(Hand.OFF_HAND);
+        if (stack.getItem() instanceof Bag) {
+            int eye = Bag.getEyeId(stack);
+            boolean up = event.getScrollDelta() > 0;
+            if (ModeManager.changeModeRequest(player, eye, up)) {
+                PacketHandler.toServer(new ChangeModeRequest(eye, up));
                 event.setCanceled(true);
             }
         }
     }
 
     public enum KeyBindings {
-        BAG_KEY(true, ()->()->new KeyBinding("key.open_gui", KeyConflictContext.IN_GAME, InputMappings.Type.KEYSYM, GLFW.GLFW_KEY_I, KEY_CATEGORY)),
+        BAG_KEY(true, ()->()->new KeyBinding("key.action", KeyConflictContext.IN_GAME, InputMappings.Type.KEYSYM, GLFW.GLFW_KEY_I, KEY_CATEGORY)),
         SNEAK_KEY(false, ()->()->Minecraft.getInstance().gameSettings.keyBindSneak),
         SPRINT_KEY(false, ()->()->Minecraft.getInstance().gameSettings.keyBindSprint),
         JUMP_KEY(false, ()->()->Minecraft.getInstance().gameSettings.keyBindJump),

@@ -1,15 +1,11 @@
 package com.limachi.dimensional_bags.common.tileentities;
 
-import com.limachi.dimensional_bags.DimBag;
 import com.limachi.dimensional_bags.StaticInit;
 import com.limachi.dimensional_bags.common.Registries;
 import com.limachi.dimensional_bags.common.blocks.Pillar;
 import com.limachi.dimensional_bags.common.data.EyeDataMK2.InventoryData;
 import com.limachi.dimensional_bags.common.data.EyeDataMK2.SubRoomsManager;
 import com.limachi.dimensional_bags.common.inventory.PillarInventory;
-import net.minecraft.block.BlockState;
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.Direction;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.util.LazyOptional;
@@ -18,13 +14,12 @@ import net.minecraftforge.items.CapabilityItemHandler;
 import java.util.UUID;
 
 @StaticInit
-public class PillarTileEntity extends TileEntity {
+public class PillarTileEntity extends BaseTileEntity implements IisBagTE {
 
     public static final String NAME = "pillar";
 
     public static final String NBT_KEY_ID = "ID";
 
-    public UUID invId;
     private int eyeId;
 
     static {
@@ -39,25 +34,15 @@ public class PillarTileEntity extends TileEntity {
 
     public PillarTileEntity() {
         super(Registries.getTileEntityType(NAME));
-        invId = UUID.randomUUID();
+        getTileData().putUniqueId(NBT_KEY_ID, UUID.randomUUID());
     }
 
-    @Override
-    public CompoundNBT write(CompoundNBT compound) {
-        compound.putUniqueId(NBT_KEY_ID, invId);
-        return super.write(compound);
-    }
+    public UUID getId() { return getTileData().getUniqueId(NBT_KEY_ID); }
 
-    @Override
-    public void read(BlockState state, CompoundNBT compound) {
-        super.read(state, compound);
-        if (DimBag.isServer(world)) { //TODO: clean this hack, this is used to silence invalid id client side (ids are only used server side)
-            invId = compound.getUniqueId(NBT_KEY_ID);
-        }
-    }
+    public void setId(UUID id) { getTileData().putUniqueId(NBT_KEY_ID, id); markDirty(); }
 
     public PillarInventory getInventory() {
-        return (PillarInventory)InventoryData.execute(getEyeId(), invData->invData.getPillarInventory(invId), null);
+        return (PillarInventory)InventoryData.execute(getEyeId(), invData->invData.getPillarInventory(getId()), null);
     }
 
     @Override

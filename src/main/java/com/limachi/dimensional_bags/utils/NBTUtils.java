@@ -57,6 +57,13 @@ public class NBTUtils {
 //
 //    }
 
+    public static CompoundNBT clear(CompoundNBT comp) {
+        Object[] keys = comp.keySet().toArray();
+        for (Object key : keys)
+            comp.remove((String)key);
+        return comp;
+    }
+
     protected static CompoundNBT removeKeys(CompoundNBT nbt, ListNBT keys) {
         for (int i = 0; i < keys.size(); ++i) {
             INBT k = keys.get(i);
@@ -118,6 +125,8 @@ public class NBTUtils {
             out.put("Diff_Added", added);
         if (!removed.isEmpty())
             out.put("Diff_Removed", removed);
+        if (!out.isEmpty())
+            out.putBoolean("IsDiff", true);
         return out;
     }
 

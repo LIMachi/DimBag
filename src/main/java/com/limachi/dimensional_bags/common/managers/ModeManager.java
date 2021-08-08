@@ -3,11 +3,13 @@ package com.limachi.dimensional_bags.common.managers;
 import com.google.common.collect.ImmutableMultimap;
 import com.limachi.dimensional_bags.CuriosIntegration;
 import com.limachi.dimensional_bags.DimBag;
+import com.limachi.dimensional_bags.KeyMapController;
 import com.limachi.dimensional_bags.common.data.EyeDataMK2.ClientDataManager;
 import com.limachi.dimensional_bags.common.data.EyeDataMK2.WorldSavedDataManager;
 import com.limachi.dimensional_bags.common.items.Bag;
 import com.limachi.dimensional_bags.common.items.GhostBag;
 import com.limachi.dimensional_bags.common.managers.modes.*;
+import net.minecraft.client.entity.player.ClientPlayerEntity;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.ai.attributes.Attribute;
 import net.minecraft.entity.ai.attributes.AttributeModifier;
@@ -32,9 +34,12 @@ public class ModeManager extends WorldSavedDataManager.EyeWorldSavedData {
         new Tank()
     };
 
-    public static void changeModeRequest(int eye, boolean up) { //should iterate over players and change all bags
+    //should be changed to offer to modes to change the behavior
+    public static boolean changeModeRequest(PlayerEntity splayer, int eye, boolean up) { //should iterate over players and change all bags
         ModeManager dataS = getInstance(eye);
-        if (dataS == null) return;
+        if (dataS == null) return false;
+        if (ModeManager.getMode(dataS.selectedMode).onScroll(splayer, eye, up)) return true; //scroll was processed by a mode
+        if (splayer instanceof ClientPlayerEntity) return KeyMapController.KeyBindings.BAG_KEY.getState(splayer);
         ClientDataManager dataC = ClientDataManager.getInstance(eye);
         ArrayList<String> modes = new ArrayList<>(dataS.getInstalledModes());
         for (int i = 0; i < modes.size(); ++i) {
@@ -54,6 +59,7 @@ public class ModeManager extends WorldSavedDataManager.EyeWorldSavedData {
             if (res.size() != 0)
                 player.sendStatusMessage(new TranslationTextComponent("notification.bag.changed_mode", new TranslationTextComponent("bag.mode." + dataS.getSelectedMode())), true);
         }
+        return true;
     }
 
     public static int getModeIndex(String name) {

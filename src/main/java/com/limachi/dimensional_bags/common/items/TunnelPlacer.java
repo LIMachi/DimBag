@@ -4,8 +4,8 @@ import com.limachi.dimensional_bags.DimBag;
 import com.limachi.dimensional_bags.ConfigManager.Config;
 import com.limachi.dimensional_bags.common.Registries;
 import com.limachi.dimensional_bags.common.blocks.Tunnel;
-import com.limachi.dimensional_bags.common.blocks.Wall;
 import com.limachi.dimensional_bags.common.data.EyeDataMK2.SubRoomsManager;
+import com.limachi.dimensional_bags.utils.WorldUtils;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.ItemUseContext;
@@ -33,14 +33,16 @@ public class TunnelPlacer extends Item implements IDimBagCommonItem {
     @Override
     public ActionResultType onItemUse(ItemUseContext context) { //detect right clic on walls to transform them in tunnels, consuming 1 tunnel placer
         World world = context.getWorld();
-        if (!(world instanceof ServerWorld)) return ActionResultType.PASS;
+        if (!(world instanceof ServerWorld) || context.getPlayer() == null) return ActionResultType.PASS;
+
         BlockPos pos = context.getPos();
-        if (world.getBlockState(pos) != Registries.getBlock(Wall.NAME).getDefaultState()) return ActionResultType.PASS;
+        if (!SubRoomsManager.isWall(world, pos)) return ActionResultType.PASS;
 
         ItemStack stack = context.getItem();
-        if (SubRoomsManager.tunnel((ServerWorld)world, pos, null, true, false, stack.getTag())) {
-            world.setBlockState(pos, Registries.getBlock(Tunnel.NAME).getDefaultState());
-            stack.shrink(1);
+        if (SubRoomsManager.tunnel((ServerWorld)world, pos, context.getPlayer(), true, false, stack.getTag())) {
+            if (!context.getPlayer().isCreative())
+                stack.shrink(1);
+            WorldUtils.replaceBlockAndGiveBack(pos, Registries.getBlock(Tunnel.NAME), context.getPlayer());
         }
 
         return ActionResultType.SUCCESS;

@@ -10,7 +10,7 @@ import net.minecraft.util.text.TranslationTextComponent;
 import javax.annotation.Nonnull;
 
 @StaticInit
-public class SettingsContainer extends BaseEyeContainer {
+public class SettingsContainer extends BaseEyeContainer<SettingsContainer> {
 
     public static final String NAME = "settings";
 

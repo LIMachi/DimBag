@@ -5,7 +5,6 @@ import com.limachi.dimensional_bags.common.Registries;
 import com.limachi.dimensional_bags.common.blocks.Crystal;
 import com.limachi.dimensional_bags.common.data.EyeDataMK2.EnergyData;
 import com.limachi.dimensional_bags.common.data.EyeDataMK2.SubRoomsManager;
-import net.minecraft.tileentity.ITickableTileEntity;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.Direction;
 import net.minecraftforge.common.capabilities.Capability;
@@ -19,7 +18,7 @@ import java.util.Collections;
 import java.util.List;
 
 @StaticInit
-public class CrystalTileEntity extends TileEntity implements ITickableTileEntity, IEnergyStorage {
+public class CrystalTileEntity extends BaseTileEntity implements IEnergyStorage, IisBagTE {
 
     public static final String NAME = "crystal";
 
@@ -29,7 +28,7 @@ public class CrystalTileEntity extends TileEntity implements ITickableTileEntity
         Registries.registerTileEntity(NAME, CrystalTileEntity::new, ()->Registries.getBlock(Crystal.NAME), null);
     }
 
-    public CrystalTileEntity() { super(Registries.getTileEntityType(NAME)); }
+    public CrystalTileEntity() { super(Registries.getTileEntityType(NAME)); hasTileData = false; }
 
     public int getLocalEnergy() {
         EnergyData ed = data.get();
@@ -44,14 +43,14 @@ public class CrystalTileEntity extends TileEntity implements ITickableTileEntity
         ArrayList<T> list = new ArrayList<>();
         for(Direction facing : Direction.values()){
             TileEntity tile = this.world.getTileEntity(this.pos.offset(facing));
-            if(tile != null && !(tile instanceof CrystalTileEntity) && getBlockState().get(Crystal.IOSTATES.get(facing)).isPushOrPull(push))
+            if(tile != null && !(tile instanceof CrystalTileEntity) && getBlockState().get(Crystal.PULL) != push)
                 tile.getCapability(capability, facing.getOpposite()).ifPresent(list::add);
         }
         return list;
     }
 
     @Override
-    public void tick() {
+    public void tick(int tick) {
         EnergyData ed = getEnergyData();
         if (ed != null && ed.canReceive() && ed.getEnergyStored() < ed.getMaxEnergyStored()) //pull
             for (IEnergyStorage storage : getSurroundingCapabilities(CapabilityEnergy.ENERGY, false)) {

@@ -71,6 +71,7 @@ public class BagLayer<T extends LivingEntity, M extends BipedModel<T>, A extends
     @Override
     public void render(MatrixStack matrix, IRenderTypeBuffer buffer, int packedLight, T entity, float limbSwing, float limbSwingAmount, float partialTicks, float ageInTicks, float netHeadYaw, float headPitch) {
 //        ItemStack itemstack = entity.getItemStackFromSlot(EquipmentSlotType.CHEST);
+        if (entity.isInvisible()) return;
         Optional<ImmutableTriple<String, Integer, ItemStack>> s = CuriosApi.getCuriosHelper().findEquippedCurio((Item)Registries.getItem(Bag.NAME), entity);
         ItemStack itemstack = s.isPresent() ? s.get().getRight() : ItemStack.EMPTY;
         int eyeId;

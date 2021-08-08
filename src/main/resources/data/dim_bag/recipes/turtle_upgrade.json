@@ -1,0 +1,26 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    " H ",
+    "IUI",
+    " E "
+  ],
+  "key": {
+    "U": {
+      "item": "dim_bag:blank_upgrade"
+    },
+    "H": {
+      "item": "minecraft:turtle_helmet"
+    },
+    "I": {
+      "item": "minecraft:iron_block"
+    },
+    "E": {
+      "item": "minecraft:ender_pearl"
+    }
+  },
+  "result": {
+    "item": "dim_bag:turtle_upgrade",
+    "count": 1
+  }
+}

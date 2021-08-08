@@ -51,7 +51,7 @@ public class GhostHand extends Block implements ITileEntityProvider {
 
     @Override
     public void onReplaced(BlockState state, World worldIn, BlockPos pos, BlockState newState, boolean isMoving) {
-        if (!state.isIn(newState.getBlock())) //only do the default behavior if the new state is of a different block
+        if (state.getBlock() != newState.getBlock()) //only do the default behavior if the new state is of a different block
             super.onReplaced(state, worldIn, pos, newState, isMoving);
         worldIn.notifyNeighborsOfStateChange(pos, this);
     }

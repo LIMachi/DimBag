@@ -20,7 +20,7 @@ archivesBaseName = 'DimBag_1.16.5'
 sourceCompatibility = targetCompatibility = compileJava.sourceCompatibility = compileJava.targetCompatibility = '1.8' // Need this here so eclipse task generates correctly.
 
 minecraft {
-    mappings channel: 'snapshot', version: '20201028-1.16.3'
+    mappings channel: 'snapshot', version: '20210309-1.16.5'
     accessTransformer = file('src/main/resources/META-INF/accesstransformer.cfg')
     runs {
         client {
@@ -69,7 +69,7 @@ repositories {
 }
 
 dependencies {
-    minecraft 'net.minecraftforge:forge:1.16.5-36.1.2'
+    minecraft 'net.minecraftforge:forge:1.16.5-36.1.32'
     runtimeOnly fg.deobf("top.theillusivec4.curios:curios-forge:1.16.5-4.0.4.0") //Curios
     compileOnly fg.deobf("top.theillusivec4.curios:curios-forge:1.16.5-4.0.4.0:api") //Curios
     runtimeOnly fg.deobf("mezz.jei:jei-1.16.4:7.6.1.71") //jei
@@ -79,11 +79,13 @@ dependencies {
     runtimeOnly fg.deobf("mcp.mobius.waila:Hwyla:1.10.11-B78_1.16.2") //waila
 //    runtimeOnly "curse.maven:create-328085:3261455" //create (see https://www.cursemaven.com/)
     runtimeOnly fg.deobf("curse.maven:refined_storage-243076:3196167")
+//    runtimeOnly fg.deobf("curse.maven:shutup-experimental-settings-407174:3188120")
 //    compileOnly "mekanism:Mekanism:1.16.1-10.0.9.432:api" //mekanism
 //    runtimeOnly fg.deobf("mekanism:Mekanism:1.16.1-10.0.9.432")//Mekanism: core
 //    runtimeOnly fg.deobf("mekanism:Mekanism:1.16.1-10.0.9.432:additions")// Mekanism: Additions
 //    runtimeOnly fg.deobf("mekanism:Mekanism:1.16.1-10.0.9.432:generators")// Mekanism: Generators
 //    runtimeOnly fg.deobf("mekanism:Mekanism:1.16.1-10.0.9.432:tools")// Mekanism: Tools
+    runtimeOnly "curse.maven:immersive-engineering-231951:3377691" //immersive engineering (see https://www.cursemaven.com/)
 
 }
 

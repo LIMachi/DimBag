@@ -52,7 +52,7 @@ public class SweetFabricUpgrade extends BaseUpgrade {
                 }
             if (found_match) {
                 int bag = SubRoomsManager.getEyeId(event.getWorld(), event.getPos(), false);
-                if (bag > 0 && UpgradeManager.isUpgradeInstalled(bag, NAME).isPresent())
+                if (bag > 0 && UpgradeManager.isUpgradeInstalled(bag, NAME).isPresent() && UpgradeManager.getUpgrade(NAME).isActive(bag))
                     return;
                 event.setCanceled(true);
             }

@@ -1,0 +1,23 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "BRB",
+    "RER",
+    "BRB"
+  ],
+  "key": {
+    "B": {
+      "item": "minecraft:end_stone_brick_stairs"
+    },
+    "E": {
+      "item": "minecraft:end_crystal"
+    },
+    "R": {
+      "item": "minecraft:redstone_block"
+    }
+  },
+  "result": {
+    "item": "dim_bag:crystal",
+    "count": 1
+  }
+}

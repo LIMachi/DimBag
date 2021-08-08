@@ -1,36 +1,76 @@
 {
+  "key.action": "Action Key",
+
   "item.dim_bag.bag": "Dimensional Bag",
   "item.dim_bag.ghost_bag": "Virtual Bag",
-  "item.dim_bag.upgrade_row": "DimBag™ upgrade: Row",
-  "item.dim_bag.upgrade_column": "DimBag™ upgrade: Column",
-  "item.dim_bag.upgrade_radius": "DimBag™ upgrade: Radius",
-  "item.dim_bag.upgrade_slot": "DimBag™ upgrade: Slot",
-  "item.dim_bag.upgrade_slot_x4": "DimBag™ upgrade: Slot x4",
-  "item.dim_bag.upgrade_slot_x9": "DimBag™ upgrade: Slot x9",
+
   "item.dim_bag.tunnel_placer": "Tunnel Placer",
-  "block.dim_bag.bag_eye": "The All Seeing Eye Of The Dimentional Rift",
+  "item.dim_bag.wall_pusher": "Wall Pusher",
+
+  "item.dim_bag.battery_component": "Battery Component",
+  "item.dim_bag.blank_upgrade": "Blank Upgrade",
+  "item.dim_bag.compression_field": "Compression Field",
+
+  "item.dim_bag.charger_aura_upgrade": "Charger Aura Upgrade",
+  "item.dim_bag.death_hopper_upgrade": "Death Hopper Upgrade",
+  "item.dim_bag.hidden_upgrade": "This is a secret :)",
+  "item.dim_bag.induction_upgrade": "Induction Upgrade",
+  "item.dim_bag.kinetic_generator_upgrade": "Kinetic Generator Upgrade",
+  "item.dim_bag.sweet_fabric_upgrade": "Sweet Fabric Upgrade",
+  "item.dim_bag.turtle_upgrade": "Turtle Upgrade",
+
+  "block.dim_bag.bag_eye": "The All Seeing Eye Of The Dimensional Rift",
   "block.dim_bag.pillar": "Pillar",
   "block.dim_bag.cloud": "Cloud",
+  "block.dim_bag.bag_gateway": "Bag Gateway",
+  "block.dim_bag.brain": "Brain",
+  "block.dim_bag.crystal": "Crystal",
+  "block.dim_bag.fountain": "Fountain",
+  "block.dim_bag.ghost_hand": "Ghost Hand",
+  "block.dim_bag.pad": "Pad",
+  "block.dim_bag.player_pillar": "Player Pillar",
+  "block.dim_bag.tunnel": "Tunnel",
+  "block.dim_bag.wall": "Wall",
+
   "itemGroup.tab_dim_bag": "Dimensional Bags",
+
   "curios.identifier.backpack": "Backpack",
+
   "tooltip.upgrade.slot.craft_result": "Will produce between 9 and 27 slots",
   "tooltip.upgrade.row": "Add an additional row to the bag inventory, up to a maximum of %d rows",
   "tooltip.upgrade.column": "Add an additional column to the bag inventory, up to a maximum of %d columns",
   "tooltip.bag.missing_id": "Unlinked bag",
   "tooltip.bag.id": "Bag id: %d, Owner: %s",
+  "tooltip.upgrade.disabled": "This upgrade is not available for installation (WARNING: can be crafted, but will do NOTHING)",
+
   "inventory.player_interface.name": "Player Inventory: %s",
   "inventory.upgrades.row.description": "add an extra row to your bag inventory, increasing it's storage capacity",
   "inventory.upgrades.column.description": "add an extra column to your bag inventory, increasing it's storage capacity",
   "inventory.upgrades.radius.description": "increase the size of the current room (main room if applied to the bag directly) by 1 block in all directions",
+
   "tooltip.bag.upgrade_count": "%s -> %d/%d",
   "tooltip.bag.usable_slots": "Usable slots: %d/%d",
   "tooltip.shift_for_info": "use [SHIFT] for more information",
   "tooltip.bag.mode": "Selected mode: %s",
+
   "notification.bag.changed_mode": "Switched mode to: %s",
+  "notification.upgrade.trying_to_install_disabled_upgrade": "This upgrade is disabled, unable to install",
+  "notification.upgrade.installed_X_upgrades": "Installed %d %s",
+  "notification.upgrade.max_upgrades_reached": "Max upgrade count reached for %s",
+
   "bag.mode.Default": "Default",
+
   "entity_value_reader.printable": "%s->%s = '%s'(%s)",
+
   "item.fluid_item.empty_name": "Empty",
   "item.fluid_item.append_qty_to_name": " (%dmb)",
+
   "screen.fluid.bucket_acronym": "B",
-  "screen.milli_fluid.bucket_acronym": "mB"
+  "screen.milli_fluid.bucket_acronym": "mB",
+
+  "container.display_name.pillar": "Pillar",
+  "container.display_name.fountain": "Fountain",
+  "container.display_name.pad": "Pad",
+  "container.display_name.brain": "Brain",
+  "container.display_name.ghost_hand": "Ghost Hand"
 }

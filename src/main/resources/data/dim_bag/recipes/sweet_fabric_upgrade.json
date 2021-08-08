@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    " W ",
+    "WUW",
+    " W "
+  ],
+  "key": {
+    "U": {
+      "item": "dim_bag:blank_upgrade"
+    },
+    "W": {
+      "tag": "minecraft:wool"
+    }
+  },
+  "result": {
+    "item": "dim_bag:sweet_fabric_upgrade",
+    "count": 1
+  }
+}

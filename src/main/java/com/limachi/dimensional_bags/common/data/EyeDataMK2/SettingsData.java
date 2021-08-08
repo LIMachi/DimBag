@@ -1,17 +1,24 @@
 package com.limachi.dimensional_bags.common.data.EyeDataMK2;
 
+import com.google.common.collect.ImmutableList;
 import com.limachi.dimensional_bags.DimBag;
 import com.limachi.dimensional_bags.utils.NBTUtils;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.widget.TextFieldWidget;
+import net.minecraft.client.gui.widget.Widget;
+import net.minecraft.client.gui.widget.button.CheckboxButton;
 import net.minecraft.inventory.Inventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundNBT;
+import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TranslationTextComponent;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
+import net.minecraftforge.fml.client.gui.widget.Slider;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -24,15 +31,16 @@ public class SettingsData extends WorldSavedDataManager.EyeWorldSavedData {
     private static final ArrayList<SettingsReader> READERS = new ArrayList<>();
 
     public static class SettingsReader {
-        protected final String group; //"Upgrades", "Modes", "Others", etc
-        protected final String name; //"<upgrade_name>", "<mode_name>", "General", "Interact", etc
-        protected final Supplier<ItemStack> icon;
-        protected final HashMap<String, SettingsEntry<?>> settings = new HashMap<>();
+        public final String group; //"Upgrades", "Modes", "Others", etc
+        public final String name; //"<upgrade_name>", "<mode_name>", "General", "Interact", etc
+        public final Supplier<ItemStack> icon;
+        public final HashMap<String, SettingsEntry<?>> settings = new HashMap<>();
         protected boolean isBuilt;
 
         protected static class SettingsEntry<T> {
             final private String label;
             final private Predicate<T> validate;
+            private SettingsReader handler;
 
             static class InputType<T> {
                 public final T def;
@@ -63,6 +71,54 @@ public class SettingsData extends WorldSavedDataManager.EyeWorldSavedData {
             public T get(CompoundNBT nbt) { return NBTUtils.getOrDefault(nbt, label, inputType.def); }
             public void set(CompoundNBT nbt, T value) { NBTUtils.put(nbt, label, value); }
             public boolean validate(T value) { return validate.test(value); }
+            @OnlyIn(Dist.CLIENT)
+            public Widget getWidget(SettingsData data, CompoundNBT nbt, int x, int y) {
+                ITextComponent title = new TranslationTextComponent("settings." + handler.group + "." + handler.name + "." + label);
+                if (inputType.def instanceof Boolean)
+                    return new CheckboxButton(x, y, 16, 16, title, (Boolean)get(nbt)) {
+                        @Override
+                        public void onPress() {
+                            super.onPress();
+                            set(nbt, (T)(Boolean)isChecked());
+                            data.markDirty();
+                        }
+                    };
+                if (inputType.def instanceof String) {
+                    TextFieldWidget field = new TextFieldWidget(Minecraft.getInstance().fontRenderer, x, y, 200, 20, title);
+                    field.writeText((String) get(nbt));
+                    field.setResponder(s -> {set(nbt, (T) s); data.markDirty();});
+                    return field;
+                }
+                if (inputType.start != null && inputType.end != null) {
+                    return new Slider(x, y, title, ((Number) inputType.start).doubleValue(), ((Number) inputType.end).doubleValue(), ((Number) (T) get(nbt)).doubleValue(), onPress -> {
+                    }, null) {
+                        @Override
+                        public void onRelease(double mouseX, double mouseY) {
+                            super.onRelease(mouseX, mouseY);
+                            if (inputType.def instanceof Integer)
+                                set(nbt, (T) (Integer) getValueInt());
+                            else
+                                set(nbt, (T) (Double) getValue());
+                            data.markDirty();
+                        }
+                    };
+                }
+                if (inputType.def instanceof Integer) {
+                    TextFieldWidget field = new TextFieldWidget(Minecraft.getInstance().fontRenderer, x, y, 200, 20, title);
+                    field.writeText((String) get(nbt));
+                    field.setResponder(s -> {set(nbt, (T)(Integer)Integer.parseInt(s)); data.markDirty();});
+                    return field;
+                }
+                if (inputType.def instanceof Double) {
+                    TextFieldWidget field = new TextFieldWidget(Minecraft.getInstance().fontRenderer, x, y, 200, 20, title);
+                    field.writeText((String) get(nbt));
+                    field.setResponder(s -> {set(nbt, (T)(Double)Double.parseDouble(s)); data.markDirty();});
+                    return field;
+                }
+                return null;
+            }
+
+            SettingsEntry<T> attach(SettingsReader handler) { this.handler = handler; return this; }
         }
 
         public SettingsReader(String group, String name, Supplier<ItemStack> icon) {
@@ -70,6 +126,20 @@ public class SettingsData extends WorldSavedDataManager.EyeWorldSavedData {
             this.name = name;
             this.icon = icon;
             this.isBuilt = false;
+        }
+
+        @OnlyIn(Dist.CLIENT)
+        public ArrayList<Widget> getWidgets(SettingsData data, int x, int y) {
+            CompoundNBT nbt = data.getSettings(group, name, true);
+            ArrayList<Widget> out = new ArrayList<>();
+            for (SettingsEntry<?> entry : settings.values()) {
+                Widget widget = entry.getWidget(data, nbt, x, y);
+                if (widget != null) {
+                    y += 2 + widget.getHeight();
+                    out.add(widget);
+                }
+            }
+            return out;
         }
 
         public <T> T get(String label, SettingsData data) {
@@ -113,7 +183,7 @@ public class SettingsData extends WorldSavedDataManager.EyeWorldSavedData {
             if (isBuilt)
                 DimBag.LOGGER.error("Creating settings after build finished: " + group + "." + name + "." + label);
             else
-                settings.put(label, entry);
+                settings.put(label, entry.attach(this));
             return this;
         }
 
@@ -140,6 +210,8 @@ public class SettingsData extends WorldSavedDataManager.EyeWorldSavedData {
         return t.getCompound(name);
     }
 
+    public static ImmutableList<SettingsReader> getReaders() { return ImmutableList.copyOf(READERS); }
+
     public Inventory getSettingsIcons() {
         Inventory out = new Inventory(READERS.size());
         for (int i = 0; i < READERS.size(); ++i)
@@ -160,8 +232,16 @@ public class SettingsData extends WorldSavedDataManager.EyeWorldSavedData {
         markDirty();
     }
 
+    public void initDefaultSettings() {
+        for (SettingsReader reader : READERS)
+            for (Map.Entry<String, SettingsReader.SettingsEntry<?>> e : reader.settings.entrySet())
+                reader.set(e.getKey(), this, e.getValue().inputType.def);
+    }
+
     @Override
-    public void read(@Nonnull CompoundNBT nbt) { settingsNbt = nbt.copy(); }
+    public void read(@Nonnull CompoundNBT nbt) {
+        settingsNbt.merge(nbt); //this should ensure the same pointer is kept, but it is not the cleanest way (hold data will bloat if not rewritten)
+    }
 
     @Nonnull
     @Override

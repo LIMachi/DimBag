@@ -1,46 +1,18 @@
--Fix stack size acceptance in the upgrade gui (replace the hold guis with the new inv wrapper, redo upgrades system), PARTIALLY DONE (clicking a stack for merge isn't stable)
--Try to accelerate the change of the size of the rooms (for now, limit the max size of the rooms), and fix lightning issues (it is possible that the lightnin issue is vanilla and not fixable)
--Implement the tunnel block, rework the application of upgrades to take into account the room they are applied to (the bag is a reference to the main room)
--Implement a random teleport of nearby enemy/whitelisted entity if the filter upgrade isn't applied (for the bag entity, not the item entity)
 -Work on craft (very high chance that most craft will be vanilla json files)
--working on IO rights for the bag content itself, not only the player inventory
--fix interaction if the player as an item in hand while targeting the eye/bag
 -upgrade: sprinkler: use water to prevent burning, solidify lava, damage "fire" mobs, water farmland
--upgrade: slot upgrade. not only you upgrade the bag volume by row/column but also by slot (because at the start the upgrades are weak and the more row/column you use, the more slots they add, which is unfair for the first upgrades)
 
 -common buttons: applicable to all gui, allow switching of guis
 -new blocks for the dimension
 -crafts
 -Actions gui (facultative? will probably not be done after a while)
 
--redo crafts: use most vanilla crafting tables, no longer use an upgrade UI
-example:
--use the stone cutter to create slots
--apply upgrades using the smithing table
-
--lightning upgrade: consume rf to generate lightning
 -guardian upgrade: consume rf to shoot guardian laser to entities close to the holder and to the eye (always exclude owner, white list by mob type and player name)
 -projectile absorber: consume rf to catch projectiles that aren't sent by the holder or owner (white list allowed projectiles to go through)
 -boost upgrade: repurpose the firework part of the elytra upgrade, if elytra is equiped, easy elytra + firework. If no elytra and in water/rain, do a trident spin attack. If no elytra and no water, temporary speed + jump boost + fall absorbtion
--armor stand upgrade: repurpose the elytra part of the elytra upgrade and application of armor: add 2 slots to the bag that store a chest plate and an elytra
 
--see how enchantments work to make some enchantments compatible with the armor stand upgrade
 -see how entities/the player interact with the world to create the functions of the ghost hand (for player, might have to simulate key presses, for entities, might have to inject AI goals)
 
-
-
--store positions for entering/leaving the bag (I propose using names) -> when a player leaves the bag, entering again will put him back to where he was, the entry positions can be changed by a block (while redstone powered, all entities with the listed names spawn on the block instead of the default/previous positions) DONE
--add interaction with the ghost bag in the bag for leaving with shift-click DONE (might also want to leave when shit-right-click a block, not done)
--remember to redo the power system and remove the permanent energy coming from the eye DONE (the eye is no longer a tile entity, crystals can be moved and auto eject energy, might to make the auto eject of energy a redstone behavior)
-
--fix sleeping in the bag DONE (need upgrade, still need to test with other mods dimensions, but the method should work)
--rethink the inventory system of the bag DONE
--rework upgrade system (again) (and how about upgrading the bag is a craft?) (or better to prevent craft bugs: applying the upgrade by rightclicking the bag entity with an upgrade?) DONE
--nerf the tunnel placer (when you break a tunnel, give back a formated tunnel that only works on the same wall) to prevent infinite rooms with a single tunnel item
-
--back to the original idea: make pillars the inventory of the bag (each pillar is a slot that can old more than a stack, similar to the dank) DONE
 -pillars can be upgraded to player pillar (access to a single slot of the player inventory)
--a new room spawns with a certain number of pillars (by default 9)
 -pillars can be upgraded (like barrels/drawers) to contain more items
 -player pillars can be automated using redstone (redstone power on 1 axis select the line/belt/armor/extra inventory, redstont on the other axis selects the column)
 
@@ -48,10 +20,10 @@ example:
 
 -we could add a mode linked to a redstone block (adding the block inside the bag unlocks the mode) which allow the bag user to send redstone signals selecting the mode and on right clic open a radial menu to change the redtone signal (0-15, 16 radials? might be a little much)
 
--add morphing abilities to wall blocks (https://www.youtube.com/watch?v=nIWmQCJ6TGs)
-
 -finish those goddamned models and guis (please, for the love of god, finish the settings/widget system)
 -btw: you might have to rethink the guis entirely, swallow up your pride and go back to the standard way of doing it (one screen for one container) (you can keep the good parts tho and make SimpleContainer and SimpleContainerScreen into abstract BaseContainer and abstract BaseScreen)
+
+-block to move the bag (use redstone on the cardinals to move, might be able to move the holding entity, should prevent the bag from falling)
 
 (only when all else is finished, get back on track you dofus)
 ->proto pearl branch:
@@ -64,3 +36,23 @@ proto pearl (when consumed/eaten) will have a random effect in the following lis
 size pearl (stabilized proto pearl in size mode) will change your size when consumed
 -halve your size if you are sneaking (limited to 2 times or 1/2 of a block height)
 -double your size if you are standing (limited to 2 times or 8 blocks height)
+
+
+-----------------------------------------------------------------------
+TODO ADDITION EDITION:
+-----------------------------------------------------------------------
+add documentation (book/tooltips/UI text) (might look into Patchouli)
+add back the 'player pillar' features
+finish the WII block (fluids)
+almost finished --- add a new block placeable outside the bag to access the bag as a block (proxy) (allowing interactions with the inventory, tanks and batteries of the bag. note: interaction is passive, needs modded conduits/hoppers to work) (low tier: need the bag inside the block, high tier: bound to a bag)
+
+-----------------------------------------------------------------------
+TODO DEBUG EDITION:
+-----------------------------------------------------------------------
+finish those god-damn UI
+finish modeling/texturing
+look into sync bag and TE config in better ways (and maybe test for hacks/invalid values' server side)
+use 'Flight Recorder' and 'Coverage' to test how much the mod impact the performances of the game (RIP bag gateway renderers, too heavy)
+test against other mods/throw in a modpack
+test/balance upgrades and crafts (early, mid, late game, again the best way is playing on a modpack)
+prevent or un-equip bag when using another mod to teleport a player inside a bag (waystone, I'm looking at you)

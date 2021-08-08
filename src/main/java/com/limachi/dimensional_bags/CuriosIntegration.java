@@ -130,7 +130,8 @@ public class CuriosIntegration {
                 out.add(new ProxyItemStackModifier(() -> inv.getStackInSlot(current), stack -> inv.setInventorySlotContents(current, stack)));
             }
         } else {
-            ItemStack test = entity.getHeldEquipment().iterator().next();
+            Iterator<ItemStack> tit = entity.getHeldEquipment().iterator();
+            ItemStack test = tit.hasNext() ? tit.next() : ItemStack.EMPTY;
             if (clazz.isInstance(test.getItem()) && predicate.test(test))
                 out.add(new ProxyItemStackModifier(()->entity.getHeldEquipment().iterator().next(), stack->entity.setItemStackToSlot(EquipmentSlotType.MAINHAND, stack)));
         }

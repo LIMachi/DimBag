@@ -8,11 +8,12 @@ import com.limachi.dimensional_bags.common.data.EyeDataMK2.HolderData;
 import com.limachi.dimensional_bags.common.data.EyeDataMK2.SubRoomsManager;
 import com.limachi.dimensional_bags.common.data.IEyeIdHolder;
 import com.limachi.dimensional_bags.common.items.Bag;
+import com.limachi.dimensional_bags.common.managers.ModeManager;
+import com.limachi.dimensional_bags.common.managers.UpgradeManager;
 import net.minecraft.entity.*;
 import net.minecraft.entity.ai.attributes.AttributeModifierMap;
 import net.minecraft.entity.ai.attributes.Attributes;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.nbt.CompoundNBT;
@@ -38,8 +39,6 @@ public class BagEntity extends MobEntity implements IEyeIdHolder {
     }
 
     public static String ITEM_KEY = "BagItemStack";
-
-    private int tick = 0;
 
     public BagEntity(EntityType<? extends MobEntity> type, World world) {
         super(type, world);
@@ -120,34 +119,24 @@ public class BagEntity extends MobEntity implements IEyeIdHolder {
     @Override
     public void tick() {
         super.tick();
-        if (this.world.isRemote()) return; //do nothing client side
-        if ((tick & 7) == 0)
-            HolderData.execute(getEyeId(), holderData->holderData.setHolder(this));
-        ++tick;
+        int eyeId = getEyeId();
+        if (eyeId > 0) {
+            if (DimBag.isServer(world))
+                HolderData.execute(eyeId, holderData->holderData.setHolder(this));
+            ModeManager.execute(eyeId, modeManager -> modeManager.inventoryTick(world, this, true));
+            UpgradeManager.execute(eyeId, upgradeManager -> upgradeManager.inventoryTick(world, this));
+        }
     }
 
     @Override
-    protected ActionResultType/*boolean processInteract*/func_230254_b_(PlayerEntity player, Hand hand) { //TODO: update mapping
+    protected ActionResultType getEntityInteractionResult(PlayerEntity player, Hand hand) {
         if (player.world.isRemote()) return ActionResultType.PASS;
         int id = getEyeId();
         if (id == 0) return ActionResultType.PASS;
         if (KeyMapController.KeyBindings.SNEAK_KEY.getState(player)) {
             SubRoomsManager.execute(id, sm->sm.enterBag(player));
-//            CompoundNBT pp = player.getPersistentData().getCompound("DimBagData").getCompound("PreviousPosition");
-//            String sid = Integer.toString(id);
-//            BlockPos bp;
-//            TODO: add the code for the forced teleport on pad, move this code somewhere else (and make it common with the item version)
-//            if (pp.contains(sid)) {
-//                CompoundNBT t = pp.getCompound(sid);
-//                bp = new BlockPos(t.getInt("X"), t.getInt("Y"), t.getInt("Z"));
-//            } else {
-//                bp = new BlockPos(1024 * (getEyeId() - 1) + 8, 129, 8);
-//            }
-//            WorldUtils.teleportEntity(player, WorldUtils.DimBagRiftKey, new BlockPos(1024 * (getEyeId() - 1) + 8, 129, 8));
         } else
             new PillarContainer(0, player.inventory, getEyeId(), null).open(player);
-//            Network.openEyeInventory((ServerPlayerEntity)player, getEyeId(), null);
-            ;//FIXME
         return ActionResultType.SUCCESS;
     }
 

@@ -5,6 +5,7 @@ import com.limachi.dimensional_bags.common.blocks.Crystal;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraftforge.energy.IEnergyStorage;
 
+import javax.annotation.Nonnull;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -83,6 +84,18 @@ public class EnergyData extends WorldSavedDataManager.EyeWorldSavedData implemen
         return WorldSavedDataManager.execute(EnergyData.class, null, id, data->{executable.accept(data); return true;}, false);
     }
 
+    public static int transferFrom(int eye, int receive, @Nonnull IEnergyStorage from, boolean exactOnly) {
+        return execute(eye, ed->{
+            if (!ed.canReceive() || !from.canExtract()) return 0;
+            if (exactOnly && (from.extractEnergy(receive, true) != receive || ed.receiveEnergy(receive, true) != receive)) return 0;
+            return from.extractEnergy(ed.receiveEnergy(from.extractEnergy(receive, true), false), false);
+            }, 0);
+    }
+
+    public static int receiveEnergy(int eye, int receive) {
+        return execute(eye, ed->ed.receiveEnergy(receive, false), 0);
+    }
+
     @Override
     public int receiveEnergy(int receive, boolean simulate) {
         int energyReceived = Integer.max(0, Integer.min(capacity - energy, receive));
@@ -93,6 +106,18 @@ public class EnergyData extends WorldSavedDataManager.EyeWorldSavedData implemen
             markDirty();
         }
         return (int)energyReceived;
+    }
+
+    public static int transferTo(int eye, int extract, @Nonnull IEnergyStorage to, boolean exactOnly) {
+        return execute(eye, ed->{
+            if (!ed.canReceive() || !to.canExtract()) return 0;
+            if (exactOnly && (ed.extractEnergy(extract, true) != extract || to.receiveEnergy(extract, true) != extract)) return 0;
+            return ed.extractEnergy(to.receiveEnergy(ed.extractEnergy(extract, true), false), false);
+        }, 0);
+    }
+
+    public static int extractEnergy(int eye, int extract) {
+        return execute(eye, ed->ed.extractEnergy(extract, false), 0);
     }
 
     @Override
@@ -107,8 +132,16 @@ public class EnergyData extends WorldSavedDataManager.EyeWorldSavedData implemen
         return energyExtracted;
     }
 
+    public static int getEnergyStored(int eye) {
+        return execute(eye, EnergyData::getEnergyStored, 0);
+    }
+
     @Override
     public int getEnergyStored() { return (int)energy; }
+
+    public static int getMaxEnergyStored(int eye) {
+        return execute(eye, EnergyData::getMaxEnergyStored, 0);
+    }
 
     @Override
     public int getMaxEnergyStored() { return (int)capacity; }

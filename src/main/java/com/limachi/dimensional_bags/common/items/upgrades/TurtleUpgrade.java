@@ -4,7 +4,6 @@ import com.limachi.dimensional_bags.DimBag;
 import com.limachi.dimensional_bags.StaticInit;
 import com.limachi.dimensional_bags.ConfigManager.Config;
 import com.limachi.dimensional_bags.common.EventManager;
-import com.limachi.dimensional_bags.common.Registries;
 import com.limachi.dimensional_bags.common.data.EyeDataMK2.SettingsData;
 import com.limachi.dimensional_bags.common.data.EyeDataMK2.SubRoomsManager;
 import com.limachi.dimensional_bags.common.items.Bag;
@@ -54,7 +53,7 @@ public class TurtleUpgrade extends BaseUpgrade {
         if (!entity.isAlive() || event.getAmount() <= 0) return;
         int id = Bag.getBag(entity, 0);
         if (id == 0) return;
-        BaseUpgrade turtleUpgrade = getInstance(NAME);
+        TurtleUpgrade turtleUpgrade = getInstance(NAME);
         if (!turtleUpgrade.isActive(id)) return;
         int limit = turtleUpgrade.getSetting(id, "Threshold");
         if (entity.getHealth() - event.getAmount() <= limit && entity.getHealth() - event.getAmount() / GRACE_FACTOR > 0) {

@@ -8,6 +8,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.*;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.vector.Vector3i;
+import org.apache.commons.lang3.tuple.Triple;
 import org.apache.logging.log4j.util.TriConsumer;
 import org.objectweb.asm.Type;
 
@@ -16,9 +17,9 @@ import javax.annotation.Nullable;
 import java.lang.annotation.*;
 import java.lang.reflect.*;
 import java.security.InvalidParameterException;
-import java.text.NumberFormat;
 import java.util.*;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @StaticInit
 public class ReflectionUtils {
@@ -238,37 +239,79 @@ public class ReflectionUtils {
     }
 
     //use caching for frequent usage
-    private static final HashMap<Pair<Class<?>, String>, Method> METHOD_CACHE = new HashMap<>();
-    private static Method cacheMethod(Pair<Class<?>, String> key, Method method) {
+//    private static final HashMap<Pair<Class<?>, String>, Method> METHOD_CACHE = new HashMap<>();
+    private static final HashMap<Triple<Class<?>, String, List<Class<?>>>, Method> METHOD_CACHE = new HashMap<>();
+
+    private static Method cacheMethod(Triple<Class<?>, String, List<Class<?>>> key, Method method) {
         if (method != null)
             METHOD_CACHE.put(key, method);
         return method;
     }
 
-    //TODO: when upgrading, dont forget to update obfuscated names (mcp_alternative)
-    public static Method classMethod(@Nonnull Class<?> clazz, @Nonnull String method, @Nullable String mcp_alternative, Class<?> ... params) {
-        Pair<Class<?>, String> key = new Pair<>(clazz, method);
+    //Arrays.stream(clazz.getDeclaredMethods()).filter(m->m.name.equals("reselectEntry")).findFirst()
+    //generic and overloaded methods will be a pain in the ass (should not rely on 'getDeclaredMethod' but instead find the first valid method that matches the parameters types
+    //or we can let the user call an alternative method in which it as the requirement to give what type should be used for each param instead of automatically finding them
+
+    protected static Method getDeclaredMethod(@Nonnull Class<?> clazz, @Nonnull String name, Object ... params) throws NoSuchMethodException {
+        for (Method m : clazz.getDeclaredMethods()) {
+            if (!m.getName().equals(name) || m.getParameterCount() != params.length) continue; //invalid name or number of parameters, we skip
+            Class<?>[] cp = m.getParameterTypes();
+            boolean ok = true;
+            for (int i = 0; i < params.length; ++i)
+                if (!cp[i].isInstance(params[i])) {
+                    ok = false;
+                    break;
+                }
+            if (ok)
+                return m;
+        }
+        throw new NoSuchMethodException(clazz.getName() + "." + name + " " + Arrays.toString(params));
+    }
+
+    protected static List<Class<?>> paramTypes(Object ... params) {
+        return Arrays.stream(params).map(Object::getClass).collect(Collectors.toList());
+    }
+
+    public static Method getMethod(@Nonnull Class<?> clazz, @Nonnull String method, @Nullable String mcp_alternative, Object ... params) {
+        Triple<Class<?>, String, List<Class<?>>> key = Triple.of(clazz, method, paramTypes(params));
+        Class<?>[] types = key.getRight().toArray(new Class<?>[]{});
         Method t = METHOD_CACHE.get(key);
         if (t != null) return t;
         if (mcp_alternative != null)
             try {
-                return cacheMethod(key, clazz.getDeclaredMethod(mcp_alternative, params));
+                return cacheMethod(key, clazz.getDeclaredMethod(mcp_alternative, types));
             } catch (NoSuchMethodException ignore) {}
         try {
-            return cacheMethod(key, clazz.getDeclaredMethod(method, params));
+            return cacheMethod(key, clazz.getDeclaredMethod(method, types));
         } catch (NoSuchMethodException ignore) {}
         Class<?> zuper = clazz.getSuperclass();
-        return zuper == null ? null : cacheMethod(key, classMethod(zuper, method, mcp_alternative));
+        return zuper == null ? null : cacheMethod(key, getMethod(zuper, method, mcp_alternative, params));
     }
+
+//    TODO: when upgrading, dont forget to update obfuscated names (mcp_alternative)
+//    public static Method classMethod(@Nonnull Class<?> clazz, @Nonnull String method, @Nullable String mcp_alternative, Class<?> ... params) {
+//        Pair<Class<?>, String> key = new Pair<>(clazz, method); //should not cache this way, as overloaded methods might fail
+//        Method t = METHOD_CACHE.get(key);
+//        if (t != null) return t;
+//        if (mcp_alternative != null)
+//            try {
+//                return cacheMethod(key, clazz.getDeclaredMethod(mcp_alternative, params)/*getDeclaredMethod(clazz, mcp_alternative, params)*/); //might have problems with params of inherited types (method not found for this specific parameter, but would work with it super class)
+//            } catch (NoSuchMethodException ignore) {}
+//        try {
+//            return cacheMethod(key, clazz.getDeclaredMethod(method, params)/*getDeclaredMethod(clazz, method, params)*/);
+//        } catch (NoSuchMethodException ignore) {}
+//        Class<?> zuper = clazz.getSuperclass();
+//        return zuper == null ? null : cacheMethod(key, classMethod(zuper, method, mcp_alternative, params));
+//    }
 
     //TODO: when upgrading, dont forget to update obfuscated names (mcp_alternative)
     @SuppressWarnings({"UnusedReturnValue", "unused"})
     public static Object runMethod(@Nonnull Object object, @Nonnull String method, @Nullable String mcp_alternative, Object ... params) {
-        Class<?>[] parameterTypes = new Class[params.length];
-        for (int i = 0; i < params.length; ++i)
-            parameterTypes[i] = params[i].getClass();
+//        Class<?>[] parameterTypes = new Class[params.length];
+//        for (int i = 0; i < params.length; ++i)
+//            parameterTypes[i] = params[i].getClass();
         try {
-            Method m = classMethod(object.getClass(), method, mcp_alternative, parameterTypes);
+            Method m = getMethod(object.getClass(), method, mcp_alternative, params);
             m.setAccessible(true);
             return m.invoke(object, params);
         } catch (IllegalAccessException | InvocationTargetException | NullPointerException ignore) {

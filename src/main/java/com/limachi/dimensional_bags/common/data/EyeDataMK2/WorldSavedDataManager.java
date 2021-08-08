@@ -19,6 +19,7 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
 import javax.annotation.Nullable;
+import java.io.File;
 import java.lang.reflect.Constructor;
 import java.util.HashMap;
 import java.util.function.Function;
@@ -63,6 +64,11 @@ public class WorldSavedDataManager {
             this.isClient = isClient;
             this.syncUp = syncUp;
             this.prevState = new CompoundNBT();
+        }
+
+        @Override
+        public void save(File fileIn) {
+            super.save(DimBag.debug(fileIn, " Saving data"));
         }
 
         @Override
@@ -143,6 +149,8 @@ public class WorldSavedDataManager {
                 ewsd.applyDiff(nbt);
             else
                 ewsd.read(nbt);
+            if (!ewsd.isClient)
+                ewsd.markDirty();
         }
     }
 
@@ -162,7 +170,7 @@ public class WorldSavedDataManager {
         String suffix = TYPE_TO_SUFFIX.get(type);
         if (DimBag.isServer(world)) {
             if (world == null)
-                world = WorldUtils.getOverWorld();
+                world = (ServerWorld)WorldUtils.getOverWorld();
             if (world != null) {
                 if (suffix != null && suffix.length() != 0) {
                     Constructor<T> constructor = null;

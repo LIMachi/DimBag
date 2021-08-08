@@ -4,11 +4,13 @@ import com.limachi.dimensional_bags.client.render.Box2d;
 import com.limachi.dimensional_bags.client.render.FluidStackRenderer;
 import com.limachi.dimensional_bags.client.render.RenderUtils;
 import com.limachi.dimensional_bags.client.render.TextureCutout;
+import com.limachi.dimensional_bags.client.render.widgets.BaseWidget;
 import com.limachi.dimensional_bags.client.widgets.Base;
 import com.limachi.dimensional_bags.client.widgets.SlotWidget;
 import com.limachi.dimensional_bags.client.widgets.ViewPort;
 import com.limachi.dimensional_bags.common.container.BaseContainer;
 import com.limachi.dimensional_bags.common.container.slot.FluidSlot;
+import com.limachi.dimensional_bags.common.container.widgets.BaseContainerWidget;
 import com.limachi.dimensional_bags.common.items.FluidItem;
 import com.mojang.blaze3d.matrix.MatrixStack;
 import com.mojang.blaze3d.systems.RenderSystem;
@@ -18,6 +20,7 @@ import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.IGuiEventListener;
 import net.minecraft.client.gui.screen.IScreen;
 import net.minecraft.client.gui.widget.TextFieldWidget;
+import net.minecraft.client.gui.widget.Widget;
 import net.minecraft.client.renderer.*;
 import net.minecraft.client.renderer.color.ItemColors;
 import net.minecraft.client.renderer.model.IBakedModel;
@@ -35,6 +38,7 @@ import net.minecraft.util.text.ITextComponent;
 import net.minecraftforge.fluids.FluidStack;
 import org.lwjgl.opengl.GL11;
 
+import javax.annotation.Nullable;
 import java.util.HashMap;
 import java.util.Stack;
 import java.util.function.Consumer;
@@ -42,21 +46,16 @@ import java.util.function.Consumer;
 import static com.limachi.dimensional_bags.DimBag.MOD_ID;
 import static com.limachi.dimensional_bags.common.references.GUIs.ScreenParts.*;
 
-public class SimpleContainerScreen<T extends BaseContainer> extends DisplayEffectsScreen<T> {
+public class SimpleContainerScreen<C extends BaseContainer<C>> extends DisplayEffectsScreen<C> {
 
     Box2d playerBackGround;
     Box2d containerBackGround;
     Box2d fullBackground;
-    ViewPort rootWidget;
 
-    public Base focusedWidget = null;
     public Stack<int[]> scissors = new Stack<>();
     public int ticks = 0;
 
     public FontRenderer getFont() { return font; }
-
-    public Base getFocusedWidget() { return focusedWidget; }
-    public void setFocusedWidget(Base widget) { focusedWidget = widget; }
 
     public void scissor(MatrixStack matrixStack, double x1, double y1, double x2, double y2) {
         if (scissors.empty())
@@ -109,7 +108,6 @@ public class SimpleContainerScreen<T extends BaseContainer> extends DisplayEffec
     @Override
     public void tick() {
         super.tick();
-//        rootWidget.tick(ticks);
         for (IGuiEventListener child : children) {
             boolean hasTicked = false;
             for (Class<?> clazz : TICK_INTERFACES.keySet())
@@ -118,11 +116,15 @@ public class SimpleContainerScreen<T extends BaseContainer> extends DisplayEffec
                     hasTicked = true;
                 }
         }
+        for (BaseContainerWidget<C> widget : container.widgets)
+            widget.tick(ticks);
+        container.detectAndSendWidgetChanges();
         ++ticks;
     }
 
-    public SimpleContainerScreen(T screenContainer, PlayerInventory inv, ITextComponent titleIn) {
+    public SimpleContainerScreen(C screenContainer, PlayerInventory inv, ITextComponent titleIn) {
         super(screenContainer, inv, titleIn);
+        screenContainer.screen = this;
     }
 
     @Override
@@ -130,10 +132,6 @@ public class SimpleContainerScreen<T extends BaseContainer> extends DisplayEffec
         Minecraft.getInstance().keyboardListener.enableRepeatEvents(true);
         super.init();
         this.itemRenderer = SimpleItemRenderer.INSTANCE;
-        rootWidget = new ViewPort(0, 0, width, height, width, height, 0, 0, 0.97);
-        rootWidget.attachToScreen(this);
-        for (Slot slot : getContainer().inventorySlots)
-            rootWidget.attachChild(new SlotWidget(slot));
         calculateBackGround();
     }
 
@@ -202,6 +200,8 @@ public class SimpleContainerScreen<T extends BaseContainer> extends DisplayEffec
     public void render(MatrixStack matrixStack, int mouseX, int mouseY, float partialTicks) {
         renderBackground(matrixStack);
         super.render(matrixStack, mouseX, mouseY, partialTicks);
+//        for (BaseContainerWidget<C> widget : container.widgets)
+//            widget.render(matrixStack, mouseX, mouseY, partialTicks);
         renderHoveredTooltip(matrixStack, mouseX, mouseY);
     }
 
@@ -236,14 +236,21 @@ public class SimpleContainerScreen<T extends BaseContainer> extends DisplayEffec
         if (fullBackground.getX1() != -1) {
             defaultBackground(matrixStack, fullBackground);
             tm.bindTexture(SLOT);
+            boolean shouldResetTexture = false;
             for (Slot slot : getContainer().inventorySlots) {
-                if (slot.isEnabled() && slot instanceof FluidSlot && ((FluidSlot) slot).isSelected())
+                if (slot.isEnabled() && slot instanceof FluidSlot && ((FluidSlot) slot).isSelected() && getContainer().inventorySlots.size() > 1) {
                     tm.bindTexture(SELECTED_FLUID_SLOT);
-                if (!slot.isEnabled())
+                    shouldResetTexture = true;
+                }
+                if (!slot.isEnabled()) {
                     tm.bindTexture(LOCKED_SLOT);
+                    shouldResetTexture = true;
+                }
                 this.blitGuiFull(matrixStack, slot.xPos - 1, slot.yPos - 1, SLOT_SIZE_X, SLOT_SIZE_Y);
-                if (!slot.isEnabled() || (slot instanceof FluidSlot && ((FluidSlot) slot).isSelected()))
+                if (shouldResetTexture) {
                     tm.bindTexture(SLOT);
+                    shouldResetTexture = false;
+                }
             }
         }
         if (containerBackGround.getX1() != -1)
@@ -253,73 +260,95 @@ public class SimpleContainerScreen<T extends BaseContainer> extends DisplayEffec
     }
 
     @Override
+    public <T extends Widget> T addButton(T button) {
+        if (button == null) return null;
+        if (button instanceof BaseWidget)
+            ((BaseWidget)button).attachToScreen(this);
+        return super.addButton(button);
+    }
+
+    public <T extends Widget> void removeButton(T button) {
+        if (button == null) return;
+        if (button instanceof BaseWidget)
+            ((BaseWidget)button).detachFromScreen();
+        if (getListener() == button)
+            setListener(null);
+        buttons.remove(button);
+        children.remove(button);
+    }
+
+    @Override
+    public boolean mouseDragged(double mouseX, double mouseY, int button, double dragX, double dragY) {
+        super.mouseDragged(mouseX, mouseY, button, dragX, dragY);
+        if (!dragSplitting) //add back the default INestedGuiEventHandler#mouseDragged behavior after the ContainerScreen#mouseDragged (since this one always returns true in container, it disable the draging from other widgets)
+            return getListener() != null && isDragging() && button == 0 && getListener().mouseDragged(mouseX, mouseY, button, dragX, dragY);
+        return true;
+    }
+
+    /*
+    @Override
     public boolean mouseDragged(double x, double y, int b, double px, double py) {
-        if (focusedWidget != null)
-            return focusedWidget.mouseDragged(x, y, b, px, py) || super.mouseDragged(x, y, b, px, py);
-        if (rootWidget.mouseDragged(x, y, b, px, py))
-            return true;
+        for (BaseContainerWidget<C> widget : container.widgets)
+            if (widget.mouseDragged(x, y, b, px, py))
+                return true;
         return super.mouseDragged(x, y, b, px, py);
     }
 
     @Override
     public void mouseMoved(double mouseX, double mouseY) {
-        rootWidget.mouseMoved(mouseX, mouseY);
+        for (BaseContainerWidget<C> widget : container.widgets)
+            widget.mouseMoved(mouseX, mouseY);
         super.mouseMoved(mouseX, mouseY);
     }
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        if (focusedWidget != null)
-            return focusedWidget.mouseClicked(mouseX, mouseY, button) || super.mouseClicked(mouseX, mouseY, button);
-        if (rootWidget.mouseClicked(mouseX, mouseY, button))
-            return true;
+        for (BaseContainerWidget<C> widget : container.widgets)
+            if (widget.mouseClicked(mouseX, mouseY, button))
+                return true;
         return super.mouseClicked(mouseX,mouseY, button);
     }
 
     @Override
     public boolean mouseReleased(double mouseX, double mouseY, int button) {
-        if (focusedWidget != null)
-            return focusedWidget.mouseReleased(mouseX, mouseY, button) || super.mouseReleased(mouseX, mouseY, button);
-        if (rootWidget.mouseReleased(mouseX, mouseY, button))
-            return true;
+        for (BaseContainerWidget<C> widget : container.widgets)
+            if (widget.mouseReleased(mouseX, mouseY, button))
+                return true;
         return super.mouseReleased(mouseX, mouseY, button);
     }
 
     @Override
     public boolean mouseScrolled(double mouseX, double mouseY, double scrollAmount) {
-        if (focusedWidget != null)
-            return focusedWidget.mouseScrolled(mouseX, mouseY, scrollAmount) || super.mouseScrolled(mouseX, mouseY, scrollAmount);
-        if (rootWidget.mouseScrolled(mouseX, mouseY, scrollAmount))
-            return true;
+        for (BaseContainerWidget<C> widget : container.widgets)
+            if (widget.mouseScrolled(mouseX, mouseY, scrollAmount))
+                return true;
         return super.mouseScrolled(mouseX, mouseY, scrollAmount);
     }
 
     @Override
     public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
-        if (focusedWidget != null)
-            return focusedWidget.keyPressed(keyCode, scanCode, modifiers) || super.keyPressed(keyCode, scanCode, modifiers);
-        if (rootWidget.keyPressed(keyCode, scanCode, modifiers))
-            return true;
+        for (BaseContainerWidget<C> widget : container.widgets)
+            if (widget.keyPressed(keyCode, scanCode, modifiers))
+                return true;
         return super.keyPressed(keyCode, scanCode, modifiers);
     }
 
     @Override
     public boolean keyReleased(int keyCode, int scanCode, int modifiers) {
-        if (focusedWidget != null)
-            return focusedWidget.keyReleased(keyCode, scanCode, modifiers) || super.keyReleased(keyCode, scanCode, modifiers);
-        if (rootWidget.keyReleased(keyCode, scanCode, modifiers))
-            return true;
+        for (BaseContainerWidget<C> widget : container.widgets)
+            if (widget.keyReleased(keyCode, scanCode, modifiers))
+                return true;
         return super.keyReleased(keyCode, scanCode, modifiers);
     }
 
     @Override
     public final boolean charTyped(char codePoint, int modifiers) {
-        if (focusedWidget != null)
-            return focusedWidget.charTyped(codePoint, modifiers) || super.charTyped(codePoint, modifiers);
-        if (rootWidget.charTyped(codePoint, modifiers))
-            return true;
+        for (BaseContainerWidget<C> widget : container.widgets)
+            if (widget.charTyped(codePoint, modifiers))
+                return true;
         return super.charTyped(codePoint, modifiers);
     }
+     */
 
     public static class SimpleItemRenderer extends ItemRenderer {
         public static final Minecraft mc = Minecraft.getInstance();

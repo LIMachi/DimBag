@@ -32,6 +32,7 @@ import org.objectweb.asm.Type;
 import javax.annotation.Nullable;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.function.Consumer;
@@ -118,8 +119,8 @@ public class DimBag {
         return runLogicalSide(null, ()->()->Minecraft.getInstance().player, ()->()->null);
     }
 
-    public static List<ServerPlayerEntity> getPlayers() {
-        return runLogicalSide(null, ()->()->null, ()->()->getServer().getPlayerList().getPlayers());
+    public static List<? extends PlayerEntity> getPlayers() {
+        return runLogicalSide(null, ()->()-> Collections.singletonList(Minecraft.getInstance().player), ()->()->getServer().getPlayerList().getPlayers());
     }
 
     /** try to get the current server we are connected on, return null if we aren't connected (hanging in main menu for example) */

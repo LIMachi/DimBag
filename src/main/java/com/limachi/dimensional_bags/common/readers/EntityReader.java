@@ -136,7 +136,7 @@ public class EntityReader {
         register(Entity.class, "team", t -> t.getTeam() != null ? t.getTeam().getName() : "");
         register(Entity.class, "team_color", t -> t.getTeam() != null ? t.getTeam().getColor().getFriendlyName() : "");
         register(Entity.class, "string", Entity::toString);
-        register(Entity.class, "is_non_boss", Entity::isNonBoss);
+//        register(Entity.class, "is_non_boss", Entity::isNonBoss);
         register(Entity.class, "max_fall_height", Entity::getMaxFallHeight);
         register(Entity.class, "does_not_trigger_pressure_plate", Entity::doesEntityNotTriggerPressurePlate);
         register(Entity.class, "can_be_pushed_by_water", Entity::isPushedByWater);

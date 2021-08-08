@@ -1,0 +1,23 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "W",
+    "U",
+    "H"
+  ],
+  "key": {
+    "W": {
+      "item": "minecraft:wither_skeleton_skull"
+    },
+    "U": {
+      "item": "dim_bag:blank_upgrade"
+    },
+    "H": {
+      "item": "minecraft:hopper"
+    }
+  },
+  "result": {
+    "item": "dim_bag:death_hopper_upgrade",
+    "count": 1
+  }
+}

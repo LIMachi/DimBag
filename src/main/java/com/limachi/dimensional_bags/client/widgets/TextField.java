@@ -107,7 +107,7 @@ public class TextField extends Base {
     }
 
     public String getVisibleText() {
-        return getFont().func_238412_a_(text.substring(leftCorrection), (int)coords.getWidth());
+        return getFont().trimStringToWidth(text.substring(leftCorrection), (int)coords.getWidth());
     }
 
     public void pushToHistory() {

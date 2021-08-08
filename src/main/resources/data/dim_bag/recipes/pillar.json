@@ -1,25 +1,25 @@
 {
   "type": "minecraft:crafting_shaped",
   "pattern": [
-    "#P#",
-    "QEQ",
-    "QSQ"
+    "SGS",
+    "BEB",
+    "BCB"
   ],
   "key": {
-    "#": {
+    "S": {
       "item": "minecraft:end_stone_brick_stairs"
     },
-    "P": {
-      "item": "minecraft:piston"
+    "G": {
+      "item": "minecraft:glass"
     },
-    "Q": {
-      "item": "minecraft:end_stone_brick"
+    "B": {
+      "item": "minecraft:end_stone_bricks"
     },
     "E": {
       "item": "minecraft:ender_chest"
     },
-    "S": {
-      "item": "minecraft:sticky_piston"
+    "C": {
+      "item": "minecraft:crying_obsidian"
     }
   },
   "result": {

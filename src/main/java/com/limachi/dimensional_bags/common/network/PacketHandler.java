@@ -94,6 +94,10 @@ public class PacketHandler {
         registerMsg(SyncCompoundNBT.SCNBTC.class);
         registerMsg(SyncCompoundNBT.SCNBTD.class);
         registerMsg(SyncCompoundNBT.SCNBTU.class);
+
+        registerMsg(WidgetDataPacket.class);
+
+        registerMsg(UpstreamTileUpdateMsg.class);
     }
 
     public static <T extends Message> void toServer(T msg) { if (msg != null) HANDLER.sendToServer(msg); }

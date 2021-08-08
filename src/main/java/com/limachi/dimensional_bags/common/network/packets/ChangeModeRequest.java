@@ -25,5 +25,5 @@ public class ChangeModeRequest extends PacketHandler.Message {
     }
 
     @Override
-    public void serverWork(ServerPlayerEntity player) { ModeManager.changeModeRequest(eye, up); }
+    public void serverWork(ServerPlayerEntity player) { ModeManager.changeModeRequest(player, eye, up); }
 }

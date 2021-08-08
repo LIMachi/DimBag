@@ -18,7 +18,7 @@ import java.util.UUID;
 import static com.limachi.dimensional_bags.common.references.GUIs.ScreenParts.*;
 
 @StaticInit
-public class FountainContainer extends BaseEyeContainer {
+public class FountainContainer extends BaseEyeContainer<FountainContainer> {
 
     public static final String NAME = "fountain";
 

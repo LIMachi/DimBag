@@ -3,7 +3,6 @@ package com.limachi.dimensional_bags.common.items.upgrades;
 import com.limachi.dimensional_bags.DimBag;
 import com.limachi.dimensional_bags.StaticInit;
 import com.limachi.dimensional_bags.ConfigManager.Config;
-import com.limachi.dimensional_bags.common.Registries;
 import com.limachi.dimensional_bags.common.data.EyeDataMK2.SubRoomsManager;
 import com.limachi.dimensional_bags.common.entities.BagEntity;
 import com.limachi.dimensional_bags.common.items.Bag;
@@ -64,7 +63,7 @@ public class DeathHopperUpgrade extends BaseUpgrade {
                 if (!item.removed) {
                     if (ITEMS_DO_NOT_DESPAWN)
                         item.setNoDespawn();
-                    sm.enterBag(item, false, true, false);
+                    sm.enterBag(item, false, true, false, false);
                 }
             event.setCanceled(true);
         }

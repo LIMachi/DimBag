@@ -12,7 +12,7 @@ import net.minecraft.util.math.AxisAlignedBB;
 
 import javax.annotation.Nonnull;
 
-public abstract class BaseEyeContainer extends BaseContainer{
+public abstract class BaseEyeContainer<C extends BaseContainer<C>> extends BaseContainer<C> {
 
     public int eyeId;
 

@@ -3,14 +3,16 @@ package com.limachi.dimensional_bags.common.container;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.limachi.dimensional_bags.ConfigManager.Config;
-import com.limachi.dimensional_bags.common.EventManager;
+import com.limachi.dimensional_bags.DimBag;
+import com.limachi.dimensional_bags.client.render.screen.SimpleContainerScreen;
 import com.limachi.dimensional_bags.common.container.slot.FluidSlot;
+import com.limachi.dimensional_bags.common.container.widgets.BaseContainerWidget;
 import com.limachi.dimensional_bags.common.inventory.IPacketSerializable;
 import com.limachi.dimensional_bags.common.network.PacketHandler;
-import com.limachi.dimensional_bags.common.network.SyncCompoundNBT;
 import com.limachi.dimensional_bags.common.network.packets.SetSlotPacket;
+import com.limachi.dimensional_bags.common.network.packets.WidgetDataPacket;
+import com.limachi.dimensional_bags.utils.NBTUtils;
 import com.limachi.dimensional_bags.utils.ReflectionUtils;
-import io.netty.buffer.Unpooled;
 import net.minecraft.crash.CrashReport;
 import net.minecraft.crash.CrashReportCategory;
 import net.minecraft.crash.ReportedException;
@@ -21,9 +23,15 @@ import net.minecraft.inventory.IInventory;
 import net.minecraft.inventory.Inventory;
 import net.minecraft.inventory.container.*;
 import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.util.*;
 import net.minecraft.util.registry.Registry;
+import net.minecraft.util.text.ITextComponent;
+import net.minecraft.util.text.StringTextComponent;
+import net.minecraft.world.World;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.fml.network.NetworkHooks;
 import net.minecraftforge.items.SlotItemHandler;
 
@@ -38,18 +46,73 @@ import static com.limachi.dimensional_bags.common.references.GUIs.ScreenParts.*;
  * overrides most of the vanilla container to allow finer control of behavior
  */
 
-public abstract class BaseContainer extends Container implements IPacketSerializable, INamedContainerProvider {
+public abstract class BaseContainer<I extends BaseContainer<I>> extends Container implements IPacketSerializable, INamedContainerProvider {
+    public static final class NullPlayerInventory extends PlayerInventory {
+        public static final NullPlayerInventory NULL_PLAYER_CONTAINER = new NullPlayerInventory();
+
+        public NullPlayerInventory() {
+            super(null);
+        }
+
+        @Override
+        public boolean add(int slotIn, ItemStack stack) { return false; }
+
+        @Override
+        public void placeItemBackInInventory(World worldIn, ItemStack stack) {}
+
+        @Override
+        public void func_234563_a_(DamageSource p_234563_1_, float p_234563_2_) {}
+
+        @Override
+        public void dropAllItems() {}
+
+        @Override
+        public boolean isUsableByPlayer(PlayerEntity player) { return true; }
+    }
+
+    public static final class NullContainer extends BaseContainer<NullContainer> {
+        public static final NullContainer NULL_CONTAINER = new NullContainer();
+
+        protected NullContainer() {
+            super(null, -1, NullPlayerInventory.NULL_PLAYER_CONTAINER);
+        }
+
+        protected NullContainer(ContainerType<?> containerType, int windowId, PlayerInventory playerInv, PacketBuffer buffer) {
+            super(null, -1, NullPlayerInventory.NULL_PLAYER_CONTAINER, buffer);
+        }
+
+        @Override
+        public ITextComponent getDisplayName() {
+            return StringTextComponent.EMPTY;
+        }
+
+        @Override
+        public boolean canInteractWith(PlayerEntity playerIn) {
+            return true;
+        }
+
+        @Override
+        public void readFromBuff(PacketBuffer buff) {
+
+        }
+
+        @Override
+        public void writeToBuff(PacketBuffer buff) {
+
+        }
+    }
+
+    @OnlyIn(Dist.CLIENT)
+    public SimpleContainerScreen<I> screen;
 
     protected final NonNullList<ItemStack> inventoryItemStacks = NonNullList.create();
+    public final List<BaseContainerWidget<I>> widgets = Lists.newArrayList();
+    private BaseContainerWidget<I> focusedWidget = null;
+    public final NonNullList<CompoundNBT> widgetData = NonNullList.create();
     protected final List<IntReferenceHolder> trackedIntReferences = Lists.newArrayList();
 
-    private final UUIDIntArray sci = new UUIDIntArray();
-    public SyncCompoundNBT sc;
-    {
-        sci.set(UUID.randomUUID());
-        trackIntArray(sci);
-        EventManager.delayedTask(1, ()->sc = SyncCompoundNBT.create(sci.get(), true, true)); //mad scientist is back baby
-    }
+    public BaseContainerWidget<I> getFocusedWidget() { return focusedWidget; }
+    public void setFocusedWidget(BaseContainerWidget<I> widget) { focusedWidget = widget; }
 
     @Nullable
     @Override
@@ -123,7 +186,7 @@ public abstract class BaseContainer extends Container implements IPacketSerializ
 //    protected final int columns;
 //    protected final int rows;
 //    protected int scroll = 0;
-//    protected final boolean isClient;
+    public final boolean isClient;
 
     /*
     static public void open(ServerPlayerEntity playerEntity, ITextComponent name, @Nullable ISimpleItemHandlerSerializable inv, @Nullable ISimpleFluidHandlerSerializable tanks, @Nullable ArrayList<Integer> slots, int columnLimit, int rowLimit, @Nonnull Predicate<PlayerEntity> canInteractWithPred) {
@@ -165,7 +228,7 @@ public abstract class BaseContainer extends Container implements IPacketSerializ
 
     protected BaseContainer(ContainerType<?> containerType, int windowId, PlayerInventory playerInv/*, ISimpleItemHandlerSerializable inv, ISimpleFluidHandlerSerializable tanks, int[] slots, int columnLimit, int rowLimit, boolean isClient*/) {
         super(containerType, windowId);
-//        this.isClient = isClient;
+        this.isClient = !DimBag.isServer(null);
         this.playerInv = playerInv;
 //        this.inv = inv;
 //        this.tanks = tanks;
@@ -239,6 +302,16 @@ public abstract class BaseContainer extends Container implements IPacketSerializ
         this.inventoryItemStacks.clear();
     }
 
+    public void addWidget(BaseContainerWidget<I> widget) {
+        widgets.add(widget);
+        widgetData.add(new CompoundNBT());
+    }
+
+    public void clearWidgets() {
+        widgets.clear();
+        widgetData.clear();
+    }
+
     @Override
     protected IntReferenceHolder trackInt(IntReferenceHolder intIn) {
         this.trackedIntReferences.add(intIn);
@@ -276,14 +349,31 @@ public abstract class BaseContainer extends Container implements IPacketSerializ
                 }
             }
         }
+    }
 
-//        CompoundNBT diff = NBTUtils.extractDiff(widgetData, prevWidgetData);
-//        if (!diff.isEmpty()) {
-//            for (IContainerListener icontainerlistener : this.listeners)
-//                if (icontainerlistener instanceof ServerPlayerEntity) {
-//
-//                }
-//        }
+    /**
+     * should only be called by the associated screen client side
+     */
+    public void detectAndSendWidgetChanges() {
+        for (int i = 0; i < widgets.size(); ++i) {
+            CompoundNBT d = widgets.get(i).getDiffOrData(widgetData.get(i));
+            if (d.getBoolean("IsDiff"))
+                NBTUtils.applyDiff(widgetData.get(i), d);
+            else
+                widgetData.set(i, d.copy());
+            if (!d.isEmpty())
+                PacketHandler.toServer(new WidgetDataPacket(windowId, i, d));
+        }
+    }
+
+    public void receiveWidgetChange(PlayerEntity player, int widget, CompoundNBT data) {
+        if (player instanceof ServerPlayerEntity) //mirror changes on other clients if we are server side
+            for(IContainerListener icontainerlistener1 : this.listeners)
+                if (!icontainerlistener1.equals(player) && icontainerlistener1 instanceof ServerPlayerEntity)
+                    PacketHandler.toClient((ServerPlayerEntity)icontainerlistener1, new WidgetDataPacket(windowId, widget, data));
+        BaseContainer<I> container = (BaseContainer<I>)player.openContainer;
+        container.widgets.get(widget).loadDiffOrData(data);
+        container.widgetData.set(widget, container.widgets.get(widget).getLocalData().copy());
     }
 
     /**

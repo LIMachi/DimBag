@@ -5,14 +5,18 @@ import net.minecraft.block.AbstractBlock;
 import net.minecraft.block.Block;
 import net.minecraft.block.FlowingFluidBlock;
 import net.minecraft.block.material.Material;
+import net.minecraft.client.util.ITooltipFlag;
 import net.minecraft.entity.EntityType;
 import net.minecraft.fluid.FlowingFluid;
 import net.minecraft.fluid.Fluid;
 import net.minecraft.inventory.container.ContainerType;
 import net.minecraft.item.BlockItem;
 import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.tileentity.TileEntityType;
+import net.minecraft.util.text.ITextComponent;
+import net.minecraft.world.World;
 import net.minecraftforge.common.extensions.IForgeContainerType;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.fluids.ForgeFlowingFluid;
@@ -22,10 +26,13 @@ import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraft.inventory.container.Container;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 import com.mojang.datafixers.types.Type;
+import org.spongepowered.asm.mixin.Interface;
 
 import javax.annotation.Nullable;
 
@@ -33,6 +40,11 @@ import static com.limachi.dimensional_bags.DimBag.LOGGER;
 import static com.limachi.dimensional_bags.DimBag.MOD_ID;
 
 public class Registries {
+
+    public interface IRegistryNameProvider {
+        String registryName();
+    }
+
     public static final DeferredRegister<Block> BLOCK_REGISTER = DeferredRegister.create(ForgeRegistries.BLOCKS, MOD_ID);
     public static final DeferredRegister<Item> ITEM_REGISTER = DeferredRegister.create(ForgeRegistries.ITEMS, MOD_ID);
     public static final DeferredRegister<net.minecraft.tileentity.TileEntityType<?>> TILE_ENTITY_REGISTER = DeferredRegister.create(ForgeRegistries.TILE_ENTITIES, MOD_ID);

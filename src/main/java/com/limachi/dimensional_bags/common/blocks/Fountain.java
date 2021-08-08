@@ -11,12 +11,12 @@ import com.limachi.dimensional_bags.common.data.EyeDataMK2.SubRoomsManager;
 import com.limachi.dimensional_bags.common.inventory.FountainTank;
 import com.limachi.dimensional_bags.common.managers.modes.Tank;
 import com.limachi.dimensional_bags.common.tileentities.FountainTileEntity;
+import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.SoundType;
 import net.minecraft.block.material.Material;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.item.BlockItem;
 import net.minecraft.item.BlockItemUseContext;
 import net.minecraft.item.ItemStack;
@@ -26,6 +26,9 @@ import net.minecraft.util.ActionResultType;
 import net.minecraft.util.Hand;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockRayTraceResult;
+import net.minecraft.util.math.shapes.ISelectionContext;
+import net.minecraft.util.math.shapes.VoxelShape;
+import net.minecraft.world.IBlockReader;
 import net.minecraft.world.World;
 
 import javax.annotation.Nullable;
@@ -37,10 +40,14 @@ public class Fountain extends AbstractTileEntityBlock<FountainTileEntity> {
     public static final String NAME = "fountain";
     public static final Supplier<Fountain> INSTANCE = Registries.registerBlock(NAME, Fountain::new);
     public static final Supplier<BlockItem> INSTANCE_ITEM = Registries.registerBlockItem(NAME, NAME, DimBag.DEFAULT_PROPERTIES);
+    public static final VoxelShape SHAPE = Block.makeCuboidShape(0, 0, 0, 16, 8, 16);
 
     public Fountain() {
         super(NAME, Properties.create(Material.PISTON).hardnessAndResistance(1.5f, 3600000f).sound(SoundType.STONE), FountainTileEntity.class, FountainTileEntity.NAME);
     }
+
+    @Override
+    public VoxelShape getShape(BlockState state, IBlockReader worldIn, BlockPos pos, ISelectionContext context) { return SHAPE; }
 
     @Override
     public <B extends AbstractTileEntityBlock<FountainTileEntity>> B getInstance() { return (B)INSTANCE.get(); }
@@ -60,7 +67,7 @@ public class Fountain extends AbstractTileEntityBlock<FountainTileEntity> {
     public ItemStack asItem(BlockState state, FountainTileEntity fountain) {
         ItemStack out = super.asItem(state, fountain);
         if (fountain != null && DimBag.isServer(null)) { //only run this part serve side as fountain.invId is server only
-            FountainTank tank = (FountainTank) TankData.execute(fountain.getEyeId(), d -> d.getFountainTank(fountain.id), null);
+            FountainTank tank = (FountainTank) TankData.execute(fountain.getEyeId(), d -> d.getFountainTank(fountain.getId()), null);
             if (out.getTag() == null)
                 out.setTag(new CompoundNBT());
             out.getTag().remove("BlockEntityTag");
@@ -76,14 +83,22 @@ public class Fountain extends AbstractTileEntityBlock<FountainTileEntity> {
             FountainTank tank = new FountainTank();
             if (tags != null && tags.contains("UUID"))
                 tank.deserializeNBT(tags);
-            fountain.id = tank.getId();
             TankData.execute(fountain.getEyeId(), d -> d.addFountain(tank));
+            fountain.setId(tank.getId());
+        }
+        else { //FIXME
+            CompoundNBT tags = stack.getTag();
+            if (tags != null && tags.contains("UUID")) {
+                FountainTank tank = new FountainTank();
+                tank.deserializeNBT(tags);
+                fountain.setId(tank.getId());
+            }
         }
     }
 
     @Override
     public void onRemove(BlockState state, World worldIn, BlockPos pos, BlockState newState, boolean isMoving, FountainTileEntity fountain) {
-        EventManager.delayedTask(0, ()->TankData.execute(fountain.getEyeId(), d->d.removeFountain(fountain.id))); //on remove is called before drops, rip
+        EventManager.delayedTask(0, ()->TankData.execute(fountain.getEyeId(), d->d.removeFountain(fountain.getId()))); //on remove is called before drops, rip
     }
 
     @Config(cmt = "does clicking a fountain with a tank item (bucket, glass bottle, etc...) should empty or fill it (set to false if you want players to be forced to use strict fluid mechanics)")

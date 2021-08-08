@@ -1,0 +1,23 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "RCR",
+    "CUC",
+    "RCR"
+  ],
+  "key": {
+    "U": {
+      "item": "dim_bag:blank_upgrade"
+    },
+    "C": {
+      "item": "minecraft:end_crystal"
+    },
+    "R": {
+      "item": "minecraft:redstone_block"
+    }
+  },
+  "result": {
+    "item": "dim_bag:induction_upgrade",
+    "count": 1
+  }
+}

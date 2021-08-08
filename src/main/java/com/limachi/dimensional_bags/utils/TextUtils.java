@@ -51,23 +51,23 @@ public class TextUtils {
             else if (l.size() == 1) {
                 ArrayList<IFormattableTextComponent> t = prettyNBTInternal(l.get(0), depth + 1);
                 if (t.size() == 1)
-                    out.add(lst("[ ").append(t.get(0)).append(lst(" ]")));
+                    out.add(lst("[ ").appendSibling(t.get(0)).appendSibling(lst(" ]")));
                 else {
-                    out.add(lst("[ ").append(t.get(0)));
+                    out.add(lst("[ ").appendSibling(t.get(0)));
                     for (int i = 1; i < t.size() - 1; ++i)
-                        out.add(new StringTextComponent(margin).append(t.get(i)));
-                    out.add(t.get(t.size() - 1).append(lst(" ]")));
+                        out.add(new StringTextComponent(margin).appendSibling(t.get(i)));
+                    out.add(t.get(t.size() - 1).appendSibling(lst(" ]")));
                 }
             } else {
                 out.add(lst("["));
                 for (int i = 0; i < l.size(); ++i) {
                     ArrayList<IFormattableTextComponent> t = prettyNBTInternal(l.get(i), depth + 1);
                     for (int j = 0; j < t.size() - 1; ++j)
-                        out.add(new StringTextComponent(margin).append(t.get(j)));
+                        out.add(new StringTextComponent(margin).appendSibling(t.get(j)));
                     if (i < l.size() - 1)
-                        out.add(new StringTextComponent(margin).append(t.get(t.size() - 1)).append(lst(",")));
+                        out.add(new StringTextComponent(margin).appendSibling(t.get(t.size() - 1)).appendSibling(lst(",")));
                     else
-                        out.add(new StringTextComponent(margin).append(t.get(t.size() - 1)));
+                        out.add(new StringTextComponent(margin).appendSibling(t.get(t.size() - 1)));
                 }
                 out.add(lst("]"));
             }
@@ -79,12 +79,12 @@ public class TextUtils {
                 String k = (String)c.keySet().toArray()[0];
                 ArrayList<IFormattableTextComponent> t = prettyNBTInternal(c.get(k), depth + 1);
                 if (t.size() == 1)
-                    out.add(obj("{ ").append(key(k)).append(obj(" : ")).append(t.get(0)).append(obj(" }")));
+                    out.add(obj("{ ").appendSibling(key(k)).appendSibling(obj(" : ")).appendSibling(t.get(0)).appendSibling(obj(" }")));
                 else {
-                    out.add(obj("{ ").append(key(k)).append(obj(" : ")).append(t.get(0)));
+                    out.add(obj("{ ").appendSibling(key(k)).appendSibling(obj(" : ")).appendSibling(t.get(0)));
                     for (int i = 1; i < t.size() - 1; ++i)
-                        out.add(new StringTextComponent(margin).append(t.get(i)));
-                    out.add(t.get(t.size() - 1).append(obj(" }")));
+                        out.add(new StringTextComponent(margin).appendSibling(t.get(i)));
+                    out.add(t.get(t.size() - 1).appendSibling(obj(" }")));
                 }
             } else {
                 out.add(obj("{"));
@@ -92,18 +92,18 @@ public class TextUtils {
                 for (int i = 0; i < ks.length; ++i) {
                     ArrayList<IFormattableTextComponent> t = prettyNBTInternal(c.get(ks[i]), depth + 1);
                     if (t.size() > 1) {
-                        out.add(new StringTextComponent(margin).append(key(ks[i])).append(obj(" : ")).append(t.get(0)));
+                        out.add(new StringTextComponent(margin).appendSibling(key(ks[i])).appendSibling(obj(" : ")).appendSibling(t.get(0)));
                         for (int j = 1; j < t.size() - 1; ++j)
-                            out.add(new StringTextComponent(margin).append(t.get(j)));
+                            out.add(new StringTextComponent(margin).appendSibling(t.get(j)));
                         if (i < c.size() - 1)
-                            out.add(new StringTextComponent(margin).append(t.get(t.size() - 1)).append(obj(",")));
+                            out.add(new StringTextComponent(margin).appendSibling(t.get(t.size() - 1)).appendSibling(obj(",")));
                         else
-                            out.add(new StringTextComponent(margin).append(t.get(t.size() - 1)));
+                            out.add(new StringTextComponent(margin).appendSibling(t.get(t.size() - 1)));
                     } else {
                         if (i < c.size() - 1)
-                            out.add(new StringTextComponent(margin).append(key(ks[i])).append(obj(" : ")).append(t.get(0)).append(obj(",")));
+                            out.add(new StringTextComponent(margin).appendSibling(key(ks[i])).appendSibling(obj(" : ")).appendSibling(t.get(0)).appendSibling(obj(",")));
                         else
-                            out.add(new StringTextComponent(margin).append(key(ks[i])).append(obj(" : ")).append(t.get(0)));
+                            out.add(new StringTextComponent(margin).appendSibling(key(ks[i])).appendSibling(obj(" : ")).appendSibling(t.get(0)));
                     }
                 }
                 out.add(obj("}"));
@@ -123,8 +123,8 @@ public class TextUtils {
         ArrayList<IFormattableTextComponent> list = prettyNBTInternal(nbt, 0);
         IFormattableTextComponent out = new StringTextComponent("");
         for (int i = 0; i < list.size() - 1; ++i)
-            out.append(list.get(i)).appendString("\n");
-        out.append(list.get(list.size() - 1));
+            out.appendSibling(list.get(i)).appendString("\n");
+        out.appendSibling(list.get(list.size() - 1));
         return out;
     }
 }

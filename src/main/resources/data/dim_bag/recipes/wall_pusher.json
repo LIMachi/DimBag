@@ -1,0 +1,26 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "SSS",
+    "OIO",
+    "ORO"
+  ],
+  "key": {
+    "I": {
+      "item": "minecraft:iron_block"
+    },
+    "S": {
+      "item": "minecraft:end_stone"
+    },
+    "O": {
+      "item": "minecraft:obsidian"
+    },
+    "R": {
+      "item": "minecraft:redstone"
+    }
+  },
+  "result": {
+    "item": "dim_bag:wall_pusher",
+    "count": 6
+  }
+}

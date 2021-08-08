@@ -1,0 +1,32 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "BPH",
+    "RER",
+    "HSB"
+  ],
+  "key": {
+    "B": {
+      "item": "minecraft:bucket"
+    },
+    "P": {
+      "item": "minecraft:piston"
+    },
+    "E": {
+      "item": "minecraft:ender_pearl"
+    },
+    "H": {
+      "item": "minecraft:hopper"
+    },
+    "R": {
+      "item": "minecraft:redstone"
+    },
+    "S": {
+      "item": "minecraft:sticky_piston"
+    }
+  },
+  "result": {
+    "item": "dim_bag:world_access_point",
+    "count": 1
+  }
+}

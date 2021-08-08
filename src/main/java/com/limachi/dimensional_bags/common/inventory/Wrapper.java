@@ -236,7 +236,7 @@ public class Wrapper implements IItemHandlerModifiable { //rewrite of InvWrapper
         }
     }
 
-    private static final IORights[] baseRights(int size) {
+    protected static final IORights[] baseRights(int size) {
         IORights out[] = new IORights[size];
         for (int i = 0; i < out.length; ++i)
             out[i] = new IORights();

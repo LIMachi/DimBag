@@ -3,6 +3,7 @@ package com.limachi.dimensional_bags.common.blocks;
 import com.limachi.dimensional_bags.DimBag;
 import com.limachi.dimensional_bags.KeyMapController;
 import com.limachi.dimensional_bags.StaticInit;
+import com.limachi.dimensional_bags.client.render.screen.PadScreen;
 import com.limachi.dimensional_bags.common.Registries;
 import com.limachi.dimensional_bags.common.data.EyeDataMK2.SubRoomsManager;
 import com.limachi.dimensional_bags.common.tileentities.PadTileEntity;
@@ -43,7 +44,7 @@ public class Pad extends RSReactiveBlock implements ITileEntityProvider {
     @Override
     public void onReplaced(BlockState state, World worldIn, BlockPos pos, BlockState newState, boolean isMoving) {
         super.onReplaced(state, worldIn, pos, newState, isMoving);
-        if (state.isIn(newState.getBlock())) {
+        if (state.getBlock() == newState.getBlock()) {
             if (isPowered(state) != isPowered(newState)) {
                 TileEntity te = worldIn.getTileEntity(pos);
                 if (te instanceof PadTileEntity)
@@ -54,19 +55,12 @@ public class Pad extends RSReactiveBlock implements ITileEntityProvider {
 
     @Override
     public ActionResultType onBlockActivated(BlockState state, World worldIn, BlockPos pos, PlayerEntity player, Hand handIn, BlockRayTraceResult hit) {
-        if (worldIn.isRemote) {
-            return ActionResultType.SUCCESS;
-        } else {
-            int eyeId = SubRoomsManager.getEyeId(worldIn, pos, false);
-            if (eyeId <= 0) return ActionResultType.FAIL;
-            if (KeyMapController.KeyBindings.SNEAK_KEY.getState(player))
-                SubRoomsManager.execute(eyeId, sm->sm.leaveBag(player, false, null, null));
-            else {
-//            TileEntity tileentity = worldIn.getTileEntity(pos);
-//            if (tileentity instanceof GhostHandTileEntity)
-//                Network.openGhostHandInterface((ServerPlayerEntity)player, (GhostHandTileEntity)tileentity);
-            }
-            return ActionResultType.CONSUME;
-        }
+        int eyeId = SubRoomsManager.getEyeId(worldIn, pos, false);
+        if (eyeId <= 0) return ActionResultType.FAIL;
+        if (KeyMapController.KeyBindings.SNEAK_KEY.getState(player))
+            SubRoomsManager.execute(eyeId, sm->sm.leaveBag(player, false, null, null));
+        else
+            PadScreen.open((PadTileEntity) worldIn.getTileEntity(pos));
+        return ActionResultType.CONSUME;
     }
 }

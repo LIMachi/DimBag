@@ -1,6 +1,7 @@
 package com.limachi.dimensional_bags.common;
 
 import com.google.common.collect.ArrayListMultimap;
+import com.limachi.dimensional_bags.ConfigManager;
 import com.limachi.dimensional_bags.CuriosIntegration;
 import com.limachi.dimensional_bags.DimBag;
 import com.limachi.dimensional_bags.KeyMapController;
@@ -16,12 +17,11 @@ import com.limachi.dimensional_bags.common.items.IDimBagCommonItem;
 import com.limachi.dimensional_bags.common.items.entity.BagEntityItem;
 import com.limachi.dimensional_bags.utils.SyncUtils;
 import com.limachi.dimensional_bags.utils.WorldUtils;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.Blocks;
-import net.minecraft.block.FlowingFluidBlock;
+import javafx.util.Pair;
+import net.minecraft.block.*;
 import net.minecraft.command.impl.TimeCommand;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.monster.EndermanEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.inventory.EquipmentSlotType;
@@ -35,8 +35,10 @@ import net.minecraft.util.math.vector.Vector3d;
 import net.minecraft.world.World;
 import net.minecraft.world.server.ServerWorld;
 import net.minecraftforge.event.TickEvent;
+import net.minecraftforge.event.entity.EntityEvent;
 import net.minecraftforge.event.entity.living.LivingEquipmentChangeEvent;
 import net.minecraftforge.event.entity.player.AttackEntityEvent;
+import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.event.world.BlockEvent;
 import net.minecraftforge.event.world.SleepFinishedTimeEvent;
@@ -51,6 +53,8 @@ public class EventManager {
     public static int tick = 0;
     private static ArrayListMultimap<Integer, Runnable> pendingTasks = ArrayListMultimap.create();
 
+    public static Random RANDOM = new Random();
+
     public static void delayedTask(int ticksToWait, Runnable run) { if (ticksToWait <= 0) ticksToWait = 1; pendingTasks.put(ticksToWait + tick, run); }
 
     @SubscribeEvent
@@ -64,6 +68,31 @@ public class EventManager {
             pendingTasks.removeAll(tick);
             ++tick;
         }
+    }
+
+    @ConfigManager.Config
+    public static int ONE_IN_X_TO_ADD_ENDSTONE_TO_ENDERMAN = 10;
+
+    @SubscribeEvent
+    public static void addRandomEndstoneToNewEndermen(EntityEvent.EntityConstructing event) {
+        Entity ent = event.getEntity();
+        if (ent instanceof EndermanEntity) {
+            BlockState bs = ((EndermanEntity)ent).getHeldBlockState();
+            if ((bs == null || bs.getBlock() instanceof AirBlock) && (ONE_IN_X_TO_ADD_ENDSTONE_TO_ENDERMAN <= 0 || RANDOM.nextInt(ONE_IN_X_TO_ADD_ENDSTONE_TO_ENDERMAN) == 0))
+                ((EndermanEntity)ent).setHeldBlockState(Blocks.END_STONE.getDefaultState());
+        }
+    }
+
+    @SubscribeEvent
+    public static void wallBlocksCannotBeMined(PlayerEvent.BreakSpeed event) {
+        if (SubRoomsManager.isWall(event.getPlayer().world, event.getPos()))
+            event.setCanceled(true);
+    }
+
+    @SubscribeEvent
+    public static void wallBlocksCannotBeBroken(BlockEvent.BreakEvent event) {
+        if (!event.getPlayer().isCreative() && SubRoomsManager.isWall((World)event.getWorld(), event.getPos()))
+            event.setCanceled(true);
     }
 
     /*

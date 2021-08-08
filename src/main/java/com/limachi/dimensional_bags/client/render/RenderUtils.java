@@ -12,6 +12,10 @@ import net.minecraft.util.math.vector.Vector4f;
 
 public class RenderUtils {
 
+    /**
+     * color order: 0xAARRGGBB
+     */
+
     public static Vector4f expandColor(int color, boolean isShadow) {
         float shadow = isShadow ? 0.25f : 1.0f;
         return new Vector4f(
@@ -21,6 +25,9 @@ public class RenderUtils {
                 (float)(color >> 24 & 255) / 255.0F);
     }
 
+    /**
+     * color order: 0xAARRGGBB
+     */
     public static int compactColor(Vector4f color) {
         return ((int)(color.getW() * 255) << 24) | ((int)(color.getX() * 255) << 16) | ((int)(color.getY() * 255) << 8) | (int)(color.getZ() * 255);
     }
@@ -59,7 +66,7 @@ public class RenderUtils {
 
         if (withWrap)
             while (r < string.length() && y + l * font.FONT_HEIGHT < coords.getY2()) {
-                tmpStr = font.func_238412_a_(string.substring(r), (int) coords.getWidth());
+                tmpStr = font.trimStringToWidth(string.substring(r), (int) coords.getWidth());
                 if (tmpStr.isEmpty())
                     tmpStr = string.substring(0, 1);
                 r += tmpStr.length();

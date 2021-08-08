@@ -1,0 +1,29 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "SES",
+    "BFB",
+    "BCB"
+  ],
+  "key": {
+    "S": {
+      "item": "minecraft:end_stone_brick_stairs"
+    },
+    "E": {
+      "item": "minecraft:ender_pearl"
+    },
+    "B": {
+      "item": "minecraft:end_stone_bricks"
+    },
+    "F": {
+      "item": "minecraft:bucket"
+    },
+    "C": {
+      "item": "minecraft:crying_obsidian"
+    }
+  },
+  "result": {
+    "item": "dim_bag:fountain",
+    "count": 1
+  }
+}

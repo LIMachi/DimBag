@@ -18,7 +18,7 @@ import java.util.UUID;
 import static com.limachi.dimensional_bags.common.references.GUIs.ScreenParts.*;
 
 @StaticInit
-public class PillarContainer extends BaseEyeContainer {
+public class PillarContainer extends BaseEyeContainer<PillarContainer> {
 
     public static final String NAME = "pillar";
 

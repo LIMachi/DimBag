@@ -38,6 +38,6 @@ public class FluidItem extends Item {
         FluidStack fluid = FluidStack.loadFluidStackFromNBT(stack.getTag());
         if (fluid.isEmpty())
             return new TranslationTextComponent("item.fluid_item.empty_name");
-        return ((IFormattableTextComponent)fluid.getDisplayName()).append(new TranslationTextComponent("item.fluid_item.append_qty_to_name", fluid.getAmount()));
+        return ((IFormattableTextComponent)fluid.getDisplayName()).appendSibling(new TranslationTextComponent("item.fluid_item.append_qty_to_name", fluid.getAmount()));
     }
 }
