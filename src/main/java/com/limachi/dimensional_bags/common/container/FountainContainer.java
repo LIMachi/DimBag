@@ -6,7 +6,9 @@ import com.limachi.dimensional_bags.common.data.EyeDataMK2.TankData;
 import com.limachi.dimensional_bags.common.inventory.ISimpleFluidHandlerSerializable;
 import com.limachi.dimensional_bags.common.references.GUIs;
 import com.limachi.dimensional_bags.utils.UUIDUtils;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
+import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TranslationTextComponent;
@@ -26,11 +28,16 @@ public class FountainContainer extends BaseEyeContainer<FountainContainer> {
         Registries.registerContainer(NAME, FountainContainer::new);
     }
 
+    public static void open(PlayerEntity player, int eye, @Nullable UUID fountainId) {
+        if (player instanceof ServerPlayerEntity)
+            BaseContainer.open(player, new FountainContainer(((ServerPlayerEntity)player).containerCounter + 1, player.inventory, eye, fountainId));
+    }
+
     public FountainContainer(int windowId, PlayerInventory playerInv, PacketBuffer extraData) {
         super(Registries.getContainerType(NAME), windowId, playerInv, extraData);
     }
 
-    public FountainContainer(int windowId, PlayerInventory playerInv, int eye, @Nullable UUID fountainId) {
+    private FountainContainer(int windowId, PlayerInventory playerInv, int eye, @Nullable UUID fountainId) {
         super(Registries.getContainerType(NAME), windowId, playerInv, eye);
         loadFountainFromUUID(fountainId);
     }

@@ -165,7 +165,7 @@ public class BagEntity extends MobEntity implements IEyeIdHolder {
         if (KeyMapController.KeyBindings.SNEAK_KEY.getState(player)) {
             SubRoomsManager.execute(id, sm->sm.enterBag(player));
         } else
-            new PillarContainer(0, player.inventory, getEyeId(), null).open(player);
+            PillarContainer.open(player, getEyeId(), null);
         return ActionResultType.SUCCESS;
     }
 

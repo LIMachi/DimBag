@@ -16,6 +16,7 @@ import net.minecraft.inventory.EquipmentSlotType;
 import net.minecraft.inventory.Inventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundNBT;
+import net.minecraft.network.IPacket;
 import net.minecraft.util.DamageSource;
 import net.minecraft.util.Hand;
 import net.minecraft.world.World;
@@ -27,6 +28,7 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
 import com.limachi.dimensional_bags.StaticInit;
+import net.minecraftforge.fml.network.NetworkHooks;
 
 import java.util.Iterator;
 
@@ -50,6 +52,9 @@ public class BagEntityItem extends ItemEntity implements IEyeIdHolder {
         lifespan = Integer.MAX_VALUE;
         setPickUpDelay(10);
     }
+
+    @Override
+    public IPacket<?> getAddEntityPacket() { return NetworkHooks.getEntitySpawningPacket(this); }
 
     @Override
     public boolean hurt(DamageSource source, float amount) { return false; }

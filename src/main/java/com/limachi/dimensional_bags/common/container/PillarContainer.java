@@ -7,7 +7,9 @@ import com.limachi.dimensional_bags.common.data.EyeDataMK2.SettingsData;
 import com.limachi.dimensional_bags.common.inventory.ISimpleItemHandlerSerializable;
 import com.limachi.dimensional_bags.common.references.GUIs;
 import com.limachi.dimensional_bags.utils.UUIDUtils;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
+import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.StringTextComponent;
@@ -28,11 +30,16 @@ public class PillarContainer extends BaseEyeContainer<PillarContainer> {
         Registries.registerContainer(NAME, PillarContainer::new);
     }
 
+    public static void open(PlayerEntity player, int eye, @Nullable UUID pillarId) {
+        if (player instanceof ServerPlayerEntity)
+            BaseContainer.open(player, new PillarContainer(((ServerPlayerEntity)player).containerCounter + 1, player.inventory, eye, pillarId));
+    }
+
     public PillarContainer(int windowId, PlayerInventory playerInv, PacketBuffer extraData) {
         super(Registries.getContainerType(NAME), windowId, playerInv, extraData);
     }
 
-    public PillarContainer(int windowId, PlayerInventory playerInv, int eye, @Nullable UUID pillarId) {
+    private PillarContainer(int windowId, PlayerInventory playerInv, int eye, @Nullable UUID pillarId) {
         super(Registries.getContainerType(NAME), windowId, playerInv, eye);
         loadPillarFromUUID(pillarId);
     }

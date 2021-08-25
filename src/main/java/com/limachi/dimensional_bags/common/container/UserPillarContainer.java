@@ -7,6 +7,7 @@ import com.limachi.dimensional_bags.common.inventory.EntityInventoryProxy;
 import com.limachi.dimensional_bags.common.inventory.IEntityInventoryProxyIsActiveSlot;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
+import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.inventory.container.Slot;
 import net.minecraft.item.ItemStack;
 import net.minecraft.network.PacketBuffer;
@@ -30,12 +31,17 @@ public class UserPillarContainer extends BaseEyeContainer<UserPillarContainer> {
         Registries.registerContainer(NAME, UserPillarContainer::new);
     }
 
+    public static void open(PlayerEntity player, int eye) {
+        if (player instanceof ServerPlayerEntity)
+            BaseContainer.open(player, new UserPillarContainer(((ServerPlayerEntity)player).containerCounter + 1, player.inventory, eye));
+    }
+
     public UserPillarContainer(int windowId, PlayerInventory playerInv, PacketBuffer extraData) {
         super(Registries.getContainerType(NAME), windowId, playerInv, extraData);
         init();
     }
 
-    public UserPillarContainer(int windowId, PlayerInventory playerInv, int eye) {
+    private UserPillarContainer(int windowId, PlayerInventory playerInv, int eye) {
         super(Registries.getContainerType(NAME), windowId, playerInv, eye);
         target = HolderData.execute(eye, HolderData::getEntityInventory, new EntityInventoryProxy());
         init();

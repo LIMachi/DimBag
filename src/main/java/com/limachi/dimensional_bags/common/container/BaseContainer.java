@@ -10,7 +10,6 @@ import com.limachi.dimensional_bags.common.container.widgets.BaseContainerWidget
 import com.limachi.dimensional_bags.common.inventory.IPacketSerializable;
 import com.limachi.dimensional_bags.common.network.PacketHandler;
 import com.limachi.dimensional_bags.common.network.packets.SetSlotPacket;
-import com.limachi.dimensional_bags.utils.ReflectionUtils;
 import net.minecraft.crash.CrashReport;
 import net.minecraft.crash.CrashReportCategory;
 import net.minecraft.crash.ReportedException;
@@ -44,7 +43,7 @@ import static com.limachi.dimensional_bags.common.references.GUIs.ScreenParts.*;
  * overrides most of the vanilla container to allow finer control of behavior
  */
 
-public abstract class BaseContainer<I extends BaseContainer<I>> extends Container implements IPacketSerializable, INamedContainerProvider {
+public abstract class BaseContainer<I extends BaseContainer<I>> extends Container implements IPacketSerializable {
     public static final class NullPlayerInventory extends PlayerInventory {
         public static final NullPlayerInventory NULL_PLAYER_CONTAINER = new NullPlayerInventory();
 
@@ -73,7 +72,7 @@ public abstract class BaseContainer<I extends BaseContainer<I>> extends Containe
             super(null, -1, NullPlayerInventory.NULL_PLAYER_CONTAINER);
         }
 
-        protected NullContainer(ContainerType<?> containerType, int windowId, PlayerInventory playerInv, PacketBuffer buffer) {
+        protected NullContainer(int windowId, PlayerInventory playerInv, PacketBuffer buffer) {
             super(null, -1, NullPlayerInventory.NULL_PLAYER_CONTAINER, buffer);
         }
 
@@ -101,20 +100,13 @@ public abstract class BaseContainer<I extends BaseContainer<I>> extends Containe
     @OnlyIn(Dist.CLIENT)
     public SimpleContainerScreen<I> screen;
 
-    protected final NonNullList<ItemStack> inventoryItemStacks = NonNullList.create();
-//    public final List<BaseContainerWidget<I>> widgets = Lists.newArrayList();
+    protected final NonNullList<ItemStack> lastSlots = NonNullList.create();
     private BaseContainerWidget<I> focusedWidget = null;
-    public final NonNullList<CompoundNBT> widgetData = NonNullList.create();
-    protected final List<IntReferenceHolder> trackedIntReferences = Lists.newArrayList();
+    protected final List<IntReferenceHolder> dataSlots = Lists.newArrayList();
 
-    public BaseContainerWidget<I> getFocusedWidget() { return focusedWidget; }
-    public void setFocusedWidget(BaseContainerWidget<I> widget) { focusedWidget = widget; }
-
-    @Nullable
     @Override
-    public Container createMenu(int windowId, PlayerInventory playerInventory, PlayerEntity player) {
-        ReflectionUtils.setField(this, "windowId", "field_75152_c", windowId);
-        return this;
+    public Slot getSlot(int slot) {
+        return slots.get(slot);
     }
 
     public static class UUIDIntArray extends IntArray {
@@ -143,114 +135,44 @@ public abstract class BaseContainer<I extends BaseContainer<I>> extends Containe
             this.addDataSlot(IntReferenceHolder.forContainer(arrayIn, i));
     }
 
-    /*
-        public static final String NAME = "simple_container";
-    
-        static {
-            Registries.registerContainer(NAME, (windowId, playerInv, extraData)->{
-                String invClassName = extraData.readString();
-                ISimpleItemHandlerSerializable inv;
-                try {
-                    inv = (ISimpleItemHandlerSerializable)Class.forName(invClassName).newInstance();
-                    inv.readFromBuff(extraData);
-                } catch (Exception e) {
-                    DimBag.LOGGER.error("Failed to load inventory: " + invClassName + " for container, reason: " + e);
-                    inv = new EmptySimpleItemHandlerSerializable();
-                }
-                String tanksClassName = extraData.readString();
-                ISimpleFluidHandlerSerializable tanks;
-                try {
-                    tanks = (ISimpleFluidHandlerSerializable)Class.forName(tanksClassName).newInstance();
-                    tanks.readFromBuff(extraData);
-                } catch (Exception e) {
-                    DimBag.LOGGER.error("Failed to load tanks: " + tanksClassName + " for container, reason: " + e);
-                    tanks = new EmptySimpleFluidHandlerSerializable();
-                }
-                return new SimpleContainer(windowId, playerInv, inv, tanks, extraData.readVarIntArray(), extraData.readInt(), extraData.readInt(), p->true, true);
-            });
-        }
-    */
-    public void open(PlayerEntity player) { if (player instanceof ServerPlayerEntity) NetworkHooks.openGui((ServerPlayerEntity)player, this, this::writeToBuff); }
-    public void close() { playerInv.player.closeContainer(); }
-
     protected final PlayerInventory playerInv;
-//    protected final ISimpleItemHandlerSerializable inv;
-//    protected final ISimpleFluidHandlerSerializable tanks;
-//    protected final int[] slots;
-//    protected final boolean scrollBar;
-//    protected final int columnLimit;
-//    protected final int rowLimit;
-//    protected final int columns;
-//    protected final int rows;
-//    protected int scroll = 0;
     public final boolean isClient;
 
-    /*
-    static public void open(ServerPlayerEntity playerEntity, ITextComponent name, @Nullable ISimpleItemHandlerSerializable inv, @Nullable ISimpleFluidHandlerSerializable tanks, @Nullable ArrayList<Integer> slots, int columnLimit, int rowLimit, @Nonnull Predicate<PlayerEntity> stillValidPred) {
-        int[] slotArray = new int[slots != null ? slots.size() : 0];
-        if (slots != null)
-            for (int i = 0; i < slots.size(); ++i)
-                slotArray[i] = slots.get(i);
-        if (inv == null)
-            inv = new EmptySimpleItemHandlerSerializable();
-        if (tanks == null)
-            tanks = new EmptySimpleFluidHandlerSerializable();
-        final ISimpleItemHandlerSerializable finv = inv;
-        final ISimpleFluidHandlerSerializable ftanks = tanks;
-        NetworkHooks.openGui(playerEntity, new INamedContainerProvider() {
-            @Override
-            public ITextComponent getDisplayName() { return name; }
+    public abstract ITextComponent getDisplayName();
 
-            @Nullable
-            @Override
-            public Container createMenu(int windowId, PlayerInventory playerInv, PlayerEntity player) {
-                return new SimpleContainer(windowId, playerInv, finv, ftanks, slotArray, columnLimit, rowLimit, stillValidPred, false);
-            }
-        }, buffer->{
-            buffer.writeString(finv.getClass().getName());
-            finv.writeToBuff(buffer);
-            buffer.writeString(ftanks.getClass().getName());
-            ftanks.writeToBuff(buffer);
-            buffer.writeVarIntArray(slotArray);
-            buffer.writeInt(columnLimit);
-            buffer.writeInt(rowLimit);
-        });
-    }*/
+    protected static <I extends BaseContainer<I>> void open(PlayerEntity player, I container) {
+        if (player instanceof ServerPlayerEntity)
+            NetworkHooks.openGui((ServerPlayerEntity) player, new INamedContainerProvider() {
+                @Override
+                public ITextComponent getDisplayName() {
+                    return container.getDisplayName();
+                }
 
-    /*
-    static public void open(ServerPlayerEntity playerEntity, ITextComponent name, @Nullable ISimpleItemHandlerSerializable inv, @Nullable ISimpleFluidHandlerSerializable tanks) {
-        open(playerEntity, name, inv, tanks, null, 9, 6, p->true);
+                @Nullable
+                @Override
+                public Container createMenu(int p_createMenu_1_, PlayerInventory p_createMenu_2_, PlayerEntity p_createMenu_3_) {
+                    return container;
+                }
+            }, container::writeToBuff);
     }
-    */
 
     protected BaseContainer(ContainerType<?> containerType, int windowId, PlayerInventory playerInv/*, ISimpleItemHandlerSerializable inv, ISimpleFluidHandlerSerializable tanks, int[] slots, int columnLimit, int rowLimit, boolean isClient*/) {
         super(containerType, windowId);
         this.isClient = !DimBag.isServer(null);
         this.playerInv = playerInv;
-//        this.inv = inv;
-//        this.tanks = tanks;
-//        if (slots.length > 0)
-//            this.slots = slots;
-//        else {
-//            this.slots = new int[inv.getSlots() + tanks.getTanks()];
-//            for (int i = 0; i < this.slots.length; ++i)
-//                this.slots[i] = i;
-//        }
-//        this.columnLimit = columnLimit;
-//        this.rowLimit = rowLimit;
-//        this.rows = (int)Math.ceil((double)this.slots.length / (double)columnLimit);
-//        this.columns = (int)Math.ceil((double)this.slots.length / (double)this.rows);
-//        this.scrollBar = rows > rowLimit;
     }
 
-    protected BaseContainer(ContainerType<?> containerType, int windowId, PlayerInventory playerInv, PacketBuffer buffer) {
+    protected BaseContainer(ContainerType<?> containerType, int windowId, PlayerInventory playerInv, @Nullable PacketBuffer buffer) {
         this(containerType, windowId, playerInv);
-        readFromBuff(buffer);
+        if (buffer != null)
+            readFromBuff(buffer);
     }
 
-//    public int getRows() { return rows; }
-//    public int getColumns() { return columns; }
-//    public int getSlotCount() { return slots.length; }
+    public void readFromBuff(PacketBuffer buff) {
+    }
+
+    public void writeToBuff(PacketBuffer buff) {
+    }
 
     protected void addPlayerSlots(int px, int py) {
         int dx = px + PLAYER_INVENTORY_FIRST_SLOT_X + 1;
@@ -265,70 +187,37 @@ public abstract class BaseContainer<I extends BaseContainer<I>> extends Containe
 
     protected static final Inventory EMPTY_INVENTORY = new Inventory(0);
 
-//    protected Slot createSlot(int index, int x, int y) {
-//        if (index < inv.getSlots())
-//            return inv.createSlot(index, x, y);
-//        if (index < inv.getSlots() + tanks.getTanks())
-//            return tanks.createSlot(index - inv.getSlots(), x, y);
-//        return new DisabledSlot(EMPTY_INVENTORY, 0, x, y);
-//    }
-//
-//    protected void addSlots() {
-//        int sx = GUIs.BagScreen.calculateShiftLeft(columns);
-//        int sy = GUIs.BagScreen.calculateYSize(rows);
-//        addPlayerSlots(sx > 0 ? sx * SLOT_SIZE_X : 0, sy - PLAYER_INVENTORY_Y);
-//        sx = PART_SIZE_X + 1 + (sx < 0 ? -sx * SLOT_SIZE_X : 0);
-//        sy = PART_SIZE_Y * 2 + 1;
-//        int si = 0;
-//        for (int y = 0; y < rows; ++y)
-//            for (int x = 0; x < columns; ++x)
-//                if (si < slots.length)
-//                    this.addSlot(createSlot(slots[si++], sx + SLOT_SIZE_X * x, sy + SLOT_SIZE_Y * y));
-//    }
-
     @Override
     protected Slot addSlot(Slot slotIn) {
         slotIn.index = this.slots.size();
         this.slots.add(slotIn);
-        this.inventoryItemStacks.add(ItemStack.EMPTY);
+        this.lastSlots.add(ItemStack.EMPTY);
         return slotIn;
     }
 
     protected void clearSlots() {
         this.slots.clear();
-        this.inventoryItemStacks.clear();
+        this.lastSlots.clear();
     }
-
-    /*
-    public void addWidget(BaseContainerWidget<I> widget) {
-        widgets.add(widget);
-        widgetData.add(new CompoundNBT());
-    }
-
-    public void clearWidgets() {
-        widgets.clear();
-        widgetData.clear();
-    }
-     */
 
     @Override
     protected IntReferenceHolder addDataSlot(IntReferenceHolder intIn) {
-        this.trackedIntReferences.add(intIn);
+        this.dataSlots.add(intIn);
         return intIn;
     }
 
     @Override
-    public void setData(int id, int data) { this.trackedIntReferences.get(id).set(data); }
+    public void setData(int id, int data) { this.dataSlots.get(id).set(data); }
 
     @Override
     public void broadcastChanges() {
         for(int i = 0; i < this.slots.size(); ++i) {
             ItemStack itemstack = this.slots.get(i).getItem();
-            ItemStack itemstack1 = this.inventoryItemStacks.get(i);
+            ItemStack itemstack1 = this.lastSlots.get(i);
             if (!ItemStack.isSame(itemstack1, itemstack)) {
                 boolean clientStackChanged = !itemstack1.equals(itemstack, true);
                 ItemStack itemstack2 = itemstack.copy();
-                this.inventoryItemStacks.set(i, itemstack2);
+                this.lastSlots.set(i, itemstack2);
 
                 if (clientStackChanged)
                     for(IContainerListener icontainerlistener : this.containerListeners) {
@@ -340,8 +229,8 @@ public abstract class BaseContainer<I extends BaseContainer<I>> extends Containe
             }
         }
 
-        for(int j = 0; j < this.trackedIntReferences.size(); ++j) { //could be upgraded to sync other things than just int truncated to shorts IMO
-            IntReferenceHolder intreferenceholder = this.trackedIntReferences.get(j);
+        for(int j = 0; j < this.dataSlots.size(); ++j) { //could be upgraded to sync other things than just int truncated to shorts IMO
+            IntReferenceHolder intreferenceholder = this.dataSlots.get(j);
             if (intreferenceholder.checkAndClearUpdateFlag()) {
                 for(IContainerListener icontainerlistener1 : this.containerListeners) {
                     icontainerlistener1.setContainerData(this, j, intreferenceholder.get());

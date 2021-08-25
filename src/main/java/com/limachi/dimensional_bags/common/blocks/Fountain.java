@@ -122,7 +122,7 @@ public class Fountain extends AbstractTileEntityBlock<FountainTileEntity> {
             }
         }
 //        DimBag.debug(tank, "expected tank").open((ServerPlayerEntity) DimBag.debug(player));
-        new FountainContainer(0, player.inventory, eyeId, tank.getId()).open(player);
+        FountainContainer.open(player, eyeId, tank.getId());
         return ActionResultType.SUCCESS;
     }
 }

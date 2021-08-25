@@ -45,7 +45,7 @@ public class Default extends Mode {
     public ActionResultType onActivateItem(int eyeId, PlayerEntity player) {
         if (!KeyMapController.KeyBindings.SNEAK_KEY.getState(player)) {
             if (player instanceof ServerPlayerEntity)
-                new PillarContainer(0, player.inventory, eyeId, null).open(player);
+                PillarContainer.open(player, eyeId, null);
             return ActionResultType.SUCCESS;
         }
         return ActionResultType.PASS;

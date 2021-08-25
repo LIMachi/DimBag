@@ -102,7 +102,7 @@ public class Chunkloadder {
             CLEntry entry = me.getValue();
             int r = arc.getOrDefault(entry, 0);
             if (r == 0)
-                WorldUtils.getWorld(DimBag.getServer(), entry.dimReg).setChunkForced(entry.x, entry.y, true);
+                WorldUtils.getWorld(DimBag.getServer(), entry.dimReg).setChunkForced(entry.x, entry.y, true); //FIXME: invalid entry
             arc.put(entry, r + 1);
         }
         for (int i = 0; i < list.size(); ++i) {

@@ -43,7 +43,7 @@ public class TheEye extends Block {
         if (KeyMapController.KeyBindings.SNEAK_KEY.getState(player))
             EventManager.delayedTask(0, ()->SubRoomsManager.execute(eyeId, sm->sm.leaveBag(player, false, null, null)));
         else
-            new PillarContainer(0, player.inventory, eyeId, null).open(player);
+            PillarContainer.open(player, eyeId, null);
 //            Network.openEyeInventory((ServerPlayerEntity) player, eyeId, null);
             ; //FIXME
         return ActionResultType.SUCCESS;

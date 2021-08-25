@@ -24,7 +24,7 @@ public class Settings extends Mode {
 
     @Override
     public ActionResultType onItemRightClick(int eyeId, World world, PlayerEntity player) {
-        new SettingsContainer(0, player.inventory, eyeId).open(player);
+        SettingsContainer.open(player, eyeId);
         return ActionResultType.SUCCESS;
     }
 

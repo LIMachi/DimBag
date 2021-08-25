@@ -101,7 +101,7 @@ public class BagProxyBlock extends AbstractTileEntityBlock<BagProxyTileEntity> {
                 if (KeyMapController.KeyBindings.SNEAK_KEY.getState(player))
                     SubRoomsManager.execute(eye, sm->sm.enterBag(player, !UpgradeManager.getUpgrade(ParadoxUpgrade.NAME).isActive(eye), true, true, false, true));
                 else
-                    new PillarContainer(0, player.inventory, eye, null).open(player);
+                    PillarContainer.open(player, eye, null);
             }
         }
         return super.use(state, worldIn, pos, player, handIn, hit);

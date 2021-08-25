@@ -81,7 +81,7 @@ public class Pillar extends BlockWithUUID<PillarTileEntity> implements IHasBagSe
         if (eyeId <= 0) return ActionResultType.SUCCESS;
         TileEntity te = DimBag.debug(world.getBlockEntity(pos));
         if (!(te instanceof PillarTileEntity)) return super.use(state, world, pos, player, hand, ray);
-        new PillarContainer(0, player.inventory, eyeId, ((PillarTileEntity) te).getInventory().getId()).open(player);
+        PillarContainer.open(player, eyeId, ((PillarTileEntity) te).getInventory().getId());
         return ActionResultType.SUCCESS;
     }
 

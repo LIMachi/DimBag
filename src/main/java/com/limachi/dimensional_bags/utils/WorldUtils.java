@@ -77,7 +77,7 @@ public class WorldUtils { //TODO: remove bloat once MCP/Forge mappings are bette
         return RegistryKey.create(Registry.DIMENSION_REGISTRY, new ResourceLocation(str));
     }
 
-    public static String worldRKToString(RegistryKey<World> reg) { return reg.getRegistryName().toString(); }
+    public static String worldRKToString(RegistryKey<World> reg) { return reg.location().toString(); }
 
     public static boolean replaceBlockAndGiveBack(BlockPos pos, Block block, PlayerEntity player) {
         ItemStack prevHand = player.getItemInHand(Hand.MAIN_HAND);

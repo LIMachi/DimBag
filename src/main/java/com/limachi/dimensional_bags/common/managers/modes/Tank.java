@@ -189,7 +189,7 @@ public class Tank extends Mode {
                     return ActionResultType.FAIL;
             }
         }
-        new FountainContainer(0, player.inventory, eyeId, null).open(player);
+        FountainContainer.open(player, eyeId, null);
         return ActionResultType.SUCCESS;
     }
 }

@@ -49,7 +49,7 @@ public class UserPillar extends ContainerBlock {
         if (!(te instanceof UserPillarTileEntity)) return super.use(state, world, pos, player, hand, ray);
         EntityInventoryProxy inv = ((UserPillarTileEntity)te).getInvProxy();
         if (inv != null)
-            new UserPillarContainer(0, player.inventory, SubRoomsManager.getEyeId(world, pos, false)).open(player);
+            UserPillarContainer.open(player, SubRoomsManager.getEyeId(world, pos, false));
 //        LOGGER.info(inv);
 //        if (inv != null)
 //            Network.openWrappedPlayerInventory((ServerPlayerEntity) player, inv, te);
