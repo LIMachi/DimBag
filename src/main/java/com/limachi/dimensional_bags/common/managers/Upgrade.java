@@ -69,7 +69,7 @@ public abstract class Upgrade { //contain all information for config, item, upgr
     public String getDescription() { return this.description./*getFormattedText()*/getString(); }
 
     public class UpgradeItem extends Item implements IDimBagCommonItem {
-        public UpgradeItem(int stackLimit) { super(new Item.Properties().group(DimBag.ITEM_GROUP).maxStackSize(max)); }
+        public UpgradeItem(int stackLimit) { super(DimBag.DEFAULT_PROPERTIES.stacksTo(max)); }
     }
 
     void register(DeferredRegister<Item> itemRegister) { this.itemReg = itemRegister.register(this.sId, () -> new UpgradeItem(this.limit)); }
@@ -105,7 +105,7 @@ public abstract class Upgrade { //contain all information for config, item, upgr
 //    public ActionResultType upgradePlayerTick(EyeData data, ItemStack stack, World world, Entity player, int itemSlot, boolean isSelected) { return ActionResultType.PASS; } //called while the bag is ticking inside a player inventory
     public ActionResultType upgradeEntityTick(int eyeId, World world, Entity entity) { return ActionResultType.PASS; } //called every X ticks by the bag manager
 //    public ActionResultType onItemUse(EyeData data, ItemUseContext context) { return ActionResultType.PASS; } //called when the bag is right clicked on something, before the bag does anything
-//    public ActionResult<ItemStack> onItemRightClick(World world, PlayerEntity player, Hand hand) { return ActionResult.resultPass(player.getHeldItem(hand)); } //called when the bag is right clicked in the air or shift-right-clicked, before the bag does anything (except set the id if needed and accessing data)
+//    public ActionResult<ItemStack> onItemRightClick(World world, PlayerEntity player, Hand hand) { return ActionResult.resultPass(player.getItemInHand(hand)); } //called when the bag is right clicked in the air or shift-right-clicked, before the bag does anything (except set the id if needed and accessing data)
 //    public ActionResultType onAttack(EyeData data, ItemStack stack, PlayerEntity player, Entity entity) { return ActionResultType.PASS; } //called when the bag is left-clicked on an entity
 //    @OnlyIn(Dist.CLIENT)
 //    public void onRenderHud(EyeData data, PlayerEntity player, MainWindow window, MatrixStack matrixStack, float partialTicks) {} //called each tick by the game overlay event
@@ -146,11 +146,11 @@ public abstract class Upgrade { //contain all information for config, item, upgr
 
     public CompoundNBT getMemory(UpgradeManager manager) { return manager.getUpgradesNBT().getCompound(this.sId); }
 
-    public void setMemory(UpgradeManager manager, CompoundNBT nbt) { manager.getUpgradesNBT().put(this.sId, nbt); manager.markDirty(); }
+    public void setMemory(UpgradeManager manager, CompoundNBT nbt) { manager.getUpgradesNBT().put(this.sId, nbt); manager.setDirty(); }
 
     public void shallowAddMemory(UpgradeManager manager, CompoundNBT nbt) {
         CompoundNBT t = getMemory(manager);
-        for (String key : nbt.keySet())
+        for (String key : nbt.getAllKeys())
             t.put(key, nbt.get(key));
         setMemory(manager, t);
     }

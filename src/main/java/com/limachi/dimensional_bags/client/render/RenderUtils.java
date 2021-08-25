@@ -29,30 +29,30 @@ public class RenderUtils {
      * color order: 0xAARRGGBB
      */
     public static int compactColor(Vector4f color) {
-        return ((int)(color.getW() * 255) << 24) | ((int)(color.getX() * 255) << 16) | ((int)(color.getY() * 255) << 8) | (int)(color.getZ() * 255);
+        return ((int)(color.w() * 255) << 24) | ((int)(color.x() * 255) << 16) | ((int)(color.y() * 255) << 8) | (int)(color.z() * 255);
     }
 
     public static void drawBox(MatrixStack matrixStack, Box2d box, int color, int depth) {
-        Matrix4f matrix = matrixStack.getLast().getMatrix();
+        Matrix4f matrix = matrixStack.last().pose();
         Vector4f ec = expandColor(color, false);
-        BufferBuilder bufferbuilder = Tessellator.getInstance().getBuffer();
+        BufferBuilder bufferbuilder = Tessellator.getInstance().getBuilder();
         RenderSystem.enableBlend();
         RenderSystem.disableTexture();
         RenderSystem.defaultBlendFunc();
         bufferbuilder.begin(7, DefaultVertexFormats.POSITION_COLOR);
-        bufferbuilder.pos(matrix, (float)box.getX1(), (float)box.getY2(), depth).color(ec.getX(), ec.getY(), ec.getZ(), ec.getW()).endVertex();
-        bufferbuilder.pos(matrix, (float)box.getX2(), (float)box.getY2(), depth).color(ec.getX(), ec.getY(), ec.getZ(), ec.getW()).endVertex();
-        bufferbuilder.pos(matrix, (float)box.getX2(), (float)box.getY1(), depth).color(ec.getX(), ec.getY(), ec.getZ(), ec.getW()).endVertex();
-        bufferbuilder.pos(matrix, (float)box.getX1(), (float)box.getY1(), depth).color(ec.getX(), ec.getY(), ec.getZ(), ec.getW()).endVertex();
-        bufferbuilder.finishDrawing();
-        WorldVertexBufferUploader.draw(bufferbuilder);
+        bufferbuilder.vertex(matrix, (float)box.getX1(), (float)box.getY2(), depth).color(ec.x(), ec.y(), ec.z(), ec.w()).endVertex();
+        bufferbuilder.vertex(matrix, (float)box.getX2(), (float)box.getY2(), depth).color(ec.x(), ec.y(), ec.z(), ec.w()).endVertex();
+        bufferbuilder.vertex(matrix, (float)box.getX2(), (float)box.getY1(), depth).color(ec.x(), ec.y(), ec.z(), ec.w()).endVertex();
+        bufferbuilder.vertex(matrix, (float)box.getX1(), (float)box.getY1(), depth).color(ec.x(), ec.y(), ec.z(), ec.w()).endVertex();
+        bufferbuilder.end();
+        WorldVertexBufferUploader.end(bufferbuilder);
         RenderSystem.enableTexture();
         RenderSystem.disableBlend();
     }
 
     public static int getPrintedStringWidth(Matrix4f matrix, FontRenderer font, String text) {
         float m00 = new Float(matrix.toString().substring(10).split(" ")[0]); //dirty trick to get the current scale on the X axis from the matrix
-        return (int)(font.getStringWidth(text) * m00);
+        return (int)(font.width(text) * m00);
     }
 
     public static void drawString(MatrixStack matrixStack, FontRenderer font, String string, Box2d coords, int textColor, boolean withShadow, boolean withWrap) {
@@ -65,15 +65,15 @@ public class RenderUtils {
         String tmpStr;
 
         if (withWrap)
-            while (r < string.length() && y + l * font.FONT_HEIGHT < coords.getY2()) {
-                tmpStr = font.trimStringToWidth(string.substring(r), (int) coords.getWidth());
+            while (r < string.length() && y + l * font.lineHeight < coords.getY2()) {
+                tmpStr = font.plainSubstrByWidth(string.substring(r), (int) coords.getWidth());
                 if (tmpStr.isEmpty())
                     tmpStr = string.substring(0, 1);
                 r += tmpStr.length();
-                font.drawString(matrixStack, tmpStr, x, (float)(y + l * font.FONT_HEIGHT), textColor);
+                font.draw(matrixStack, tmpStr, x, (float)(y + l * font.lineHeight), textColor);
                 ++l;
             }
         else
-            font.drawString(matrixStack, string, x, y, textColor);
+            font.draw(matrixStack, string, x, y, textColor);
     }
 }

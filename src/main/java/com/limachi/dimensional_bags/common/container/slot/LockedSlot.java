@@ -10,32 +10,32 @@ public class LockedSlot extends Slot {
     public LockedSlot(IInventory inventoryIn, int index, int xPosition, int yPosition) { super(inventoryIn, index, xPosition, yPosition); }
 
     @Override
-    public boolean canTakeStack(PlayerEntity playerIn) { return false; }
+    public boolean mayPickup(PlayerEntity playerIn) { return false; }
 
     @Override
-    public void putStack(ItemStack stack) {}
+    public void set(ItemStack stack) {}
 
     @Override
-    public boolean isItemValid(ItemStack stack) { return false; }
+    public boolean mayPlace(ItemStack stack) { return false; }
 
     @Override
-    public void onSlotChange(ItemStack oldStackIn, ItemStack newStackIn) {}
+    public void onQuickCraft(ItemStack oldStackIn, ItemStack newStackIn) {}
 
     @Override
-    protected void onCrafting(ItemStack stack, int amount) {}
+    protected void onQuickCraft(ItemStack stack, int amount) {}
 
     @Override
     protected void onSwapCraft(int numItemsCrafted) {}
 
     @Override
-    protected void onCrafting(ItemStack stack) {}
+    protected void checkTakeAchievements(ItemStack stack) {}
 
     @Override
     public ItemStack onTake(PlayerEntity thePlayer, ItemStack stack) { return ItemStack.EMPTY; }
 
     @Override
-    public void onSlotChanged() {}
+    public void setChanged() {}
 
     @Override
-    public ItemStack decrStackSize(int amount) { return ItemStack.EMPTY; }
+    public ItemStack remove(int amount) { return ItemStack.EMPTY; }
 }

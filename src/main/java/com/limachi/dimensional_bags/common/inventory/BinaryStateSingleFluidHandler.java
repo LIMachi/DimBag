@@ -63,9 +63,9 @@ public class BinaryStateSingleFluidHandler implements IFluidHandler, IFluidTank 
         /**
          * potions are standardised to use 333mb of fluid, their empty state is always a glass_bottle, and their full state is a Potion item with potion nbt
          */
-        private static BinaryStateSingleFluidHandlerItem registerPotion(Fluid fluid, Potion potion) { return new BinaryStateSingleFluidHandlerItem(new FluidStack(fluid, 333), PotionUtils.addPotionToItemStack(new ItemStack(Items.POTION), potion), new ItemStack(Items.GLASS_BOTTLE), true, true); }
-        private static BinaryStateSingleFluidHandlerItem registerSplashPotion(Fluid fluid, Potion potion) { return new BinaryStateSingleFluidHandlerItem(new FluidStack(fluid, 333), PotionUtils.addPotionToItemStack(new ItemStack(Items.SPLASH_POTION), potion), new ItemStack(Items.GLASS_BOTTLE), true, true); }
-        private static BinaryStateSingleFluidHandlerItem registerLingeringPotion(Fluid fluid, Potion potion) { return new BinaryStateSingleFluidHandlerItem(new FluidStack(fluid, 333), PotionUtils.addPotionToItemStack(new ItemStack(Items.LINGERING_POTION), potion), new ItemStack(Items.GLASS_BOTTLE), true, true); }
+        private static BinaryStateSingleFluidHandlerItem registerPotion(Fluid fluid, Potion potion) { return new BinaryStateSingleFluidHandlerItem(new FluidStack(fluid, 333), PotionUtils.setPotion(new ItemStack(Items.POTION), potion), new ItemStack(Items.GLASS_BOTTLE), true, true); }
+        private static BinaryStateSingleFluidHandlerItem registerSplashPotion(Fluid fluid, Potion potion) { return new BinaryStateSingleFluidHandlerItem(new FluidStack(fluid, 333), PotionUtils.setPotion(new ItemStack(Items.SPLASH_POTION), potion), new ItemStack(Items.GLASS_BOTTLE), true, true); }
+        private static BinaryStateSingleFluidHandlerItem registerLingeringPotion(Fluid fluid, Potion potion) { return new BinaryStateSingleFluidHandlerItem(new FluidStack(fluid, 333), PotionUtils.setPotion(new ItemStack(Items.LINGERING_POTION), potion), new ItemStack(Items.GLASS_BOTTLE), true, true); }
 
         public BinaryStateSingleFluidHandlerItem fullInstance() { return new BinaryStateSingleFluidHandlerItem(stack, full, empty, true, false); }
 

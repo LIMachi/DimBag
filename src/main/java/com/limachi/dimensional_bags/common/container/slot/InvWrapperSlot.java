@@ -1,8 +1,8 @@
 package com.limachi.dimensional_bags.common.container.slot;
 
-import com.limachi.dimensional_bags.common.inventory.Wrapper;
+//import com.limachi.dimensional_bags.common.inventory.Wrapper;
 import net.minecraftforge.items.SlotItemHandler;
-
+/*
 public class InvWrapperSlot extends SlotItemHandler implements IIORightsSlot {
     protected Wrapper inv;
 
@@ -11,7 +11,7 @@ public class InvWrapperSlot extends SlotItemHandler implements IIORightsSlot {
     public Wrapper getWrapper() { return inv; }
 
     @Override
-    public int getSlotStackLimit() { return inv.getRights(this.getSlotIndex()).maxStack; }
+    public int getMaxStackSize() { return inv.getRights(this.getSlotIndex()).maxStack; }
 
     @Override
     public byte getRights() {
@@ -30,3 +30,4 @@ public class InvWrapperSlot extends SlotItemHandler implements IIORightsSlot {
         inv.setRights(this.getSlotIndex(), rights);
     }
 }
+*/

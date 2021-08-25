@@ -32,26 +32,26 @@ public class Fountain extends TileEntityRenderer<FountainTileEntity> {
             FluidStack fs = tank.getFluid();
             if (!fs.isEmpty()) {
                 IVertexBuilder buffer = bufferIn.getBuffer(RenderTypes.FOUNTAIN_FLUID);
-                matrixStackIn.push();
+                matrixStackIn.pushPose();
                 matrixStackIn.translate(7.5, 1, 7.5);
-                Matrix4f mat = matrixStackIn.getLast().getMatrix();
+                Matrix4f mat = matrixStackIn.last().pose();
                 float fullness = ((float) tank.getFluidAmount()) / (float) tank.getCapacity() * 7.f;
                 TextureAtlasSprite stillFluid = FluidStackRenderer.getFluidSprite(tank.getFluid(), false);
                 if (fullness < 6.999) {
                     TextureAtlasSprite flowingFluid = FluidStackRenderer.getFluidSprite(tank.getFluid(), true);
                     //render the center still overlay (top) FIXME: UV probably is wrong
-                    buffer.pos(mat, -2, 7, 2).color(1, 1, 1, 1).tex(stillFluid.getMinU(), stillFluid.getMaxV()).endVertex();
-                    buffer.pos(mat, 2, 7, 2).color(1, 1, 1, 1).tex(stillFluid.getMaxU(), stillFluid.getMaxV()).endVertex();
-                    buffer.pos(mat, 2, 7, -2).color(1, 1, 1, 1).tex(stillFluid.getMaxU(), stillFluid.getMinV()).endVertex();
-                    buffer.pos(mat, -2, 7, -2).color(1, 1, 1, 1).tex(stillFluid.getMinU(), stillFluid.getMinV()).endVertex();
+                    buffer.vertex(mat, -2, 7, 2).color(1, 1, 1, 1).uv(stillFluid.getU0(), stillFluid.getV1()).endVertex();
+                    buffer.vertex(mat, 2, 7, 2).color(1, 1, 1, 1).uv(stillFluid.getU1(), stillFluid.getV1()).endVertex();
+                    buffer.vertex(mat, 2, 7, -2).color(1, 1, 1, 1).uv(stillFluid.getU1(), stillFluid.getV0()).endVertex();
+                    buffer.vertex(mat, -2, 7, -2).color(1, 1, 1, 1).uv(stillFluid.getU0(), stillFluid.getV0()).endVertex();
                     //render the center flowing overlay (sides)
                 }
                 //render the still overlay
-                buffer.pos(mat, -7, fullness, 7).color(1, 1, 1, 1).tex(stillFluid.getMinU(), stillFluid.getMaxV()).endVertex();
-                buffer.pos(mat, 7, fullness, 7).color(1, 1, 1, 1).tex(stillFluid.getMaxU(), stillFluid.getMaxV()).endVertex();
-                buffer.pos(mat, 7, fullness, -7).color(1, 1, 1, 1).tex(stillFluid.getMaxU(), stillFluid.getMinV()).endVertex();
-                buffer.pos(mat, -7, fullness, -7).color(1, 1, 1, 1).tex(stillFluid.getMinU(), stillFluid.getMinV()).endVertex();
-                matrixStackIn.pop();
+                buffer.vertex(mat, -7, fullness, 7).color(1, 1, 1, 1).uv(stillFluid.getU0(), stillFluid.getV1()).endVertex();
+                buffer.vertex(mat, 7, fullness, 7).color(1, 1, 1, 1).uv(stillFluid.getU1(), stillFluid.getV1()).endVertex();
+                buffer.vertex(mat, 7, fullness, -7).color(1, 1, 1, 1).uv(stillFluid.getU1(), stillFluid.getV0()).endVertex();
+                buffer.vertex(mat, -7, fullness, -7).color(1, 1, 1, 1).uv(stillFluid.getU0(), stillFluid.getV0()).endVertex();
+                matrixStackIn.popPose();
             }
         }
     }

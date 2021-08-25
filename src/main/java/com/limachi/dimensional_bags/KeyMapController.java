@@ -1,8 +1,7 @@
 package com.limachi.dimensional_bags;
 
+import com.limachi.dimensional_bags.client.EventManager;
 import com.limachi.dimensional_bags.common.items.Bag;
-import com.limachi.dimensional_bags.common.items.GhostBag;
-import com.limachi.dimensional_bags.common.items.IDimBagCommonItem;
 import com.limachi.dimensional_bags.common.managers.ModeManager;
 import com.limachi.dimensional_bags.common.network.PacketHandler;
 import com.limachi.dimensional_bags.common.network.packets.ChangeModeRequest;
@@ -12,7 +11,6 @@ import net.minecraft.client.settings.KeyBinding;
 import net.minecraft.client.util.InputMappings;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.Hand;
 import net.minecraftforge.api.distmarker.Dist;
@@ -48,17 +46,26 @@ public class KeyMapController {
         KeyMapController.syncKeyMap(event.getKey(), event.getScanCode(), false, event.getAction() == GLFW.GLFW_PRESS || event.getAction() == GLFW.GLFW_REPEAT);
     }
 
+    private static int scrollCoolDown = 0;
+
+    @ConfigManager.Config(cmt = "how much ticks should pass before the next scroll event will be sent to the bag", min = "5", max = "20")
+    public static final int SCROLL_COOLDOWN = 5;
+
     @SubscribeEvent
     public static void addScrollBehaviorToBag(InputEvent.MouseScrollEvent event) {
         PlayerEntity player = DimBag.getPlayer();
-        ItemStack stack = player.getHeldItem(Hand.MAIN_HAND);
+        ItemStack stack = player.getItemInHand(Hand.MAIN_HAND);
         if (!(stack.getItem() instanceof Bag))
-            stack = player.getHeldItem(Hand.OFF_HAND);
+            stack = player.getItemInHand(Hand.OFF_HAND);
         if (stack.getItem() instanceof Bag) {
             int eye = Bag.getEyeId(stack);
             boolean up = event.getScrollDelta() > 0;
-            if (ModeManager.changeModeRequest(player, eye, up)) {
-                PacketHandler.toServer(new ChangeModeRequest(eye, up));
+            boolean trueRun = EventManager.getTick() - scrollCoolDown >= SCROLL_COOLDOWN; //prevent spam of scroll (only allow a scroll every SCROLL_COOLDOWN ticks)
+            if (ModeManager.changeModeRequest(player, eye, up, !trueRun)) {
+                if (trueRun) {
+                    PacketHandler.toServer(new ChangeModeRequest(eye, up));
+                    scrollCoolDown = EventManager.getTick();
+                }
                 event.setCanceled(true);
             }
         }
@@ -66,15 +73,15 @@ public class KeyMapController {
 
     public enum KeyBindings {
         BAG_KEY(true, ()->()->new KeyBinding("key.action", KeyConflictContext.IN_GAME, InputMappings.Type.KEYSYM, GLFW.GLFW_KEY_I, KEY_CATEGORY)),
-        SNEAK_KEY(false, ()->()->Minecraft.getInstance().gameSettings.keyBindSneak),
-        SPRINT_KEY(false, ()->()->Minecraft.getInstance().gameSettings.keyBindSprint),
-        JUMP_KEY(false, ()->()->Minecraft.getInstance().gameSettings.keyBindJump),
-        FORWARD_KEY(false, ()->()->Minecraft.getInstance().gameSettings.keyBindForward),
-        BACK_KEY(false, ()->()->Minecraft.getInstance().gameSettings.keyBindBack),
-        RIGHT_KEY(false, ()->()->Minecraft.getInstance().gameSettings.keyBindRight),
-        LEFT_KEY(false, ()->()->Minecraft.getInstance().gameSettings.keyBindLeft),
-        USE_KEY(false, ()->()->Minecraft.getInstance().gameSettings.keyBindUseItem),
-        ATTACK_KEY(false, ()->()->Minecraft.getInstance().gameSettings.keyBindAttack),
+        SNEAK_KEY(false, ()->()->Minecraft.getInstance().options.keyShift),
+        SPRINT_KEY(false, ()->()->Minecraft.getInstance().options.keySprint),
+        JUMP_KEY(false, ()->()->Minecraft.getInstance().options.keyJump),
+        FORWARD_KEY(false, ()->()->Minecraft.getInstance().options.keyUp),
+        BACK_KEY(false, ()->()->Minecraft.getInstance().options.keyDown),
+        RIGHT_KEY(false, ()->()->Minecraft.getInstance().options.keyRight),
+        LEFT_KEY(false, ()->()->Minecraft.getInstance().options.keyLeft),
+        USE_KEY(false, ()->()->Minecraft.getInstance().options.keyUse),
+        ATTACK_KEY(false, ()->()->Minecraft.getInstance().options.keyAttack),
         ;
 
         static public void registerKeybindings() {
@@ -95,14 +102,14 @@ public class KeyMapController {
 
         public boolean getState(PlayerEntity player) {
             return DimBag.runLogicalSide(null,
-                    ()-> keybinding::isKeyDown,
-                    ()->()->player != null && playerKeyStateMap.getOrDefault(player.getUniqueID(), new boolean[KeyBindings.values().length])[this.ordinal()]);
+                    ()-> keybinding::isDown,
+                    ()->()->player != null && playerKeyStateMap.getOrDefault(player.getUUID(), new boolean[KeyBindings.values().length])[this.ordinal()]);
         }
 
         public void forceKeyState(PlayerEntity player, boolean state) {
-            DimBag.runLogicalSide(player != null ? player.world : null, ()->()->{
+            DimBag.runLogicalSide(player != null ? player.level : null, ()->()->{
                 local_key_map[this.ordinal()] = state;
-                KeyBindings.values()[this.ordinal()].keybinding.setPressed(state);
+                KeyBindings.values()[this.ordinal()].keybinding.setDown(state);
                 return null;
             }, ()->()->{
                 PacketHandler.toClient((ServerPlayerEntity)player, new KeyStateMsg(this.ordinal(), state));
@@ -122,7 +129,7 @@ public class KeyMapController {
         if (player == null)
             return;
         for (int i = 0; i < KEY_BIND_COUNT; ++i) {
-            if (/*TRACKED_KEYBINDS[i].getKeyConflictContext().isActive() &&*/ mouse ? KeyBindings.values()[i].getKeybinding().matchesMouseKey(key) : KeyBindings.values()[i].getKeybinding().matchesKey(key, scan)) {
+            if (/*TRACKED_KEYBINDS[i].getKeyConflictContext().isActive() &&*/ mouse ? KeyBindings.values()[i].getKeybinding().matchesMouse(key) : KeyBindings.values()[i].getKeybinding().matches(key, scan)) {
                 if (state != local_key_map[i]) {
                     local_key_map[i] = state;
                     PacketHandler.toServer(new KeyStateMsg(i, state));
@@ -158,10 +165,10 @@ public class KeyMapController {
     }
 
     public static void syncKeyMapMsg(ServerPlayerEntity player, int key, boolean state) {
-        boolean[] previousKeys = playerKeyStateMap.getOrDefault(player.getUniqueID(), new boolean[KEY_BIND_COUNT]);
+        boolean[] previousKeys = playerKeyStateMap.getOrDefault(player.getUUID(), new boolean[KEY_BIND_COUNT]);
         boolean[] keys = previousKeys.clone();
         keys[key] = state;
-        playerKeyStateMap.put(player.getUniqueID(), keys);
+        playerKeyStateMap.put(player.getUUID(), keys);
         MinecraftForge.EVENT_BUS.post(new KeyMapChangedEvent(player, keys, previousKeys));
     }
 }

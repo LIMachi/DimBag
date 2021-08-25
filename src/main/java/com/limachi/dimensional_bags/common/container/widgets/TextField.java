@@ -22,7 +22,7 @@ import java.util.function.Consumer;
 import static org.lwjgl.glfw.GLFW.*;
 
 public abstract class TextField<C extends BaseContainer<C>> extends BaseContainerWidget<C> {
-
+/*
     @OnlyIn(Dist.CLIENT)
     protected FontRenderer font = screen(SimpleContainerScreen::getFont, null);
     protected String text = "";
@@ -81,7 +81,6 @@ public abstract class TextField<C extends BaseContainer<C>> extends BaseContaine
         setCursorPos(end, true);
     }
 
-    /** expand the current selection to the word */
     @OnlyIn(Dist.CLIENT)
     public void selectWord(boolean left) {
         int start = 0;
@@ -319,5 +318,5 @@ public abstract class TextField<C extends BaseContainer<C>> extends BaseContaine
                 return true;
             }
         };
-    }
+    }*/
 }

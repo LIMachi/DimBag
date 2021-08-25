@@ -1,6 +1,6 @@
 package com.limachi.dimensional_bags.common.inventory;
 
-import com.limachi.dimensional_bags.common.container.slot.InvWrapperSlot;
+//import com.limachi.dimensional_bags.common.container.slot.InvWrapperSlot;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.inventory.Inventory;
@@ -21,8 +21,8 @@ import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.limachi.dimensional_bags.common.inventory.Wrapper.IORights.*;
-
+//import static com.limachi.dimensional_bags.common.inventory.Wrapper.IORights.*;
+/*
 public class Wrapper implements IItemHandlerModifiable { //rewrite of InvWrapper to include IO limitations per slots
 
     public static class IORights {
@@ -62,7 +62,7 @@ public class Wrapper implements IItemHandlerModifiable { //rewrite of InvWrapper
             byte l = buff.readByte();
             blacklist = NonNullList.create();
             for (byte i = 0; i < l; ++i)
-                blacklist.add(buff.readItemStack());
+                blacklist.add(buff.readItem());
         }
 
         public IORights(int integer) {
@@ -113,7 +113,7 @@ public class Wrapper implements IItemHandlerModifiable { //rewrite of InvWrapper
             return true;
         }
 
-        public boolean isItemValid(ItemStack stack) { //might be used by merge, so do not test IO, only the blacklist (or whitelist)
+        public boolean mayPlace(ItemStack stack) { //might be used by merge, so do not test IO, only the blacklist (or whitelist)
             if (stack.isEmpty()) return true;
             for (ItemStack test : blacklist)
                 if (nbtDamageTag(flags, stack, test))
@@ -143,7 +143,7 @@ public class Wrapper implements IItemHandlerModifiable { //rewrite of InvWrapper
                 if (blacklist.size() > 0)
                     blacklist = NonNullList.create();
                 for (int i = 0; i < list.size(); ++i)
-                    blacklist.add(ItemStack.read(list.getCompound(i)));
+                    blacklist.add(ItemStack.of(list.getCompound(i)));
             }
         }
 
@@ -160,15 +160,15 @@ public class Wrapper implements IItemHandlerModifiable { //rewrite of InvWrapper
 
     protected IORights[] IO;
     protected IInventory inv;
-    protected Runnable markDirty;
+    protected Runnable setChanged;
 
-    public Wrapper(IInventory inv, final IORights IO[], Runnable markDirty) {
+    public Wrapper(IInventory inv, final IORights IO[], Runnable setChanged) {
         this.inv = inv;
-        this.markDirty = markDirty;
-        if (inv.getSizeInventory() == IO.length)
+        this.setChanged = setChanged;
+        if (inv.getContainerSize() == IO.length)
             this.IO = IO;
         else {
-            this.IO = new IORights[inv.getSizeInventory()];
+            this.IO = new IORights[inv.getContainerSize()];
             for (int i = 0; i < this.IO.length; ++i)
                 this.IO[i] = i < IO.length ? IO[i] : new IORights();
         }
@@ -179,16 +179,16 @@ public class Wrapper implements IItemHandlerModifiable { //rewrite of InvWrapper
             this.inv = new Inventory(size);
         else
             this.inv = inv;
-        assert (this.inv.getSizeInventory() == size);
+        assert (this.inv.getContainerSize() == size);
         this.IO = new IORights[size];
-        for (int i = 0; i < this.inv.getSizeInventory(); ++i)
+        for (int i = 0; i < this.inv.getContainerSize(); ++i)
             this.IO[i] = new IORights(buffer);
-        this.markDirty = null;
+        this.setChanged = null;
     }
 
-    public Wrapper(IInventory inv) { this(inv, baseRights(inv.getSizeInventory()), null); }
-    public Wrapper(IInventory inv, Runnable markDirty) { this(inv, baseRights(inv.getSizeInventory()), markDirty); }
-    public Wrapper(int size, Runnable markDirty) { this(new Inventory(size), baseRights(size), markDirty); }
+    public Wrapper(IInventory inv) { this(inv, baseRights(inv.getContainerSize()), null); }
+    public Wrapper(IInventory inv, Runnable setChanged) { this(inv, baseRights(inv.getContainerSize()), setChanged); }
+    public Wrapper(int size, Runnable setChanged) { this(new Inventory(size), baseRights(size), setChanged); }
     public Wrapper(int size) { this(new Inventory(size)); }
     public Wrapper(PacketBuffer buffer) { this(buffer.readInt(), null, buffer); }
     public Wrapper(IInventory inv, PacketBuffer buffer) { this(buffer.readInt(), inv, buffer); }
@@ -216,18 +216,18 @@ public class Wrapper implements IItemHandlerModifiable { //rewrite of InvWrapper
 
     public void read(CompoundNBT nbt) {
         int size = nbt.getInt("Size");
-        if (size != inv.getSizeInventory()) {
+        if (size != inv.getContainerSize()) {
             inv = new Inventory(size);
             IO = new IORights[size];
         }
         for (int i = 0; i < size; ++i) {
-            inv.setInventorySlotContents(i, ItemStack.EMPTY);
+            inv.setItem(i, ItemStack.EMPTY);
             IO[i] = new IORights();
         }
         ListNBT items = nbt.getList("Items", 10);
         for (int i = 0; i < items.size(); ++i) {
             int index = items.getCompound(i).getInt("Slot");
-            inv.setInventorySlotContents(index, ItemStack.read(items.getCompound(i)));
+            inv.setItem(index, ItemStack.of(items.getCompound(i)));
         }
         ListNBT rights = nbt.getList("Rights", 10);
         for (int i = 0; i < rights.size(); ++i) {
@@ -249,21 +249,21 @@ public class Wrapper implements IItemHandlerModifiable { //rewrite of InvWrapper
         for (int y = 0; y < newRows; ++y)
             for (int x = 0; x < newColumns; ++x)
                 if (x + y * newColumns < newSize) {
-                    if (x < prevColumns && y < prevRows && x + y * prevColumns < inv.getSizeInventory()) {
-                        newInv.setInventorySlotContents(x + y * newColumns, this.inv.getStackInSlot(x + y * prevColumns));
+                    if (x < prevColumns && y < prevRows && x + y * prevColumns < inv.getContainerSize()) {
+                        newInv.setItem(x + y * newColumns, this.inv.getStackInSlot(x + y * prevColumns));
                         newRights[x + y * newColumns] = this.IO[x + y * prevColumns];
                     } else {
-                        newInv.setInventorySlotContents(x + y * newColumns, ItemStack.EMPTY);
+                        newInv.setItem(x + y * newColumns, ItemStack.EMPTY);
                         newRights[x + y * newColumns] = new IORights();
                     }
                 }
         for (int i = newRows * newColumns; i < newSize; ++i) {
-            newInv.setInventorySlotContents(i, ItemStack.EMPTY);
+            newInv.setItem(i, ItemStack.EMPTY);
             newRights[i] = new IORights();
         }
         this.IO = newRights;
         this.inv = newInv;
-        this.markDirty.run();
+        this.setChanged.run();
     }
 
     public PacketBuffer sizeAndRightsToBuffer(PacketBuffer buff) {
@@ -276,8 +276,8 @@ public class Wrapper implements IItemHandlerModifiable { //rewrite of InvWrapper
     public void setRights(int slot, IORights rights) {
         if (slot < 0 || slot >= IO.length) return;
         IO[slot] = rights;
-        if (markDirty != null)
-            markDirty.run();
+        if (setChanged != null)
+            setChanged.run();
     }
 
     public void setRights(int slot, int field, int data) {
@@ -305,10 +305,10 @@ public class Wrapper implements IItemHandlerModifiable { //rewrite of InvWrapper
 
     public IInventory getInventory() { return inv; }
 
-    public void markDirty() {
-        inv.markDirty();
-        if (markDirty != null)
-            markDirty.run();
+    public void setChanged() {
+        inv.setChanged();
+        if (setChanged != null)
+            setChanged.run();
     }
 
     @Override
@@ -316,7 +316,7 @@ public class Wrapper implements IItemHandlerModifiable { //rewrite of InvWrapper
     public ItemStack insertItem(int slot, @Nonnull ItemStack stack, boolean simulate) {
 
         if (stack.isEmpty()) return ItemStack.EMPTY;
-        if ((IO[slot].flags & CANINPUT) == 0 || !isItemValid(slot, stack)) return stack; //can't touch this slot with this filthy stack
+        if ((IO[slot].flags & CANINPUT) == 0 || !mayPlace(slot, stack)) return stack; //can't touch this slot with this filthy stack
         ItemStack stackInSlot = inv.getStackInSlot(slot);
 
         int stackLimit = (IO[slot].flags & OVERIDESTACKLIMIT) != 0 ? IO[slot].maxStack : Math.min(stack.getMaxStackSize(), getSlotLimit(slot));
@@ -331,8 +331,8 @@ public class Wrapper implements IItemHandlerModifiable { //rewrite of InvWrapper
                 if (!simulate) {
                     ItemStack copy = stack.copy();
                     copy.grow(stackInSlot.getCount());
-                    inv.setInventorySlotContents(slot, copy);
-                    inv.markDirty();
+                    inv.setItem(slot, copy);
+                    inv.setChanged();
                 }
                 return ItemStack.EMPTY;
             } else {//not enough room, we will return a truncated stack
@@ -341,8 +341,8 @@ public class Wrapper implements IItemHandlerModifiable { //rewrite of InvWrapper
                 {
                     ItemStack copy = stack.split(stackLimit);
                     copy.grow(stackInSlot.getCount());
-                    inv.setInventorySlotContents(slot, copy);
-                    inv.markDirty();
+                    inv.setItem(slot, copy);
+                    inv.setChanged();
                     return stack;
                 } else {
                     stack.shrink(stackLimit);
@@ -353,8 +353,8 @@ public class Wrapper implements IItemHandlerModifiable { //rewrite of InvWrapper
             if (stackLimit < stack.getCount()) {
                 stack = stack.copy();
                 if (!simulate) {
-                    inv.setInventorySlotContents(slot, stack.split(stackLimit));
-                    inv.markDirty();
+                    inv.setItem(slot, stack.split(stackLimit));
+                    inv.setChanged();
                     return stack;
                 } else {
                     stack.shrink(stackLimit);
@@ -362,8 +362,8 @@ public class Wrapper implements IItemHandlerModifiable { //rewrite of InvWrapper
                 }
             } else {
                 if (!simulate) {
-                    inv.setInventorySlotContents(slot, stack);
-                    inv.markDirty();
+                    inv.setItem(slot, stack);
+                    inv.setChanged();
                 }
                 return ItemStack.EMPTY;
             }
@@ -391,16 +391,12 @@ public class Wrapper implements IItemHandlerModifiable { //rewrite of InvWrapper
                 return copy;
             }
         } else {
-            ItemStack decrStackSize = inv.decrStackSize(slot, amount);
-            inv.markDirty();
-            return decrStackSize;
+            ItemStack remove = inv.remove(slot, amount);
+            inv.setChanged();
+            return remove;
         }
     }
 
-    /**
-     * Merge provided ItemStack with the first available one in the inventory between slot minIndex (included) and
-     * maxIndex (excluded), do validation before inserting the items, based on Container#mergeItemStack
-     */
     public static boolean mergeItemStack(List<Slot> inventorySlots, ItemStack stack, int startIndex, int endIndex, boolean reverseDirection, ArrayList<Integer> blackListSlot) {
         boolean flag = false; //tell if something was put, return false if the stack in input wasn't shrinked/consumed
         int i = reverseDirection ? endIndex - 1 : startIndex;
@@ -414,7 +410,7 @@ public class Wrapper implements IItemHandlerModifiable { //rewrite of InvWrapper
                 Slot slot = inventorySlots.get(i);
                 if (slot instanceof InvWrapperSlot) {
                     Wrapper wrap = (Wrapper)((InvWrapperSlot)slot).getItemHandler();
-                    if ((wrap.getRights(slot.getSlotIndex()).flags & CANINPUT) == 0 || !slot.isItemValid(stack) || !wrap.isItemValid(slot.getSlotIndex(), stack)) { //skip this slot as it is not valid for input
+                    if ((wrap.getRights(slot.getSlotIndex()).flags & CANINPUT) == 0 || !slot.mayPlace(stack) || !wrap.mayPlace(slot.getSlotIndex(), stack)) { //skip this slot as it is not valid for input
                         i += reverseDirection ? -1 : 1;
                         continue;
                     }
@@ -422,17 +418,17 @@ public class Wrapper implements IItemHandlerModifiable { //rewrite of InvWrapper
                 ItemStack itemStack = slot.getStack();
                 if (!itemStack.isEmpty() && itemStack.getItem() == stack.getItem() && IORights.nbtDamageTag(WITHOUTORE, itemStack, stack)) { //similar itemstacks (matching item, nbt and damage), will try to merge
                     int j = itemStack.getCount() + stack.getCount(); //new stack size after full merge (might need to be truncated if it exceed stack size)
-                    int maxSize = Math.min(slot.getSlotStackLimit(), stack.getMaxStackSize());
+                    int maxSize = Math.min(slot.getMaxStackSize(), stack.getMaxStackSize());
                     if (maxSize != itemStack.getCount()) {//slot is not already full
                         if (j <= maxSize) { //the slot can fit all the new merged stack
                             stack.setCount(0);
                             itemStack.setCount(j);
-                            slot.onSlotChanged();
+                            slot.setChanged();
                             flag = true;
                         } else {
                             stack.shrink(maxSize - itemStack.getCount());
                             itemStack.setCount(maxSize);
-                            slot.onSlotChanged();
+                            slot.setChanged();
                             flag = true;
                         }
                     }
@@ -449,18 +445,18 @@ public class Wrapper implements IItemHandlerModifiable { //rewrite of InvWrapper
                 Slot slot = inventorySlots.get(i);
                 if (slot instanceof InvWrapperSlot) {
                     Wrapper wrap = (Wrapper)((InvWrapperSlot)slot).getItemHandler();
-                    if ((wrap.getRights(slot.getSlotIndex()).flags & CANINPUT) == 0 || !slot.isItemValid(stack) || !wrap.isItemValid(slot.getSlotIndex(), stack)) { //skip this slot as it is not valid for input
+                    if ((wrap.getRights(slot.getSlotIndex()).flags & CANINPUT) == 0 || !slot.mayPlace(stack) || !wrap.mayPlace(slot.getSlotIndex(), stack)) { //skip this slot as it is not valid for input
                         i += reverseDirection ? -1 : 1;
                         continue;
                     }
                 }
                 ItemStack itemStack = slot.getStack();
                 if (itemStack.isEmpty()) { //found empty valid slot, try to put the stack
-                    if (stack.getCount() > slot.getSlotStackLimit())
-                        slot.putStack(stack.split(slot.getSlotStackLimit()));
+                    if (stack.getCount() > slot.getMaxStackSize())
+                        slot.set(stack.split(slot.getMaxStackSize()));
                     else
-                        slot.putStack(stack.split(stack.getCount()));
-                    slot.onSlotChanged();
+                        slot.set(stack.split(stack.getCount()));
+                    slot.setChanged();
                     flag = true;
                     break;
                 }
@@ -471,7 +467,7 @@ public class Wrapper implements IItemHandlerModifiable { //rewrite of InvWrapper
     }
 
     @Override
-    public int getSlots() { return inv.getSizeInventory(); }
+    public int getSlots() { return inv.getContainerSize(); }
 
     @Nonnull
     @Override
@@ -479,7 +475,7 @@ public class Wrapper implements IItemHandlerModifiable { //rewrite of InvWrapper
 
     @Override
     public void setStackInSlot(int slot, @Nonnull ItemStack stack) {
-        inv.setInventorySlotContents(slot, stack);
+        inv.setItem(slot, stack);
     }
 
     @Override
@@ -491,8 +487,9 @@ public class Wrapper implements IItemHandlerModifiable { //rewrite of InvWrapper
     }
 
     @Override
-    public boolean isItemValid(int slot, @Nonnull ItemStack stack) {
+    public boolean mayPlace(int slot, @Nonnull ItemStack stack) {
         if (slot < 0 || slot >= IO.length) return false;
-        return inv.isItemValidForSlot(slot, stack) && IO[slot].isItemValid(stack);
+        return inv.mayPlaceForSlot(slot, stack) && IO[slot].mayPlace(stack);
     }
 }
+*/

@@ -4,6 +4,7 @@ import com.limachi.dimensional_bags.DimBag;
 import com.limachi.dimensional_bags.utils.WorldUtils;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.nbt.ListNBT;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.server.ServerWorld;
 
 import java.util.ArrayList;
@@ -20,7 +21,7 @@ public class Chunkloadder {
         public CLEntry(ServerWorld world1, int x1, int y1) {
             x = x1;
             y = y1;
-            dimReg = WorldUtils.worldRKToString(world1.getDimensionKey());
+            dimReg = WorldUtils.worldRKToString(world1.dimension());
         }
 
         public CLEntry(String dim, int x1, int y1) {
@@ -30,7 +31,7 @@ public class Chunkloadder {
         }
 
         public boolean equal(ServerWorld world1, int x1, int y1) {
-            return dimReg.equals(WorldUtils.worldRKToString(world1.getDimensionKey())) && x == x1 && y == y1;
+            return dimReg.equals(WorldUtils.worldRKToString(world1.dimension())) && x == x1 && y == y1;
         }
     }
 
@@ -38,20 +39,24 @@ public class Chunkloadder {
     private Map<CLEntry, Integer> arc = new HashMap<>(); //how many bags are in each loaded chunk (once at zero, chunk should be unloaded)
     private ArrayList<CLEntry> list = new ArrayList<>(); //which chunk should be loadded no matter what
 
+    public void loadChunk(ServerWorld world, BlockPos pos, int by) {
+        loadChunk(world, pos.getX() >> 4, pos.getZ() >> 4, by);
+    }
+
     public void loadChunk(ServerWorld world, int x, int z, int by) { //'by' is the bag id that is forcing the chunk to be loadded, since the mod is made with the idea that only one item/entity can exist at a time with the same id, we consider that only one chunk can be loadded by a single item/entity
         int cx = x >> 4;
         int cy = z >> 4;
         CLEntry entry = new CLEntry(world, cx, cy);
         Integer r = arc.getOrDefault(entry, 0);
         if (r == 0) //this is the first id that tried to load this chunk, and thus the chunk must be loaded
-            world.forceChunk(cx, cy, true);
+            world.setChunkForced(cx, cy, true);
         arc.put(entry, r + 1);
         if (by != 0) {
             CLEntry mapEntry = map.get(by); //if possible, get the previous chunk loaded by this id
             if (mapEntry != null && !entry.equal(world, cx, cy)) { //the bag is not in the same chunk as before, should try an unload
                 Integer r1 = arc.getOrDefault(mapEntry, 0);
                 if (r1 <= 1) //this was the last id loading this chunk, so it is time to unload it
-                    WorldUtils.getWorld(DimBag.getServer(), mapEntry.dimReg).forceChunk(mapEntry.x, mapEntry.y, false);
+                    WorldUtils.getWorld(DimBag.getServer(), mapEntry.dimReg).setChunkForced(mapEntry.x, mapEntry.y, false);
                 if (r1 <= 1)
                     arc.remove(mapEntry);
                 else
@@ -71,7 +76,7 @@ public class Chunkloadder {
             map.remove(by);
             int r = arc.getOrDefault(entry, 0);
             if (r <= 1) {
-                WorldUtils.getWorld(DimBag.getServer(), entry.dimReg).forceChunk(entry.x, entry.y, false);
+                WorldUtils.getWorld(DimBag.getServer(), entry.dimReg).setChunkForced(entry.x, entry.y, false);
                 arc.remove(entry);
             } else
                 arc.put(entry, r - 1);
@@ -84,7 +89,7 @@ public class Chunkloadder {
             list.remove(entry);
             int c = arc.getOrDefault(entry, 0);
             if (c <= 1) {
-                WorldUtils.getWorld(DimBag.getServer(), entry.dimReg).forceChunk(entry.x, entry.y, false);
+                WorldUtils.getWorld(DimBag.getServer(), entry.dimReg).setChunkForced(entry.x, entry.y, false);
                 arc.remove(entry);
             } else
                 arc.put(entry, c - 1);
@@ -97,14 +102,14 @@ public class Chunkloadder {
             CLEntry entry = me.getValue();
             int r = arc.getOrDefault(entry, 0);
             if (r == 0)
-                WorldUtils.getWorld(DimBag.getServer(), entry.dimReg).forceChunk(entry.x, entry.y, true);
+                WorldUtils.getWorld(DimBag.getServer(), entry.dimReg).setChunkForced(entry.x, entry.y, true);
             arc.put(entry, r + 1);
         }
         for (int i = 0; i < list.size(); ++i) {
             CLEntry entry = list.get(i);
             int r = arc.getOrDefault(entry, 0);
             if (r == 0)
-                WorldUtils.getWorld(DimBag.getServer(), entry.dimReg).forceChunk(entry.x, entry.y, true);
+                WorldUtils.getWorld(DimBag.getServer(), entry.dimReg).setChunkForced(entry.x, entry.y, true);
             arc.put(entry, r + 1);
         }
     }

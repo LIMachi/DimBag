@@ -23,6 +23,7 @@ import net.minecraft.util.Direction;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IBlockReader;
 import net.minecraft.world.World;
+import net.minecraftforge.common.util.Constants;
 
 import javax.annotation.Nullable;
 import java.util.function.Supplier;
@@ -47,27 +48,27 @@ public class Crystal extends AbstractTileEntityBlock<CrystalTileEntity> implemen
     public static final BooleanProperty PULL = BooleanProperty.create("pull");
 
     public Crystal() {
-        super(NAME, Properties.create(Material.REDSTONE_LIGHT).hardnessAndResistance(1.5f, 3600000f).sound(SoundType.GLASS), CrystalTileEntity.class, CrystalTileEntity.NAME);
+        super(NAME, Properties.of(Material.HEAVY_METAL).strength(1.5f, 3600000f).sound(SoundType.GLASS), CrystalTileEntity.class, CrystalTileEntity.NAME);
     }
 
 
 
     @Override
-    protected void fillStateContainer(StateContainer.Builder<Block, BlockState> builder) {
+    protected void createBlockStateDefinition(StateContainer.Builder<Block, BlockState> builder) {
         builder.add(PULL);
     }
 
     @Nullable
     @Override //this block can only be placed in a subroom
     public BlockState getStateForPlacement(BlockItemUseContext context) {
-        int eyeId = SubRoomsManager.getEyeId(context.getWorld(), context.getPos(), false);
+        int eyeId = SubRoomsManager.getEyeId(context.getLevel(), context.getClickedPos(), false);
         if (eyeId <= 0) return null;
         return super.getStateForPlacement(context);
     }
 
     @Nullable
     @Override
-    public TileEntity createNewTileEntity(IBlockReader worldIn) { return Registries.getTileEntityType(CrystalTileEntity.NAME).create(); }
+    public TileEntity newBlockEntity(IBlockReader worldIn) { return Registries.getBlockEntityType(CrystalTileEntity.NAME).create(); }
 
     @Override
     public <B extends AbstractTileEntityBlock<CrystalTileEntity>> B getInstance() { return (B)INSTANCE.get(); }
@@ -94,7 +95,7 @@ public class Crystal extends AbstractTileEntityBlock<CrystalTileEntity> implemen
 
     @Override //cycle the face state (push, pull, both, none)
     public ActionResultType wrenchWithBag(World world, BlockPos pos, BlockState state, Direction face) {
-        world.setBlockState(pos, state.with(PULL, !state.get(PULL)));
+        world.setBlock(pos, state.setValue(PULL, !state.getValue(PULL)), Constants.BlockFlags.DEFAULT_AND_RERENDER);
         return ActionResultType.SUCCESS;
     }
 }

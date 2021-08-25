@@ -4,9 +4,9 @@ import com.limachi.dimensional_bags.DimBag;
 import com.limachi.dimensional_bags.utils.WorldUtils;
 import com.limachi.dimensional_bags.common.container.slot.DisabledSlot;
 //import com.limachi.dimensional_bags.common.container.slot.RemoteFluidSlot;
-import com.limachi.dimensional_bags.common.container.slot.IIORightsSlot;
-import com.limachi.dimensional_bags.common.container.slot.InvWrapperSlot;
-import com.limachi.dimensional_bags.common.inventory.Wrapper;
+//import com.limachi.dimensional_bags.common.container.slot.IIORightsSlot;
+//import com.limachi.dimensional_bags.common.container.slot.InvWrapperSlot;
+//import com.limachi.dimensional_bags.common.inventory.Wrapper;
 import com.limachi.dimensional_bags.common.network.PacketHandler;
 //import com.limachi.dimensional_bags.common.network.packets.TrackedStringSyncMsg;
 import net.minecraft.entity.player.PlayerEntity;
@@ -125,7 +125,7 @@ public class BaseContainer extends Container {
         this.connectionType = ContainerConnectionType.values()[extraData.readInt()];
         switch (this.connectionType) {
             case TILE_ENTITY:
-                this.tileEntity = WorldUtils.getWorld(DimBag.getServer(), extraData.readString()).getTileEntity(extraData.readBlockPos());
+                this.tileEntity = WorldUtils.getWorld(DimBag.getServer(), extraData.readString()).getBlockEntity(extraData.readBlockPos());
                 this.itemSlot = null;
                 break;
             case ITEM:
@@ -141,7 +141,7 @@ public class BaseContainer extends Container {
     public static PacketBuffer writeBaseParameters(PacketBuffer buffer, ContainerConnectionType connectionType, TileEntity tileEntity, int itemSlot) {
         buffer.writeInt(connectionType.ordinal());
         if (connectionType == ContainerConnectionType.TILE_ENTITY) {
-            buffer.writeString(WorldUtils.worldRKToString(tileEntity.getWorld().getDimensionKey()));
+            buffer.writeString(WorldUtils.worldRKToString(tileEntity.getWorld().dimension()));
             buffer.writeBlockPos(tileEntity.getPos());
         } else if (connectionType == ContainerConnectionType.ITEM)
             buffer.writeInt(itemSlot);
@@ -156,10 +156,10 @@ public class BaseContainer extends Container {
     }
 
     @Override
-    public boolean canInteractWith(PlayerEntity playerIn) {
+    public boolean stillValid(PlayerEntity playerIn) {
         if (connectionType == ContainerConnectionType.TILE_ENTITY) {
             if (tileEntity != null)
-                return tileEntity.getWorld().getTileEntity(tileEntity.getPos()) == tileEntity; //does the tile entity in the world at the previous position is still the same
+                return tileEntity.getWorld().getBlockEntity(tileEntity.getPos()) == tileEntity; //does the tile entity in the world at the previous position is still the same
             return false; //missing tile entity reference, the logic of this container might break
         }
         return true;
@@ -222,8 +222,8 @@ public class BaseContainer extends Container {
     }
 
     @Override
-    public void detectAndSendChanges() {
-        super.detectAndSendChanges(); //will do the int and ItemStacks for us
+    public void broadcastChanges() {
+        super.broadcastChanges(); //will do the int and ItemStacks for us
         if (player instanceof ServerPlayerEntity) {
 //            for (int i = 0; i < this.remoteFluidSlots.size(); ++i) {
 //                FluidStack fluid = this.remoteFluidSlots.get(i).getFluidStack();
@@ -309,10 +309,10 @@ public class BaseContainer extends Container {
     }
 
     @Override
-    public ItemStack transferStackInSlot(PlayerEntity playerIn, int index) {
+    public ItemStack quickMoveStack(PlayerEntity playerIn, int index) {
         ItemStack itemStack = ItemStack.EMPTY;
         Slot slot = index >= 0 && index < inventorySlots.size() ? inventorySlots.get(index) : null;
-        if (slot != null && slot.getHasStack()) {
+        if (slot != null && slot.hasItem()) {
             ItemStack slotStack = slot.getStack();
             itemStack = slotStack.copy();
             boolean playerSlot = isPlayerSlot(index);
@@ -325,15 +325,15 @@ public class BaseContainer extends Container {
             if (!Wrapper.mergeItemStack(inventorySlots, slotStack, 0, inventorySlots.size(), false, blackList))
                 return ItemStack.EMPTY;
             if (slotStack.getCount() == 0)
-                slot.putStack(ItemStack.EMPTY);
+                slot.set(ItemStack.EMPTY);
             else
-                slot.onSlotChanged();
+                slot.setChanged();
         }
         return itemStack;
     }
 
     @Override
-    public ItemStack slotClick(int slotId, int dragType, ClickType clickTypeIn, PlayerEntity player) {
+    public ItemStack clicked(int slotId, int dragType, ClickType clickTypeIn, PlayerEntity player) {
         if (disabledSlots().contains(slotId)) return ItemStack.EMPTY; //clicking invalid slot
         if (clickTypeIn == ClickType.SWAP && disabledSlots().contains(dragType)) return ItemStack.EMPTY; //trying to swap invalid slot
         Slot slot = slotId >= 0 && slotId < inventorySlots.size() ? inventorySlots.get(slotId) : null;
@@ -342,7 +342,7 @@ public class BaseContainer extends Container {
             return ItemStack.EMPTY;
         }
 //        if (slot instanceof RemoteFluidSlot) return ((RemoteFluidSlot)slot).onSlotClick(player, clickTypeIn);
-        return super.slotClick(slotId, dragType, clickTypeIn, player);
+        return super.clicked(slotId, dragType, clickTypeIn, player);
     }
 
     public Wrapper.IORights getRights(int index) {

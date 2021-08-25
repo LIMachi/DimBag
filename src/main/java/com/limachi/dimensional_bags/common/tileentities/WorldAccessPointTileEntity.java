@@ -19,9 +19,11 @@ import net.minecraft.entity.item.ItemEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.inventory.ISidedInventoryProvider;
+import net.minecraft.item.CrossbowItem;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.ItemUseContext;
 import net.minecraft.tileentity.ChestTileEntity;
+import net.minecraft.tileentity.HopperTileEntity;
 import net.minecraft.tileentity.ITickableTileEntity;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.ActionResult;
@@ -74,15 +76,15 @@ public class WorldAccessPointTileEntity extends BaseTileEntity implements IEnerg
     @ConfigManager.Config
     public static final int COOLDOWN = 10;
 
-    public WorldAccessPointTileEntity() { super(Registries.getTileEntityType(NAME)); }
+    public WorldAccessPointTileEntity() { super(Registries.getBlockEntityType(NAME)); }
 
-    public ItemStack getItemHold() { return ItemStack.read(getTileData().getCompound("ItemHold")); }
+    public ItemStack getItemHold() { return ItemStack.of(getTileData().getCompound("ItemHold")); }
 
-    public void setItemHold(ItemStack item) { item.write(getTileData().getCompound("ItemHold")); markDirty(); }
+    public void setItemHold(ItemStack item) { item.save(getTileData().getCompound("ItemHold")); setChanged(); }
 
     public int getEnergy() { return getTileData().getInt("Energy"); }
 
-    public void setEnergy(int energy) { getTileData().putInt("Energy", energy); markDirty(); }
+    public void setEnergy(int energy) { getTileData().putInt("Energy", energy); setChanged(); }
 
     @Nonnull
     @Override
@@ -94,22 +96,22 @@ public class WorldAccessPointTileEntity extends BaseTileEntity implements IEnerg
 
     @Override //the total size of the cached inventory is 1 reserver slot + number of items visible by the bag + remote inventory. the radius of detection and if the remote inventory should be accessible is dependent on the bag state (equiped vs inworld)
     public void tick(int tick) {
-        int eye = SubRoomsManager.getEyeId(world, pos, false);
+        int eye = SubRoomsManager.getEyeId(level, worldPosition, false);
 
         if (eye > 0) {
-            Entity e = HolderData.getInstance(SubRoomsManager.getEyeId(world, pos, false)).getEntity();
+            Entity e = HolderData.getInstance(SubRoomsManager.getEyeId(level, worldPosition, false)).getEntity();
             if (e == null) return;
             lastKnownHolder = new WeakReference<>(e);
             isEquipped = !(e instanceof BagEntity);
 
             if (isEquipped) {
-                List<ItemEntity> tl = e.world.getEntitiesWithinAABB(ItemEntity.class, new AxisAlignedBB(e.getPosition().add(-RADIUS_EQUIPPED, -RADIUS_EQUIPPED, -RADIUS_EQUIPPED), e.getPosition().add(RADIUS_EQUIPPED, RADIUS_EQUIPPED, RADIUS_EQUIPPED)), f -> Bag.getEyeId(f.getItem()) != eye);
+                List<ItemEntity> tl = e.level.getEntitiesOfClass(ItemEntity.class, new AxisAlignedBB(e.blockPosition().offset(-RADIUS_EQUIPPED, -RADIUS_EQUIPPED, -RADIUS_EQUIPPED), e.blockPosition().offset(RADIUS_EQUIPPED, RADIUS_EQUIPPED, RADIUS_EQUIPPED)), f -> Bag.getEyeId(f.getItem()) != eye);
                 worldItems = new ArrayList<>();
                 for (ItemEntity ie : tl)
                     worldItems.add(new WeakReference<>(ie));
                 inv = new WeakReference<>(null);
             } else {
-                List<ItemEntity> tl = e.world.getEntitiesWithinAABB(ItemEntity.class, new AxisAlignedBB(e.getPosition().add(-DEFAULT_RADIUS, -DEFAULT_RADIUS, -DEFAULT_RADIUS), e.getPosition().add(DEFAULT_RADIUS, DEFAULT_RADIUS, DEFAULT_RADIUS)), f -> Bag.getEyeId(f.getItem()) != eye);
+                List<ItemEntity> tl = e.level.getEntitiesOfClass(ItemEntity.class, new AxisAlignedBB(e.blockPosition().offset(-DEFAULT_RADIUS, -DEFAULT_RADIUS, -DEFAULT_RADIUS), e.blockPosition().offset(DEFAULT_RADIUS, DEFAULT_RADIUS, DEFAULT_RADIUS)), f -> Bag.getEyeId(f.getItem()) != eye);
                 worldItems = new ArrayList<>();
                 for (ItemEntity ie : tl)
                     worldItems.add(new WeakReference<>(ie));
@@ -131,33 +133,33 @@ public class WorldAccessPointTileEntity extends BaseTileEntity implements IEnerg
         if (extractEnergy(ENERGY_USAGE_PER_ACTION, true) == ENERGY_USAGE_PER_ACTION) {
 
             ItemStack original = holdItem.copy();
-            ItemStack cacheMain = e.getHeldItem(Hand.MAIN_HAND).copy();
-            ItemStack cacheOff = e.getHeldItem(Hand.OFF_HAND).copy();
-            e.setHeldItem(Hand.MAIN_HAND, holdItem);
-            e.setHeldItem(Hand.OFF_HAND, ItemStack.EMPTY);
+            ItemStack cacheMain = e.getItemInHand(Hand.MAIN_HAND).copy();
+            ItemStack cacheOff = e.getItemInHand(Hand.OFF_HAND).copy();
+            e.setItemInHand(Hand.MAIN_HAND, holdItem);
+            e.setItemInHand(Hand.OFF_HAND, ItemStack.EMPTY);
 
             if (e instanceof PlayerEntity) {
-                ActionResult<ItemStack> ars = holdItem.getItem().onItemRightClick(e.world, (PlayerEntity) e, Hand.MAIN_HAND);
-                if (ars.getType().isSuccess()) {
-                    holdItem = ars.getResult();
+                ActionResult<ItemStack> ars = holdItem.getItem().use(e.level, (PlayerEntity) e, Hand.MAIN_HAND);
+                if (ars.getResult().consumesAction()) {
+                    holdItem = ars.getObject();
                     simulateRightClickCleanup(e, holdItem, original, cacheMain, cacheOff);
                     return;
                 }
 
 
-                BlockRayTraceResult rr = Bag.rayTrace(e.world, (PlayerEntity) e, RayTraceContext.FluidMode.NONE);
-                if (rr.getType() != RayTraceResult.Type.MISS && holdItem.getItem().onItemUse(new ItemUseContext((PlayerEntity) e, Hand.MAIN_HAND, rr)).isSuccess()) {
-                    holdItem = e.getHeldItem(Hand.MAIN_HAND);
+                BlockRayTraceResult rr = Bag.rayTrace(e.level, (PlayerEntity) e, RayTraceContext.FluidMode.NONE);
+                if (rr.getType() != RayTraceResult.Type.MISS && holdItem.getItem().useOn(new ItemUseContext((PlayerEntity) e, Hand.MAIN_HAND, rr)).consumesAction()) {
+                    holdItem = e.getItemInHand(Hand.MAIN_HAND);
                     simulateRightClickCleanup(e, holdItem, original, cacheMain, cacheOff);
                     return;
                 }
             } else {
-                BlockRayTraceResult rb = e.world.rayTraceBlocks(new RayTraceContext(e.getPositionVec(), e.getPositionVec().add(0.d, -1.5d, 0.d), RayTraceContext.BlockMode.OUTLINE, RayTraceContext.FluidMode.NONE, e));
-                FakePlayer fp = net.minecraftforge.common.util.FakePlayerFactory.getMinecraft((net.minecraft.world.server.ServerWorld)e.world);
-                fp.setHeldItem(Hand.MAIN_HAND, holdItem);
-                fp.setHeldItem(Hand.OFF_HAND, ItemStack.EMPTY);
-                if (rb.getType() != RayTraceResult.Type.MISS && holdItem.getItem().onItemUse(new ItemUseContext(fp, Hand.MAIN_HAND, rb)).isSuccess()) {
-                    holdItem = fp.getHeldItem(Hand.MAIN_HAND);
+                BlockRayTraceResult rb = e.level.clip(new RayTraceContext(e.position(), e.position().add(0.d, -1.5d, 0.d), RayTraceContext.BlockMode.OUTLINE, RayTraceContext.FluidMode.NONE, e));
+                FakePlayer fp = net.minecraftforge.common.util.FakePlayerFactory.getMinecraft((net.minecraft.world.server.ServerWorld)e.level);
+                fp.setItemInHand(Hand.MAIN_HAND, holdItem);
+                fp.setItemInHand(Hand.OFF_HAND, ItemStack.EMPTY);
+                if (rb.getType() != RayTraceResult.Type.MISS && holdItem.getItem().useOn(new ItemUseContext(fp, Hand.MAIN_HAND, rb)).consumesAction()) {
+                    holdItem = fp.getItemInHand(Hand.MAIN_HAND);
                     simulateRightClickCleanup(e, holdItem, original, cacheMain, cacheOff);
                     return;
                 }
@@ -177,12 +179,12 @@ public class WorldAccessPointTileEntity extends BaseTileEntity implements IEnerg
                         if (!test.isEmpty())
                             if (net.minecraftforge.event.ForgeEventFactory.onItemUseTick(e, test, dur) > 0)
                                 test.onUsingTick(e, dur);
-                        test.onItemUsed(e.world, e, dur);
-                        if (!test.isCrossbowStack())
-                            holdItem = net.minecraftforge.event.ForgeEventFactory.onItemUseFinish(e, test, 0, holdItem.onItemUseFinish(e.world, e));
+                        test.onUseTick(e.level, e, dur);
+                        if (!(test.getItem() instanceof CrossbowItem))
+                            holdItem = net.minecraftforge.event.ForgeEventFactory.onItemUseFinish(e, test, 0, holdItem.finishUsingItem(e.level, e));
                         if (!net.minecraftforge.event.ForgeEventFactory.onUseItemStop(e, holdItem, 0)) {
                             ItemStack copy = e instanceof PlayerEntity ? holdItem.copy() : null;
-                            holdItem.onPlayerStoppedUsing(e.world, e, 0);
+                            holdItem.releaseUsing(e.level, e, 0);
                             if (copy != null && holdItem.isEmpty())
                                 net.minecraftforge.event.ForgeEventFactory.onPlayerDestroyItem((PlayerEntity) e, copy, Hand.MAIN_HAND);
                         }
@@ -192,15 +194,15 @@ public class WorldAccessPointTileEntity extends BaseTileEntity implements IEnerg
 //            holdItem = holdItem.getItem().onItemUseFinish(holdItem, e.world, e);
 //            if (original.equals(holdItem, false))
 //                holdItem.getItem().onPlayerStoppedUsing(holdItem, e.world, e, 0);
-//            holdItem = e.getHeldItem(Hand.MAIN_HAND);
+//            holdItem = e.getItemInHand(Hand.MAIN_HAND);
             simulateRightClickCleanup(e, holdItem, original, cacheMain, cacheOff);
         }
     }
 
     private void simulateRightClickCleanup(LivingEntity e, ItemStack holdItem, ItemStack original, ItemStack cacheMain, ItemStack cacheOff) {
         boolean update = !original.equals(holdItem, false);
-        e.setHeldItem(Hand.MAIN_HAND, cacheMain);
-        e.setHeldItem(Hand.OFF_HAND, cacheOff);
+        e.setItemInHand(Hand.MAIN_HAND, cacheMain);
+        e.setItemInHand(Hand.OFF_HAND, cacheOff);
         extractEnergy(ENERGY_USAGE_PER_ACTION, false);
         cooldown = COOLDOWN;
         if (update)
@@ -208,47 +210,19 @@ public class WorldAccessPointTileEntity extends BaseTileEntity implements IEnerg
     }
 
     public WeakReference<IInventory> getNearInventory(Entity entity) {
-        IInventory i = getInventoryAtPosition(entity.world, entity.getPosX(), entity.getPosY() - 1.0D, entity.getPosZ());
+        IInventory i = HopperTileEntity.getContainerAt(entity.level, entity.position().x, entity.position().y - 1.0D, entity.position().z);
         if (i != null) return new WeakReference<>(i);
-        i = getInventoryAtPosition(entity.world, entity.getPosX(), entity.getPosY() + 1.0D, entity.getPosZ());
+        i = HopperTileEntity.getContainerAt(entity.level, entity.position().x, entity.position().y + 1.0D, entity.position().z);
         if (i != null) return new WeakReference<>(i);
-        i = getInventoryAtPosition(entity.world, entity.getPosX(), entity.getPosY(), entity.getPosZ());
+        i = HopperTileEntity.getContainerAt(entity.level, entity.position().x, entity.position().y, entity.position().z);
         if (i != null) return new WeakReference<>(i);
         return new WeakReference<>(null);
-    }
-
-    //vanilla hopper code
-    public static IInventory getInventoryAtPosition(World worldIn, double x, double y, double z) {
-        IInventory iinventory = null;
-        BlockPos blockpos = new BlockPos(x, y, z);
-        BlockState blockstate = worldIn.getBlockState(blockpos);
-        Block block = blockstate.getBlock();
-        if (block instanceof ISidedInventoryProvider) {
-            iinventory = ((ISidedInventoryProvider)block).createInventory(blockstate, worldIn, blockpos);
-        } else if (blockstate.hasTileEntity()) {
-            TileEntity tileentity = worldIn.getTileEntity(blockpos);
-            if (tileentity instanceof IInventory) {
-                iinventory = (IInventory)tileentity;
-                if (iinventory instanceof ChestTileEntity && block instanceof ChestBlock) {
-                    iinventory = ChestBlock.getChestInventory((ChestBlock)block, blockstate, worldIn, blockpos, true);
-                }
-            }
-        }
-
-        if (iinventory == null) {
-            List<Entity> list = worldIn.getEntitiesInAABBexcluding((Entity)null, new AxisAlignedBB(x - 0.5D, y - 0.5D, z - 0.5D, x + 0.5D, y + 0.5D, z + 0.5D), EntityPredicates.HAS_INVENTORY);
-            if (!list.isEmpty()) {
-                iinventory = (IInventory)list.get(worldIn.rand.nextInt(list.size()));
-            }
-        }
-
-        return iinventory;
     }
 
     @Override
     public int getSlots() {
         IInventory li = inv.get();
-        return 1 + worldItems.size() + (li != null ? li.getSizeInventory() : 0);
+        return 1 + worldItems.size() + (li != null ? li.getContainerSize() : 0);
     }
 
     @Override
@@ -260,8 +234,8 @@ public class WorldAccessPointTileEntity extends BaseTileEntity implements IEnerg
             return ie != null ? ie.getItem() : ItemStack.EMPTY;
         }
         IInventory li = inv.get();
-        if (li != null && index < 1 + worldItems.size() + li.getSizeInventory())
-            return li.getStackInSlot(index - 1 - worldItems.size());
+        if (li != null && index < 1 + worldItems.size() + li.getContainerSize())
+            return li.getItem(index - 1 - worldItems.size());
         return ItemStack.EMPTY;
     }
 
@@ -306,7 +280,7 @@ public class WorldAccessPointTileEntity extends BaseTileEntity implements IEnerg
         if (!simulate) {
             stack.shrink(toOutput);
             if (slot == 0)
-                markDirty();
+                setChanged();
         }
         return out;
     }
@@ -317,9 +291,7 @@ public class WorldAccessPointTileEntity extends BaseTileEntity implements IEnerg
     }
 
     @Override
-    public boolean isItemValid(int slot, @Nonnull ItemStack stack) {
-        return slot == 0;
-    }
+    public boolean isItemValid(int slot, @Nonnull ItemStack stack) { return slot == 0; }
 
     @Override
     public int receiveEnergy(int maxReceive, boolean simulate) {

@@ -11,14 +11,10 @@ import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.items.CapabilityItemHandler;
 
-import java.util.UUID;
-
 @StaticInit
-public class PillarTileEntity extends BaseTileEntity implements IisBagTE {
+public class PillarTileEntity extends TEWithUUID implements IisBagTE {
 
     public static final String NAME = "pillar";
-
-    public static final String NBT_KEY_ID = "ID";
 
     private int eyeId;
 
@@ -28,28 +24,20 @@ public class PillarTileEntity extends BaseTileEntity implements IisBagTE {
 
     public int getEyeId() {
         if (eyeId == 0)
-            eyeId = SubRoomsManager.getEyeId(world, pos, false);
+            eyeId = SubRoomsManager.getEyeId(level, worldPosition, false);
         return eyeId;
     }
 
-    public PillarTileEntity() {
-        super(Registries.getTileEntityType(NAME));
-        getTileData().putUniqueId(NBT_KEY_ID, UUID.randomUUID());
-    }
+    public PillarTileEntity() { super(Registries.getBlockEntityType(NAME)); }
 
-    public UUID getId() { return getTileData().getUniqueId(NBT_KEY_ID); }
-
-    public void setId(UUID id) { getTileData().putUniqueId(NBT_KEY_ID, id); markDirty(); }
-
-    public PillarInventory getInventory() {
-        return (PillarInventory)InventoryData.execute(getEyeId(), invData->invData.getPillarInventory(getId()), null);
+    public PillarInventory getInventory() { //FIXME: find why sometimes the id is invalid (very annoying for new bags generated with invalid ids)
+        return (PillarInventory)InventoryData.execute(getEyeId(), invData->invData.getPillarInventory(getUUID()), null);
     }
 
     @Override
     public <T> LazyOptional<T> getCapability(Capability<T> capability, Direction facing) {
-        if (capability == CapabilityItemHandler.ITEM_HANDLER_CAPABILITY) {
+        if (capability == CapabilityItemHandler.ITEM_HANDLER_CAPABILITY)
             return LazyOptional.of(this::getInventory).cast();
-        }
         return super.getCapability(capability, facing);
     }
 }

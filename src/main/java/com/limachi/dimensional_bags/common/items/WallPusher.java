@@ -21,17 +21,17 @@ public class WallPusher extends Item implements IDimBagCommonItem {
         Registries.registerItem(NAME, WallPusher::new);
     }
 
-    public WallPusher() { super(new Properties().group(DimBag.ITEM_GROUP)); }
+    public WallPusher() { super(DimBag.DEFAULT_PROPERTIES); }
 
     @Override
-    public ActionResultType onItemUse(ItemUseContext context) {
-        World world = context.getWorld();
+    public ActionResultType useOn(ItemUseContext context) {
+        World world = context.getLevel();
         if (!(world instanceof ServerWorld)) return ActionResultType.PASS;
-        BlockPos pos = context.getPos();
+        BlockPos pos = context.getClickedPos();
         if (!SubRoomsManager.isWall(world, pos)) return ActionResultType.PASS;
 
         if (SubRoomsManager.pushWall((ServerWorld) world, pos)) {
-            ItemStack stack = context.getItem();
+            ItemStack stack = context.getItemInHand();
             stack.shrink(1);
         }
 

@@ -2,8 +2,8 @@ package com.limachi.dimensional_bags.common.container;
 
 import com.limachi.dimensional_bags.common.Registries;
 import com.limachi.dimensional_bags.common.data.EyeDataMK2.InventoryData;
-import com.limachi.dimensional_bags.common.inventory.PlayerInvWrapper;
-import com.limachi.dimensional_bags.common.inventory.Wrapper;
+//import com.limachi.dimensional_bags.common.inventory.PlayerInvWrapper;
+//import com.limachi.dimensional_bags.common.inventory.Wrapper;
 import com.limachi.dimensional_bags.common.references.GUIs;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
@@ -45,7 +45,7 @@ public class BagContainer extends BaseWrappedInventoryContainer {
         }
 //        this.data = data;
         addSlots();
-        trackIntArray(this.openInv.rightsAsIntArray());
+        addDataSlots(this.openInv.rightsAsIntArray());
     }
 
     public static BagContainer CreateClient(int windowId, PlayerInventory playerInv, PacketBuffer extraData) { //client
@@ -75,19 +75,19 @@ public class BagContainer extends BaseWrappedInventoryContainer {
     public int getInventorySize() { return openInv.getSlots(); }
 
 //    @Override
-//    public void detectAndSendChanges() {
+//    public void broadcastChanges() {
 //        if (!client && data != null && data.getPillarDirtyState()) {//something changed with the pillar
 //            PillarState s = data.getPillarState(pillar);
 //            if (s == PillarState.)
 //            Network.openEyeInventory((ServerPlayerEntity) playerInv.getPlayerInventory().player, data.getEyeId(), pillar);
 //        } else
-//            super.detectAndSendChanges();
+//            super.broadcastChanges();
 //    }
 
     @Override
-    public ItemStack slotClick(int slotId, int dragType, ClickType clickTypeIn, PlayerEntity player) {
+    public ItemStack clicked(int slotId, int dragType, ClickType clickTypeIn, PlayerEntity player) {
         if (clickTypeIn == ClickType.CLONE) { //middle click
-            if (slotId < 36 || slotId >= inventorySlots.size()) return super.slotClick(slotId, dragType, clickTypeIn, player);
+            if (slotId < 36 || slotId >= inventorySlots.size()) return super.clicked(slotId, dragType, clickTypeIn, player);
             slotId -= 36;
             Wrapper.IORights rights = this.openInv.getRights(slotId);
             byte flags = (byte)(((rights.flags & 3) + 1) & 3); //only work on the 2 first flags who correspond to Input and Output, increment and modulo it
@@ -95,6 +95,6 @@ public class BagContainer extends BaseWrappedInventoryContainer {
             changeRights(slotId, rights);
             return ItemStack.EMPTY;
         }
-        return super.slotClick(slotId, dragType, clickTypeIn, player);
+        return super.clicked(slotId, dragType, clickTypeIn, player);
     }
 }*/

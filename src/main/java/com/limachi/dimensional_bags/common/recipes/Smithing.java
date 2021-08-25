@@ -18,7 +18,7 @@ import javax.annotation.Nullable;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
-
+/*
 public class Smithing extends SmithingRecipe implements IRecipe { //smithing use a crafting system similar to that of an anvil, which is not a simple IRecipe<IInventory> implementation
     private final ResourceLocation ID;
     private final Supplier<NonNullList<Ingredient>> INGREDIENTS; //use a supplier to make sure that tags exists
@@ -103,4 +103,4 @@ public class Smithing extends SmithingRecipe implements IRecipe { //smithing use
     @Override
     @Nonnull
     public IRecipeSerializer<?> getSerializer() { return this.SERIALIZER; }
-}
+}*/

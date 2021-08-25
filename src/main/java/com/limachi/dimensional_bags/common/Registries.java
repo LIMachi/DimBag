@@ -65,7 +65,7 @@ public class Registries {
      * helper function to generate a tile entity type and bind a tile entity to a block
      */
     public static void registerTileEntity(String name, Supplier<? extends TileEntity> teSup, Supplier<? extends Block> blockSup, @Nullable Type<?> fixer) {
-        registerTileEntityType(name, ()-> TileEntityType.Builder.create(teSup, blockSup.get()).build(fixer));
+        registerTileEntityType(name, ()-> TileEntityType.Builder.of(teSup, blockSup.get()).build(fixer));
     }
 
     /**
@@ -83,7 +83,7 @@ public class Registries {
     }
 
 //    public static Supplier<FlowingFluidBlock> registerFluidBlock(String name, String fluidName) {
-//        BLOCKS.put(name, BLOCK_REGISTER.register(name, ()->new FlowingFluidBlock(fluid, Block.Properties.create(Material.WATER).doesNotBlockMovement().hardnessAndResistance(100.0F).noDrops())));
+//        BLOCKS.put(name, BLOCK_REGISTER.register(name, ()->new FlowingFluidBlock(fluid, Block.Properties.of(Material.WATER).doesNotBlockMovement().hardnessAndResistance(100.0F).noDrops())));
 //    }
 
     /**
@@ -131,7 +131,7 @@ public class Registries {
             LOGGER.error("Trying to register a tile entity type after initialization phase! Please move this registration to static phase: " + name);
         else
             TILE_ENTITY_TYPES.put(name, TILE_ENTITY_REGISTER.register(name, sup));
-        return ()->getTileEntityType(name);
+        return ()->getBlockEntityType(name);
     }
 
     /**
@@ -188,7 +188,7 @@ public class Registries {
     /**
      * only valid after register phase
      */
-    public static <T extends net.minecraft.tileentity.TileEntityType<?>> T getTileEntityType(String name) {
+    public static <T extends net.minecraft.tileentity.TileEntityType<?>> T getBlockEntityType(String name) {
         if (!initializationFinished)
             LOGGER.warn("Trying to access a registry object (of type tile entity type) before finishing initialization! Please move this access after the registry phase: " + name);
         return (T) TILE_ENTITY_TYPES.get(name).get();

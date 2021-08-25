@@ -1,8 +1,8 @@
 package com.limachi.dimensional_bags.common.container;
 
 import com.limachi.dimensional_bags.common.Registries;
-import com.limachi.dimensional_bags.common.container.slot.InvWrapperSlot;
-import com.limachi.dimensional_bags.common.inventory.PlayerInvWrapper;
+//import com.limachi.dimensional_bags.common.container.slot.InvWrapperSlot;
+//import com.limachi.dimensional_bags.common.inventory.PlayerInvWrapper;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.network.PacketBuffer;
@@ -12,6 +12,7 @@ import static com.limachi.dimensional_bags.common.references.GUIs.ScreenParts.*;
 import static com.limachi.dimensional_bags.common.references.GUIs.PlayerInterface.*;
 
 import com.limachi.dimensional_bags.StaticInit;
+import net.minecraft.util.text.ITextComponent;
 
 /*
 @StaticInit
@@ -48,7 +49,7 @@ public class WrappedPlayerInventoryContainer extends BaseContainer {
         for (int x = 0; x < 4; ++x)
             addSlot(new InvWrapperSlot(targetInventory, 36 + x, ARMOR_SLOTS_X + 1 + x * SLOT_SIZE_X, SPECIAL_SLOTS_Y + 1));
         addSlot(new InvWrapperSlot(targetInventory, 40, OFF_HAND_SLOT_X + 1, SPECIAL_SLOTS_Y + 1));
-        trackIntArray(targetInventory.rightsAsIntArray());
+        addDataSlots(targetInventory.rightsAsIntArray());
         trackString(new StringReferenceHolder() {
             @Override
             public String get() {
@@ -76,6 +77,20 @@ public class WrappedPlayerInventoryContainer extends BaseContainer {
     public String getLocalUserName() { return localUserName; }
 
     @Override
-    public boolean canInteractWith(PlayerEntity playerIn) { return true; }
-}
-*/
+    public boolean stillValid(PlayerEntity playerIn) { return true; }
+
+    @Override
+    public void readFromBuff(PacketBuffer buff) {
+
+    }
+
+    @Override
+    public void writeToBuff(PacketBuffer buff) {
+
+    }
+
+    @Override
+    public ITextComponent getDisplayName() {
+        return null;
+    }
+}*/

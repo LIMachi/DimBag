@@ -16,7 +16,7 @@ import net.minecraft.util.ActionResultType;
 import net.minecraft.world.World;
 
 @StaticInit
-public class KineticGeneratorUpgrade extends BaseUpgrade {
+public class KineticGeneratorUpgrade extends BaseUpgrade<KineticGeneratorUpgrade> {
 
     public static final String NAME = "kinetic_generator_upgrade";
 
@@ -37,17 +37,14 @@ public class KineticGeneratorUpgrade extends BaseUpgrade {
     @Override
     public String upgradeName() { return NAME; }
 
-    @Override
-    public int installUpgrade(UpgradeManager manager, int qty) { return qty; }
-
     protected int motionGeneration(int eyeId, Entity entity) { //FIXME: use a better algorithm and make it configurable
 
-        boolean isRiding = entity.getRidingEntity() != null;
-        boolean isElytraFlying = entity instanceof PlayerEntity && ((PlayerEntity) entity).isElytraFlying();
+        boolean isRiding = entity.getVehicle() != null;
+        boolean isElytraFlying = entity instanceof PlayerEntity && ((PlayerEntity) entity).isFallFlying();
         boolean isInWater = entity.isInWater();
         boolean isInLava = entity.isInLava();
 
-        double generation = HolderData.execute(eyeId, (holderData)->entity.getPositionVec().distanceTo(holderData.getLastKnownPosition()), 0D);
+        double generation = HolderData.execute(eyeId, (holderData)->entity.position().distanceTo(holderData.getLastKnownPosition()), 0D);
         if (isElytraFlying && !isInWater && !isInLava)
             generation /= 12D;
         if (isElytraFlying && (isInWater || isInLava))
@@ -61,7 +58,7 @@ public class KineticGeneratorUpgrade extends BaseUpgrade {
         if (isRiding)
             generation /= 4D;
         if (entity instanceof LivingEntity && SLOWNESS_POWER > 0)
-            ((LivingEntity)entity).addPotionEffect(new EffectInstance(Effects.SLOWNESS, 20, SLOWNESS_POWER - 1, false, false, false));
+            ((LivingEntity)entity).addEffect(new EffectInstance(Effects.MOVEMENT_SLOWDOWN, 20, SLOWNESS_POWER - 1, false, false, false));
         return (int)(generation * 10);
     }
 

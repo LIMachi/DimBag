@@ -5,6 +5,7 @@ import com.limachi.dimensional_bags.common.inventory.FountainTank;
 import com.limachi.dimensional_bags.common.inventory.ISimpleFluidHandlerSerializable;
 import com.limachi.dimensional_bags.utils.UUIDUtils;
 import net.minecraft.nbt.CompoundNBT;
+import net.minecraft.nbt.IntArrayNBT;
 import net.minecraft.nbt.ListNBT;
 import net.minecraft.nbt.NBTUtil;
 import net.minecraft.network.PacketBuffer;
@@ -48,8 +49,8 @@ public class TankData extends WorldSavedDataManager.EyeWorldSavedData implements
             fountainsOrder.add(tank.getId());
             fountains.add(tank);
         }
-        tank.notifyDirt = this::markDirty;
-        markDirty();
+        tank.notifyDirt = this::setDirty;
+        setDirty();
     }
 
     public void removeFountain(UUID id) {
@@ -58,7 +59,7 @@ public class TankData extends WorldSavedDataManager.EyeWorldSavedData implements
         fountains.remove(font);
         if (selectedTank >= fountains.size())
             selectedTank = 0;
-        markDirty();
+        setDirty();
     }
 
     public ISimpleFluidHandlerSerializable getFountainTank(@Nullable UUID id) {
@@ -69,17 +70,11 @@ public class TankData extends WorldSavedDataManager.EyeWorldSavedData implements
         return null;
     }
 
-    static public TankData getInstance(int id) {
-        return WorldSavedDataManager.getInstance(TankData.class, null, id);
-    }
+    static public TankData getInstance(int id) { return WorldSavedDataManager.getInstance(TankData.class, id); }
 
-    static public <T> T execute(int id, Function<TankData, T> executable, T onErrorReturn) {
-        return WorldSavedDataManager.execute(TankData.class, null, id, executable, onErrorReturn);
-    }
+    static public <T> T execute(int id, Function<TankData, T> executable, T onErrorReturn) { return WorldSavedDataManager.execute(TankData.class, id, executable, onErrorReturn); }
 
-    static public boolean execute(int id, Consumer<TankData> executable) {
-        return WorldSavedDataManager.execute(TankData.class, null, id, data->{executable.accept(data); return true;}, false);
-    }
+    static public boolean execute(int id, Consumer<TankData> executable) { return WorldSavedDataManager.execute(TankData.class, id, data->{executable.accept(data); return true;}, false); }
 
     @Override
     public void readFromBuff(PacketBuffer buff) {
@@ -92,11 +87,11 @@ public class TankData extends WorldSavedDataManager.EyeWorldSavedData implements
         tryDrain = buff.readBoolean();
         autoSelect = buff.readBoolean();
         for (int i = 0; i < no; ++i)
-            fountainsOrder.add(buff.readUniqueId());
+            fountainsOrder.add(buff.readUUID());
         for (int i = 0; i < np; ++i) {
             FountainTank tank = new FountainTank();
             tank.readFromBuff(buff);
-            tank.notifyDirt = this::markDirty;
+            tank.notifyDirt = this::setDirty;
             fountains.add(tank);
         }
     }
@@ -110,23 +105,23 @@ public class TankData extends WorldSavedDataManager.EyeWorldSavedData implements
         buff.writeBoolean(tryDrain);
         buff.writeBoolean(autoSelect);
         for (UUID id : fountainsOrder)
-            buff.writeUniqueId(id);
+            buff.writeUUID(id);
         for (FountainTank tank : fountains)
             tank.writeToBuff(buff);
     }
 
     @Override
-    public void read(CompoundNBT nbt) {
+    public void load(CompoundNBT nbt) {
         fountains.clear();
         fountainsOrder.clear();
         ListNBT ord = nbt.getList("Order", 11);
         for (int i = 0; i < ord.size(); ++i)
-            fountainsOrder.add(UUIDCodec.decodeUUID(ord.getIntArray(i)));
+            fountainsOrder.add(UUIDCodec.uuidFromIntArray(ord.getIntArray(i)));
         ListNBT pil = nbt.getList("Fountains", 10);
         for (int i = 0; i < pil.size(); ++i) {
             FountainTank tank = new FountainTank();
             tank.deserializeNBT(pil.getCompound(i));
-            tank.notifyDirt = this::markDirty;
+            tank.notifyDirt = this::setDirty;
             fountains.add(tank);
         }
         selectedTank = nbt.getInt("Selected");
@@ -136,10 +131,10 @@ public class TankData extends WorldSavedDataManager.EyeWorldSavedData implements
     }
 
     @Override
-    public CompoundNBT write(CompoundNBT compound) {
+    public CompoundNBT save(CompoundNBT compound) {
         ListNBT ord = new ListNBT();
         for (UUID id : fountainsOrder)
-            ord.add(NBTUtil.func_240626_a_(id));
+            ord.add(new IntArrayNBT(UUIDCodec.uuidToIntArray(id)));
         compound.put("Order", ord);
         ListNBT pil = new ListNBT();
         for (FountainTank inv : fountains)
@@ -160,28 +155,28 @@ public class TankData extends WorldSavedDataManager.EyeWorldSavedData implements
         if (tank != selectedTank) {
             if (tank >= 0 && tank < fountains.size())
                 selectedTank = tank;
-            markDirty();
+            setDirty();
         }
     }
 
     public void setTryFillState(boolean state) {
         if (state != tryFill) {
             tryFill = state;
-            markDirty();
+            setDirty();
         }
     }
 
     public void setTryDrainState(boolean state) {
         if (state != tryDrain) {
             tryDrain = state;
-            markDirty();
+            setDirty();
         }
     }
 
     public void setAutoSelectState(boolean state) {
         if (state != autoSelect) {
             autoSelect = state;
-            markDirty();
+            setDirty();
         }
     }
 

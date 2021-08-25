@@ -20,13 +20,13 @@ public class GhostHandTileEntity extends BaseTileEntity implements IisBagTE {
         Registries.registerTileEntity(NAME, GhostHandTileEntity::new, ()->Registries.getBlock(GhostHand.NAME), null);
     }
 
-    public GhostHandTileEntity() { super(Registries.getTileEntityType(NAME)); }
+    public GhostHandTileEntity() { super(Registries.getBlockEntityType(NAME)); }
 
     public String getCommand() { return getTileData().getString(NBT_KEY_COMMAND); }
 
-    public void setCommand(String command) { getTileData().putString(NBT_KEY_COMMAND, command); markDirty(); }
+    public void setCommand(String command) { getTileData().putString(NBT_KEY_COMMAND, command); setChanged(); }
 
-    public int getEyeId() { return SubRoomsManager.getEyeId(world, pos, false); }
+    public int getEyeId() { return SubRoomsManager.getEyeId(level, worldPosition, false); }
 
     public Entity getHolder(int eyeId) { return HolderData.execute(eyeId, HolderData::getEntity, null); }
 

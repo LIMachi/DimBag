@@ -2,6 +2,7 @@ package com.limachi.dimensional_bags.common.data.EyeDataMK2;
 
 import com.google.common.collect.ImmutableList;
 import com.limachi.dimensional_bags.DimBag;
+import com.limachi.dimensional_bags.common.managers.ModeManager;
 import com.limachi.dimensional_bags.utils.NBTUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.widget.TextFieldWidget;
@@ -24,6 +25,7 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
+//FIXME: use my widgets instead of vanilla
 public class SettingsData extends WorldSavedDataManager.EyeWorldSavedData {
 
     private CompoundNBT settingsNbt = new CompoundNBT();
@@ -79,14 +81,16 @@ public class SettingsData extends WorldSavedDataManager.EyeWorldSavedData {
                         @Override
                         public void onPress() {
                             super.onPress();
-                            set(nbt, (T)(Boolean)isChecked());
-                            data.markDirty();
+//                            set(nbt, (T)(Boolean)isChecked());
+                            set(nbt, (T)(Boolean)selected());
+                            data.setDirty();
                         }
                     };
                 if (inputType.def instanceof String) {
-                    TextFieldWidget field = new TextFieldWidget(Minecraft.getInstance().fontRenderer, x, y, 200, 20, title);
-                    field.writeText((String) get(nbt));
-                    field.setResponder(s -> {set(nbt, (T) s); data.markDirty();});
+                    TextFieldWidget field = new TextFieldWidget(Minecraft.getInstance().font, x, y, 200, 20, title);
+//                    field.writeText((String) get(nbt));
+                    field.insertText((String) get(nbt));
+                    field.setResponder(s -> {set(nbt, (T) s); data.setDirty();});
                     return field;
                 }
                 if (inputType.start != null && inputType.end != null) {
@@ -99,20 +103,20 @@ public class SettingsData extends WorldSavedDataManager.EyeWorldSavedData {
                                 set(nbt, (T) (Integer) getValueInt());
                             else
                                 set(nbt, (T) (Double) getValue());
-                            data.markDirty();
+                            data.setDirty();
                         }
                     };
                 }
                 if (inputType.def instanceof Integer) {
-                    TextFieldWidget field = new TextFieldWidget(Minecraft.getInstance().fontRenderer, x, y, 200, 20, title);
-                    field.writeText((String) get(nbt));
-                    field.setResponder(s -> {set(nbt, (T)(Integer)Integer.parseInt(s)); data.markDirty();});
+                    TextFieldWidget field = new TextFieldWidget(Minecraft.getInstance().font, x, y, 200, 20, title);
+                    field.insertText((String) get(nbt));
+                    field.setResponder(s -> {set(nbt, (T)(Integer)Integer.parseInt(s)); data.setDirty();});
                     return field;
                 }
                 if (inputType.def instanceof Double) {
-                    TextFieldWidget field = new TextFieldWidget(Minecraft.getInstance().fontRenderer, x, y, 200, 20, title);
-                    field.writeText((String) get(nbt));
-                    field.setResponder(s -> {set(nbt, (T)(Double)Double.parseDouble(s)); data.markDirty();});
+                    TextFieldWidget field = new TextFieldWidget(Minecraft.getInstance().font, x, y, 200, 20, title);
+                    field.insertText((String) get(nbt));
+                    field.setResponder(s -> {set(nbt, (T)(Double)Double.parseDouble(s)); data.setDirty();});
                     return field;
                 }
                 return null;
@@ -156,12 +160,26 @@ public class SettingsData extends WorldSavedDataManager.EyeWorldSavedData {
             return null;
         }
 
+        public <T> T getOrDefault(String label, SettingsData data, T def) {
+            if (isBuilt) {
+                SettingsEntry<T> se = (SettingsEntry<T>) settings.get(label);
+                if (se == null) return def;
+                if (data != null) {
+                    CompoundNBT t = data.getSettings(group, name, false);
+                    return se.get(t);
+                }
+                return def;
+            }
+            DimBag.LOGGER.error("Accessing settings before build finished (get): " + group + "." + name + "." + label);
+            return def;
+        }
+
         public <T> void set(String label, SettingsData data, T value) {
             if (isBuilt) {
                 SettingsEntry<T> se = (SettingsEntry<T>) settings.get(label);
                 CompoundNBT t = data.getSettings(group, name, true);
                 se.set(t, value);
-                data.markDirty();
+                data.setDirty();
                 return;
             }
             DimBag.LOGGER.error("Accessing settings before build finished (set): " + group + "." + name + "." + label);
@@ -174,7 +192,7 @@ public class SettingsData extends WorldSavedDataManager.EyeWorldSavedData {
 
         public ItemStack getIcon() {
             if (isBuilt)
-                return icon.get().setDisplayName(new TranslationTextComponent("settings." + group + "." + name));
+                return icon.get().setHoverName(new TranslationTextComponent("settings." + group + "." + name));
             DimBag.LOGGER.error("Accessing settings before build finished (icon): " + group + "." + name);
             return ItemStack.EMPTY;
         }
@@ -200,12 +218,12 @@ public class SettingsData extends WorldSavedDataManager.EyeWorldSavedData {
     public CompoundNBT getSettings(String group, String name, boolean generatePath) {
         if (!settingsNbt.contains(group) && generatePath) {
             settingsNbt.put(group, new CompoundNBT());
-            markDirty();
+            setDirty();
         }
         CompoundNBT t = settingsNbt.getCompound(group);
         if (!t.contains(name) && generatePath) {
             t.put(name, new CompoundNBT());
-            markDirty();
+            setDirty();
         }
         return t.getCompound(name);
     }
@@ -215,7 +233,7 @@ public class SettingsData extends WorldSavedDataManager.EyeWorldSavedData {
     public Inventory getSettingsIcons() {
         Inventory out = new Inventory(READERS.size());
         for (int i = 0; i < READERS.size(); ++i)
-            out.setInventorySlotContents(i, READERS.get(i).getIcon());
+            out.setItem(i, READERS.get(i).getIcon());
         return out;
     }
 
@@ -229,36 +247,35 @@ public class SettingsData extends WorldSavedDataManager.EyeWorldSavedData {
             NBTUtils.applyDiff(t.getCompound(name), nbt);
         else
             t.put(name, nbt);
-        markDirty();
+        setDirty();
     }
 
     public void initDefaultSettings() {
         for (SettingsReader reader : READERS)
             for (Map.Entry<String, SettingsReader.SettingsEntry<?>> e : reader.settings.entrySet())
                 reader.set(e.getKey(), this, e.getValue().inputType.def);
+        ModeManager.getMode("Default").settingsReader.set("bag_name", this, new TranslationTextComponent("item.dim_bag.bag").getString() + " " + getEyeId());
+    }
+
+    public String getBagName() { /*return settingsNbt.getString("BagName");*/
+        return ModeManager.getMode("Default").getSetting(getEyeId(), "bag_name");
     }
 
     @Override
-    public void read(@Nonnull CompoundNBT nbt) {
+    public void load(@Nonnull CompoundNBT nbt) {
         settingsNbt.merge(nbt); //this should ensure the same pointer is kept, but it is not the cleanest way (hold data will bloat if not rewritten)
     }
 
     @Nonnull
     @Override
-    public CompoundNBT write(CompoundNBT nbt) {
+    public CompoundNBT save(CompoundNBT nbt) {
         nbt.merge(this.settingsNbt);
         return nbt;
     }
 
-    static public SettingsData getInstance(int id) {
-        return WorldSavedDataManager.getInstance(SettingsData.class, null, id);
-    }
+    static public SettingsData getInstance(int id) { return WorldSavedDataManager.getInstance(SettingsData.class, id); }
 
-    static public <T> T execute(int id, Function<SettingsData, T> executable, T onErrorReturn) {
-        return WorldSavedDataManager.execute(SettingsData.class, null, id, executable, onErrorReturn);
-    }
+    static public <T> T execute(int id, Function<SettingsData, T> executable, T onErrorReturn) { return WorldSavedDataManager.execute(SettingsData.class, id, executable, onErrorReturn); }
 
-    static public boolean execute(int id, Consumer<SettingsData> executable) {
-        return WorldSavedDataManager.execute(SettingsData.class, null, id, data->{executable.accept(data); return true;}, false);
-    }
+    static public boolean execute(int id, Consumer<SettingsData> executable) { return WorldSavedDataManager.execute(SettingsData.class, id, data->{executable.accept(data); return true;}, false); }
 }

@@ -8,9 +8,8 @@ import net.minecraft.item.ItemStack;
 
 import java.util.Iterator;
 import java.util.Set;
-
+/*
 public class EntityInventory implements IInventory {
-
     protected final Entity entity;
 
     public EntityInventory(Entity entity) {
@@ -18,11 +17,11 @@ public class EntityInventory implements IInventory {
     }
 
     public Iterator<ItemStack> getIterator() {
-        return entity.getArmorInventoryList().iterator();
+        return entity.getArmorSlots().iterator();
     }
 
     @Override
-    public int getSizeInventory() {
+    public int getContainerSize() {
         int[] count = {0};
         entity.getEquipmentAndArmor().forEach(t->++count[0]);
         return count[0];
@@ -36,7 +35,12 @@ public class EntityInventory implements IInventory {
     }
 
     @Override
-    public ItemStack getStackInSlot(int index) {
+    public ItemStack removeItemNoUpdate(int p_70304_1_) {
+        return null;
+    }
+
+    @Override
+    public ItemStack getItem(int index) {
         Iterator<ItemStack> it = getIterator();
         for (int i = 0; i < index; ++i) {
             if (!it.hasNext()) break;
@@ -46,7 +50,7 @@ public class EntityInventory implements IInventory {
     }
 
     @Override
-    public ItemStack decrStackSize(int index, int count) {
+    public ItemStack removeItem(int index, int count) {
         return null;
     }
 
@@ -56,7 +60,7 @@ public class EntityInventory implements IInventory {
     }
 
     @Override
-    public void setInventorySlotContents(int index, ItemStack stack) {
+    public void setItem(int index, ItemStack stack) {
 
     }
 
@@ -66,12 +70,12 @@ public class EntityInventory implements IInventory {
     }
 
     @Override
-    public void markDirty() {
+    public void setChanged() {
 
     }
 
     @Override
-    public boolean isUsableByPlayer(PlayerEntity player) {
+    public boolean stillValid(PlayerEntity player) {
         return false;
     }
 
@@ -86,7 +90,7 @@ public class EntityInventory implements IInventory {
     }
 
     @Override
-    public boolean isItemValidForSlot(int index, ItemStack stack) {
+    public boolean mayPlaceForSlot(int index, ItemStack stack) {
         return false;
     }
 
@@ -101,7 +105,7 @@ public class EntityInventory implements IInventory {
     }
 
     @Override
-    public void clear() {
+    public void clearContent() {
 
     }
-}
+}*/

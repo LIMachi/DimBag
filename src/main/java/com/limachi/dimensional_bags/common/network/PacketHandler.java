@@ -106,5 +106,5 @@ public class PacketHandler {
             for (ServerPlayerEntity player : DimBag.getServer().getPlayerList().getPlayers())
                 toClient(player, msg);
     }
-    public static <T extends Message> void toClient(ServerPlayerEntity player, T msg) { if (msg != null && !(player instanceof FakePlayer)) HANDLER.sendTo(msg, player.connection.netManager, NetworkDirection.PLAY_TO_CLIENT); }
+    public static <T extends Message> void toClient(ServerPlayerEntity player, T msg) { if (msg != null && !(player instanceof FakePlayer)) HANDLER.sendTo(msg, player.connection.connection, NetworkDirection.PLAY_TO_CLIENT); }
 }

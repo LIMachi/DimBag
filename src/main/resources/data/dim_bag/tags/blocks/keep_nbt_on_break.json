@@ -1,10 +1,5 @@
 {
   "replace": false,
   "values": [
-    "dim_bag:pad",
-    "dim_bag:pillar",
-    "dim_bag:player_pillar",
-    "dim_bag:brain",
-    "dim_bag:ghost_hand"
   ]
 }

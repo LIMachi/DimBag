@@ -6,8 +6,8 @@ import com.limachi.dimensional_bags.common.managers.Upgrade;
 import com.limachi.dimensional_bags.common.managers.UpgradeManager;
 import net.minecraft.item.ItemStack;
 
-import static com.limachi.dimensional_bags.common.inventory.Wrapper.IORights.CANINPUT;
-import static com.limachi.dimensional_bags.common.inventory.Wrapper.IORights.CANOUTPUT;
+//import static com.limachi.dimensional_bags.common.inventory.Wrapper.IORights.CANINPUT;
+//import static com.limachi.dimensional_bags.common.inventory.Wrapper.IORights.CANOUTPUT;
 
 /*
 public class TankUpgrade extends Upgrade {

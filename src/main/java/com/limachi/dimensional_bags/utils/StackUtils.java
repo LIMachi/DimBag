@@ -13,7 +13,7 @@ import net.minecraft.network.PacketBuffer;
 public class StackUtils {
 
     public static CompoundNBT writeAsCompound(ItemStack stack) {
-        CompoundNBT out = stack.write(new CompoundNBT());
+        CompoundNBT out = stack.save(new CompoundNBT());
         if (stack.getCount() > 64) {
             out.putByte("Count", (byte)64); //make sure at the very least that if the item count is lost, we can save a full stack
             out.putInt("realCount", stack.getCount());
@@ -22,7 +22,7 @@ public class StackUtils {
     }
 
     public static ItemStack readFromCompound(CompoundNBT nbt) {
-        ItemStack out = ItemStack.read(nbt);
+        ItemStack out = ItemStack.of(nbt);
         if (nbt.contains("realCount"))
             out.setCount(nbt.getInt("realCount"));
         return out;
@@ -36,10 +36,10 @@ public class StackUtils {
         } else {
             buff.writeBoolean(true);
             Item item = stack.getItem();
-            buff.writeVarInt(Item.getIdFromItem(item));
+            buff.writeVarInt(Item.getId(item));
             buff.writeByte(Math.min(stack.getCount(), 64)); //make sure at the very least that if the item count is lost, we can save a full stack
             CompoundNBT compoundnbt = null;
-            if (item.isDamageable(stack) || item.shouldSyncTag()) {
+            if (item.isDamageable(stack) || item.shouldOverrideMultiplayerNbt()) {
                 compoundnbt = limitedTag ? stack.getShareTag() : stack.getTag();
             }
             if (stack.getCount() > 64) {
@@ -48,7 +48,7 @@ public class StackUtils {
                 compoundnbt.putInt("realCount", stack.getCount()); //use the tags to communicate the real size, as it's the only part in the buffer that can have it's size changed with little incompatibility with forge
             }
 
-            buff.writeCompoundTag(compoundnbt);
+            buff.writeNbt(compoundnbt);
         }
         return buff;
     }
@@ -59,8 +59,8 @@ public class StackUtils {
         } else {
             int i = buff.readVarInt();
             int j = buff.readByte();
-            ItemStack itemstack = new ItemStack(Item.getItemById(i), j);
-            itemstack.readShareTag(buff.readCompoundTag());
+            ItemStack itemstack = new ItemStack(Item.byId(i), j);
+            itemstack.readShareTag(buff.readAnySizeNbt());
             if (itemstack.getTag() != null) {
                 CompoundNBT t = itemstack.getTag();
                 if (t.contains("realCount")) {

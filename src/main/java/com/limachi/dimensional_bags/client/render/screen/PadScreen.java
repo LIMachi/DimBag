@@ -32,18 +32,18 @@ public class PadScreen extends SimpleContainerScreen<BaseContainer.NullContainer
     @Override
     protected void init() {
         super.init();
-        this.minecraft.keyboardListener.enableRepeatEvents(true);
+        this.minecraft.keyboardHandler.setSendRepeatsToGui(true);
         addButton(isWhitelist);
         addButton(list);
         list.init();
     }
 
     public static void open(PadTileEntity pad) {
-        if (!DimBag.isServer(null)) Minecraft.getInstance().displayGuiScreen(new PadScreen(pad));
+        if (!DimBag.isServer(null)) Minecraft.getInstance().setScreen(new PadScreen(pad));
     }
 
     public void onClose() {
-        this.minecraft.keyboardListener.enableRepeatEvents(false);
-        pad.updateList(isWhitelist.isChecked(), list.finalEntries().collect(Collectors.toList()));
+        this.minecraft.keyboardHandler.setSendRepeatsToGui(false);
+        pad.updateList(isWhitelist.selected(), list.finalEntries().collect(Collectors.toList()));
     }
 }

@@ -31,14 +31,14 @@ public abstract class BaseScreen<T extends BaseContainer> extends ContainerScree
 
     @Override
     protected void init() {
-        Minecraft.getInstance().keyboardListener.enableRepeatEvents(true);
+        Minecraft.getInstance().keyboardListener.setSendRepeatsToGui(true);
         super.init();
     }
 
     @Override
     public void onClose() {
         super.onClose();
-        Minecraft.getInstance().keyboardListener.enableRepeatEvents(false);
+        Minecraft.getInstance().keyboardListener.setSendRepeatsToGui(false);
     }
 
     @Override

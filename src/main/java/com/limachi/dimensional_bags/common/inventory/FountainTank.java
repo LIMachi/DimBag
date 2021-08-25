@@ -35,7 +35,7 @@ public class FountainTank implements ISimpleFluidHandlerSerializable, IFluidTank
         return id.hashCode();
     }
 
-    public void markDirty() {
+    public void setChanged() {
         if (notifyDirt != null)
             notifyDirt.run();
     }
@@ -49,7 +49,7 @@ public class FountainTank implements ISimpleFluidHandlerSerializable, IFluidTank
     @Override
     public CompoundNBT serializeNBT() {
         CompoundNBT out = new CompoundNBT();
-        out.putUniqueId("UUID", id);
+        out.putUUID("UUID", id);
         out.putInt("capacity", capacity);
         out.put("fluid", fluid.writeToNBT(new CompoundNBT()));
         return out;
@@ -61,14 +61,14 @@ public class FountainTank implements ISimpleFluidHandlerSerializable, IFluidTank
 
     @Override
     public void deserializeNBT(CompoundNBT nbt) {
-        id = nbt.getUniqueId("UUID");
+        id = nbt.getUUID("UUID");
         capacity = nbt.getInt("capacity");
         fluid = FluidStack.loadFluidStackFromNBT(nbt.getCompound("fluid"));
     }
 
     public void setLockState(boolean lock) {
         if (lock != locked)
-            markDirty();
+            setChanged();
         locked = lock;
     }
 
@@ -78,7 +78,7 @@ public class FountainTank implements ISimpleFluidHandlerSerializable, IFluidTank
 
     @Override
     public void readFromBuff(PacketBuffer buff) {
-        id = buff.readUniqueId();
+        id = buff.readUUID();
         capacity = buff.readInt();
         fluid = buff.readFluidStack();
         locked = buff.readBoolean();
@@ -86,7 +86,7 @@ public class FountainTank implements ISimpleFluidHandlerSerializable, IFluidTank
 
     @Override
     public void writeToBuff(PacketBuffer buff) {
-        buff.writeUniqueId(id);
+        buff.writeUUID(id);
         buff.writeInt(capacity);
         buff.writeFluidStack(fluid);
         buff.writeBoolean(locked);
@@ -138,7 +138,7 @@ public class FountainTank implements ISimpleFluidHandlerSerializable, IFluidTank
             }
             else
                 fluid.grow(consumed);
-            markDirty();
+            setChanged();
         }
         return consumed;
     }
@@ -151,7 +151,7 @@ public class FountainTank implements ISimpleFluidHandlerSerializable, IFluidTank
         out.setAmount(Integer.min(resource.getAmount(), fluid.getAmount()));
         if (!out.isEmpty() && action.execute()) {
             fluid.shrink(out.getAmount());
-            markDirty();
+            setChanged();
         }
         return out;
     }
@@ -164,7 +164,7 @@ public class FountainTank implements ISimpleFluidHandlerSerializable, IFluidTank
         out.setAmount(Integer.min(maxDrain, fluid.getAmount()));
         if (!out.isEmpty() && action.execute()) {
             fluid.shrink(out.getAmount());
-            markDirty();
+            setChanged();
         }
         return out;
     }

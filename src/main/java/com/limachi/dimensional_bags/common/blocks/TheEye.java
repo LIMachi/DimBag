@@ -10,7 +10,6 @@ import com.limachi.dimensional_bags.common.data.EyeDataMK2.SubRoomsManager;
 import net.minecraft.block.*;
 import net.minecraft.block.material.Material;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.item.BlockItem;
 import net.minecraft.util.ActionResultType;
 import net.minecraft.util.Hand;
@@ -29,14 +28,14 @@ public class TheEye extends Block {
     public static final Supplier<BlockItem> INSTANCE_ITEM = Registries.registerBlockItem(NAME, NAME, DimBag.DEFAULT_PROPERTIES);
 
     public TheEye() {
-        super(Properties.create(Material.REDSTONE_LIGHT).hardnessAndResistance(-1f, 3600000f).sound(SoundType.GLASS));
+        super(Properties.of(Material.HEAVY_METAL).strength(-1f, 3600000f).sound(SoundType.GLASS));
     }
 
     @Override
-    public BlockRenderType getRenderType(BlockState state) { return BlockRenderType.MODEL; }
+    public BlockRenderType getRenderShape(BlockState state) { return BlockRenderType.MODEL; }
 
     @Override
-    public ActionResultType onBlockActivated(BlockState state, World world, BlockPos pos, PlayerEntity player, Hand hand, BlockRayTraceResult ray) {
+    public ActionResultType use(BlockState state, World world, BlockPos pos, PlayerEntity player, Hand hand, BlockRayTraceResult ray) {
         if (!DimBag.isServer(world)) return ActionResultType.SUCCESS;
         int eyeId = SubRoomsManager.getEyeId(world, pos, true);
         if (eyeId <= 0)

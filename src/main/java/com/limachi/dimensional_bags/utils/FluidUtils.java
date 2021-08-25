@@ -35,7 +35,7 @@ public class FluidUtils {
         for (Map.Entry<RegistryKey<Potion>, Potion> e : ForgeRegistries.POTION_TYPES.getEntries())
             if (e.getKey().getRegistryName().getPath().equals(fluidSimpleName)) {
                 ItemStack out = new ItemStack(Items.POTION);
-                PotionUtils.addPotionToItemStack(out, e.getValue());
+                PotionUtils.setPotion(out, e.getValue());
                 return out;
             }
         return ItemStack.EMPTY;

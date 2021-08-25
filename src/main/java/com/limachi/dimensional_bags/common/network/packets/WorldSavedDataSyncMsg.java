@@ -14,9 +14,9 @@ public class WorldSavedDataSyncMsg extends PacketHandler.Message {
     public boolean isDiff;
 
     public WorldSavedDataSyncMsg(PacketBuffer buffer) {
-        suffix = buffer.readString();
+        suffix = buffer.readUtf();
         id = buffer.readInt();
-        nbt = buffer.readCompoundTag();
+        nbt = buffer.readAnySizeNbt();
         isDiff = buffer.readBoolean();
     }
 
@@ -28,9 +28,9 @@ public class WorldSavedDataSyncMsg extends PacketHandler.Message {
     }
 
     public void toBytes(PacketBuffer buffer) {
-        buffer.writeString(suffix);
+        buffer.writeUtf(suffix);
         buffer.writeInt(id);
-        buffer.writeCompoundTag(nbt);
+        buffer.writeNbt(nbt);
         buffer.writeBoolean(isDiff);
     }
 

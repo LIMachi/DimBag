@@ -33,7 +33,7 @@ public class EnergyData extends WorldSavedDataManager.EyeWorldSavedData implemen
 
     public EnergyData changeBatterySize(int newSize) {
         capacity = Integer.max(0, Integer.min(newSize, MAX_STORAGE));
-        markDirty();
+        setDirty();
         return this;
     }
 
@@ -60,29 +60,23 @@ public class EnergyData extends WorldSavedDataManager.EyeWorldSavedData implemen
     }
 
     @Override
-    public void read(CompoundNBT nbt) {
+    public void load(CompoundNBT nbt) {
         capacity = nbt.getInt("Capacity");
         energy = nbt.getInt("Energy");
     }
 
     @Override
-    public CompoundNBT write(CompoundNBT nbt) {
+    public CompoundNBT save(CompoundNBT nbt) {
         nbt.putLong("Capacity", capacity);
         nbt.putLong("Energy", energy);
         return nbt;
     }
 
-    static public EnergyData getInstance(int id) {
-        return WorldSavedDataManager.getInstance(EnergyData.class, null, id);
-    }
+    static public EnergyData getInstance(int id) { return WorldSavedDataManager.getInstance(EnergyData.class, id); }
 
-    static public <T> T execute(int id, Function<EnergyData, T> executable, T onErrorReturn) {
-        return WorldSavedDataManager.execute(EnergyData.class, null, id, executable, onErrorReturn);
-    }
+    static public <T> T execute(int id, Function<EnergyData, T> executable, T onErrorReturn) { return WorldSavedDataManager.execute(EnergyData.class, id, executable, onErrorReturn); }
 
-    static public boolean execute(int id, Consumer<EnergyData> executable) {
-        return WorldSavedDataManager.execute(EnergyData.class, null, id, data->{executable.accept(data); return true;}, false);
-    }
+    static public boolean execute(int id, Consumer<EnergyData> executable) { return WorldSavedDataManager.execute(EnergyData.class, id, data->{executable.accept(data); return true;}, false); }
 
     public static int transferFrom(int eye, int receive, @Nonnull IEnergyStorage from, boolean exactOnly) {
         return execute(eye, ed->{
@@ -103,7 +97,7 @@ public class EnergyData extends WorldSavedDataManager.EyeWorldSavedData implemen
             energy += energyReceived;
             receivedLastMinute[tickCursor] += energyReceived;
             energyStateLastMinute[tickCursor] = energy;
-            markDirty();
+            setDirty();
         }
         return (int)energyReceived;
     }
@@ -127,7 +121,7 @@ public class EnergyData extends WorldSavedDataManager.EyeWorldSavedData implemen
             energy -= energyExtracted;
             extractedLastMinute[tickCursor] += energyExtracted;
             energyStateLastMinute[tickCursor] = energy;
-            markDirty();
+            setDirty();
         }
         return energyExtracted;
     }

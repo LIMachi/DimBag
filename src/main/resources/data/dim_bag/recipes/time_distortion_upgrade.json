@@ -1,0 +1,23 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "LCL",
+    "CUC",
+    "LCL"
+  ],
+  "key": {
+    "U": {
+      "item": "dim_bag:blank_upgrade"
+    },
+    "C": {
+      "item": "minecraft:clock"
+    },
+    "L": {
+      "item": "minecraft:lapis_block"
+    }
+  },
+  "result": {
+    "item": "dim_bag:time_distortion_upgrade",
+    "count": 1
+  }
+}

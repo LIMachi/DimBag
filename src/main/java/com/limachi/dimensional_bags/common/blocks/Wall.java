@@ -17,8 +17,5 @@ public class Wall extends Block {
     public static final Supplier<Wall> INSTANCE = Registries.registerBlock(NAME, Wall::new);
     public static final Supplier<BlockItem> INSTANCE_ITEM = Registries.registerBlockItem(NAME, NAME, DimBag.DEFAULT_PROPERTIES);
 
-    public Wall() { super(Properties.create(Material.ROCK).hardnessAndResistance(-1f, 3600000f).sound(SoundType.CLOTH).setOpaque((s,r,p)->false).notSolid().setAllowsSpawn((s,r,p,a)->false).setLightLevel(i->8)); }
-
-    @Override
-    public boolean isTransparent(BlockState state) { return true; }
+    public Wall() { super(Properties.of(Material.HEAVY_METAL).strength(-1f, 3600000f).sound(SoundType.WOOL).isRedstoneConductor((s,r,p)->false).noOcclusion().isValidSpawn((s,r,p,a)->false).lightLevel(i->8).isRedstoneConductor((s,r,p)->false)); }
 }

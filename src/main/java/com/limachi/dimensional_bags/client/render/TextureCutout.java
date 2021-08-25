@@ -49,7 +49,7 @@ public class TextureCutout {
     }
 
     @OnlyIn(Dist.CLIENT)
-    public TextureCutout bindTexture() { mc.getTextureManager().bindTexture(file); return this; }
+    public TextureCutout bindTexture() { mc.getTextureManager().bind(file); return this; }
 
     public TextureCutout copy() { return new TextureCutout(file, fileWidth, fileHeight, corners.getX1(), corners.getY1(), corners.getWidth(), corners.getHeight()); }
 
@@ -57,15 +57,15 @@ public class TextureCutout {
 
     @OnlyIn(Dist.CLIENT)
     private static void innerBlit(double x, double x2, double y, double y2, int blitOffset, float minU, float maxU, float minV, float maxV) {
-        BufferBuilder bufferbuilder = Tessellator.getInstance().getBuffer();
+        BufferBuilder bufferbuilder = Tessellator.getInstance().getBuilder();
         bufferbuilder.begin(7, DefaultVertexFormats.POSITION_TEX);
-        bufferbuilder.pos(x, y2, blitOffset).tex(minU, maxV).endVertex();
-        bufferbuilder.pos(x2, y2, blitOffset).tex(maxU, maxV).endVertex();
-        bufferbuilder.pos(x2, y, blitOffset).tex(maxU, minV).endVertex();
-        bufferbuilder.pos(x, y, blitOffset).tex(minU, minV).endVertex();
-        bufferbuilder.finishDrawing();
+        bufferbuilder.vertex(x, y2, blitOffset).uv(minU, maxV).endVertex();
+        bufferbuilder.vertex(x2, y2, blitOffset).uv(maxU, maxV).endVertex();
+        bufferbuilder.vertex(x2, y, blitOffset).uv(maxU, minV).endVertex();
+        bufferbuilder.vertex(x, y, blitOffset).uv(minU, minV).endVertex();
+        bufferbuilder.end();
         RenderSystem.enableAlphaTest();
-        WorldVertexBufferUploader.draw(bufferbuilder);
+        WorldVertexBufferUploader.end(bufferbuilder);
     }
 
     @OnlyIn(Dist.CLIENT)
@@ -114,7 +114,7 @@ public class TextureCutout {
         float maxU = (float)corners.getX2() / (float)fileWidth;
         float maxV = (float)corners.getY2() / (float)fileHeight;
         if (pattern == TextureApplicationPattern.STRETCH) {
-            Box2d c = coords.copy().transform(matrixStack.getLast().getMatrix());
+            Box2d c = coords.copy().transform(matrixStack.last().pose());
             innerBlit(c.getX1(), c.getX2(), c.getY1(), c.getY2(), blitOffset, minU, maxU, minV, maxV);
             if (tint != 0)
                 RenderUtils.drawBox(matrixStack, coords, tint, 0);

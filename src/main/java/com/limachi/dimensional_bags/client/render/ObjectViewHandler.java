@@ -134,26 +134,26 @@ public class ObjectViewHandler {
     }
 
     public static Box2d applyMatrix(MatrixStack matrixStack, Box2d box) {
-        Matrix4f mat = matrixStack.getLast().getMatrix().copy();
+        Matrix4f mat = matrixStack.last().pose().copy();
 //        float factor = (float)Minecraft.getInstance().getMainWindow().getGuiScaleFactor();
 //        mat.mul(Matrix4f.makeScale(factor, factor, factor));
         Vector4f vec1 = new Vector4f((float)box.getX1(), (float)box.getY1(), 0, 1);
         Vector4f vec2 = new Vector4f((float)box.getX2(), (float)box.getY2(), 0, 1);
         vec1.transform(mat);
         vec2.transform(mat);
-        return Box2d.fromCorners(vec1.getX(), vec1.getY(), vec2.getX(), vec2.getY());
+        return Box2d.fromCorners(vec1.x(), vec1.y(), vec2.x(), vec2.y());
     }
 
     private static void innerBlit(Matrix4f matrix, double x, double x2, double y, double y2, int blitOffset, double minU, double maxU, double minV, double maxV) {
-        BufferBuilder bufferbuilder = Tessellator.getInstance().getBuffer();
+        BufferBuilder bufferbuilder = Tessellator.getInstance().getBuilder();
         bufferbuilder.begin(7, DefaultVertexFormats.POSITION_TEX);
-        bufferbuilder.pos(matrix, (float)x, (float)y2, (float)blitOffset).tex((float)minU, (float)maxV).endVertex();
-        bufferbuilder.pos(matrix, (float)x2, (float)y2, (float)blitOffset).tex((float)maxU, (float)maxV).endVertex();
-        bufferbuilder.pos(matrix, (float)x2, (float)y, (float)blitOffset).tex((float)maxU, (float)minV).endVertex();
-        bufferbuilder.pos(matrix, (float)x, (float)y, (float)blitOffset).tex((float)minU, (float)minV).endVertex();
-        bufferbuilder.finishDrawing();
+        bufferbuilder.vertex(matrix, (float)x, (float)y2, (float)blitOffset).uv((float)minU, (float)maxV).endVertex();
+        bufferbuilder.vertex(matrix, (float)x2, (float)y2, (float)blitOffset).uv((float)maxU, (float)maxV).endVertex();
+        bufferbuilder.vertex(matrix, (float)x2, (float)y, (float)blitOffset).uv((float)maxU, (float)minV).endVertex();
+        bufferbuilder.vertex(matrix, (float)x, (float)y, (float)blitOffset).uv((float)minU, (float)minV).endVertex();
+        bufferbuilder.end();
         RenderSystem.enableAlphaTest();
-        WorldVertexBufferUploader.draw(bufferbuilder);
+        WorldVertexBufferUploader.end(bufferbuilder);
     }
 
     public void blit(MatrixStack matrix, TextureCutout texture, boolean withCut, int blitOffset) { //virtual window blit function, entire area
@@ -171,7 +171,7 @@ public class ObjectViewHandler {
         double maxU = texture.corners.getX2() / (double)texture.fileWidth;
         double maxV = texture.corners.getY2() / (double)texture.fileHeight;
         if (writableArea == null || (coords.getX1() >= writableArea.getX1() && coords.getY1() >= writableArea.getY1() && coords.getX2() <= writableArea.getX2() && coords.getY2() <= writableArea.getY2())) {
-            innerBlit(matrix.getLast().getMatrix(), coords.getX1(), coords.getX2(), coords.getY1(), coords.getY2(), blitOffset, minU, maxU, minV, maxV);
+            innerBlit(matrix.last().pose(), coords.getX1(), coords.getX2(), coords.getY1(), coords.getY2(), blitOffset, minU, maxU, minV, maxV);
             return;
         }
         double cMinU = minU;
@@ -186,7 +186,7 @@ public class ObjectViewHandler {
             cMaxU -= (maxU - minU) * ((coords.getX2() - writableArea.getX2()) / coords.getWidth());
         if (coords.getY2() > writableArea.getY2())
             cMaxV -= (maxV - minV) * ((coords.getY2() - writableArea.getY2()) / coords.getHeight());
-        innerBlit(matrix.getLast().getMatrix(), Math.max(coords.getX1(), writableArea.getX1()), Math.min(coords.getX2(), writableArea.getX2()), Math.max(coords.getY1(), writableArea.getY1()), Math.min(coords.getY2(), writableArea.getY2()), blitOffset, cMinU, cMaxU, cMinV, cMaxV);
+        innerBlit(matrix.last().pose(), Math.max(coords.getX1(), writableArea.getX1()), Math.min(coords.getX2(), writableArea.getX2()), Math.max(coords.getY1(), writableArea.getY1()), Math.min(coords.getY2(), writableArea.getY2()), blitOffset, cMinU, cMaxU, cMinV, cMaxV);
     }
 
     public void drawBox(MatrixStack matrixStack, int color) {
@@ -207,19 +207,19 @@ public class ObjectViewHandler {
     }
 
     public static void drawBoxS(MatrixStack matrixStack, Box2d box, int color) {
-        Matrix4f matrix = matrixStack.getLast().getMatrix();
+        Matrix4f matrix = matrixStack.last().pose();
         Vector4f ec = expandColor(color, false);
-        BufferBuilder bufferbuilder = Tessellator.getInstance().getBuffer();
+        BufferBuilder bufferbuilder = Tessellator.getInstance().getBuilder();
         RenderSystem.enableBlend();
         RenderSystem.disableTexture();
         RenderSystem.defaultBlendFunc();
         bufferbuilder.begin(7, DefaultVertexFormats.POSITION_COLOR);
-        bufferbuilder.pos(matrix, (float)box.getX1(), (float)box.getY2(), 0.0F).color(ec.getX(), ec.getY(), ec.getZ(), ec.getW()).endVertex();
-        bufferbuilder.pos(matrix, (float)box.getX2(), (float)box.getY2(), 0.0F).color(ec.getX(), ec.getY(), ec.getZ(), ec.getW()).endVertex();
-        bufferbuilder.pos(matrix, (float)box.getX2(), (float)box.getY1(), 0.0F).color(ec.getX(), ec.getY(), ec.getZ(), ec.getW()).endVertex();
-        bufferbuilder.pos(matrix, (float)box.getX1(), (float)box.getY1(), 0.0F).color(ec.getX(), ec.getY(), ec.getZ(), ec.getW()).endVertex();
-        bufferbuilder.finishDrawing();
-        WorldVertexBufferUploader.draw(bufferbuilder);
+        bufferbuilder.vertex(matrix, (float)box.getX1(), (float)box.getY2(), 0.0F).color(ec.x(), ec.y(), ec.z(), ec.w()).endVertex();
+        bufferbuilder.vertex(matrix, (float)box.getX2(), (float)box.getY2(), 0.0F).color(ec.x(), ec.y(), ec.z(), ec.w()).endVertex();
+        bufferbuilder.vertex(matrix, (float)box.getX2(), (float)box.getY1(), 0.0F).color(ec.x(), ec.y(), ec.z(), ec.w()).endVertex();
+        bufferbuilder.vertex(matrix, (float)box.getX1(), (float)box.getY1(), 0.0F).color(ec.x(), ec.y(), ec.z(), ec.w()).endVertex();
+        bufferbuilder.end();
+        WorldVertexBufferUploader.end(bufferbuilder);
         RenderSystem.enableTexture();
         RenderSystem.disableBlend();
     }
@@ -235,8 +235,8 @@ public class ObjectViewHandler {
     public static void scissorAbsolute(Box2d coords) {
         if (scissors.empty())
             glEnable(GL_SCISSOR_TEST);
-        double factor = Minecraft.getInstance().getMainWindow().getGuiScaleFactor();
-        coords = new Box2d(coords.getX1() * factor, Minecraft.getInstance().getMainWindow().getFramebufferHeight() - coords.getY2() * factor, coords.getWidth() * factor, coords.getHeight() * factor);
+        double factor = Minecraft.getInstance().getWindow().getGuiScale();
+        coords = new Box2d(coords.getX1() * factor, Minecraft.getInstance().getWindow().getScreenHeight() - coords.getY2() * factor, coords.getWidth() * factor, coords.getHeight() * factor);
         if (!scissors.empty())
             coords = coords.mergeCut(scissors.peek());
         scissors.push(coords);
@@ -267,18 +267,18 @@ public class ObjectViewHandler {
         String tmpStr;
 
 //        matrixStack.push();
-//        matrixStack.getLast().getMatrix().set(from(matrixStack.getLast().getMatrix())); //swap the new pushed matrix for one that is scaled/translated to the root widget view
+//        matrixStack.last().pose().set(from(matrixStack.last().pose())); //swap the new pushed matrix for one that is scaled/translated to the root widget view
         if (withWrap)
-            while (r < string.length() && y + l * font.FONT_HEIGHT < coords.getY2()) {
-                tmpStr = font.trimStringToWidth(string.substring(r), (int) coords.getWidth());
+            while (r < string.length() && y + l * font.lineHeight < coords.getY2()) {
+                tmpStr = font.plainSubstrByWidth(string.substring(r), (int) coords.getWidth());
                 if (tmpStr.isEmpty())
                     tmpStr = string.substring(0, 1);
                 r += tmpStr.length();
-                font.drawString(matrixStack, tmpStr, x, (float)(y + l * font.FONT_HEIGHT), textColor);
+                font.draw(matrixStack, tmpStr, x, (float)(y + l * font.lineHeight), textColor);
                 ++l;
             }
         else
-            font.drawString(matrixStack, string, x, y, textColor);
+            font.draw(matrixStack, string, x, y, textColor);
 //        matrixStack.pop();
     }
 

@@ -16,7 +16,7 @@ public class WidgetDataPacket extends PacketHandler.Message {
     public WidgetDataPacket(PacketBuffer buffer) {
         this.windowId = buffer.readByte();
         this.widget = buffer.readShort();
-        this.data = buffer.readCompoundTag();
+        this.data = buffer.readAnySizeNbt();
     }
 
     public WidgetDataPacket(int windowIdIn, int widgetIn, CompoundNBT dataIn) {
@@ -29,19 +29,19 @@ public class WidgetDataPacket extends PacketHandler.Message {
     public void toBytes(PacketBuffer buffer) {
         buffer.writeByte(this.windowId);
         buffer.writeShort(this.widget);
-        buffer.writeCompoundTag(this.data);
+        buffer.writeNbt(this.data);
     }
 
     @Override
     public void clientWork() {
         ClientPlayerEntity player = (ClientPlayerEntity) DimBag.getPlayer();
-        if (player != null && player.openContainer.windowId == windowId && !(windowId > -3 && windowId < 1)) //containers -2, -1 and 0 are reserved for creative and inworld
-            ((BaseContainer)player.openContainer).receiveWidgetChange(player, widget, data);
+        if (player != null && player.containerMenu.containerId == windowId && !(windowId > -3 && windowId < 1)) //containers -2, -1 and 0 are reserved for creative and inworld
+            ((BaseContainer)player.containerMenu).receiveWidgetChange(player, widget, data);
     }
 
     @Override
     public void serverWork(ServerPlayerEntity player) {
-        if (player != null && player.openContainer.windowId == windowId && !(windowId > -3 && windowId < 1))
-            ((BaseContainer)player.openContainer).receiveWidgetChange(player, widget, data);
+        if (player != null && player.containerMenu.containerId == windowId && !(windowId > -3 && windowId < 1))
+            ((BaseContainer)player.containerMenu).receiveWidgetChange(player, widget, data);
     }
 }

@@ -36,7 +36,7 @@ public abstract class BaseBlockContainer<C extends BaseContainer<C>> extends Bas
     public void writeToBuff(PacketBuffer buff) { buff.writeInt(pos.getX()).writeInt(pos.getY()).writeInt(pos.getZ()); }
 
     @Override
-    public boolean canInteractWith(@Nonnull PlayerEntity playerIn) {
-        return playerIn.getPositionVec().distanceTo(new Vector3d(pos.getX(), pos.getY(), pos.getZ())) < 6;
+    public boolean stillValid(@Nonnull PlayerEntity playerIn) {
+        return playerIn.position().distanceTo(new Vector3d(pos.getX(), pos.getY(), pos.getZ())) < 6;
     }
 }

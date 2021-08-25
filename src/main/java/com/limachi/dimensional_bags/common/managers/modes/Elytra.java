@@ -21,7 +21,7 @@ public class Elytra {} /*extends Mode {
 
     @Override
     public ActionResultType onActivateItem(int eyeId, PlayerEntity player) {
-        if (!player.getItemStackFromSlot(EquipmentSlotType.CHEST).canElytraFly(player)) return ActionResultType.FAIL;
+        if (!player.getItemBySlot(EquipmentSlotType.CHEST).canElytraFly(player)) return ActionResultType.FAIL;
         if (!player.isElytraFlying()) {
             player.setOnGround(false);
             player.startFallFlying();

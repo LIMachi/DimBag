@@ -10,7 +10,7 @@ import java.util.function.Function;
 
 import static com.limachi.dimensional_bags.DimBag.MOD_ID;
 
-public class Button extends Base {
+public class Button extends Base {/*
     public static final ResourceLocation VANILLA_TEXTURE = new ResourceLocation(MOD_ID, "textures/widgets/button.png");
 
     public static final TextureCutout VANILLA_BACKGROUND = new TextureCutout(VANILLA_TEXTURE, 0, 20, 200, 20);
@@ -34,9 +34,6 @@ public class Button extends Base {
     protected final TextureCutout selected;
     protected final Function<Integer, Boolean> onClick;
 
-    /**
-     * dynamic button that switch it's render and can call a function upon being pressed
-     */
     public Button(double x, double y, double width, double height, TextureCutout background, TextureCutout hover, TextureCutout selected, Function<Integer, Boolean> onClick) {
         super(x, y, width, height, true);
         this.background = background;
@@ -48,21 +45,12 @@ public class Button extends Base {
             this.onClick = i->true;
     }
 
-    /**
-     * vanilla scaled button
-     */
     public Button(double x, double y, double width, double height, Function<Integer, Boolean> onClick) {
         this(x, y, width, height, VANILLA_BACKGROUND, VANILLA_HOVER, VANILLA_SELECTED, onClick);
     }
 
-    /**
-     * vanilla full button
-     */
     public Button(double x, double y, Function<Integer, Boolean> onClick) { this(x, y, 200, 20, onClick); }
 
-    /**
-     * my buttons used by scrollbar and viewport
-     */
     public static Button smallButton(double x, double y, TextureCutout topper, Function<Integer, Boolean> onClick) {
         Button b = new Button(x, y, 11, 11, SMALL_BUTTON__BACKGROUND, SMALL_BUTTON__HOVER, SMALL_BUTTON__SELECTED, onClick);
         if (topper != null)
@@ -108,5 +96,5 @@ public class Button extends Base {
     @Override
     public boolean onMouseClicked(double mouseX, double mouseY, int button) {
         return onClick != null && isHovered() && onClick.apply(button);
-    }
+    }*/
 }

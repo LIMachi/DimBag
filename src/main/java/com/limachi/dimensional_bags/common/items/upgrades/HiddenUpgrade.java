@@ -4,6 +4,7 @@ import com.limachi.dimensional_bags.ConfigManager;
 import com.limachi.dimensional_bags.DimBag;
 import com.limachi.dimensional_bags.StaticInit;
 import com.limachi.dimensional_bags.common.EventManager;
+import com.limachi.dimensional_bags.common.data.EyeDataMK2.SettingsData;
 import com.limachi.dimensional_bags.common.data.EyeDataMK2.SubRoomsManager;
 import com.limachi.dimensional_bags.common.entities.BagEntity;
 import com.limachi.dimensional_bags.common.managers.UpgradeManager;
@@ -23,7 +24,6 @@ import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.ActionResultType;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.world.World;
-import net.minecraftforge.fml.common.Mod;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -33,7 +33,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @StaticInit
-public class HiddenUpgrade extends BaseUpgrade {
+public class HiddenUpgrade extends BaseUpgrade<HiddenUpgrade> {
 
     public static final String NAME = "hidden_upgrade";
 
@@ -44,31 +44,31 @@ public class HiddenUpgrade extends BaseUpgrade {
     public HiddenUpgrade() { super(DimBag.DEFAULT_PROPERTIES); }
 
     @Override
+    public void initSettings(SettingsData.SettingsReader settingsReader) {}
+
+    @Override
     public boolean canBeInstalled() { return false; }
 
     @Override
     public String upgradeName() { return NAME; }
 
-    @Override
-    public int installUpgrade(UpgradeManager manager, int qty) { return qty; }
-
     public static Stream<TileEntity> iterBeaconAndConduit(int eye, World world) {
-        return world.loadedTileEntityList.stream().filter(te->(te instanceof BeaconTileEntity || te instanceof ConduitTileEntity) && ((te.getPos().getX() - SubRoomsManager.ROOM_OFFSET_X + SubRoomsManager.HALF_ROOM) / SubRoomsManager.ROOM_SPACING + 1 == eye));
+        return world.blockEntityList.stream().filter(te->(te instanceof BeaconTileEntity || te instanceof ConduitTileEntity) && ((te.getBlockPos().getX() - SubRoomsManager.ROOM_OFFSET_X + SubRoomsManager.HALF_ROOM) / SubRoomsManager.ROOM_SPACING + 1 == eye));
     }
 
     public static void applyBeaconEffect(CompoundNBT beaconNBT, LivingEntity entity) {
         int levels = beaconNBT.getInt("Levels");
-        Effect primaryEffect = Effect.get(beaconNBT.getInt("Primary"));
-        Effect secondaryEffect = Effect.get(beaconNBT.getInt("Secondary"));
+        Effect primaryEffect = Effect.byId(beaconNBT.getInt("Primary"));
+        Effect secondaryEffect = Effect.byId(beaconNBT.getInt("Secondary"));
         if (primaryEffect != null) {
             double d0 = levels * 10 + 10;
             int i = 0;
             if (levels >= 4 && primaryEffect == secondaryEffect)
                 i = 1;
             int j = (9 + levels * 2) * 20;
-            entity.addPotionEffect(new EffectInstance(primaryEffect, j, i, true, false, true));
+            entity.addEffect(new EffectInstance(primaryEffect, j, i, true, false, true));
             if (levels >= 4 && primaryEffect != secondaryEffect && secondaryEffect != null)
-                entity.addPotionEffect(new EffectInstance(secondaryEffect, j, 0, true, false, true));
+                entity.addEffect(new EffectInstance(secondaryEffect, j, 0, true, false, true));
         }
     }
 
@@ -78,9 +78,9 @@ public class HiddenUpgrade extends BaseUpgrade {
         if (w == null) return false;
         iterBeaconAndConduit(eyeId, w).forEach(te->{
             if (te instanceof BeaconTileEntity)
-                applyBeaconEffect(te.write(new CompoundNBT()), (LivingEntity) entity);
-            if (te instanceof ConduitTileEntity && ((ConduitTileEntity)te).isActive() && entity.isWet())
-                ((LivingEntity)entity).addPotionEffect(new EffectInstance(Effects.CONDUIT_POWER, 260, 0, true, false, true));
+                applyBeaconEffect(te.save(new CompoundNBT()), (LivingEntity) entity);
+            if (te instanceof ConduitTileEntity && ((ConduitTileEntity)te).isActive() && entity.isInWaterOrRain())
+                ((LivingEntity)entity).addEffect(new EffectInstance(Effects.CONDUIT_POWER, 260, 0, true, false, true));
         });
         return true;
     }
@@ -96,11 +96,11 @@ public class HiddenUpgrade extends BaseUpgrade {
      */
     public static List<TileEntity> getTileEntitiesInBag(@Nonnull World world, int eye, int room, boolean tickOnly, @Nullable Predicate<TileEntity> extraPredicate) {
         List<TileEntity> empty = new ArrayList<>();
-        if (!world.getDimensionKey().equals(WorldUtils.DimBagRiftKey)) return empty;
+        if (!world.dimension().equals(WorldUtils.DimBagRiftKey)) return empty;
         SubRoomsManager manager = SubRoomsManager.getInstance(eye);
         if (manager == null) return empty;
-        Predicate<TileEntity> filter = extraPredicate != null ? te->extraPredicate.test(te) && manager.isInRoom(te.getPos(), room) : te->manager.isInRoom(te.getPos(), room);
-        return (tickOnly ? world.tickableTileEntities : world.loadedTileEntityList).stream().filter(filter).collect(Collectors.toList());
+        Predicate<TileEntity> filter = extraPredicate != null ? te->extraPredicate.test(te) && manager.isInRoom(te.getBlockPos(), room) : te->manager.isInRoom(te.getBlockPos(), room);
+        return (tickOnly ? world.tickableBlockEntities : world.blockEntityList).stream().filter(filter).collect(Collectors.toList());
     }
 
     private static final Random RANDOM = new Random();
@@ -111,8 +111,8 @@ public class HiddenUpgrade extends BaseUpgrade {
     private boolean randomMobErrorBehavior(int eyeId, Entity entity) { //adds a random (configurable) chance that an entity close to the bag (unequiped) will be sucked inside the bag
         if (EventManager.tick % 2000 != 0 || !(entity instanceof BagEntity) || ONE_IN <= 0) return false;
         DimBag.debug("randomMobErrorBehavior");
-        Optional<MobEntity> f = entity.world.getEntitiesWithinAABB(MobEntity.class, new AxisAlignedBB(entity.getPosition().add(-2, -2, -2), entity.getPosition().add(2, 2, 2)), e->!(e instanceof WitherEntity || e instanceof EnderDragonEntity || e instanceof BagEntity)).stream().findFirst();
-        if (f.isPresent() && (((double)RANDOM.nextInt(ONE_IN)) / (double)ONE_IN) * f.get().getPositionVec().distanceTo(entity.getPositionVec()) < 1.d / (double)ONE_IN)
+        Optional<MobEntity> f = entity.level.getEntitiesOfClass(MobEntity.class, new AxisAlignedBB(entity.blockPosition().offset(-2, -2, -2), entity.blockPosition().offset(2, 2, 2)), e->!(e instanceof WitherEntity || e instanceof EnderDragonEntity || e instanceof BagEntity)).stream().findFirst();
+        if (f.isPresent() && (((double)RANDOM.nextInt(ONE_IN)) / (double)ONE_IN) * f.get().position().distanceTo(entity.position()) < 1.d / (double)ONE_IN)
             SubRoomsManager.execute(eyeId, srm->srm.enterBag(f.get()));
         return true;
     }

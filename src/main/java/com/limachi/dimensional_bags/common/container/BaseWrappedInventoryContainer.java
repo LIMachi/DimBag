@@ -1,8 +1,8 @@
 package com.limachi.dimensional_bags.common.container;
 
-import com.limachi.dimensional_bags.common.container.slot.InvWrapperSlot;
-import com.limachi.dimensional_bags.common.inventory.PlayerInvWrapper;
-import com.limachi.dimensional_bags.common.inventory.Wrapper;
+//import com.limachi.dimensional_bags.common.container.slot.InvWrapperSlot;
+//import com.limachi.dimensional_bags.common.inventory.PlayerInvWrapper;
+//import com.limachi.dimensional_bags.common.inventory.Wrapper;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.entity.player.ServerPlayerEntity;
@@ -15,7 +15,7 @@ import net.minecraft.network.PacketBuffer;
 import java.util.ArrayList;
 
 import static com.limachi.dimensional_bags.common.references.GUIs.ScreenParts.*;
-
+/*
 public class BaseWrappedInventoryContainer extends Container {
 
     protected PlayerInvWrapper playerInv;
@@ -61,12 +61,12 @@ public class BaseWrappedInventoryContainer extends Container {
     }
 
     @Override
-    public ItemStack transferStackInSlot(PlayerEntity player, int position)
+    public ItemStack quickMoveStack(PlayerEntity player, int position)
     {
         ItemStack itemstack = ItemStack.EMPTY;
         Slot slot = this.inventorySlots.get(position);
 
-        if(slot != null && slot.getHasStack())
+        if(slot != null && slot.hasItem())
         {
             ItemStack itemstack1 = slot.getStack();
             itemstack = itemstack1.copy();
@@ -76,13 +76,14 @@ public class BaseWrappedInventoryContainer extends Container {
             else if(!Wrapper.mergeItemStack(inventorySlots, itemstack1, 36, this.inventorySlots.size(), false, new ArrayList<>()))
                 return ItemStack.EMPTY;
             if(itemstack1.getCount() == 0)
-                slot.putStack(ItemStack.EMPTY);
+                slot.set(ItemStack.EMPTY);
             else
-                slot.onSlotChanged();
+                slot.setChanged();
         }
         return itemstack;
     }
 
     @Override
-    public boolean canInteractWith(PlayerEntity playerIn) { return true; }
+    public boolean stillValid(PlayerEntity playerIn) { return true; }
 }
+*/

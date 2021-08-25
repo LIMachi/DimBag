@@ -7,6 +7,7 @@ import net.minecraft.block.*;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.item.ItemEntity;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.fluid.FluidState;
 import net.minecraft.item.BlockItem;
 import net.minecraft.item.ItemStack;
 import net.minecraft.loot.LootContext;
@@ -14,6 +15,7 @@ import net.minecraft.loot.LootParameters;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.world.IBlockReader;
 import net.minecraft.world.World;
 
@@ -41,15 +43,14 @@ public abstract class AbstractTileEntityBlock<T extends BaseTileEntity> extends 
     public abstract <B extends AbstractTileEntityBlock<T>> B getInstance();
     public abstract BlockItem getItemInstance();
 
-    public abstract void onValidPlace(World worldIn, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack stack, T tileEntity);
-    public abstract void onRemove(BlockState state, World worldIn, BlockPos pos, BlockState newState, boolean isMoving, T tileEntity);
+    public void onValidPlace(World worldIn, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack stack, T tileEntity) {}
+    public void onRemove(BlockState state, World worldIn, BlockPos pos, BlockState newState, boolean isMoving, T tileEntity) {}
+    @Override
+    public BlockRenderType getRenderShape(BlockState state) { return BlockRenderType.MODEL; }
 
     @Override
-    public BlockRenderType getRenderType(BlockState state) { return BlockRenderType.MODEL; }
-
-    @Override
-    public ItemStack getItem(IBlockReader worldIn, BlockPos pos, BlockState state) {
-        TileEntity te = worldIn.getTileEntity(pos);
+    public ItemStack getPickBlock(BlockState state, RayTraceResult target, IBlockReader world, BlockPos pos, PlayerEntity player) {
+        TileEntity te = world.getBlockEntity(pos);
         return asItem(state, tileEntityClass.isInstance(te) ? (T)te : null);
     }
 
@@ -65,49 +66,56 @@ public abstract class AbstractTileEntityBlock<T extends BaseTileEntity> extends 
         if (out.getTag() == null)
             out.setTag(new CompoundNBT());
         if (tileEntity != null)
-            out.getTag().put("BlockEntityTag", tileEntity.serializeNBT());
+            out.getTag().put("BlockEntityTag", tileEntity.populateBlockEntityTag());
         return out;
     }
 
     @Override
-    public void onBlockPlacedBy(World worldIn, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack stack) {
-        TileEntity te = worldIn.getTileEntity(pos);
-        if (tileEntityClass.isInstance(te))
-            onValidPlace(worldIn, pos, state, placer, stack, (T)te);
+    public void setPlacedBy(World worldIn, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack stack) {
+        TileEntity te = worldIn.getBlockEntity(pos);
+        if (tileEntityClass.isInstance(te)) {
+            if (DimBag.isServer(worldIn)) {
+                CompoundNBT tags = stack.getTag();
+                if (tags != null && tags.contains("BlockEntityTag"))
+                    te.load(state, tags.getCompound("BlockEntityTag"));
+            }
+            onValidPlace(worldIn, pos, state, placer, stack, (T) te);
+            te.setChanged();
+        }
     }
 
     @Override //creative destroying drops
-    public void onBlockHarvested(World worldIn, BlockPos pos, BlockState state, PlayerEntity player) {
-        if (DimBag.isServer(worldIn) && player.isCreative()) {
-            TileEntity te = worldIn.getTileEntity(pos);
+    public boolean removedByPlayer(BlockState state, World world, BlockPos pos, PlayerEntity player, boolean willHarvest, FluidState fluid) {
+        if (DimBag.isServer(world) && player.isCreative()) {
+            TileEntity te = world.getBlockEntity(pos);
             ItemStack itemstack = asItem(state, tileEntityClass.isInstance(te) ? (T)te : null);
-            if (itemstack.isEmpty()) return;
-            ItemEntity itementity = new ItemEntity(worldIn, (double)pos.getX() + 0.5D, (double)pos.getY() + 0.5D, (double)pos.getZ() + 0.5D, itemstack);
-            itementity.setDefaultPickupDelay();
-            worldIn.addEntity(itementity);
+            if (itemstack.isEmpty()) return false;
+            ItemEntity itementity = new ItemEntity(world, (double)pos.getX() + 0.5D, (double)pos.getY() + 0.5D, (double)pos.getZ() + 0.5D, itemstack);
+            itementity.setDefaultPickUpDelay();
+            world.addFreshEntity(itementity);
         }
-        super.onBlockHarvested(worldIn, pos, state, player);
+        return super.removedByPlayer(state, world, pos, player, willHarvest, fluid);
     }
 
     @Override //standard drop
     public List<ItemStack> getDrops(BlockState state, LootContext.Builder builder) {
         ArrayList<ItemStack> list = new ArrayList<>();
-        TileEntity te = builder.get(LootParameters.BLOCK_ENTITY);
+        TileEntity te = builder.getParameter(LootParameters.BLOCK_ENTITY);
         list.add(asItem(state, tileEntityClass.isInstance(te) ? (T)te : null));
         return list;
     }
 
     @Override
-    public void onReplaced(BlockState state, World worldIn, BlockPos pos, BlockState newState, boolean isMoving) {
+    public void onRemove(BlockState state, World worldIn, BlockPos pos, BlockState newState, boolean isMoving) {
         if (state.getBlock() != newState.getBlock() && state.getBlock() == getInstance()) {
-            TileEntity te = worldIn.getTileEntity(pos);
+            TileEntity te = worldIn.getBlockEntity(pos);
             if (tileEntityClass.isInstance(te))
                 onRemove(state, worldIn, pos, newState, isMoving, (T)te);
         }
-        super.onReplaced(state, worldIn, pos, newState, isMoving);
+        super.onRemove(state, worldIn, pos, newState, isMoving);
     }
 
     @Nullable
     @Override
-    public TileEntity createNewTileEntity(IBlockReader worldIn) { return Registries.getTileEntityType(tileEntityRegistryName).create(); }
+    public TileEntity newBlockEntity(IBlockReader p_196283_1_) { return Registries.getBlockEntityType(tileEntityRegistryName).create(); }
 }

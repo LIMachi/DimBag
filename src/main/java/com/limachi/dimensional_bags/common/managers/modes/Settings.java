@@ -31,8 +31,8 @@ public class Settings extends Mode {
     @Override
     public ActionResultType onItemUse(int eyeId, World world, PlayerEntity player, BlockRayTraceResult ray) {
         /**behavior: if in main hand and block in off hand (or inside ghost bag), allow replacement of walls with the selected block (except tunnels)*/
-        if (!world.isRemote() && ray.getType() == RayTraceResult.Type.BLOCK && !(world.getBlockState(ray.getPos()).getBlock() instanceof Tunnel) && SubRoomsManager.isWall(world, ray.getPos()) && player.getHeldItem(Hand.MAIN_HAND).getItem() instanceof Bag && player.getHeldItem(Hand.OFF_HAND).getItem() instanceof BlockItem) {
-            if (WorldUtils.replaceBlockAndGiveBack(ray.getPos(), player, Hand.OFF_HAND, !player.isCreative(), n->!(n == null || n.hasTileEntity() || VoxelShapes.compare(n.getCollisionShape(world, ray.getPos()), VoxelShapes.fullCube(), IBooleanFunction.NOT_SAME))))
+        if (!world.isClientSide() && ray.getType() == RayTraceResult.Type.BLOCK && !(world.getBlockState(ray.getBlockPos()).getBlock() instanceof Tunnel) && SubRoomsManager.isWall(world, ray.getBlockPos()) && player.getItemInHand(Hand.MAIN_HAND).getItem() instanceof Bag && player.getItemInHand(Hand.OFF_HAND).getItem() instanceof BlockItem) {
+            if (WorldUtils.replaceBlockAndGiveBack(ray.getBlockPos(), player, Hand.OFF_HAND, !player.isCreative(), n->!(n == null || n.hasTileEntity() || VoxelShapes.joinIsNotEmpty(n.getCollisionShape(world, ray.getBlockPos()), VoxelShapes.block(), IBooleanFunction.NOT_SAME))))
                 return ActionResultType.SUCCESS;
         }
         return onItemRightClick(eyeId, world, player);

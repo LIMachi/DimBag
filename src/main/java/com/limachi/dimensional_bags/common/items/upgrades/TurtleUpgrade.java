@@ -17,7 +17,7 @@ import net.minecraftforge.fml.common.Mod;
 
 @Mod.EventBusSubscriber
 @StaticInit
-public class TurtleUpgrade extends BaseUpgrade {
+public class TurtleUpgrade extends BaseUpgrade<TurtleUpgrade> {
 
     public static final String NAME = "turtle_upgrade";
 
@@ -33,6 +33,7 @@ public class TurtleUpgrade extends BaseUpgrade {
 
     @Override
     public void initSettings(SettingsData.SettingsReader settingsReader) {
+        super.initSettings(settingsReader);
         settingsReader.integer("Threshold", 5, 2, 20, true);
     }
 
@@ -44,14 +45,11 @@ public class TurtleUpgrade extends BaseUpgrade {
     @Override
     public String upgradeName() { return NAME; }
 
-    @Override
-    public int installUpgrade(UpgradeManager manager, int qty) { return qty; }
-
     @SubscribeEvent
     public static void turtleUpgrade(LivingDamageEvent event) { //protect and tp the player in the bag if it would take damage setting it's health below a threshold
         LivingEntity entity = event.getEntityLiving();
         if (!entity.isAlive() || event.getAmount() <= 0) return;
-        int id = Bag.getBag(entity, 0);
+        int id = Bag.getBag(entity, 0, true);
         if (id == 0) return;
         TurtleUpgrade turtleUpgrade = getInstance(NAME);
         if (!turtleUpgrade.isActive(id)) return;
@@ -61,8 +59,8 @@ public class TurtleUpgrade extends BaseUpgrade {
             EventManager.delayedTask(0, ()->{
                 LivingEntity eff = (LivingEntity) SubRoomsManager.execute(id, sm->sm.enterBag(entity), entity);
                 if (eff != null) {
-                    eff.addPotionEffect(new EffectInstance(Effects.MINING_FATIGUE, 600, 2, false, false, false));
-                    eff.addPotionEffect(new EffectInstance(Effects.RESISTANCE, 200, 2, false, false, false));
+                    eff.addEffect(new EffectInstance(Effects.DIG_SLOWDOWN, 600, 2, false, false, false));
+                    eff.addEffect(new EffectInstance(Effects.DAMAGE_RESISTANCE, 200, 2, false, false, false));
                 }});
         }
     }

@@ -3,6 +3,7 @@ package com.limachi.dimensional_bags.common.data.EyeDataMK2;
 import com.limachi.dimensional_bags.DimBag;
 import com.limachi.dimensional_bags.common.EventManager;
 import com.limachi.dimensional_bags.utils.NBTUtils;
+import com.limachi.dimensional_bags.utils.TextUtils;
 import com.limachi.dimensional_bags.utils.WorldUtils;
 import com.limachi.dimensional_bags.common.data.DimBagData;
 import com.limachi.dimensional_bags.common.managers.ModeManager;
@@ -12,13 +13,14 @@ import com.limachi.dimensional_bags.common.network.packets.WorldSavedDataSyncMsg
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.nbt.CompoundNBT;
+import net.minecraft.util.text.IFormattableTextComponent;
+import net.minecraft.util.text.StringTextComponent;
 import net.minecraft.world.server.ServerWorld;
 import net.minecraft.world.storage.WorldSavedData;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
-import javax.annotation.Nullable;
 import java.io.File;
 import java.lang.reflect.Constructor;
 import java.util.HashMap;
@@ -63,33 +65,35 @@ public class WorldSavedDataManager {
             this.suffix = suffix;
             this.isClient = isClient;
             this.syncUp = syncUp;
-            this.prevState = new CompoundNBT();
+            this.prevState = null;
         }
 
         @Override
-        public void save(File fileIn) {
-            super.save(DimBag.debug(fileIn, " Saving data"));
-        }
+        public void save(File fileIn) { super.save(DimBag.debug(fileIn, " Saving data")); }
 
         @Override
-        public void markDirty() {
-            super.markDirty();
+        public void setDirty() {
+            super.setDirty();
             if (lastMarkDirty != EventManager.tick && (!isClient || syncUp)) {
                 if (!isClient)
-                    EventManager.delayedTask(1, ()->PacketHandler.toClients(preparePacket()));
+                    EventManager.delayedTask(1, ()->PacketHandler.toClients(preparePacket(prevState == null)));
                 else
-                    EventManager.delayedTask(1, ()->PacketHandler.toServer(preparePacket()));
+                    EventManager.delayedTask(1, ()->PacketHandler.toServer(preparePacket(prevState == null)));
             }
             lastMarkDirty = EventManager.tick;
         }
 
-        WorldSavedDataSyncMsg preparePacket() {
+        public WorldSavedDataSyncMsg preparePacket(boolean send_all) {
             CompoundNBT ser = serializeNBT();
-            CompoundNBT diff = NBTUtils.extractDiff(ser, prevState);
-            if (diff.isEmpty()) return null;
             WorldSavedDataSyncMsg out;
-            if (diff.toString().length() < prevState.toString().length())
-                out = new WorldSavedDataSyncMsg(getSuffix(), getEyeId(), diff, true);
+            if (!send_all) {
+                CompoundNBT diff = NBTUtils.extractDiff(ser, prevState);
+                if (diff.isEmpty()) return null;
+                if (diff.toString().length() < prevState.toString().length())
+                    out = new WorldSavedDataSyncMsg(getSuffix(), getEyeId(), diff, true);
+                else
+                    out = new WorldSavedDataSyncMsg(getSuffix(), getEyeId(), ser, false);
+            }
             else
                 out = new WorldSavedDataSyncMsg(getSuffix(), getEyeId(), ser, false);
             prevState = ser;
@@ -106,15 +110,14 @@ public class WorldSavedDataManager {
 
     @SubscribeEvent
     public static void onPlayerLoginEvent(PlayerEvent.PlayerLoggedInEvent event) {
-        if (DimBag.isServer(event.getPlayer().world)) {
+        if (DimBag.isServer(event.getPlayer().level)) {
             /*should send the current state of all the worldsaveddate to the client*/
-            for (int eye = 0; eye < DimBagData.get(null).getLastId(); ++eye)
+            for (int eye = 0; eye < DimBagData.get().getLastId(); ++eye)
                 for (HashMap.Entry<Class<? extends EyeWorldSavedData>, String> entry: TYPE_TO_SUFFIX.entrySet()) {
-                    EyeWorldSavedData data = getInstance(entry.getKey(), null, eye + 1);
+                    EyeWorldSavedData data = getInstance(entry.getKey(), eye + 1);
                     if (data != null)
-                        PacketHandler.toClient((ServerPlayerEntity)event.getPlayer(), new WorldSavedDataSyncMsg(data.suffix, data.id, data.write(new CompoundNBT()), false));
+                        PacketHandler.toClient((ServerPlayerEntity)event.getPlayer(), data.preparePacket(true));
                 }
-
         } else
             clientSideReflexion.clear();
     }
@@ -138,25 +141,25 @@ public class WorldSavedDataManager {
         if (isDiff)
             ewsd.applyDiff(nbt);
         else
-            ewsd.read(nbt);
+            ewsd.load(nbt);
         clientSideReflexion.put(EyeWorldSavedData.nameGenerator(suffix, id), ewsd);
     }
 
     public static void serverUpdate(PlayerEntity player, String suffix, int id, CompoundNBT nbt, boolean isDiff) {
-        EyeWorldSavedData ewsd = getInstance(SUFFIX_TO_TYPE.get(suffix), null, id);
+        EyeWorldSavedData ewsd = getInstance(SUFFIX_TO_TYPE.get(suffix), id);
         if (ewsd != null) {
             if (isDiff)
                 ewsd.applyDiff(nbt);
             else
-                ewsd.read(nbt);
+                ewsd.load(nbt);
             if (!ewsd.isClient)
-                ewsd.markDirty();
+                ewsd.setDirty();
         }
     }
 
     @SubscribeEvent
     public static void onPlayerLogoutEvent(PlayerEvent.PlayerLoggedOutEvent event) {
-        if (!DimBag.isServer(event.getPlayer().world))
+        if (!DimBag.isServer(event.getPlayer().level))
             clientSideReflexion.clear();
     }
 
@@ -165,38 +168,42 @@ public class WorldSavedDataManager {
         SUFFIX_TO_TYPE.put(suffix, type);
     }
 
-    public static <T extends EyeWorldSavedData> T getInstance(Class<T> type, @Nullable ServerWorld world, int id) {
+    public static IFormattableTextComponent prettyDebug(int id) {
+        final CompoundNBT EC = new CompoundNBT();
+        IFormattableTextComponent out = new StringTextComponent(SettingsData.execute(id, SettingsData::getBagName, "<unnamed bag with id " + id + ">")).append("\n------------------------------------------\n");
+        for (Class<? extends EyeWorldSavedData> t : TYPE_TO_SUFFIX.keySet())
+            out.append(TYPE_TO_SUFFIX.get(t) + ": ").append(TextUtils.prettyNBT(execute(t, id, WorldSavedData::serializeNBT, EC))).append("\n");
+        return out.append("------------------------------------------\n");
+    }
+
+    public static void populateAllById(int id) {
+        for (Class<? extends EyeWorldSavedData> t : TYPE_TO_SUFFIX.keySet())
+            execute(t, id, r->{r.setDirty(); return null;}, null);
+    }
+
+    public static <T extends EyeWorldSavedData> T getInstance(Class<T> type, int id) {
         if (id <= 0) return null;
         String suffix = TYPE_TO_SUFFIX.get(type);
-        if (DimBag.isServer(world)) {
-            if (world == null)
-                world = (ServerWorld)WorldUtils.getOverWorld();
+        if (DimBag.isServer(null)) {
+            ServerWorld world = (ServerWorld)WorldUtils.getOverWorld();
             if (world != null) {
-                if (suffix != null && suffix.length() != 0) {
-                    Constructor<T> constructor = null;
-                    try {
-                        constructor = type.getConstructor(String.class, int.class, boolean.class);
-                    } catch (NoSuchMethodException e) {
-                        return null;
-                    }
-                    Constructor<T> finalConstructor = constructor;
-                    return world.getSavedData().getOrCreate(() -> {
+                if (suffix != null && suffix.length() != 0)
+                    return world.getDataStorage().computeIfAbsent(() -> {
                         try {
-                            return finalConstructor.newInstance(suffix, id, false);
+                            return type.getConstructor(String.class, int.class, boolean.class).newInstance(suffix, id, false);
                         } catch (Exception e) {
                             return null;
                         }
                     }, EyeWorldSavedData.nameGenerator(suffix, id));
-                }
             }
         } else if (suffix != null && suffix.length() != 0)
             return (T)clientSideReflexion.get(EyeWorldSavedData.nameGenerator(suffix, id));
         return null;
     }
 
-    public static <T extends Object, S extends EyeWorldSavedData> T execute(Class<S> type, @Nullable ServerWorld world, int id, Function<S, T> executable, T onErrorReturn) {
+    public static <T extends Object, S extends EyeWorldSavedData> T execute(Class<S> type, int id, Function<S, T> executable, T onErrorReturn) {
         if (type != null && id > 0 && executable != null) {
-            S instance = getInstance(type, world, id);
+            S instance = getInstance(type, id);
             if (instance != null)
                 return executable.apply(instance);
         }

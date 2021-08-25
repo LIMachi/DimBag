@@ -6,11 +6,11 @@ import com.limachi.dimensional_bags.common.items.Bag;
 import net.minecraft.client.Minecraft;
 import net.minecraft.command.CommandSource;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemGroup;
 import net.minecraft.item.ItemStack;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.vector.Vector2f;
 import net.minecraft.util.math.vector.Vector3d;
 import net.minecraft.util.text.StringTextComponent;
@@ -31,9 +31,7 @@ import org.objectweb.asm.Type;
 
 import javax.annotation.Nullable;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -47,12 +45,12 @@ public class DimBag {
     public static final String MOD_ID = "dim_bag";
     public static final Logger LOGGER = LogManager.getLogger();
     public static DimBag INSTANCE;
-    public static final ItemGroup ITEM_GROUP = new ItemGroup(ItemGroup.GROUPS.length, "tab_" + MOD_ID) {
+    public static final ItemGroup ITEM_GROUP = new ItemGroup("tab_" + MOD_ID) {
         @Override
-        public ItemStack createIcon() { return new ItemStack(Registries.getItem(Bag.NAME)); }
+        public ItemStack makeIcon() { return new ItemStack(Registries.getItem(Bag.NAME)); }
     };
 
-    public static final Item.Properties DEFAULT_PROPERTIES = new Item.Properties().group(DimBag.ITEM_GROUP);
+    public static final Item.Properties DEFAULT_PROPERTIES = new Item.Properties().tab(DimBag.ITEM_GROUP);
 
     /**
      * will debug methods actually log something
@@ -94,14 +92,15 @@ public class DimBag {
     /** try by all means to know if the current invocation is on a logical client or logical server */
     public static boolean isServer(@Nullable World world) {
         if (world != null)
-            return !world.isRemote();
+            return !world.isClientSide();
         return EffectiveSide.get() == LogicalSide.SERVER;
     }
 
     public static CommandSource silentCommandSource() {
         MinecraftServer server = getServer();
-        ServerWorld serverworld = server.func_241755_D_();
-        return new CommandSource(server, Vector3d.copy(serverworld.getSpawnPoint()), Vector2f.ZERO, serverworld, 4, "DimBag Silent Command", new StringTextComponent("DimBag Silent Command"), server, null).withFeedbackDisabled();
+        ServerWorld serverworld = server.overworld();
+        BlockPos pos = serverworld.getSharedSpawnPos();
+        return new CommandSource(server, new Vector3d(pos.getX(), pos.getY(), pos.getZ()), Vector2f.ZERO, serverworld, 4, "DimBag Silent Command", new StringTextComponent("DimBag Silent Command"), server, null).withSuppressedOutput();
     }
 
     /** execute the first wrapped callable only on logical client + physical client, and the second wrapped callable on logical server (any physical side) */

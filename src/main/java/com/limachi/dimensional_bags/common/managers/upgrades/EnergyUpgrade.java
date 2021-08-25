@@ -9,9 +9,8 @@ import net.minecraft.client.MainWindow;
 import net.minecraft.client.Minecraft;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
-
+/*
 public class EnergyUpgrade extends Upgrade {
-
     public EnergyUpgrade() { super("energy", true, 0, 4, 0, 10); }
 
     @Override
@@ -30,6 +29,6 @@ public class EnergyUpgrade extends Upgrade {
 
     @Override
     public void onRenderHud(int eyeId, PlayerEntity player, MainWindow window, MatrixStack matrixStack, float partialTicks) {
-        EnergyData.execute(eyeId, energyData->{RenderUtils.drawString(matrixStack, Minecraft.getInstance().fontRenderer, "Energy: " + energyData.getEnergyStored() + " / " + energyData.getMaxEnergyStored(), new Box2d(10, 10, 100, 10), 0xFFFFFFFF, true, false); return true;}, false);
+        EnergyData.execute(eyeId, energyData->{RenderUtils.drawString(matrixStack, Minecraft.getInstance().font, "Energy: " + energyData.getEnergyStored() + " / " + energyData.getMaxEnergyStored(), new Box2d(10, 10, 100, 10), 0xFFFFFFFF, true, false); return true;}, false);
     }
-}
+}*/

@@ -44,14 +44,14 @@ public class DynamicMultiProxyInventory implements ISimpleMultiHandlerSerializab
         ListNBT l1 = new ListNBT();
         for (UUID id : orderedProxiesUUID) {
             CompoundNBT c = new CompoundNBT();
-            c.putUniqueId("UUID", id);
+            c.putUUID("UUID", id);
             l1.add(c);
         }
         out.put("OrderedProxies", l1);
         ListNBT l2 = new ListNBT();
         for (UUID id : activeProxies) {
             CompoundNBT c = new CompoundNBT();
-            c.putUniqueId("UUID", id);
+            c.putUUID("UUID", id);
             l2.add(c);
         }
         out.put("ActiveProxies", l2);
@@ -63,11 +63,11 @@ public class DynamicMultiProxyInventory implements ISimpleMultiHandlerSerializab
         orderedProxiesUUID.clear();
         ListNBT l1 = nbt.getList("OrderedProxies", 10);
         for (int i = 0; i < l1.size(); ++i)
-            orderedProxiesUUID.add(i, l1.getCompound(i).getUniqueId("UUID"));
+            orderedProxiesUUID.add(i, l1.getCompound(i).getUUID("UUID"));
         activeProxies.clear();
         ListNBT l2 = nbt.getList("ActiveProxies", 10);
         for (int i = 0; i < l2.size(); ++i) {
-            UUID id = l2.getCompound(i).getUniqueId("UUID");
+            UUID id = l2.getCompound(i).getUUID("UUID");
             ISimpleMultiHandlerSerializable t = queryProxy.apply(id);
             if (t != null) {
                 activeProxies.add(id);
@@ -202,10 +202,10 @@ public class DynamicMultiProxyInventory implements ISimpleMultiHandlerSerializab
     }
 
     @Override
-    public boolean isItemValid(int slot, @Nonnull ItemStack stack) {
+    public boolean mayPlace(int slot, @Nonnull ItemStack stack) {
         Pair<Integer, Integer> slotId = getProxySlot(slot);
         if (slotId != null)
-            return getProxy(slotId.getKey()).isItemValid(slotId.getValue(), stack);
+            return getProxy(slotId.getKey()).mayPlace(slotId.getValue(), stack);
         return false;
     }
 }

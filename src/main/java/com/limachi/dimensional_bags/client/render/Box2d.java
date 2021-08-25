@@ -60,10 +60,10 @@ public class Box2d {
         Vector4f v2 = new Vector4f((float)getX2(), (float)getY2(), 0, 1);
         v1.transform(matrix);
         v2.transform(matrix);
-        x = v1.getX();
-        y = v1.getY();
-        setX2(v2.getX());
-        setY2(v2.getY());
+        x = v1.x();
+        y = v1.y();
+        setX2(v2.x());
+        setY2(v2.y());
         return this;
     }
 

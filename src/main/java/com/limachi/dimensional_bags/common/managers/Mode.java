@@ -2,7 +2,7 @@ package com.limachi.dimensional_bags.common.managers;
 
 import com.google.common.collect.ImmutableMultimap;
 import com.limachi.dimensional_bags.common.Registries;
-import com.limachi.dimensional_bags.common.data.EyeDataMK2.ClientDataManager;
+//import com.limachi.dimensional_bags.common.data.EyeDataMK2.ClientDataManager;
 import com.limachi.dimensional_bags.common.data.EyeDataMK2.SettingsData;
 import com.limachi.dimensional_bags.common.entities.BagEntity;
 import com.limachi.dimensional_bags.common.items.Bag;
@@ -10,6 +10,7 @@ import com.mojang.blaze3d.matrix.MatrixStack;
 import net.minecraft.client.MainWindow;
 import net.minecraft.client.renderer.IRenderTypeBuffer;
 import net.minecraft.client.renderer.entity.model.BipedModel;
+import net.minecraft.client.util.ITooltipFlag;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.ai.attributes.Attribute;
@@ -21,10 +22,12 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.util.ActionResultType;
 import net.minecraft.util.math.BlockRayTraceResult;
+import net.minecraft.util.text.ITextComponent;
 import net.minecraft.world.World;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
+import java.util.List;
 import java.util.Map;
 
 /*
@@ -70,23 +73,25 @@ public class Mode {
 
     public final void attach(Map<String, Mode> col) { col.put(this.NAME, this); }
 
-    public void installMode(int eyeId, ItemStack stack, boolean preview) {
+    public void installMode(int eyeId, ItemStack stack/*, boolean preview*/) {
         ModeManager modeManager = null;
-        ClientDataManager clientDataManager = null;
-        if (preview) {
-            clientDataManager = ClientDataManager.getInstance(stack);
-            modeManager = clientDataManager.getModeManager();
-        }
-        else
+//        ClientDataManager clientDataManager = null;
+//        if (preview) {
+//            clientDataManager = ClientDataManager.getInstance(stack);
+//            modeManager = clientDataManager.getModeManager();
+//        }
+//        else
             modeManager = ModeManager.getInstance(eyeId);
         if (modeManager != null) {
             modeManager.installMode(NAME);
-            if (preview)
-                clientDataManager.store(stack);
+//            if (preview)
+//                clientDataManager.store(stack);
         }
     }
 
-    public boolean onScroll(PlayerEntity player, int eye, boolean up) { return false; }
+    public boolean onScroll(PlayerEntity player, int eye, boolean up, boolean testOnly) { return false; }
+
+    public ActionResultType onAddInformation(int eye, ItemStack stack, World world, List<ITextComponent> tooltip, ITooltipFlag flagIn) { return ActionResultType.PASS; }
 
     public void getAttributeModifiers(int eyeId, boolean selected, EquipmentSlotType slot, ImmutableMultimap.Builder<Attribute, AttributeModifier> builder) {}
 //    public ActionResultType onPlayerTick(int eyeId, ItemStack stack, World world, Entity player, int itemSlot, boolean isSelected) { return ActionResultType.CONSUME; } //called while the bag is ticking inside a player inventory

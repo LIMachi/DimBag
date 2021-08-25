@@ -28,17 +28,17 @@ public class TunnelPlacer extends Item implements IDimBagCommonItem {
         Registries.registerItem(NAME, TunnelPlacer::new);
     }
 
-    public TunnelPlacer() { super(new Properties().group(DimBag.ITEM_GROUP)); }
+    public TunnelPlacer() { super(DimBag.DEFAULT_PROPERTIES); }
 
     @Override
-    public ActionResultType onItemUse(ItemUseContext context) { //detect right clic on walls to transform them in tunnels, consuming 1 tunnel placer
-        World world = context.getWorld();
+    public ActionResultType useOn(ItemUseContext context) { //detect right clic on walls to transform them in tunnels, consuming 1 tunnel placer
+        World world = context.getLevel();
         if (!(world instanceof ServerWorld) || context.getPlayer() == null) return ActionResultType.PASS;
 
-        BlockPos pos = context.getPos();
+        BlockPos pos = context.getClickedPos();
         if (!SubRoomsManager.isWall(world, pos)) return ActionResultType.PASS;
 
-        ItemStack stack = context.getItem();
+        ItemStack stack = context.getItemInHand();
         if (SubRoomsManager.tunnel((ServerWorld)world, pos, context.getPlayer(), true, false, stack.getTag())) {
             if (!context.getPlayer().isCreative())
                 stack.shrink(1);

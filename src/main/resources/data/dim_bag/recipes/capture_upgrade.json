@@ -1,0 +1,23 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "SES",
+    "EUE",
+    "SES"
+  ],
+  "key": {
+    "U": {
+      "item": "dim_bag:blank_upgrade"
+    },
+    "E": {
+      "item": "minecraft:ender_pearl"
+    },
+    "S": {
+      "item": "minecraft:string"
+    }
+  },
+  "result": {
+    "item": "dim_bag:capture_upgrade",
+    "count": 1
+  }
+}

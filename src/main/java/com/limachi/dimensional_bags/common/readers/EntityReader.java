@@ -51,19 +51,20 @@ public class EntityReader {
 
     static {
         register(Entity.class, "type", t -> t.getType().toString());
-        register(Entity.class, "world", t -> t.world.getDimensionKey().toString());
-        register(Entity.class, "previous_position_x", t -> t.prevPosX);
-        register(Entity.class, "previous_position_y", t -> t.prevPosY);
-        register(Entity.class, "previous_position_z", t -> t.prevPosZ);
-        register(Entity.class, "position_x", Entity::getPosX);
-        register(Entity.class, "position_y", Entity::getPosY);
-        register(Entity.class, "position_z", Entity::getPosZ);
-        register(Entity.class, "block_position_x", t -> t.getPosition().getX());
-        register(Entity.class, "block_position_y", t -> t.getPosition().getY());
-        register(Entity.class, "block_position_z", t -> t.getPosition().getZ());
-        register(Entity.class, "motion_x", t -> t.getMotion().x);
-        register(Entity.class, "motion_y", t -> t.getMotion().y);
-        register(Entity.class, "motion_z", t -> t.getMotion().z);
+        register(Entity.class, "level", t -> t.level.dimension().toString());
+//        register(Entity.class, "previous_position_x", t -> t.prevPosX);
+//        register(Entity.class, "previous_position_y", t -> t.prevPosY);
+//        register(Entity.class, "previous_position_z", t -> t.prevPosZ);
+        register(Entity.class, "position_x", t->t.position().x);
+        register(Entity.class, "position_y", t->t.position().y);
+        register(Entity.class, "position_z", t->t.position().z);
+        register(Entity.class, "block_position_x", t -> t.blockPosition().getX());
+        register(Entity.class, "block_position_y", t -> t.blockPosition().getY());
+        register(Entity.class, "block_position_z", t -> t.blockPosition().getZ());
+        register(Entity.class, "motion_x", t -> t.getDeltaMovement().x);
+        register(Entity.class, "motion_y", t -> t.getDeltaMovement().y);
+        register(Entity.class, "motion_z", t -> t.getDeltaMovement().z);
+        /*
         register(Entity.class, "rotation_yaw", t -> t.rotationYaw);
         register(Entity.class, "rotation_pitch", t -> t.rotationPitch);
         register(Entity.class, "previous_rotation_yaw", t -> t.prevRotationYaw);
@@ -140,7 +141,7 @@ public class EntityReader {
         register(Entity.class, "max_fall_height", Entity::getMaxFallHeight);
         register(Entity.class, "does_not_trigger_pressure_plate", Entity::doesEntityNotTriggerPressurePlate);
         register(Entity.class, "can_be_pushed_by_water", Entity::isPushedByWater);
-        register(Entity.class, "is_one_player_riding", Entity::isOnePlayerRiding);
+        register(Entity.class, "is_one_player_riding", Entity::isOnePlayerRiding);*/
     }
 
     public enum Commands {

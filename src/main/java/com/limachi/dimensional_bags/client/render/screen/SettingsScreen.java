@@ -22,8 +22,8 @@ public class SettingsScreen extends SimpleContainerScreen<SettingsContainer> {
     protected void init() {
         super.init();
         int y = 10;
-        SettingsData data = SettingsData.getInstance(container.eyeId);
-        UpgradeManager upgrades = UpgradeManager.getInstance(container.eyeId);
+        SettingsData data = SettingsData.getInstance(menu.eyeId);
+        UpgradeManager upgrades = UpgradeManager.getInstance(menu.eyeId);
         if (data != null)
             for (SettingsData.SettingsReader reader : SettingsData.getReaders()) {
                 if (reader.group.equals(BaseUpgrade.SETTING_GROUP) && upgrades.getUpgradeCount(reader.name) == 0) continue; //skip uninstalled upgrades

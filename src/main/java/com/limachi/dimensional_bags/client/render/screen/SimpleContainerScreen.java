@@ -5,9 +5,6 @@ import com.limachi.dimensional_bags.client.render.FluidStackRenderer;
 import com.limachi.dimensional_bags.client.render.RenderUtils;
 import com.limachi.dimensional_bags.client.render.TextureCutout;
 import com.limachi.dimensional_bags.client.render.widgets.BaseWidget;
-import com.limachi.dimensional_bags.client.widgets.Base;
-import com.limachi.dimensional_bags.client.widgets.SlotWidget;
-import com.limachi.dimensional_bags.client.widgets.ViewPort;
 import com.limachi.dimensional_bags.common.container.BaseContainer;
 import com.limachi.dimensional_bags.common.container.slot.FluidSlot;
 import com.limachi.dimensional_bags.common.container.widgets.BaseContainerWidget;
@@ -38,7 +35,6 @@ import net.minecraft.util.text.ITextComponent;
 import net.minecraftforge.fluids.FluidStack;
 import org.lwjgl.opengl.GL11;
 
-import javax.annotation.Nullable;
 import java.util.HashMap;
 import java.util.Stack;
 import java.util.function.Consumer;
@@ -72,12 +68,12 @@ public class SimpleContainerScreen<C extends BaseContainer<C>> extends DisplayEf
         }
         Vector4f v1 = new Vector4f((float)x1, (float)y1, 0, 1);
         Vector4f v2 = new Vector4f((float)x2, (float)y2, 0, 1);
-        v1.transform(matrixStack.getLast().getMatrix());
-        v2.transform(matrixStack.getLast().getMatrix());
-        double factor = Minecraft.getInstance().getMainWindow().getGuiScaleFactor();
-        int x = (int)(v1.getX() * factor);
-        int y = (int)(Minecraft.getInstance().getMainWindow().getFramebufferHeight() - v2.getY() * factor);
-        int [] entry = {x, y, x + (int)((v2.getX() - v1.getX()) * factor), y + (int)((v2.getY() - v1.getY()) * factor)};
+        v1.transform(matrixStack.last().pose());
+        v2.transform(matrixStack.last().pose());
+        double factor = Minecraft.getInstance().getWindow().getGuiScale();
+        int x = (int)(v1.x() * factor);
+        int y = (int)(Minecraft.getInstance().getWindow().getScreenHeight() - v2.y() * factor);
+        int [] entry = {x, y, x + (int)((v2.x() - v1.x()) * factor), y + (int)((v2.y() - v1.y()) * factor)};
         if (!scissors.empty()) {
             int [] t = scissors.peek();
             entry[0] = Math.max(entry[0], t[0]);
@@ -116,9 +112,9 @@ public class SimpleContainerScreen<C extends BaseContainer<C>> extends DisplayEf
                     hasTicked = true;
                 }
         }
-        for (BaseContainerWidget<C> widget : container.widgets)
-            widget.tick(ticks);
-        container.detectAndSendWidgetChanges();
+//        for (BaseContainerWidget<C> widget : menu.widgets)
+//            widget.tick(ticks);
+        menu.detectAndSendWidgetChanges();
         ++ticks;
     }
 
@@ -129,7 +125,7 @@ public class SimpleContainerScreen<C extends BaseContainer<C>> extends DisplayEf
 
     @Override
     protected void init() {
-        Minecraft.getInstance().keyboardListener.enableRepeatEvents(true);
+        Minecraft.getInstance().keyboardHandler.setSendRepeatsToGui(true);
         super.init();
         this.itemRenderer = SimpleItemRenderer.INSTANCE;
         calculateBackGround();
@@ -138,7 +134,7 @@ public class SimpleContainerScreen<C extends BaseContainer<C>> extends DisplayEf
     @Override
     public void onClose() {
         super.onClose();
-        Minecraft.getInstance().keyboardListener.enableRepeatEvents(false);
+        Minecraft.getInstance().keyboardHandler.setSendRepeatsToGui(false);
     }
 
     //based on the container's slot, calculate the size and shape of the background (player part, container part, scroll part, tabs part, widgets part)
@@ -147,33 +143,33 @@ public class SimpleContainerScreen<C extends BaseContainer<C>> extends DisplayEf
         playerBackGround = new Box2d(-1, 0, 0, 0);
         containerBackGround = new Box2d(-1, 0, 0, 0);
 
-        for (Slot slot : getContainer().inventorySlots) {
-            if (slot.inventory instanceof PlayerInventory) {
+        for (Slot slot : menu.slots) {
+            if (slot.container instanceof PlayerInventory) {
                 if (playerBackGround.getX1() == -1)
-                    playerBackGround.setX1(slot.xPos).setY1(slot.yPos);
-                playerBackGround.expandToContain(slot.xPos - 1, slot.yPos - 1, spacer, spacer);
-                playerBackGround.expandToContain(slot.xPos + SLOT_SIZE_X - 1, slot.yPos + SLOT_SIZE_Y - 1, spacer, spacer);
+                    playerBackGround.setX1(slot.x).setY1(slot.y);
+                playerBackGround.expandToContain(slot.x - 1, slot.y - 1, spacer, spacer);
+                playerBackGround.expandToContain(slot.x + SLOT_SIZE_X - 1, slot.y + SLOT_SIZE_Y - 1, spacer, spacer);
             } else {
                 if (containerBackGround.getX1() == -1)
-                    containerBackGround.setX1(slot.xPos).setY1(slot.yPos);
-                containerBackGround.expandToContain(slot.xPos - 1, slot.yPos - 1, spacer, spacer + 3);
-                containerBackGround.expandToContain(slot.xPos + SLOT_SIZE_X - 1, slot.yPos + SLOT_SIZE_Y - 1, spacer, spacer + 3);
+                    containerBackGround.setX1(slot.x).setY1(slot.y);
+                containerBackGround.expandToContain(slot.x - 1, slot.y - 1, spacer, spacer + 3);
+                containerBackGround.expandToContain(slot.x + SLOT_SIZE_X - 1, slot.y + SLOT_SIZE_Y - 1, spacer, spacer + 3);
             }
         }
         fullBackground = new Box2d(-1,0, 0, 0);
         if (playerBackGround.getX1() != -1) {
-            playerInventoryTitleY = (int)playerBackGround.getY1() - 2;
-            playerInventoryTitleX = (int)playerBackGround.getX1() + 10;
-            playerBackGround.move(guiLeft, guiTop - 6).expand(0, 6);
+            inventoryLabelY = (int)playerBackGround.getY1() - 2;
+            inventoryLabelX = (int)playerBackGround.getX1() + 10;
+            playerBackGround.move(leftPos, topPos - 6).expand(0, 6);
             fullBackground = playerBackGround.copy();
         }
         if (containerBackGround.getX1() != -1) {
-            titleY = (int)containerBackGround.getY1() - 2;
+            titleLabelY = (int)containerBackGround.getY1() - 2;
             if (playerBackGround.getX1() == -1)
-                titleX = (int)containerBackGround.getX1() + 10;
+                titleLabelX = (int)containerBackGround.getX1() + 10;
             else
-                titleX = playerInventoryTitleX;
-            containerBackGround.move(guiLeft, guiTop - 6).expand(0, 6);
+                titleLabelX = inventoryLabelX;
+            containerBackGround.move(leftPos, topPos - 6).expand(0, 6);
             if (fullBackground.getX1() == -1)
                 fullBackground = containerBackGround.copy();
             else
@@ -188,7 +184,7 @@ public class SimpleContainerScreen<C extends BaseContainer<C>> extends DisplayEf
     }
 
     private void blitGuiFull(MatrixStack matrixStack, int x, int y, int w, int h) {
-        this.blit(matrixStack, x + this.guiLeft, y + this.guiTop, 0, 0, w, h, w, h);
+        this.blit(matrixStack, x + leftPos, y + topPos, 0, 0, w, h, w, h);
     }
 
     protected void renderPlayerBackground(MatrixStack matrixStack, TextureManager tm) {
@@ -200,34 +196,32 @@ public class SimpleContainerScreen<C extends BaseContainer<C>> extends DisplayEf
     public void render(MatrixStack matrixStack, int mouseX, int mouseY, float partialTicks) {
         renderBackground(matrixStack);
         super.render(matrixStack, mouseX, mouseY, partialTicks);
-//        for (BaseContainerWidget<C> widget : container.widgets)
-//            widget.render(matrixStack, mouseX, mouseY, partialTicks);
-        renderHoveredTooltip(matrixStack, mouseX, mouseY);
+        renderTooltip(matrixStack, mouseX, mouseY);
     }
 
     @Override
-    protected void drawGuiContainerForegroundLayer(MatrixStack matrixStack, int mouseX, int mouseY) {
-        for (Slot slot : container.inventorySlots)
+    protected void renderLabels(MatrixStack matrixStack, int mouseX, int mouseY) {
+        for (Slot slot : menu.slots)
             if (slot instanceof FluidSlot) {
                 FluidStack fluid = ((FluidSlot) slot).getFluid();
-                FluidStackRenderer.INSTANCE.render(matrixStack, slot.xPos, slot.yPos, fluid);
+                FluidStackRenderer.INSTANCE.render(matrixStack, slot.x, slot.y, fluid);
                 int amountInMB = fluid.getAmount();
                 if (amountInMB > 0) {
-                    String amount = amountInMB >= 1000 ? (amountInMB / 1000) + I18n.format("screen.fluid.bucket_acronym") : amountInMB + I18n.format("screen.fluid.milli_bucket_acronym");
+                    String amount = amountInMB >= 1000 ? (amountInMB / 1000) + I18n.get("screen.fluid.bucket_acronym") : amountInMB + I18n.get("screen.fluid.milli_bucket_acronym");
                     RenderSystem.pushMatrix();
-                    RenderSystem.translatef(slot.xPos, slot.yPos, 250);
+                    RenderSystem.translatef(slot.x, slot.y, 250);
                     if (amount.length() > 3) {
                         RenderSystem.scalef(0.5f, 0.5f, 1);
-                        font.drawStringWithShadow(matrixStack, amount, 31 - font.getStringWidth(amount), 23, 16777215);
+                        font.drawShadow(matrixStack, amount, 31 - font.width(amount), 23, 16777215);
                     } else
-                        font.drawStringWithShadow(matrixStack, amount, 17 - font.getStringWidth(amount), 9, 16777215);
+                        font.drawShadow(matrixStack, amount, 17 - font.width(amount), 9, 16777215);
                     RenderSystem.popMatrix();
                 }
             }
     }
 
     @Override
-    protected void drawGuiContainerBackgroundLayer(MatrixStack matrixStack, float partialTicks, int mouseX, int mouseY) {
+    protected void renderBg(MatrixStack matrixStack, float partialTicks, int mouseX, int mouseY) {
         RenderSystem.color4f(1.0f, 1.0f, 1.0f, 1.0f);
         if (this.minecraft == null) return;
         TextureManager tm = this.minecraft.getTextureManager();
@@ -235,28 +229,28 @@ public class SimpleContainerScreen<C extends BaseContainer<C>> extends DisplayEf
             calculateBackGround();
         if (fullBackground.getX1() != -1) {
             defaultBackground(matrixStack, fullBackground);
-            tm.bindTexture(SLOT);
+            tm.bind(SLOT);
             boolean shouldResetTexture = false;
-            for (Slot slot : getContainer().inventorySlots) {
-                if (slot.isEnabled() && slot instanceof FluidSlot && ((FluidSlot) slot).isSelected() && getContainer().inventorySlots.size() > 1) {
-                    tm.bindTexture(SELECTED_FLUID_SLOT);
+            for (Slot slot : menu.slots) {
+                if (slot.isActive() && slot instanceof FluidSlot && ((FluidSlot) slot).isSelected() && menu.slots.size() > 1) {
+                    tm.bind(SELECTED_FLUID_SLOT);
                     shouldResetTexture = true;
                 }
-                if (!slot.isEnabled()) {
-                    tm.bindTexture(LOCKED_SLOT);
+                if (!slot.isActive()) {
+                    tm.bind(LOCKED_SLOT);
                     shouldResetTexture = true;
                 }
-                this.blitGuiFull(matrixStack, slot.xPos - 1, slot.yPos - 1, SLOT_SIZE_X, SLOT_SIZE_Y);
+                this.blitGuiFull(matrixStack, slot.x - 1, slot.y - 1, SLOT_SIZE_X, SLOT_SIZE_Y);
                 if (shouldResetTexture) {
-                    tm.bindTexture(SLOT);
+                    tm.bind(SLOT);
                     shouldResetTexture = false;
                 }
             }
         }
         if (containerBackGround.getX1() != -1)
-            font.drawString(matrixStack, title.getString(), (float)(fullBackground.getX1() + 9), (float)(fullBackground.getY1() + 6), 4210752);
+            font.draw(matrixStack, title.getString(), (float)(fullBackground.getX1() + 9), (float)(fullBackground.getY1() + 6), 4210752);
         if (playerBackGround.getX1() != -1)
-            font.drawString(matrixStack, playerInventory.getDisplayName().getString(), (float)(playerBackGround.getX1() + 9), (float)(playerBackGround.getY1() + 3), 4210752);
+            font.draw(matrixStack, inventory.getDisplayName().getString(), (float)(playerBackGround.getX1() + 9), (float)(playerBackGround.getY1() + 3), 4210752);
     }
 
     @Override
@@ -271,8 +265,8 @@ public class SimpleContainerScreen<C extends BaseContainer<C>> extends DisplayEf
         if (button == null) return;
         if (button instanceof BaseWidget)
             ((BaseWidget)button).detachFromScreen();
-        if (getListener() == button)
-            setListener(null);
+        if (getFocused() == button)
+            setFocused(null);
         buttons.remove(button);
         children.remove(button);
     }
@@ -280,75 +274,10 @@ public class SimpleContainerScreen<C extends BaseContainer<C>> extends DisplayEf
     @Override
     public boolean mouseDragged(double mouseX, double mouseY, int button, double dragX, double dragY) {
         super.mouseDragged(mouseX, mouseY, button, dragX, dragY);
-        if (!dragSplitting) //add back the default INestedGuiEventHandler#mouseDragged behavior after the ContainerScreen#mouseDragged (since this one always returns true in container, it disable the draging from other widgets)
-            return getListener() != null && isDragging() && button == 0 && getListener().mouseDragged(mouseX, mouseY, button, dragX, dragY);
+        if (!isDragging()) //add back the default INestedGuiEventHandler#mouseDragged behavior after the ContainerScreen#mouseDragged (since this one always returns true in container, it disable the draging from other widgets)
+            return getFocused() != null && isDragging() && button == 0 && getFocused().mouseDragged(mouseX, mouseY, button, dragX, dragY);
         return true;
     }
-
-    /*
-    @Override
-    public boolean mouseDragged(double x, double y, int b, double px, double py) {
-        for (BaseContainerWidget<C> widget : container.widgets)
-            if (widget.mouseDragged(x, y, b, px, py))
-                return true;
-        return super.mouseDragged(x, y, b, px, py);
-    }
-
-    @Override
-    public void mouseMoved(double mouseX, double mouseY) {
-        for (BaseContainerWidget<C> widget : container.widgets)
-            widget.mouseMoved(mouseX, mouseY);
-        super.mouseMoved(mouseX, mouseY);
-    }
-
-    @Override
-    public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        for (BaseContainerWidget<C> widget : container.widgets)
-            if (widget.mouseClicked(mouseX, mouseY, button))
-                return true;
-        return super.mouseClicked(mouseX,mouseY, button);
-    }
-
-    @Override
-    public boolean mouseReleased(double mouseX, double mouseY, int button) {
-        for (BaseContainerWidget<C> widget : container.widgets)
-            if (widget.mouseReleased(mouseX, mouseY, button))
-                return true;
-        return super.mouseReleased(mouseX, mouseY, button);
-    }
-
-    @Override
-    public boolean mouseScrolled(double mouseX, double mouseY, double scrollAmount) {
-        for (BaseContainerWidget<C> widget : container.widgets)
-            if (widget.mouseScrolled(mouseX, mouseY, scrollAmount))
-                return true;
-        return super.mouseScrolled(mouseX, mouseY, scrollAmount);
-    }
-
-    @Override
-    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
-        for (BaseContainerWidget<C> widget : container.widgets)
-            if (widget.keyPressed(keyCode, scanCode, modifiers))
-                return true;
-        return super.keyPressed(keyCode, scanCode, modifiers);
-    }
-
-    @Override
-    public boolean keyReleased(int keyCode, int scanCode, int modifiers) {
-        for (BaseContainerWidget<C> widget : container.widgets)
-            if (widget.keyReleased(keyCode, scanCode, modifiers))
-                return true;
-        return super.keyReleased(keyCode, scanCode, modifiers);
-    }
-
-    @Override
-    public final boolean charTyped(char codePoint, int modifiers) {
-        for (BaseContainerWidget<C> widget : container.widgets)
-            if (widget.charTyped(codePoint, modifiers))
-                return true;
-        return super.charTyped(codePoint, modifiers);
-    }
-     */
 
     public static class SimpleItemRenderer extends ItemRenderer {
         public static final Minecraft mc = Minecraft.getInstance();
@@ -359,9 +288,9 @@ public class SimpleContainerScreen<C extends BaseContainer<C>> extends DisplayEf
         }
 
         @Override
-        public void renderItem(ItemStack itemStackIn, ItemCameraTransforms.TransformType transformTypeIn, boolean leftHand, MatrixStack matrixStackIn, IRenderTypeBuffer bufferIn, int combinedLightIn, int combinedOverlayIn, IBakedModel modelIn) {
+        public void render(ItemStack itemStackIn, ItemCameraTransforms.TransformType transformTypeIn, boolean leftHand, MatrixStack matrixStackIn, IRenderTypeBuffer bufferIn, int combinedLightIn, int combinedOverlayIn, IBakedModel modelIn) {
             if (itemStackIn.getItem() instanceof FluidItem) return; //skip fluid items, they will be rendered during the foreground rendering
-            super.renderItem(itemStackIn, transformTypeIn, leftHand, matrixStackIn, bufferIn, combinedLightIn, combinedOverlayIn, modelIn);
+            super.render(itemStackIn, transformTypeIn, leftHand, matrixStackIn, bufferIn, combinedLightIn, combinedOverlayIn, modelIn);
         }
     }
 }

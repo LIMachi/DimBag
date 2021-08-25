@@ -28,18 +28,18 @@ public class FountainTileEntity extends BaseTileEntity implements IisBagTE {
 
     public int getEyeId() {
         if (eyeId == 0)
-            eyeId = SubRoomsManager.getEyeId(world, pos, false);
+            eyeId = SubRoomsManager.getEyeId(level, worldPosition, false);
         return eyeId;
     }
 
     public FountainTileEntity() {
-        super(Registries.getTileEntityType(NAME));
-        getTileData().putUniqueId(NBT_KEY_ID, UUID.randomUUID());
+        super(Registries.getBlockEntityType(NAME));
+        getTileData().putUUID(NBT_KEY_ID, UUID.randomUUID());
     }
 
-    public UUID getId() { return getTileData().getUniqueId(NBT_KEY_ID); }
+    public UUID getId() { return getTileData().getUUID(NBT_KEY_ID); }
 
-    public void setId(UUID id) { getTileData().putUniqueId(NBT_KEY_ID, id); markDirty(); }
+    public void setId(UUID id) { getTileData().putUUID(NBT_KEY_ID, id); setChanged(); }
 
     public FountainTank getTank() { return (FountainTank)TankData.execute(getEyeId(), tankData->tankData.getFountainTank(getId()), null); }
 

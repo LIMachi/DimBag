@@ -4,7 +4,7 @@ import com.limachi.dimensional_bags.client.render.RenderUtils;
 import com.mojang.blaze3d.matrix.MatrixStack;
 
 public class Text extends Base {
-
+/*
     public String text = "";
     public int color;
     public boolean withShadow;
@@ -19,9 +19,6 @@ public class Text extends Base {
         this.withShadow = withShadow;
     }
 
-    /**
-     * basic white text, to be used with vanilla buttons (size 200x20)
-     */
     public Text(double x, double y, String text) {
         this(x + 5, y + 5, 190, 10, text, 0xFFFFFFFF, true);
     }
@@ -29,5 +26,5 @@ public class Text extends Base {
     @Override
     public void onRender(MatrixStack matrixStack, int mouseX, int mouseY, float partialTicks) {
         RenderUtils.drawString(matrixStack, getScreen().getFont(), text, coords, color, withShadow, true);
-    }
+    }*/
 }

@@ -26,14 +26,14 @@ public class TextWidget extends BaseWidget {
     }
 
     public TextWidget(int x, int y, int width, int height, String text) {
-        this(x, y, width, height, MINECRAFT.fontRenderer, new StringTextComponent(text), 0xFFFFFFFF);
+        this(x, y, width, height, MINECRAFT.font, new StringTextComponent(text), 0xFFFFFFFF);
     }
 
     @Override
-    public void renderWidget(MatrixStack matrixStack, int mouseX, int mouseY, float partialTicks) {
+    public void renderButton(MatrixStack matrixStack, int mouseX, int mouseY, float partialTicks) {
         if (renderStandardBackground)
-            font.drawText(matrixStack, text, x + 3, y + (height - font.FONT_HEIGHT) / 2.f, color);
+            font.draw(matrixStack, text, x + 3, y + (height - font.lineHeight) / 2.f, color);
         else
-            font.drawText(matrixStack, text, x, y, color);
+            font.draw(matrixStack, text, x, y, color);
     }
 }

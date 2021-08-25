@@ -13,7 +13,7 @@ import java.util.function.Function;
 
 import static com.limachi.dimensional_bags.DimBag.MOD_ID;
 
-public class Scrollbar extends Base {
+public class Scrollbar extends Base {/*
     public static final ResourceLocation TEXTURE = new ResourceLocation(MOD_ID,"textures/widgets/view_port.png");
 
     public static final TextureCutout VERTICAL_BACKGROUND = new TextureCutout(TEXTURE, 192, 0, 11, 192);
@@ -148,5 +148,5 @@ public class Scrollbar extends Base {
                 return horizontal && setScroll(scroll + mouseScrollFactor);
         }
         return false;
-    }
+    }*/
 }

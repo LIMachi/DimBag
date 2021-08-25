@@ -17,7 +17,7 @@ import net.minecraftforge.energy.CapabilityEnergy;
 import java.util.stream.Stream;
 
 @StaticInit
-public class InductionUpgrade extends BaseUpgrade {
+public class InductionUpgrade extends BaseUpgrade<InductionUpgrade> {
 
     public static final String NAME = "induction_upgrade";
 
@@ -36,14 +36,11 @@ public class InductionUpgrade extends BaseUpgrade {
     @Override
     public String upgradeName() { return NAME; }
 
-    @Override
-    public int installUpgrade(UpgradeManager manager, int qty) { return qty; }
-
     /**
      * broadly query all the TE in this bag that have an energy capability, ignoring crystals (would loop energy each tick)
      */
     public static Stream<TileEntity> iterEnergyTE(int eye, World world) {
-        return world.loadedTileEntityList.stream().filter(te->!(te instanceof CrystalTileEntity) && ((te.getPos().getX() - SubRoomsManager.ROOM_OFFSET_X + SubRoomsManager.HALF_ROOM) / SubRoomsManager.ROOM_SPACING + 1 == eye) && te.getCapability(CapabilityEnergy.ENERGY).isPresent());
+        return world.blockEntityList.stream().filter(te->!(te instanceof CrystalTileEntity) && ((te.getBlockPos().getX() - SubRoomsManager.ROOM_OFFSET_X + SubRoomsManager.HALF_ROOM) / SubRoomsManager.ROOM_SPACING + 1 == eye) && te.getCapability(CapabilityEnergy.ENERGY).isPresent());
     }
 
     @Config(min = "0", cmt = "how much energy should be extracted from the crystals and into the TEs present in the bag")

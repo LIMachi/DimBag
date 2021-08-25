@@ -30,7 +30,7 @@ public class KineticGeneratorUpgrade extends Upgrade {
         boolean isInWater = entity.isInWater();
         boolean isInLava = entity.isInLava();
 
-        double generation = HolderData.execute(eyeId, (holderData)->entity.getPositionVec().distanceTo(holderData.getLastKnownPosition()), 0D);
+        double generation = HolderData.execute(eyeId, (holderData)->entity.position().distanceTo(holderData.getLastKnownPosition()), 0D);
         if (isElytraFlying && !isInWater && !isInLava)
             generation /= 12D;
         if (isElytraFlying && (isInWater || isInLava))

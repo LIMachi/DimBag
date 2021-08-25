@@ -7,7 +7,9 @@ import com.limachi.dimensional_bags.common.data.EyeDataMK2.SubRoomsManager;
 import com.limachi.dimensional_bags.common.entities.BagEntity;
 import com.limachi.dimensional_bags.common.items.Bag;
 import com.limachi.dimensional_bags.common.managers.UpgradeManager;
+import com.limachi.dimensional_bags.utils.WorldUtils;
 import net.minecraft.entity.item.ItemEntity;
+import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.potion.EffectInstance;
 import net.minecraft.potion.Effects;
 import net.minecraftforge.event.entity.living.LivingDropsEvent;
@@ -17,7 +19,7 @@ import net.minecraftforge.fml.common.Mod;
 
 @Mod.EventBusSubscriber
 @StaticInit
-public class DeathHopperUpgrade extends BaseUpgrade {
+public class DeathHopperUpgrade extends BaseUpgrade<DeathHopperUpgrade> {
 
     public static final String NAME = "death_hopper_upgrade";
 
@@ -39,32 +41,44 @@ public class DeathHopperUpgrade extends BaseUpgrade {
     @Override
     public String upgradeName() { return NAME; }
 
-    @Override
-    public int installUpgrade(UpgradeManager manager, int qty) { return qty; }
+    public static ItemEntity setNeverDespawn(ItemEntity entity) {
+        CompoundNBT t = new CompoundNBT();
+        entity.save(t);
+        t.putShort("Age", Short.MIN_VALUE); //when set to short min, the age will not tick up ItemEntity#tick():141
+        t.putInt("Lifespan", Short.MIN_VALUE + 100); //but to make sure players can pickup the item, we also need to tamper the lifespan ItemEntity#playerTouch(PlayerEntity):325
+        entity.load(t); //we reload the entity with the two changed tags
+        return entity;
+    }
 
     @SubscribeEvent(priority = EventPriority.LOWEST)
-    public static void deathHopperUpgrade(LivingDropsEvent event) { //collect the player item's on death and send them inside the bag (change the cooldown of the items so they don't despawn)
+    public static void deathHopperUpgrade(LivingDropsEvent event) { //collect the holder item's on death and send them inside the bag (change the cooldown of the items so they don't despawn)
+        DimBag.LOGGER.info("entity drop: " + event.getDrops());
         if (event.getDrops().isEmpty()) return;
-        SubRoomsManager sm = null;
-        for (ItemEntity item : event.getDrops())
+        int[] id = {0};
+        event.getDrops().removeIf(item->{
             if (item.getItem().getItem() instanceof Bag && Bag.getEyeId(item.getItem()) != 0) {
-                int id = Bag.getEyeId(item.getItem());
-                UpgradeManager up = UpgradeManager.getInstance(id);
-                if (!up.getInstalledUpgrades().contains(NAME)) continue;
-                sm = SubRoomsManager.getInstance(id);
-                if (sm != null) {
-                    BagEntity.spawn(event.getEntity().world, event.getEntity().getPosition(), item.getItem()).addPotionEffect(new EffectInstance(Effects.GLOWING, 6000, 1, false, false, false));
-                    item.remove();
-                    break;
+                id[0] = Bag.getEyeId(item.getItem());
+                if (getInstance(NAME).isActive(id[0])) {
+                    SubRoomsManager sm = SubRoomsManager.getInstance(id[0]);
+                    if (sm != null) {
+                        BagEntity.spawn(event.getEntity().level, event.getEntity().blockPosition(), item.getItem()).addEffect(new EffectInstance(Effects.GLOWING, 6000, 1, false, false, false));
+                        item.remove();
+                        return true;
+                    }
                 }
             }
-        if (sm != null) {
-            for (ItemEntity item : event.getDrops())
+            return false;
+        });
+        if (id[0] > 0 && getInstance(NAME).isActive(id[0])) {
+            SubRoomsManager.execute(id[0], sm->event.getDrops().forEach(item->{
                 if (!item.removed) {
                     if (ITEMS_DO_NOT_DESPAWN)
-                        item.setNoDespawn();
-                    sm.enterBag(item, false, true, false, false);
+                        setNeverDespawn(item);
+                    if (item.level.dimension().equals(WorldUtils.DimBagRiftKey))
+                        item.level.addFreshEntity(item); //since the event will be cancelled and the teleport will not copy this entity because we are in the same dimension, we add it manually
+                    sm.enterBag(item, false, true, false, false, false);
                 }
+            }));
             event.setCanceled(true);
         }
     }

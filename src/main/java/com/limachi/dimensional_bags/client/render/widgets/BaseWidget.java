@@ -49,13 +49,13 @@ public class BaseWidget extends Widget {
             setFocused(focus);
             if (screen != null) {
                 if (focus) {
-                    screen.getEventListeners().forEach(b -> {
+                    screen.children().forEach(b -> {
                         if (b == this || !(b instanceof Widget) || !((Widget) b).isFocused()) return;
                         b.changeFocus(false);
                     });
-                    screen.setListener(this);
-                } else if (screen.getListener() == this)
-                    screen.setListener(null);
+                    screen.setFocused(this);
+                } else if (screen.getFocused() == this)
+                    screen.setFocused(null);
             }
             onFocusedChanged(isFocused());
             return focus;
@@ -100,8 +100,8 @@ public class BaseWidget extends Widget {
                     renderStandardBackground(matrixStack, partialTicks, x, y, width, height, active, renderState());
                 renderBg(matrixStack, MINECRAFT, mouseX, mouseY);
                 if (renderTitle)
-                    drawCenteredString(matrixStack, MINECRAFT.fontRenderer, getMessage(), x + width / 2, y + (height - 8) / 2, getFGColor() | MathHelper.ceil(alpha * 255.0F) << 24);
-                renderWidget(matrixStack, mouseX, mouseY, partialTicks);
+                    drawCenteredString(matrixStack, MINECRAFT.font, getMessage(), x + width / 2, y + (height - 8) / 2, getFGColor() | MathHelper.ceil(alpha * 255.0F) << 24);
+                renderButton(matrixStack, mouseX, mouseY, partialTicks);
             }
 
             narrate();
@@ -114,9 +114,8 @@ public class BaseWidget extends Widget {
     }
 
     public void init() {}
-
     @Override
-    public void renderWidget(MatrixStack matrixStack, int mouseX, int mouseY, float partialTicks) {}
+    public void renderButton(MatrixStack matrixStack, int mouseX, int mouseY, float partialTicks) {}
 
     public boolean isSelected() { return isSelected; }
 
@@ -144,7 +143,7 @@ public class BaseWidget extends Widget {
 
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
         if (active && visible && enableClickBehavior && isValidClickButton(button) && clicked(mouseX, mouseY)) {
-            playDownSound(Minecraft.getInstance().getSoundHandler());
+            playDownSound(Minecraft.getInstance().getSoundManager());
             isSelected = !isToggle || !isSelected;
             changeFocus(true);
             onClick(mouseX, mouseY);
@@ -158,8 +157,8 @@ public class BaseWidget extends Widget {
     }
 
     public void scissor(int x, int y, int w, int h) {
-        double factor = MINECRAFT.getMainWindow().getGuiScaleFactor();
-        glScissor((int)(x * factor), (int)(MINECRAFT.getMainWindow().getFramebufferHeight() - (y + h) * factor), (int)(w * factor), (int)(h * factor));
+        double factor = MINECRAFT.getWindow().getGuiScale();
+        glScissor((int)(x * factor), (int)(MINECRAFT.getWindow().getScreenHeight() - (y + h) * factor), (int)(w * factor), (int)(h * factor));
     }
 
     public boolean mouseReleased(double mouseX, double mouseY, int button) {

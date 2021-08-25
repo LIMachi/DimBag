@@ -20,7 +20,8 @@ archivesBaseName = 'DimBag_1.16.5'
 sourceCompatibility = targetCompatibility = compileJava.sourceCompatibility = compileJava.targetCompatibility = '1.8' // Need this here so eclipse task generates correctly.
 
 minecraft {
-    mappings channel: 'snapshot', version: '20210309-1.16.5'
+//    mappings channel: 'snapshot', version: '20210309-1.16.5'
+    mappings channel: 'official', version: '1.16.5'
     accessTransformer = file('src/main/resources/META-INF/accesstransformer.cfg')
     runs {
         client {
@@ -66,27 +67,45 @@ repositories {
     maven { url = "https://maven.tehnut.info" } //WAILA
 //    maven { url = 'https://modmaven.k-4u.nl/' } //mekanism
     maven { url = "https://www.cursemaven.com" } //general curse maven, see https://www.cursemaven.com/ for more information
+//    maven { url 'https://maven.blamejared.com' } //vazkii/patchouli
 }
 
 dependencies {
-    minecraft 'net.minecraftforge:forge:1.16.5-36.1.32'
+    minecraft 'net.minecraftforge:forge:1.16.5-36.2.2'
     runtimeOnly fg.deobf("top.theillusivec4.curios:curios-forge:1.16.5-4.0.4.0") //Curios
     compileOnly fg.deobf("top.theillusivec4.curios:curios-forge:1.16.5-4.0.4.0:api") //Curios
     runtimeOnly fg.deobf("mezz.jei:jei-1.16.4:7.6.1.71") //jei
     compileOnly fg.deobf("mezz.jei:jei-1.16.4:7.6.1.71:api") //jei
 //    fg.deobf("com.refinedmods:refinedstorage:1.9.12+155") //refined storage
-    compileOnly fg.deobf("mcp.mobius.waila:Hwyla:1.10.11-B78_1.16.2:api") //waila
-    runtimeOnly fg.deobf("mcp.mobius.waila:Hwyla:1.10.11-B78_1.16.2") //waila
+//    compileOnly fg.deobf("mcp.mobius.waila:Hwyla:1.10.11-B78_1.16.2:api") //waila
+//    runtimeOnly fg.deobf("mcp.mobius.waila:Hwyla:1.10.11-B78_1.16.2") //waila
 //    runtimeOnly "curse.maven:create-328085:3261455" //create (see https://www.cursemaven.com/)
-    runtimeOnly fg.deobf("curse.maven:refined_storage-243076:3196167")
+//    runtimeOnly fg.deobf("curse.maven:refined_storage-243076:3196167")
 //    runtimeOnly fg.deobf("curse.maven:shutup-experimental-settings-407174:3188120")
-//    compileOnly "mekanism:Mekanism:1.16.1-10.0.9.432:api" //mekanism
-//    runtimeOnly fg.deobf("mekanism:Mekanism:1.16.1-10.0.9.432")//Mekanism: core
-//    runtimeOnly fg.deobf("mekanism:Mekanism:1.16.1-10.0.9.432:additions")// Mekanism: Additions
-//    runtimeOnly fg.deobf("mekanism:Mekanism:1.16.1-10.0.9.432:generators")// Mekanism: Generators
-//    runtimeOnly fg.deobf("mekanism:Mekanism:1.16.1-10.0.9.432:tools")// Mekanism: Tools
-    runtimeOnly "curse.maven:immersive-engineering-231951:3377691" //immersive engineering (see https://www.cursemaven.com/)
+//    compileOnly "mekanism:Mekanism:1.16.5-10.0.21.448:api" //mekanism
+//    runtimeOnly fg.deobf("mekanism:Mekanism:1.16.5-10.0.21.448")//Mekanism: core
+//    runtimeOnly fg.deobf("mekanism:Mekanism:1.16.5-10.0.21.448:additions")// Mekanism: Additions
+//    runtimeOnly fg.deobf("mekanism:Mekanism:1.16.5-10.0.21.448:generators")// Mekanism: Generators
+//    runtimeOnly fg.deobf("mekanism:Mekanism:1.16.5-10.0.21.448:tools")// Mekanism: Tools
+//    runtimeOnly "curse.maven:immersive-engineering-231951:3377691" //immersive engineering (see https://www.cursemaven.com/)
+//    compileOnly fg.deobf("vazkii.patchouli:Patchouli:1.16.4-53.1:api")
+//    runtimeOnly fg.deobf("vazkii.patchouli:Patchouli:1.16.4-53.1")
+//    compileOnly "curse.maven:create-328085:3419412"
 
+//    runtimeOnly fg.deobf("curse.maven:flywheel-486392:3419392")
+//    runtimeOnly fg.deobf("curse.maven:create-328085:3419412")
+    runtimeOnly fg.deobf("curse.maven:mekanism-268560:3206392")
+//    runtimeOnly fg.deobf("curse.maven:immersive-engineering-231951:3431122")
+    runtimeOnly fg.deobf("curse.maven:the-one-probe-245211:3319255")
+//    runtimeOnly fg.deobf("curse.maven:mouse-tweaks-60089:3202662")
+//    runtimeOnly fg.deobf("curse.maven:cofh-core-69162:3407019")
+//    compileOnly fg.deobf("curse.maven:flywheel-486392:3419392")
+//    compileOnly fg.deobf("curse.maven:create-328085:3419412")
+    compileOnly fg.deobf("curse.maven:mekanism-268560:3206392")
+//    compileOnly fg.deobf("curse.maven:immersive-engineering-231951:3431122")
+    compileOnly fg.deobf("curse.maven:the-one-probe-245211:3319255")
+//    compileOnly fg.deobf("curse.maven:mouse-tweaks-60089:3202662")
+//    compileOnly fg.deobf("curse.maven:cofh-core-69162:3407019")
 }
 
 jar {

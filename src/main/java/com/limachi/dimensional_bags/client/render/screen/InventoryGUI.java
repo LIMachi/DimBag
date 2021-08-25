@@ -2,7 +2,7 @@ package com.limachi.dimensional_bags.client.render.screen;
 
 import com.google.common.primitives.Ints;
 //import com.limachi.dimensional_bags.common.container.BagContainer;
-import com.limachi.dimensional_bags.common.inventory.Wrapper;
+//import com.limachi.dimensional_bags.common.inventory.Wrapper;
 import com.limachi.dimensional_bags.common.references.GUIs;
 import com.mojang.blaze3d.matrix.MatrixStack;
 import com.mojang.blaze3d.systems.RenderSystem;
@@ -11,8 +11,8 @@ import net.minecraft.client.renderer.texture.TextureManager;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.util.text.ITextComponent;
 
-import static com.limachi.dimensional_bags.common.inventory.Wrapper.IORights.CANINPUT;
-import static com.limachi.dimensional_bags.common.inventory.Wrapper.IORights.CANOUTPUT;
+//import static com.limachi.dimensional_bags.common.inventory.Wrapper.IORights.CANINPUT;
+//import static com.limachi.dimensional_bags.common.inventory.Wrapper.IORights.CANOUTPUT;
 import static com.limachi.dimensional_bags.common.references.GUIs.ScreenParts.*;
 
 /*

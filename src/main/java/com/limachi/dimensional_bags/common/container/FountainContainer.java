@@ -71,13 +71,13 @@ public class FountainContainer extends BaseEyeContainer<FountainContainer> {
     @Override
     public void readFromBuff(PacketBuffer buff) {
         super.readFromBuff(buff);
-        loadFountainFromUUID(buff.readUniqueId());
+        loadFountainFromUUID(buff.readUUID());
     }
 
     @Override
     public void writeToBuff(PacketBuffer buff) {
         super.writeToBuff(buff);
-        buff.writeUniqueId(invId == null ? UUIDUtils.NULL_UUID : invId);
+        buff.writeUUID(invId == null ? UUIDUtils.NULL_UUID : invId);
     }
 
     @Nonnull

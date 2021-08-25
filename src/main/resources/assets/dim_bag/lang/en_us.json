@@ -3,6 +3,7 @@
 
   "item.dim_bag.bag": "Dimensional Bag",
   "item.dim_bag.ghost_bag": "Virtual Bag",
+  "item.dim_bag.ghost_bag.prefix": "Virtual ",
 
   "item.dim_bag.tunnel_placer": "Tunnel Placer",
   "item.dim_bag.wall_pusher": "Wall Pusher",
@@ -31,6 +32,8 @@
   "block.dim_bag.player_pillar": "Player Pillar",
   "block.dim_bag.tunnel": "Tunnel",
   "block.dim_bag.wall": "Wall",
+  "block.dim_bag.user_pillar": "User Interface",
+  "block.dim_bag.world_access_point": "World Interface",
 
   "itemGroup.tab_dim_bag": "Dimensional Bags",
 
@@ -39,9 +42,23 @@
   "tooltip.upgrade.slot.craft_result": "Will produce between 9 and 27 slots",
   "tooltip.upgrade.row": "Add an additional row to the bag inventory, up to a maximum of %d rows",
   "tooltip.upgrade.column": "Add an additional column to the bag inventory, up to a maximum of %d columns",
+
   "tooltip.bag.missing_id": "Unlinked bag",
   "tooltip.bag.id": "Bag id: %d, Owner: %s",
+
   "tooltip.upgrade.disabled": "This upgrade is not available for installation (WARNING: can be crafted, but will do NOTHING)",
+  "tooltip.upgrades.install_info": "Installing an upgrade can be done in various way: right click a bag entity, shift right click a proxy, shift right click inside a bag or shift right click while having a bag in your inventory/equipped",
+  "tooltip.upgrades.charger_aura_upgrade": "Will try to charge any items in the inventory of the Holder",
+  "tooltip.upgrades.death_hopper_upgrade": "Upon death of the Holder, transfer all of it's items in the bag (as entities on the ground)",
+  "tooltip.upgrades.hidden_upgrade": "this tasted like beacon and sea food",
+  "tooltip.upgrades.induction_upgrade": "Blocks inside the bag will receive energy from the bag (FE/RF)",
+  "tooltip.upgrades.kinetic_generator_upgrade": "While moving, the Holder will produce a small amount of energy",
+  "tooltip.upgrades.sweet_fabric_upgrade": "Allows placement of Beds and Respawn Anchors inside the bag, and prevent fall damage inside the bag",
+  "tooltip.upgrades.time_distortion_upgrade": "Bend the flowing of time inside the bag, making machines and entities faster or slower (consuming/generating a large amount of energy)",
+  "tooltip.upgrades.turtle_upgrade": "Upon tacking damage (at a set threshold), will protect the Holder and force it to enter the bag",
+  "tooltip.upgrades.paradox_upgrade": "Allow the Holder to enter a bag... while keeping the bag in its inventory? how does this work?",
+  "tooltip.upgrades.enticing_upgrade": "Make entities around the bag item able to pick it up",
+  "tooltip.upgrades.capture_upgrade": "Install a new Mode for the bag: the Capture mode, which you can use to capture entities inside the bag (require Pads) and remove entities from the bag",
 
   "inventory.player_interface.name": "Player Inventory: %s",
   "inventory.upgrades.row.description": "add an extra row to your bag inventory, increasing it's storage capacity",
@@ -59,6 +76,11 @@
   "notification.upgrade.max_upgrades_reached": "Max upgrade count reached for %s",
 
   "bag.mode.Default": "Default",
+  "bag.mode.Debug": "Default",
+  "bag.mode.Settings": "Settings",
+  "bag.mode.Capture": "Capture",
+
+  "mode.error.no_valid_pad": "Could not find a valid pad for this entity name: %s",
 
   "entity_value_reader.printable": "%s->%s = '%s'(%s)",
 
@@ -66,11 +88,14 @@
   "item.fluid_item.append_qty_to_name": " (%dmb)",
 
   "screen.fluid.bucket_acronym": "B",
-  "screen.milli_fluid.bucket_acronym": "mB",
+  "screen.fluid.milli_bucket_acronym": "mB",
 
   "container.display_name.pillar": "Pillar",
   "container.display_name.fountain": "Fountain",
   "container.display_name.pad": "Pad",
   "container.display_name.brain": "Brain",
-  "container.display_name.ghost_hand": "Ghost Hand"
+  "container.display_name.ghost_hand": "Ghost Hand",
+
+  "book.name": "All you need to know about Dimensional Bag",
+  "book.front_page": "Welcome to the wonderful (parallel) world of dimensional bags."
 }

@@ -2,7 +2,7 @@ package com.limachi.dimensional_bags.common.network.packets;
 
 import com.limachi.dimensional_bags.DimBag;
 //import com.limachi.dimensional_bags.common.container.WrappedPlayerInventoryContainer;
-import com.limachi.dimensional_bags.common.inventory.Wrapper;
+//import com.limachi.dimensional_bags.common.inventory.Wrapper;
 import com.limachi.dimensional_bags.common.network.PacketHandler;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.network.PacketBuffer;

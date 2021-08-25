@@ -26,8 +26,8 @@ public class ImageWidget extends BaseWidget {
     }
 
     @Override
-    public void renderWidget(MatrixStack matrixStack, int mouseX, int mouseY, float partialTicks) {
-        super.renderWidget(matrixStack, mouseX, mouseY, partialTicks);
+    public void renderButton(MatrixStack matrixStack, int mouseX, int mouseY, float partialTicks) {
+        super.renderButton(matrixStack, mouseX, mouseY, partialTicks);
         image.blitButton(matrixStack, new Box2d(x, y, width, height), 0, application, buttonRender ? renderState() : 0);
     }
 }

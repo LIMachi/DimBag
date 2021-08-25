@@ -1,6 +1,7 @@
 package com.limachi.dimensional_bags.common.managers;
 
 import com.limachi.dimensional_bags.common.Registries;
+import com.limachi.dimensional_bags.common.data.EyeDataMK2.SettingsData;
 import com.limachi.dimensional_bags.common.data.EyeDataMK2.WorldSavedDataManager;
 import com.limachi.dimensional_bags.common.items.upgrades.BaseUpgrade;
 import com.limachi.dimensional_bags.common.items.upgrades.HiddenUpgrade;
@@ -26,13 +27,6 @@ public class UpgradeManager extends WorldSavedDataManager.EyeWorldSavedData {
 
     public static BaseUpgrade getUpgrade(String id) { return Registries.getItem(id); }
 
-    /**
-     * helper function to quickly test if an upgrade is installed for the given bag id
-     */
-    public static boolean hasUpgrade(int id, String upgradeName) {
-        return execute(id, um->um.getInstalledUpgrades().contains(upgradeName), false);
-    }
-
     private CompoundNBT upgradesNBT;
 
     public UpgradeManager(int id) { this("upgrade_manager", id, true); }
@@ -53,7 +47,7 @@ public class UpgradeManager extends WorldSavedDataManager.EyeWorldSavedData {
     public CompoundNBT getMemory(String key, boolean createIfMissing) {
         if (createIfMissing && !upgradesNBT.contains(key)) {
             upgradesNBT.put(key, new CompoundNBT());
-            markDirty();
+            setDirty();
         }
         return upgradesNBT.getCompound(key);
     }
@@ -83,23 +77,17 @@ public class UpgradeManager extends WorldSavedDataManager.EyeWorldSavedData {
     }
 
     @Override
-    public void read(CompoundNBT nbt) { upgradesNBT = nbt; }
+    public void load(CompoundNBT nbt) { upgradesNBT = nbt; }
 
     @Override
-    public CompoundNBT write(CompoundNBT nbt) {
+    public CompoundNBT save(CompoundNBT nbt) {
         nbt.merge(upgradesNBT);
         return nbt;
     }
 
-    static public UpgradeManager getInstance(int id) {
-        return WorldSavedDataManager.getInstance(UpgradeManager.class, null, id);
-    }
+    static public UpgradeManager getInstance(int id) { return WorldSavedDataManager.getInstance(UpgradeManager.class, id); }
 
-    static public <T> T execute(int id, Function<UpgradeManager, T> executable, T onErrorReturn) {
-        return WorldSavedDataManager.execute(UpgradeManager.class, null, id, executable, onErrorReturn);
-    }
+    static public <T> T execute(int id, Function<UpgradeManager, T> executable, T onErrorReturn) { return WorldSavedDataManager.execute(UpgradeManager.class, id, executable, onErrorReturn); }
 
-    static public boolean execute(int id, Consumer<UpgradeManager> executable) {
-        return WorldSavedDataManager.execute(UpgradeManager.class, null, id, data->{executable.accept(data); return true;}, false);
-    }
+    static public boolean execute(int id, Consumer<UpgradeManager> executable) { return WorldSavedDataManager.execute(UpgradeManager.class, id, data->{executable.accept(data); return true;}, false); }
 }

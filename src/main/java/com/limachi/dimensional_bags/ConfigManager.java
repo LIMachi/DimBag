@@ -3,10 +3,10 @@ package com.limachi.dimensional_bags;
 import javafx.util.Pair;
 
 import net.minecraftforge.common.ForgeConfigSpec;
-import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.ModList;
 import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.config.ModConfig;
+import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.forgespi.language.ModFileScanData;
 
 import org.apache.logging.log4j.LogManager;
@@ -290,7 +290,7 @@ public class ConfigManager {
         return null;
     }
 
-    static { MinecraftForge.EVENT_BUS.addListener(ConfigManager::onModConfigEvent); }
+    static { FMLJavaModLoadingContext.get().getModEventBus().addListener(ConfigManager::onModConfigEvent); }
 
     private static void onModConfigEvent(final ModConfig.ModConfigEvent event) {
         for (ConfigManager instance : INSTANCES) {

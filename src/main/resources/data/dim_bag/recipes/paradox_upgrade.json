@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "   ",
+    " U ",
+    "   "
+  ],
+  "key": {
+    "U": {
+      "item": "dim_bag:blank_upgrade"
+    }
+  },
+  "result": {
+    "item": "dim_bag:paradox_upgrade",
+    "count": 1
+  }
+}

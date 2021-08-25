@@ -7,14 +7,14 @@ import net.minecraft.item.ItemStack;
 import java.util.Collections;
 import java.util.Iterator;
 
-
+/*
 public class Helper {
     public static ItemStack getItemStack(EquipmentSlotType slot, Entity entity) {
         Iterator<ItemStack> it = Collections.emptyIterator();
         if (slot.getSlotType() == EquipmentSlotType.Group.HAND)
-            it = entity.getHeldEquipment().iterator();
+            it = entity.getHandSlots().iterator();
         else if (slot.getSlotType() == EquipmentSlotType.Group.ARMOR)
-            it = entity.getArmorInventoryList().iterator();
+            it = entity.getArmorSlots().iterator();
         for (int i = 0; i < slot.getIndex(); ++i)
             if (it.hasNext())
                 it.next();
@@ -28,3 +28,4 @@ public class Helper {
         return null;
     }
 }
+*/

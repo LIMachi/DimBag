@@ -5,7 +5,7 @@ import com.limachi.dimensional_bags.client.widgets.Scrollbar;
 import com.limachi.dimensional_bags.client.widgets.TextField;
 import com.limachi.dimensional_bags.client.widgets.ViewPort;
 //import com.limachi.dimensional_bags.common.container.WrappedPlayerInventoryContainer;
-import com.limachi.dimensional_bags.common.inventory.Wrapper;
+//import com.limachi.dimensional_bags.common.inventory.Wrapper;
 import com.mojang.blaze3d.matrix.MatrixStack;
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.renderer.texture.TextureManager;
@@ -13,8 +13,8 @@ import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TranslationTextComponent;
 
-import static com.limachi.dimensional_bags.common.inventory.Wrapper.IORights.CANINPUT;
-import static com.limachi.dimensional_bags.common.inventory.Wrapper.IORights.CANOUTPUT;
+//import static com.limachi.dimensional_bags.common.inventory.Wrapper.IORights.CANINPUT;
+//import static com.limachi.dimensional_bags.common.inventory.Wrapper.IORights.CANOUTPUT;
 import static com.limachi.dimensional_bags.common.references.GUIs.PlayerInterface.*;
 import static com.limachi.dimensional_bags.common.references.GUIs.ScreenParts.*;
 

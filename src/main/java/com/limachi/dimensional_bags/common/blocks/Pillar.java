@@ -28,14 +28,14 @@ import javax.annotation.Nullable;
 import java.util.function.Supplier;
 
 @StaticInit
-public class Pillar extends AbstractTileEntityBlock<PillarTileEntity> implements IHasBagSettings {
+public class Pillar extends BlockWithUUID<PillarTileEntity> implements IHasBagSettings {
 
     public static final String NAME = "pillar";
     public static final Supplier<Pillar> INSTANCE = Registries.registerBlock(NAME, Pillar::new);
     public static final Supplier<BlockItem> INSTANCE_ITEM = Registries.registerBlockItem(NAME, NAME, DimBag.DEFAULT_PROPERTIES);
 
     public Pillar() {
-        super(NAME, Properties.create(Material.PISTON).hardnessAndResistance(1.5f, 3600000f).sound(SoundType.STONE), PillarTileEntity.class, PillarTileEntity.NAME);
+        super(NAME, Properties.of(Material.HEAVY_METAL).strength(1.5f, 3600000f).sound(SoundType.STONE), PillarTileEntity.class, PillarTileEntity.NAME);
     }
 
     @Override
@@ -47,40 +47,40 @@ public class Pillar extends AbstractTileEntityBlock<PillarTileEntity> implements
     @Override
     public ItemStack asItem(BlockState state, PillarTileEntity pillar) {
         ItemStack out = super.asItem(state, pillar);
-        if (pillar != null && DimBag.isServer(null)) { //only run this part serve side as pillar.invId is server only
-            PillarInventory inv = (PillarInventory) InventoryData.execute(pillar.getEyeId(), d -> d.getPillarInventory(pillar.getId()), null);
-            if (out.getTag() == null)
-                out.setTag(new CompoundNBT());
-            out.getTag().remove("BlockEntityTag");
-            out.getTag().merge(inv.serializeNBT());
+        if (pillar != null && DimBag.isServer(null)) {
+            PillarInventory inv = pillar.getInventory();
+            if (inv != null)
+                out.getTag().merge(inv.serializeNBT());
         }
         return out;
     }
 
     @Override
     public void onValidPlace(World worldIn, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack stack, PillarTileEntity pillar) {
-        if (DimBag.isServer(worldIn)) { //only run this part server side as pillar.invId is server only
+        super.onValidPlace(worldIn, pos, state, placer, stack, pillar);
+        if (DimBag.isServer(worldIn)) {
             CompoundNBT tags = stack.getTag();
             PillarInventory inv = new PillarInventory();
-            if (tags != null && tags.contains("UUID"))
+            if (tags != null && tags.contains("size") && tags.contains("stack"))
                 inv.deserializeNBT(tags);
+            else
+                inv.setId(pillar.getUUID());
             InventoryData.execute(pillar.getEyeId(), d -> d.addPillar(inv));
-            pillar.setId(inv.getId());
         }
     }
 
     @Override
     public void onRemove(BlockState state, World worldIn, BlockPos pos, BlockState newState, boolean isMoving, PillarTileEntity pillar) {
-        EventManager.delayedTask(0, ()->InventoryData.execute(pillar.getEyeId(), d->d.removePillar(pillar.getId()))); //on remove is called before drops, rip
+        EventManager.delayedTask(0, ()->InventoryData.execute(pillar.getEyeId(), d->d.removePillar(pillar.getUUID()))); //on remove is called before drops, rip
     }
 
     @Override
-    public ActionResultType onBlockActivated(BlockState state, World world, BlockPos pos, PlayerEntity player, Hand hand, BlockRayTraceResult ray) {
+    public ActionResultType use(BlockState state, World world, BlockPos pos, PlayerEntity player, Hand hand, BlockRayTraceResult ray) {
         if (!DimBag.isServer(world)) return ActionResultType.SUCCESS;
         int eyeId = DimBag.debug(SubRoomsManager.getEyeId(world, pos, false), "eye id");
         if (eyeId <= 0) return ActionResultType.SUCCESS;
-        TileEntity te = DimBag.debug(world.getTileEntity(pos));
-        if (!(te instanceof PillarTileEntity)) return super.onBlockActivated(state, world, pos, player, hand, ray);
+        TileEntity te = DimBag.debug(world.getBlockEntity(pos));
+        if (!(te instanceof PillarTileEntity)) return super.use(state, world, pos, player, hand, ray);
         new PillarContainer(0, player.inventory, eyeId, ((PillarTileEntity) te).getInventory().getId()).open(player);
         return ActionResultType.SUCCESS;
     }

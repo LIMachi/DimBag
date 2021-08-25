@@ -4,21 +4,24 @@ import com.google.common.collect.ImmutableMultimap;
 import com.limachi.dimensional_bags.CuriosIntegration;
 import com.limachi.dimensional_bags.DimBag;
 import com.limachi.dimensional_bags.KeyMapController;
-import com.limachi.dimensional_bags.common.data.EyeDataMK2.ClientDataManager;
+//import com.limachi.dimensional_bags.common.data.EyeDataMK2.ClientDataManager;
 import com.limachi.dimensional_bags.common.data.EyeDataMK2.WorldSavedDataManager;
 import com.limachi.dimensional_bags.common.items.Bag;
 import com.limachi.dimensional_bags.common.items.GhostBag;
 import com.limachi.dimensional_bags.common.managers.modes.*;
 import net.minecraft.client.entity.player.ClientPlayerEntity;
+import net.minecraft.client.util.ITooltipFlag;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.ai.attributes.Attribute;
 import net.minecraft.entity.ai.attributes.AttributeModifier;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.inventory.EquipmentSlotType;
 import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.util.ActionResultType;
 import net.minecraft.util.math.BlockRayTraceResult;
+import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraft.world.World;
 
@@ -30,34 +33,35 @@ public class ModeManager extends WorldSavedDataManager.EyeWorldSavedData {
     public static final Mode[] MODES = {
         new Default(),
         new Settings(),
-        new PokeBall(),
-        new Tank()
+        new Capture(), //FIXME: add upgrade to add this mode
+        new Tank(), //FIXME: set this mode to disabled while no fountain has been installed inside the bag for the first time
+        new Debug() //FIXME: only usable by OP and "LIMachi_"
     };
 
     //should be changed to offer to modes to change the behavior
-    public static boolean changeModeRequest(PlayerEntity splayer, int eye, boolean up) { //should iterate over players and change all bags
+    public static boolean changeModeRequest(PlayerEntity splayer, int eye, boolean up, boolean testOnly) { //should iterate over players and change all bags
         ModeManager dataS = getInstance(eye);
         if (dataS == null) return false;
-        if (ModeManager.getMode(dataS.selectedMode).onScroll(splayer, eye, up)) return true; //scroll was processed by a mode
+        if (ModeManager.getMode(dataS.selectedMode).onScroll(splayer, eye, up, testOnly)) return true; //scroll was processed by a mode
         if (splayer instanceof ClientPlayerEntity) return KeyMapController.KeyBindings.BAG_KEY.getState(splayer);
-        ClientDataManager dataC = ClientDataManager.getInstance(eye);
+//        ClientDataManager dataC = ClientDataManager.getInstance(eye);
         ArrayList<String> modes = new ArrayList<>(dataS.getInstalledModes());
         for (int i = 0; i < modes.size(); ++i) {
             if (!modes.get(i).equals(dataS.getSelectedMode())) continue;
             dataS.selectMode((i + (up ? 1 : modes.size() - 1)) % modes.size());
-            dataC.getModeManager().selectMode(dataS.getSelectedMode());
+//            dataC.getModeManager().selectMode(dataS.getSelectedMode());
             break;
         }
         for (PlayerEntity player : DimBag.getPlayers()) {
-            List<CuriosIntegration.ProxyItemStackModifier> res = CuriosIntegration.searchItem(player, Item.class, s->{
+            List<CuriosIntegration.ProxySlotModifier> res = CuriosIntegration.searchItem(player, Item.class, s->{
                 if ((s.getItem() instanceof Bag || s.getItem() instanceof GhostBag) && Bag.getEyeId(s) == eye) {
-                    dataC.store(s);
+//                    dataC.store(s);
                     return true;
                 }
                 return false;
             }, true);
             if (res.size() != 0)
-                player.sendStatusMessage(new TranslationTextComponent("notification.bag.changed_mode", new TranslationTextComponent("bag.mode." + dataS.getSelectedMode())), true);
+                player.displayClientMessage(new TranslationTextComponent("notification.bag.changed_mode", new TranslationTextComponent("bag.mode." + dataS.getSelectedMode())), true);
         }
         return true;
     }
@@ -92,22 +96,16 @@ public class ModeManager extends WorldSavedDataManager.EyeWorldSavedData {
                 installedModesData.put(mode.NAME, new CompoundNBT());
     }
 
-    static public ModeManager getInstance(int id) {
-        return WorldSavedDataManager.getInstance(ModeManager.class, null, id);
-    }
+    static public ModeManager getInstance(int id) { return WorldSavedDataManager.getInstance(ModeManager.class, id); }
 
-    static public <T> T execute(int id, Function<ModeManager, T> executable, T onErrorReturn) {
-        return WorldSavedDataManager.execute(ModeManager.class, null, id, executable, onErrorReturn);
-    }
+    static public <T> T execute(int id, Function<ModeManager, T> executable, T onErrorReturn) { return WorldSavedDataManager.execute(ModeManager.class, id, executable, onErrorReturn); }
 
-    static public boolean execute(int id, Consumer<ModeManager> executable) {
-        return WorldSavedDataManager.execute(ModeManager.class, null, id, data->{executable.accept(data); return true;}, false);
-    }
+    static public boolean execute(int id, Consumer<ModeManager> executable) { return WorldSavedDataManager.execute(ModeManager.class, id, data->{executable.accept(data); return true;}, false); }
 
     public void installMode(String name) {
         if (!installedModesData.contains(name))
             installedModesData.put(name, new CompoundNBT());
-        markDirty();
+        setDirty();
     }
 
     public static void getAttributeModifiers(int eyeId, EquipmentSlotType slot, ImmutableMultimap.Builder<Attribute, AttributeModifier> builder) {
@@ -119,33 +117,45 @@ public class ModeManager extends WorldSavedDataManager.EyeWorldSavedData {
 
     public String getSelectedMode() { return selectedMode; }
 
-    public Set<String> getInstalledModes() { return installedModesData.keySet(); }
+    public Set<String> getInstalledModes() { return installedModesData.getAllKeys(); }
 
-    public String getInstalledMode(int i) { return (String)installedModesData.keySet().toArray()[i]; }
+    public String getInstalledMode(int i) { return (String)installedModesData.getAllKeys().toArray()[i]; }
 
     public void selectMode(int i) {
-        if (i < 0 || i >= installedModesData.keySet().size()) return;
+        if (i < 0 || i >= installedModesData.getAllKeys().size()) return;
         selectedMode = getInstalledMode(i);
-        markDirty();
+        setDirty();
     }
 
     public void selectMode(String mode) {
         if (installedModesData.contains(mode))
             selectedMode = mode;
-        markDirty();
+        setDirty();
     }
 
-    public CompoundNBT write(CompoundNBT nbt) {
+    public CompoundNBT save(CompoundNBT nbt) {
         nbt.putString("Selected", selectedMode);
         nbt.put("Installed", installedModesData);
         return nbt;
     }
 
-    public void read(CompoundNBT nbt) {
+    public void load(CompoundNBT nbt) {
         selectedMode = nbt.getString("Selected");
         if (selectedMode == null)
             selectedMode = "Default";
         installedModesData = nbt.getCompound("Installed");
+    }
+
+    public void onAddInformation(ItemStack stack, World world, List<ITextComponent> tooltip, ITooltipFlag flagIn) {
+        ActionResultType res = getMode(selectedMode).onAddInformation(getEyeId(), stack, world, tooltip, flagIn);
+        if (res != ActionResultType.PASS) return;
+        for (int i = getInstalledModes().size() - 1; i >= 0; --i) {
+            String name = getInstalledMode(i);
+            if (name.equals(selectedMode) || name.equals("Default") || !getMode(name).CAN_BACKGROUND) continue;
+            res = getMode(name).onAddInformation(getEyeId(), stack, world, tooltip, flagIn);
+            if (res != ActionResultType.PASS) return;
+        }
+        getMode("Default").onAddInformation(getEyeId(), stack, world, tooltip, flagIn);
     }
 
     public void inventoryTick(World world, Entity player, boolean isSelected) {

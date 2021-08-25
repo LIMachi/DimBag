@@ -15,6 +15,7 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.util.ActionResultType;
 import net.minecraft.util.math.BlockRayTraceResult;
+import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraft.world.World;
 
 public class Default extends Mode {
@@ -26,16 +27,17 @@ public class Default extends Mode {
     @Override
     public void initSettings(SettingsData.SettingsReader settingsReader) {
         settingsReader.bool("should_show_energy", true);
+        settingsReader.string("bag_name", new TranslationTextComponent("item.dim_bag.bag").getString(), null);
     }
 
     @Override
     public ActionResultType onItemUse(int eyeId, World world, PlayerEntity player, BlockRayTraceResult ray) { //called when the bag is right clicked on something, before the bag does anything
         if (player == null || !KeyMapController.KeyBindings.SNEAK_KEY.getState(player)) return ActionResultType.PASS; //only test a player croushing
-        int x = Math.abs(ray.getPos().getX() - player.getPosition().getX());
-        int y = Math.abs(ray.getPos().getY() - player.getPosition().getY());
-        int z = Math.abs(ray.getPos().getZ() - player.getPosition().getZ());
+        int x = Math.abs(ray.getBlockPos().getX() - player.blockPosition().getX());
+        int y = Math.abs(ray.getBlockPos().getY() - player.blockPosition().getY());
+        int z = Math.abs(ray.getBlockPos().getZ() - player.blockPosition().getZ());
         if (x > 1 || y > 2 || z > 1) return ActionResultType.PASS; //only validate if the click is close enough to the player
-        Bag.unequippedBags(player, eyeId, ray.getPos().up(1));
+        Bag.unequippedBags(player, eyeId, ray.getBlockPos().above());
         return ActionResultType.SUCCESS;
     }
 
@@ -43,9 +45,7 @@ public class Default extends Mode {
     public ActionResultType onActivateItem(int eyeId, PlayerEntity player) {
         if (!KeyMapController.KeyBindings.SNEAK_KEY.getState(player)) {
             if (player instanceof ServerPlayerEntity)
-//                Network.openEyeInventory((ServerPlayerEntity) player, eyeId, null);
                 new PillarContainer(0, player.inventory, eyeId, null).open(player);
-                ; //FIXME
             return ActionResultType.SUCCESS;
         }
         return ActionResultType.PASS;
@@ -55,6 +55,6 @@ public class Default extends Mode {
         if (getSetting(eyeId, "should_show_energy"))
             EnergyData.execute(eyeId, energyData->{
                 if (energyData.getMaxEnergyStored() > 0 || energyData.getEnergyStored() > 0)
-                    RenderUtils.drawString(matrixStack, Minecraft.getInstance().fontRenderer, "Energy: " + energyData.getEnergyStored() + " / " + energyData.getMaxEnergyStored(), new Box2d(10, 10, 100, 10), 0xFFFFFFFF, true, false);});
+                    RenderUtils.drawString(matrixStack, Minecraft.getInstance().font, "Energy: " + energyData.getEnergyStored() + " / " + energyData.getMaxEnergyStored(), new Box2d(10, 10, 100, 10), 0xFFFFFFFF, true, false);});
     }
 }

@@ -3,12 +3,14 @@ package com.limachi.dimensional_bags.common.container;
 import com.limachi.dimensional_bags.StaticInit;
 import com.limachi.dimensional_bags.common.Registries;
 import com.limachi.dimensional_bags.common.data.EyeDataMK2.InventoryData;
+import com.limachi.dimensional_bags.common.data.EyeDataMK2.SettingsData;
 import com.limachi.dimensional_bags.common.inventory.ISimpleItemHandlerSerializable;
 import com.limachi.dimensional_bags.common.references.GUIs;
 import com.limachi.dimensional_bags.utils.UUIDUtils;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.util.text.ITextComponent;
+import net.minecraft.util.text.StringTextComponent;
 import net.minecraft.util.text.TranslationTextComponent;
 
 import javax.annotation.Nonnull;
@@ -71,16 +73,16 @@ public class PillarContainer extends BaseEyeContainer<PillarContainer> {
     @Override
     public void readFromBuff(PacketBuffer buff) {
         super.readFromBuff(buff);
-        loadPillarFromUUID(buff.readUniqueId());
+        loadPillarFromUUID(buff.readUUID());
     }
 
     @Override
     public void writeToBuff(PacketBuffer buff) {
         super.writeToBuff(buff);
-        buff.writeUniqueId(invId == null ? UUIDUtils.NULL_UUID : invId);
+        buff.writeUUID(invId == null ? UUIDUtils.NULL_UUID : invId);
     }
 
     @Nonnull
     @Override
-    public ITextComponent getDisplayName() { return new TranslationTextComponent("container.display_name." + NAME); }
+    public ITextComponent getDisplayName() { return invId == null ? new StringTextComponent(SettingsData.execute(eyeId, SettingsData::getBagName, NAME)) : new TranslationTextComponent("container.display_name." + NAME); }
 }

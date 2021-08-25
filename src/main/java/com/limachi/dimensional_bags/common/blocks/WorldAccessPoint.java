@@ -15,6 +15,7 @@ import net.minecraft.state.BooleanProperty;
 import net.minecraft.state.StateContainer;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
+import net.minecraftforge.common.util.Constants;
 
 import javax.annotation.Nullable;
 import java.util.function.Supplier;
@@ -46,33 +47,33 @@ public class WorldAccessPoint extends AbstractTileEntityBlock<WorldAccessPointTi
     public static final BooleanProperty POWERED = BooleanProperty.create("powered");
 
     public WorldAccessPoint() {
-        super(NAME, Properties.create(Material.REDSTONE_LIGHT).hardnessAndResistance(1.5f, 3600000f).sound(SoundType.GLASS), WorldAccessPointTileEntity.class, WorldAccessPointTileEntity.NAME);
-        this.setDefaultState(getDefaultState().with(POWERED, false));
+        super(NAME, Properties.of(Material.HEAVY_METAL).strength(1.5f, 3600000f).sound(SoundType.GLASS), WorldAccessPointTileEntity.class, WorldAccessPointTileEntity.NAME);
+        this.registerDefaultState(defaultBlockState().setValue(POWERED, false));
     }
 
     @Override
-    protected void fillStateContainer(StateContainer.Builder<Block, BlockState> builder) {
-        super.fillStateContainer(builder);
+    protected void createBlockStateDefinition(StateContainer.Builder<Block, BlockState> builder) {
+        super.createBlockStateDefinition(builder);
         builder.add(POWERED);
     }
 
     @Override
-    public void onReplaced(BlockState state, World worldIn, BlockPos pos, BlockState newState, boolean isMoving) {
+    public void onRemove(BlockState state, World worldIn, BlockPos pos, BlockState newState, boolean isMoving) {
         if (state.getBlock() != newState.getBlock()) //only do the default behavior if the new state is of a different block
-            super.onReplaced(state, worldIn, pos, newState, isMoving);
-        worldIn.notifyNeighborsOfStateChange(pos, this);
+            super.onRemove(state, worldIn, pos, newState, isMoving);
+        worldIn.updateNeighbourForOutputSignal(pos, this);
     }
 
-    public static boolean isPowered(BlockState state) { return state.get(POWERED); }
+    public static boolean isPowered(BlockState state) { return state.getValue(POWERED); }
 
     public static void setPowered(World world, BlockPos pos, boolean state) {
         if (world.getBlockState(pos).getBlock() instanceof WorldAccessPoint && isPowered(world.getBlockState(pos)) != state)
-            world.setBlockState(pos, world.getBlockState(pos).getBlock().getDefaultState().with(POWERED, state));
+            world.setBlock(pos, world.getBlockState(pos).getBlock().defaultBlockState().setValue(POWERED, state), Constants.BlockFlags.DEFAULT_AND_RERENDER);
     }
 
     @Override
     public void neighborChanged(BlockState state, World worldIn, BlockPos pos, Block blockIn, BlockPos fromPos, boolean isMoving) {
-        if (!worldIn.isRemote) setPowered(worldIn, pos, worldIn.getRedstonePowerFromNeighbors(pos) > 0);
+        if (!worldIn.isClientSide()) setPowered(worldIn, pos, worldIn.getBestNeighborSignal(pos) > 0);
     }
 
     @Override

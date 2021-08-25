@@ -11,7 +11,7 @@ import net.minecraft.util.ResourceLocation;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.function.Function;
-
+/*
 public class StoneCutting extends StonecuttingRecipe implements IRecipe {
     private final ResourceLocation ID;
     private final ResourceLocation NAME;
@@ -76,3 +76,4 @@ public class StoneCutting extends StonecuttingRecipe implements IRecipe {
     @Nonnull
     public IRecipeSerializer<?> getSerializer() { return this.SERIALIZER; }
 }
+*/

@@ -20,6 +20,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import com.limachi.dimensional_bags.StaticInit;
+import net.minecraft.potion.Effects;
 import net.minecraft.util.math.AxisAlignedBB;
 
 import static net.minecraft.potion.Effects.*;
@@ -37,23 +38,24 @@ public class PadTileEntity extends BaseTileEntity implements IisBagTE {
         Registries.registerTileEntity(NAME, PadTileEntity::new, ()->Registries.getBlock(Pad.NAME), null);
     }
 
-    public PadTileEntity() { super(Registries.getTileEntityType(NAME)); }
+    public PadTileEntity() { super(Registries.getBlockEntityType(NAME)); }
 
     public void needUpdate() { this.needUpdate = true; }
 
-    public Stream<String> getNameList() { return getTileData().getList("List", 8).stream().map(INBT::getString); }
+    public Stream<String> getNameList() { return getTileData().getList("List", 8).stream().map(INBT::getAsString); }
 
-    static final Effect[] randomEffectsPopulator = {SPEED,
-            SLOWNESS,
-            HASTE,
-            MINING_FATIGUE,
-            STRENGTH,
-            INSTANT_HEALTH,
-            INSTANT_DAMAGE,
-            JUMP_BOOST,
-            NAUSEA,
+    static final Effect[] randomEffectsPopulator = {
+            MOVEMENT_SPEED,
+            MOVEMENT_SLOWDOWN,
+            DIG_SPEED,
+            DIG_SLOWDOWN,
+            DAMAGE_BOOST,
+            HEAL,
+            HARM,
+            JUMP,
+            CONFUSION,
             REGENERATION,
-            RESISTANCE,
+            DAMAGE_RESISTANCE,
             FIRE_RESISTANCE,
             WATER_BREATHING,
             INVISIBILITY,
@@ -71,41 +73,43 @@ public class PadTileEntity extends BaseTileEntity implements IisBagTE {
             LUCK,
             UNLUCK,
             SLOW_FALLING};
-    static final List<EffectInstance> randomEffects = Arrays.stream(randomEffectsPopulator).map(e->new EffectInstance(e, 0, e.isInstant() ? 0 : TICK_RATE * 32, true, false, true)).collect(Collectors.toList());
+    static final List<EffectInstance> randomEffects = Arrays.stream(randomEffectsPopulator).map(e->new EffectInstance(e, 0, e.isInstantenous() ? 0 : TICK_RATE * 32, true, false, true)).collect(Collectors.toList());
 
     private void hiddenCreatureBuff(SubRoomsManager sm) { //dolphin -> dolphin grace to holder, brown mooshroom -> low chance of random potion effect, cow -> low chance of removing a potion effect, mooshroom -> low chance of saturation
-        Entity e = HolderData.execute(sm.getEyeId(), hd->hd.getEntity(), null);
+        if (level == null) return;
+        Entity e = HolderData.execute(sm.getEyeId(), HolderData::getEntity, null);
         if (e instanceof LivingEntity) {
-            List<LivingEntity> el = world.getLoadedEntitiesWithinAABB(LivingEntity.class, new AxisAlignedBB(pos.up()), t -> t instanceof DolphinEntity || t instanceof MooshroomEntity);
+            List<LivingEntity> el = level.getEntitiesOfClass(LivingEntity.class, new AxisAlignedBB(worldPosition.above()), t -> t instanceof DolphinEntity || t instanceof MooshroomEntity);
             if (!el.isEmpty()) {
                 LivingEntity entity = el.get(0);
-                if (entity instanceof DolphinEntity && e.isWet())
-                    ((LivingEntity) e).addPotionEffect(new EffectInstance(DOLPHINS_GRACE, TICK_RATE * 32, 0, true, false, true));
+                if (entity instanceof DolphinEntity && e.isInWaterOrRain())
+                    ((LivingEntity) e).addEffect(new EffectInstance(DOLPHINS_GRACE, TICK_RATE * 32, 0, true, false, true));
                 else if (entity instanceof MooshroomEntity && EventManager.RANDOM.nextDouble() > 0.8) {
-                    if (((MooshroomEntity)entity).getMooshroomType() == MooshroomEntity.Type.BROWN)
-                        ((LivingEntity) e).addPotionEffect(randomEffects.get(EventManager.RANDOM.nextInt(randomEffects.size())));
-                    else if (((MooshroomEntity)entity).getMooshroomType() == MooshroomEntity.Type.RED)
-                        ((LivingEntity) e).addPotionEffect(new EffectInstance(SATURATION, 400, 1, true, false, true));
+                    if (((MooshroomEntity)entity).getMushroomType() == MooshroomEntity.Type.BROWN)
+                        ((LivingEntity) e).addEffect(randomEffects.get(EventManager.RANDOM.nextInt(randomEffects.size())));
+                    else if (((MooshroomEntity)entity).getMushroomType() == MooshroomEntity.Type.RED)
+                        ((LivingEntity) e).addEffect(new EffectInstance(SATURATION, 400, 1, true, false, true));
                 }
             }
         }
     }
 
     public <T extends Entity> T getEntity(Class<T> clazz) {
-        List<T> l = world.getLoadedEntitiesWithinAABB(clazz, new AxisAlignedBB(pos.up()));
+        if (level == null) return null;
+        List<T> l = level.getEntitiesOfClass(clazz, new AxisAlignedBB(worldPosition.above()));
         return l.isEmpty() ? null : l.get(0);
     }
 
     @Override
     public void tick(int tick) {
-        if (world == null || !DimBag.isServer(world) || tick % TICK_RATE != 0 || !(world.getBlockState(pos).getBlock() instanceof Pad)) return;
-        SubRoomsManager sm = SubRoomsManager.getInstance(SubRoomsManager.getEyeId(world, pos, false));
+        if (level == null || !DimBag.isServer(level) || tick % TICK_RATE != 0 || !(level.getBlockState(worldPosition).getBlock() instanceof Pad)) return;
+        SubRoomsManager sm = SubRoomsManager.getInstance(SubRoomsManager.getEyeId(level, worldPosition, false));
         if (sm == null) return;
         if (needUpdate) {
-            if (Pad.isPowered(world.getBlockState(pos)))
-                sm.activatePad(pos);
+            if (Pad.isPowered(level.getBlockState(worldPosition)))
+                sm.activatePad(worldPosition);
             else
-                sm.deactivatePad(pos);
+                sm.deactivatePad(worldPosition);
             needUpdate = false;
         }
         if (tick % (TICK_RATE * 16) == 0)
@@ -117,11 +121,11 @@ public class PadTileEntity extends BaseTileEntity implements IisBagTE {
     public void updateList(boolean whitelist, Collection<String> names) {
         getTileData().putBoolean("IsWhitelist", whitelist);
         getTileData().put("List", NBTUtils.toNBT(names));
-        markDirty();
+        setChanged();
     }
 
     public boolean isValidEntity(Entity entity) {
-        String name = entity.getName().getUnformattedComponentText();
+        String name = entity.getName().getContents();
         if (name.isEmpty())
             name = entity.getName().getString();
         DimBag.LOGGER.info("validating entity entering the bag with name: " + name);

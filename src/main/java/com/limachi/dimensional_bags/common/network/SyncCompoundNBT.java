@@ -65,7 +65,7 @@ public class SyncCompoundNBT {
         }
 
         public SCNBTC(PacketBuffer buffer) {
-            id = buffer.readUniqueId();
+            id = buffer.readUUID();
             isClient = buffer.readBoolean();
             syncUp = buffer.readBoolean();
             this.autoUpdate =buffer.readBoolean();
@@ -73,7 +73,7 @@ public class SyncCompoundNBT {
 
         @Override
         public void toBytes(PacketBuffer buffer) {
-            buffer.writeUniqueId(id);
+            buffer.writeUUID(id);
             buffer.writeBoolean(isClient);
             buffer.writeBoolean(syncUp);
             buffer.writeBoolean(autoUpdate);
@@ -91,10 +91,10 @@ public class SyncCompoundNBT {
 
         public SCNBTD(UUID id) { this.id = id; }
 
-        public SCNBTD(PacketBuffer buffer) { id = buffer.readUniqueId(); }
+        public SCNBTD(PacketBuffer buffer) { id = buffer.readUUID(); }
 
         @Override
-        public void toBytes(PacketBuffer buffer) { buffer.writeUniqueId(id); }
+        public void toBytes(PacketBuffer buffer) { buffer.writeUUID(id); }
 
         @Override
         public void serverWork(ServerPlayerEntity player) { SYNC_MAP.remove(id); }
@@ -109,10 +109,10 @@ public class SyncCompoundNBT {
 
         public SCNBTU(UUID id, CompoundNBT diff) { this.id = id; this.diff = diff; }
 
-        public SCNBTU(PacketBuffer buffer) { id = buffer.readUniqueId(); diff = buffer.readCompoundTag(); }
+        public SCNBTU(PacketBuffer buffer) { id = buffer.readUUID(); diff = buffer.readAnySizeNbt(); }
 
         @Override
-        public void toBytes(PacketBuffer buffer) { buffer.writeUniqueId(id); buffer.writeCompoundTag(diff); }
+        public void toBytes(PacketBuffer buffer) { buffer.writeUUID(id); buffer.writeNbt(diff); }
 
         @Override
         public void serverWork(ServerPlayerEntity player) { applyDiff(id, diff); }

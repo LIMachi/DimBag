@@ -3,6 +3,7 @@ package com.limachi.dimensional_bags.common.inventory;
 import com.limachi.dimensional_bags.DimBag;
 import com.limachi.dimensional_bags.ConfigManager.Config;
 import com.limachi.dimensional_bags.common.container.BaseContainer;
+import com.limachi.dimensional_bags.common.tileentities.TEWithUUID;
 import com.limachi.dimensional_bags.utils.StackUtils;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.inventory.container.Slot;
@@ -21,7 +22,7 @@ public class PillarInventory implements ISimpleItemHandlerSerializable {
     @Config(min = "1", max = "30000000", cmt = "initial size of a bag slot (pillar inside of the bag) in stacks")
     public static int DEFAULT_SIZE_IN_STACKS = 4;
 
-    protected UUID id = UUID.randomUUID(); //unique id used to create a group of pillar
+    protected UUID id = new UUID(0, 0); //unique id used to create a group of pillar
     protected int size = DEFAULT_SIZE_IN_STACKS; //how much items can be stored (in stacks, yes this means the real amount is dependent on 'referent.getMaxStackSize()')
     protected ItemStack stack = ItemStack.EMPTY; //the count of this stack may go above a byte and should be communicated using StackUtils
     protected boolean locked = false; //does this pillar need to keep it's last item
@@ -41,7 +42,7 @@ public class PillarInventory implements ISimpleItemHandlerSerializable {
     @Override
     public int hashCode() { return id.hashCode(); }
 
-    public void markDirty() {
+    public void setChanged() {
         if (notifyDirt != null)
             notifyDirt.run();
     }
@@ -53,7 +54,7 @@ public class PillarInventory implements ISimpleItemHandlerSerializable {
         }
 
         @Override
-        public int getItemStackLimit(@Nonnull ItemStack stack) {
+        public int getMaxStackSize(@Nonnull ItemStack stack) {
             IItemHandler handler = this.getItemHandler();
             return handler.isItemValid(0, stack) ? handler.getSlotLimit(0) : 0;
         }
@@ -74,7 +75,7 @@ public class PillarInventory implements ISimpleItemHandlerSerializable {
     @Override
     public CompoundNBT serializeNBT() {
         CompoundNBT out = new CompoundNBT();
-        out.putUniqueId("UUID", id);
+        out.putUUID("UUID", id);
         out.putInt("size", size);
         CompoundNBT ref = new CompoundNBT();
         out.put("stack", StackUtils.writeAsCompound(stack));
@@ -83,16 +84,22 @@ public class PillarInventory implements ISimpleItemHandlerSerializable {
 
     public UUID getId() { return id; }
 
+    public void setId(UUID id) { this.id = id; setChanged(); }
+
     @Override
     public void deserializeNBT(CompoundNBT nbt) {
-        id = nbt.getUniqueId("UUID");
+        CompoundNBT t = nbt.getCompound("BlockEntityTag").getCompound("ForgeData");
+        if (t.contains(TEWithUUID.NBT_KEY_UUID))
+            id = t.getUUID(TEWithUUID.NBT_KEY_UUID);
+        else
+            id = nbt.getUUID("UUID");
         size = nbt.getInt("size");
         stack = StackUtils.readFromCompound(nbt.getCompound("stack"));
     }
 
     public void setLockState(boolean lock) {
         if (lock != locked)
-            markDirty();
+            setChanged();
         locked = lock;
     }
 
@@ -105,7 +112,7 @@ public class PillarInventory implements ISimpleItemHandlerSerializable {
     @Override
     public void setStackInSlot(int slot, @Nonnull ItemStack input) {
         stack = input;
-        markDirty();
+        setChanged();
     }
 
     @Override
@@ -129,7 +136,7 @@ public class PillarInventory implements ISimpleItemHandlerSerializable {
                 stack.setCount(toInput);
             } else
                 stack.grow(toInput);
-            markDirty();
+            setChanged();
         }
         return out;
     }
@@ -150,7 +157,7 @@ public class PillarInventory implements ISimpleItemHandlerSerializable {
         out.setCount(toOutput);
         if (!simulate) {
             stack.shrink(toOutput);
-            markDirty();
+            setChanged();
         }
         return out;
     }
@@ -163,17 +170,17 @@ public class PillarInventory implements ISimpleItemHandlerSerializable {
 
     @Override
     public void readFromBuff(PacketBuffer buff) {
-        id = buff.readUniqueId();
+        id = buff.readUUID();
         size = buff.readInt();
-        stack = buff.readItemStack();
+        stack = buff.readItem();
         locked = buff.readBoolean();
     }
 
     @Override
     public void writeToBuff(PacketBuffer buff) {
-        buff.writeUniqueId(id);
+        buff.writeUUID(id);
         buff.writeInt(size);
-        buff.writeItemStack(stack);
+        buff.writeItemStack(stack, false);
         buff.writeBoolean(locked);
     }
 }

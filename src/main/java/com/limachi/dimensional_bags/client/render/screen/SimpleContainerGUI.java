@@ -20,14 +20,14 @@ public class SimpleContainerGUI extends ContainerScreen<SimpleContainer> {
 
     @Override
     protected void init() {
-        Minecraft.getInstance().keyboardListener.enableRepeatEvents(true);
+        Minecraft.getInstance().keyboardListener.setSendRepeatsToGui(true);
         super.init();
     }
 
     @Override
     public void onClose() {
         super.onClose();
-        Minecraft.getInstance().keyboardListener.enableRepeatEvents(false);
+        Minecraft.getInstance().keyboardListener.setSendRepeatsToGui(false);
     }
 
     public SimpleContainerGUI(SimpleContainer screenContainer, PlayerInventory inv, ITextComponent titleIn) {

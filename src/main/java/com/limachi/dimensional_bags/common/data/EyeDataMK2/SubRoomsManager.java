@@ -5,6 +5,8 @@ import com.limachi.dimensional_bags.DimBag;
 import com.limachi.dimensional_bags.ConfigManager.Config;
 import com.limachi.dimensional_bags.common.blocks.BagGateway;
 import com.limachi.dimensional_bags.common.blocks.Wall;
+import com.limachi.dimensional_bags.common.data.DimBagData;
+import com.limachi.dimensional_bags.common.items.upgrades.ParadoxUpgrade;
 import com.limachi.dimensional_bags.utils.NBTUtils;
 import com.limachi.dimensional_bags.common.Registries;
 import com.limachi.dimensional_bags.utils.WorldUtils;
@@ -27,15 +29,19 @@ import net.minecraft.nbt.ListNBT;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.Direction;
 import net.minecraft.util.RegistryKey;
+import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.ChunkPos;
 import net.minecraft.util.math.vector.Vector3i;
 import net.minecraft.world.World;
 import net.minecraft.world.server.ServerWorld;
+import net.minecraftforge.common.util.Constants;
 
 import javax.annotation.Nullable;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 public class SubRoomsManager extends WorldSavedDataManager.EyeWorldSavedData {
 
@@ -57,6 +63,7 @@ public class SubRoomsManager extends WorldSavedDataManager.EyeWorldSavedData {
 
     private HashMap<Vector3i, Integer> posToSubRoomId = new HashMap<>();
     private int selectedPad = -1;
+    private boolean isLoaded = true;
     private ArrayList<Vector3i> activePads = new ArrayList<>();
     private ArrayList<SubRoomData> subRooms = new ArrayList<>();
 
@@ -73,6 +80,19 @@ public class SubRoomsManager extends WorldSavedDataManager.EyeWorldSavedData {
         public int westWall; // - X
 
         //corners are generated for a traversal using only positive increment in X, Y and Z
+
+        /**
+         * @return all the chunks that intersects with this room (useful for ticking/loadding)
+         */
+        public ArrayList<ChunkPos> getComposingChunks() {
+            ArrayList<ChunkPos> out = new ArrayList<>();
+            for (int x = (center.getX() - westWall) >> 4; x <= (int)Math.ceil((center.getX() + eastWall) / 16.); ++x)
+                for (int z = (center.getZ() - northWall) >> 4; z <= (int)Math.ceil((center.getZ() + southWall) / 16.); ++z)
+                    out.add(new ChunkPos(x, z));
+            return out;
+        }
+
+        public AxisAlignedBB asAABB() { return new AxisAlignedBB(center.getX() - westWall, center.getY() - downWall, center.getZ() - northWall, center.getX() + eastWall, center.getY() + upWall, center.getZ() + southWall); }
 
         //lowest corner on all axis, including offset
         public BlockPos getWallCorner1(Direction dir, int depthOffset, int areaOffset) {
@@ -245,11 +265,34 @@ public class SubRoomsManager extends WorldSavedDataManager.EyeWorldSavedData {
         subRooms.add(0, new SubRoomData().setPos(new Vector3i(0, 0, 0)).setCenter(getEyePos(id)).setRadius(DEFAULT_RADIUS, null));
     }
 
+    /**
+     * load/unload all the rooms in a bag
+     * @param active
+     */
+    public void bagChunkLoading(boolean active) {
+        if (active != isLoaded) {
+            World w = WorldUtils.getRiftWorld();
+            if (w instanceof ServerWorld) {
+                ServerWorld world = (ServerWorld) w;
+                DimBagData dbd = DimBagData.get();
+                if (dbd == null) return;
+                if (active)
+                    for (SubRoomData srd : subRooms)
+                        srd.getComposingChunks().forEach(c -> dbd.chunkloadder.loadChunk(world, c.x, c.z, 0));
+                else
+                    for (SubRoomData srd : subRooms)
+                        srd.getComposingChunks().forEach(c -> dbd.chunkloadder.unloadChunk(world, c.x, c.z));
+            }
+            isLoaded = active;
+            setDirty();
+        }
+    }
+
     public void activatePad(BlockPos pos) {
         activePads.add(pos);
         if (activePads.size() == 1) //first active pad
             selectedPad = 0;
-        markDirty();
+        setDirty();
     }
 
     public void deactivatePad(BlockPos pos) {
@@ -258,14 +301,14 @@ public class SubRoomsManager extends WorldSavedDataManager.EyeWorldSavedData {
         if (reselect)
             selectOtherPad(true);
         else
-            markDirty();
+            setDirty();
     }
 
     public PadTileEntity getSelectedPad() {
         if (selectedPad == -1) return null;
         World w = WorldUtils.getRiftWorld();
         if (w == null) return null;
-        TileEntity te = w.getTileEntity(new BlockPos(activePads.get(selectedPad)));
+        TileEntity te = w.getBlockEntity(new BlockPos(activePads.get(selectedPad)));
         if (!(te instanceof PadTileEntity)) return null;
         return (PadTileEntity)te;
     }
@@ -279,7 +322,7 @@ public class SubRoomsManager extends WorldSavedDataManager.EyeWorldSavedData {
             if (selectedPad >= activePads.size())
                 selectedPad = 0;
         }
-        markDirty();
+        setDirty();
     }
 
     public int getWallOffset(int room, Direction wall) {
@@ -310,7 +353,7 @@ public class SubRoomsManager extends WorldSavedDataManager.EyeWorldSavedData {
     }
 
     public static Optional<Pair<Integer, Integer>> getRoomIds(World world, BlockPos pos, boolean eye, boolean includeOutside) {
-        if (world.getDimensionKey() != WorldUtils.DimBagRiftKey) return Optional.empty();
+        if (world.dimension() != WorldUtils.DimBagRiftKey) return Optional.empty();
         int x = pos.getX() - ROOM_OFFSET_X;
         int z = pos.getZ() - ROOM_OFFSET_Z;
         if (eye) {
@@ -329,8 +372,10 @@ public class SubRoomsManager extends WorldSavedDataManager.EyeWorldSavedData {
         return Optional.empty();
     }
 
+    public static ArrayList<AxisAlignedBB> getRoomsAABB(int eye) { return (ArrayList<AxisAlignedBB>) SubRoomsManager.execute(eye, srm->srm.subRooms.stream().map(SubRoomData::asAABB).collect(Collectors.toList()), new ArrayList<AxisAlignedBB>()); }
+
     public void tpTunnel(Entity entity, BlockPos portalPos) { //teleport an entity to the next room, the position of the portal determine the destination
-        tunnel((ServerWorld)entity.world, portalPos, entity, false, false, null);
+        tunnel((ServerWorld)entity.level, portalPos, entity, false, false, null);
     }
 
     /**
@@ -344,11 +389,21 @@ public class SubRoomsManager extends WorldSavedDataManager.EyeWorldSavedData {
         //tp out
         //if reequipIfAble is true, try to reequip the bag to the entity and remove the bag entity
         CompoundNBT nbt = NBTUtils.ensurePathExistence(entity.getPersistentData(), DimBag.MOD_ID, Integer.toString(getEyeId()), "previousPosition");
-        nbt.putInt("X", entity.getPosition().getX());
-        nbt.putInt("Y", entity.getPosition().getY());
-        nbt.putInt("Z", entity.getPosition().getZ());
-        if (pos == null || world == null)
-            HolderData.execute(getEyeId(), holderData -> holderData.tpToHolder(entity));
+        nbt.putInt("X", entity.blockPosition().getX());
+        nbt.putInt("Y", entity.blockPosition().getY());
+        nbt.putInt("Z", entity.blockPosition().getZ());
+        if (pos == null || world == null) {
+            CompoundNBT t = entity.getPersistentData().getCompound(DimBag.MOD_ID).getCompound(Integer.toString(getEyeId()));
+            if (t.contains("proxy")) {
+                CompoundNBT proxy = t.getCompound("proxy");
+                RegistryKey<World> wrk = WorldUtils.stringToWorldRK(proxy.getString("Dimension"));
+                BlockPos dst = new BlockPos(proxy.getInt("X"), proxy.getInt("Y"), proxy.getInt("Z"));
+                t.remove("proxy");
+                WorldUtils.teleportEntity(entity, wrk, dst);
+            }
+            else
+                HolderData.execute(getEyeId(), holderData -> holderData.tpToHolder(entity));
+        }
         else
             WorldUtils.teleportEntity(entity, world, pos);
         //TODO: reequip code
@@ -358,18 +413,30 @@ public class SubRoomsManager extends WorldSavedDataManager.EyeWorldSavedData {
     /**
      * function to tp an entity inside the bag (includes check for previous position and pads)
      * @param entity
-     * @param checkForBag
-     * @return true if the function succeeded
+     * @param checkForBag will entering the bag drop and spawn bags from the entity with the same id as the entered bag
+     * @param checkForPads could result in going to a pad instead of other location
+     * @param defaultToPreviousPos could result in going to a previous known location (instead of default)
+     * @param requirePad refuse to enter the bag if no pad is available
+     * @param byProxy leaving the bag will teleport you to the proxy instead of the bag
+     * @return
      */
-    public Entity enterBag(Entity entity, boolean checkForBag, boolean checkForPads, boolean defaultToPreviousPos, boolean requirePad) {
+    public Entity enterBag(Entity entity, boolean checkForBag, boolean checkForPads, boolean defaultToPreviousPos, boolean requirePad, boolean byProxy) {
         //if check for bag is true, might have to remove the bag from the inventory and drop it as an entity (if the inseption uprage ins't installed)
         //pad first
         //previous known position second
         //default eye tp last
+
+        if (byProxy) {
+            CompoundNBT proxy = NBTUtils.ensurePathExistence(entity.getPersistentData(), DimBag.MOD_ID, Integer.toString(getEyeId()), "proxy");
+            proxy.putString("Dimension", WorldUtils.worldRKToString(entity.level.dimension()));
+            proxy.putInt("X", entity.blockPosition().getX());
+            proxy.putInt("Y", entity.blockPosition().getY());
+            proxy.putInt("Z", entity.blockPosition().getZ());
+        }
         if (checkForBag && !UpgradeManager.isUpgradeInstalled(getEyeId(), "inception").isPresent()) {
-            List<CuriosIntegration.ProxyItemStackModifier> res = CuriosIntegration.searchItem(entity, Bag.class, o->Bag.getEyeId(o) == getEyeId(), true);
-            for (CuriosIntegration.ProxyItemStackModifier p : res) {
-                BagEntity.spawn(entity.world, entity.getPosition(), p.get());
+            List<CuriosIntegration.ProxySlotModifier> res = CuriosIntegration.searchItem(entity, Bag.class, o->Bag.getEyeId(o) == getEyeId(), true);
+            for (CuriosIntegration.ProxySlotModifier p : res) {
+                BagEntity.spawn(entity.level, entity.blockPosition(), p.get());
                 p.set(ItemStack.EMPTY);
             }
         }
@@ -379,13 +446,13 @@ public class SubRoomsManager extends WorldSavedDataManager.EyeWorldSavedData {
             World w = WorldUtils.getRiftWorld();
             if (w != null)
                 for (Vector3i pos : activePads) {
-                    TileEntity te = w.getTileEntity(new BlockPos(pos));
+                    TileEntity te = w.getBlockEntity(new BlockPos(pos));
                     if (!(te instanceof PadTileEntity)) {
                         deactivatePad(new BlockPos(pos));
                         continue;
                     }
                     if (((PadTileEntity)te).isValidEntity(entity)) { //should take this chance to clear invalid pads
-                        arrival = new BlockPos(pos).up();
+                        arrival = new BlockPos(pos).above();
                         break;
                     }
                 }
@@ -398,21 +465,21 @@ public class SubRoomsManager extends WorldSavedDataManager.EyeWorldSavedData {
                 arrival = new BlockPos(bnbt.getInt("X"), bnbt.getInt("Y"), bnbt.getInt("Z"));
         }
         if (arrival == null) { //default position if all previous position weren't found
-            arrival = getEyePos(getEyeId()).add(0, 1, 0);
+            arrival = getEyePos(getEyeId()).offset(0, 1, 0);
         }
         return WorldUtils.teleportEntity(entity, WorldUtils.DimBagRiftKey, arrival);
     }
 
     public Entity enterBag(Entity entity) {
         if (entity instanceof MobEntity)
-            ((MobEntity)entity).enablePersistence();
-        return enterBag(entity, true, true, true, false);
+            ((MobEntity)entity).requiresCustomPersistence();
+        return enterBag(entity, !UpgradeManager.getUpgrade(ParadoxUpgrade.NAME).isActive(getEyeId()), true, true, false, false);
     }
 
     public Entity captureEntity(Entity entity) {
         if (entity instanceof MobEntity)
-            ((MobEntity)entity).enablePersistence();
-        return enterBag(entity, true, true, false, true);
+            ((MobEntity)entity).requiresCustomPersistence();
+        return enterBag(entity, !UpgradeManager.getUpgrade(ParadoxUpgrade.NAME).isActive(getEyeId()), true, false, true, false);
     }
 
     private static BlockPos calculateOutput(BlockPos tunnelIn, SubRoomData srdFrom, Direction direction, int deltaRoom, SubRoomData srdTarget) {
@@ -429,14 +496,14 @@ public class SubRoomsManager extends WorldSavedDataManager.EyeWorldSavedData {
 
     private Direction wall(BlockPos pos, int room) { //test if a position is IN a wall, and if true, return the direction of the wall (north, south, east, west, up, down; null if not a wall)
         int x = pos.getX() -(getEyeId() - 1) * ROOM_SPACING;
-        if (x == ROOM_OFFSET_X + getWallOffset(room, Direction.EAST)) return Direction.byLong(1, 0, 0);
-        if (x == ROOM_OFFSET_X - getWallOffset(room, Direction.WEST)) return Direction.byLong(-1, 0, 0);
+        if (x == ROOM_OFFSET_X + getWallOffset(room, Direction.EAST)) return Direction.fromNormal(1, 0, 0);
+        if (x == ROOM_OFFSET_X - getWallOffset(room, Direction.WEST)) return Direction.fromNormal(-1, 0, 0);
         int y = pos.getY();
-        if (y == ROOM_CENTER_Y + getWallOffset(room, Direction.UP)) return Direction.byLong(0, 1, 0);
-        if (y == ROOM_CENTER_Y - getWallOffset(room, Direction.DOWN)) return Direction.byLong(0, -1, 0);
+        if (y == ROOM_CENTER_Y + getWallOffset(room, Direction.UP)) return Direction.fromNormal(0, 1, 0);
+        if (y == ROOM_CENTER_Y - getWallOffset(room, Direction.DOWN)) return Direction.fromNormal(0, -1, 0);
         int z = pos.getZ() -room * ROOM_SPACING;
-        if (z == ROOM_OFFSET_Z + getWallOffset(room, Direction.SOUTH)) return Direction.byLong(0, 0, 1);
-        if (z == ROOM_OFFSET_Z - getWallOffset(room, Direction.NORTH)) return Direction.byLong(0, 0, -1);
+        if (z == ROOM_OFFSET_Z + getWallOffset(room, Direction.SOUTH)) return Direction.fromNormal(0, 0, 1);
+        if (z == ROOM_OFFSET_Z - getWallOffset(room, Direction.NORTH)) return Direction.fromNormal(0, 0, -1);
         return null;
     }
 
@@ -447,10 +514,16 @@ public class SubRoomsManager extends WorldSavedDataManager.EyeWorldSavedData {
         if (room == null) { //test if the room exists, do nothing with the value
             room = subRooms.size();
             posToSubRoomId.put(targetRoom, room); //create the double link
-            BlockPos center = getEyePos(getEyeId()).add(0, 0, ROOM_SPACING * room);
+            BlockPos center = getEyePos(getEyeId()).offset(0, 0, ROOM_SPACING * room);
             subRooms.add(room, new SubRoomData().setCenter(center).setPos(targetRoom).setRadius(DEFAULT_RADIUS_SUB_ROOMS, null));
             WorldUtils.buildRoom(world, center, DEFAULT_RADIUS_SUB_ROOMS); //build the room
-            markDirty();
+            if (isLoaded && world instanceof ServerWorld) {
+                ServerWorld w = (ServerWorld) world;
+                DimBagData dbd = DimBagData.get();
+                if (dbd != null)
+                    subRooms.get(room).getComposingChunks().forEach(c->dbd.chunkloadder.loadChunk(w, c.x, c.z, 0));
+            }
+            setDirty();
         }
         return room;
     }
@@ -458,7 +531,7 @@ public class SubRoomsManager extends WorldSavedDataManager.EyeWorldSavedData {
     //get all wall blocks positions that need an overlay (telling where the next room is to place tunnels)
     public static List<Pair<BlockPos, Boolean>> collectPlacerOverlays(ClientPlayerEntity player, ItemStack tunnel) {
         List<Pair<BlockPos, Boolean>> out = new ArrayList<>();
-        Pair<Integer, Integer> pr = SubRoomsManager.getRoomIds(player.world, player.getPosition(), false, false).orElse(new Pair<>(0, 0));
+        Pair<Integer, Integer> pr = SubRoomsManager.getRoomIds(player.level, player.blockPosition(), false, false).orElse(new Pair<>(0, 0));
         if (pr.getKey() == 0) return out;
         SubRoomsManager data = SubRoomsManager.getInstance(pr.getKey());
         if (data == null) return out;
@@ -469,21 +542,21 @@ public class SubRoomsManager extends WorldSavedDataManager.EyeWorldSavedData {
         int room1 = NBTUtils.getOrDefault(nbt, "Room1", -1);
         int room2 = NBTUtils.getOrDefault(nbt, "Room2", -1);
         boolean forceFalse = (nid != -1 && room1 != -1 && room2 != -1 && (nid != pr.getKey() || !(room1 == pr.getValue() || room2 == pr.getValue())));
-        for (int x = player.getPosition().getX() - 6; x <= player.getPosition().getX() + 6; ++x)
-            for (int y = player.getPosition().getY() - 5; y <= player.getPosition().getY() + 8; ++y)
-                for (int z = player.getPosition().getZ() - 6; z <= player.getPosition().getZ() + 6; ++z) {
+        for (int x = player.blockPosition().getX() - 6; x <= player.blockPosition().getX() + 6; ++x)
+            for (int y = player.blockPosition().getY() - 5; y <= player.blockPosition().getY() + 8; ++y)
+                for (int z = player.blockPosition().getZ() - 6; z <= player.blockPosition().getZ() + 6; ++z) {
                     BlockPos tested = new BlockPos(x, y, z);
-                    if (srdr.isInWall(tested) && !(player.world.getBlockState(tested).getBlock() instanceof Tunnel)) {
+                    if (srdr.isInWall(tested) && !(player.level.getBlockState(tested).getBlock() instanceof Tunnel)) {
                         boolean valid = false;
                         if (!forceFalse) {
                             Direction dir = data.wall(tested, pr.getValue()); //which wall the tunnel was placed on
                             if (dir != null) {
-                                BlockPos targetRoom = new BlockPos(coord.getX() + dir.getXOffset(), coord.getY() + dir.getYOffset(), coord.getZ() + dir.getZOffset()); //virtual coordinates of the targeted room
+                                BlockPos targetRoom = new BlockPos(coord.getX() + dir.getStepX(), coord.getY() + dir.getStepY(), coord.getZ() + dir.getStepZ()); //virtual coordinates of the targeted room
                                 Integer targetRoomId = data.posToSubRoomId.get(targetRoom);
                                 SubRoomData targetSrd;
                                 if (targetRoomId == null) {
                                     targetRoomId = data.subRooms.size();
-                                    BlockPos center = getEyePos(pr.getKey()).add(0, 0, ROOM_SPACING * targetRoomId);
+                                    BlockPos center = getEyePos(pr.getKey()).offset(0, 0, ROOM_SPACING * targetRoomId);
                                     targetSrd = new SubRoomData().setCenter(center).setPos(targetRoom).setRadius(DEFAULT_RADIUS_SUB_ROOMS, null);
                                 } else
                                     targetSrd = data.subRooms.get(targetRoomId);
@@ -512,7 +585,7 @@ public class SubRoomsManager extends WorldSavedDataManager.EyeWorldSavedData {
         Vector3i coord = data.subRooms.get(room).pos; //virtual coordinates of the current room
         Direction wall = data.wall(tunnel, room); //which wall the tunnel was placed on
         if (wall == null) return false;
-        BlockPos targetRoom = new BlockPos(coord.getX() + wall.getXOffset(), coord.getY() + wall.getYOffset(), coord.getZ() + wall.getZOffset()); //virtual coordinates of the targeted room
+        BlockPos targetRoom = new BlockPos(coord.getX() + wall.getStepX(), coord.getY() + wall.getStepY(), coord.getZ() + wall.getStepZ()); //virtual coordinates of the targeted room
         Integer targetRoomId;
         if (create)
             targetRoomId = data.createSubRoom(world, targetRoom); //build the room (if necessary)
@@ -533,12 +606,12 @@ public class SubRoomsManager extends WorldSavedDataManager.EyeWorldSavedData {
         if (create)
             WorldUtils.replaceBlockAndGiveBack(output, Registries.getBlock(Tunnel.NAME), (PlayerEntity)entity);
         else if (destroy)
-            world.setBlockState(output, Registries.getBlock(Wall.NAME).getDefaultState()); //destroy the tunnel
+            world.setBlock(output, Registries.getBlock(Wall.NAME).defaultBlockState(), Constants.BlockFlags.DEFAULT_AND_RERENDER); //destroy the tunnel
         else {
-            output = output.offset(wall);
-            if (entity instanceof PlayerEntity && world.getBlockState(output.offset(Direction.DOWN)).getBlock() == Blocks.AIR) //special code to try to keep the tunnel at eye level of a player on teleport
-                output = output.offset(Direction.DOWN);
-            WorldUtils.teleportEntity(entity, world.getDimensionKey(), output); //teleport the entity next to the portal
+            output = output.offset(wall.getNormal());
+            if (entity instanceof PlayerEntity && world.getBlockState(output.offset(Direction.DOWN.getNormal())).getBlock() == Blocks.AIR) //special code to try to keep the tunnel at eye level of a player on teleport
+                output = output.offset(Direction.DOWN.getNormal());
+            WorldUtils.teleportEntity(entity, world.dimension(), output); //teleport the entity next to the portal
         }
         return true;
     }
@@ -562,16 +635,16 @@ public class SubRoomsManager extends WorldSavedDataManager.EyeWorldSavedData {
         SubRoomData srd = data.subRooms.get(room);
         int off = srd.getWallOffset(wall);
         if (off >= MAX_RADIUS) return false;
-        BlockState airState = Blocks.AIR.getDefaultState();
-        BlockState gatewayState = Registries.getBlock(BagGateway.NAME).getDefaultState();
+        BlockState airState = Blocks.AIR.defaultBlockState();
+        BlockState gatewayState = Registries.getBlock(BagGateway.NAME).defaultBlockState();
         /**first we clone walls*/
-        iterateBlockPos(srd.getWallCorner1(wall, 0, 0),srd.getWallCorner2(wall, 0, 0), p->world.setBlockState(p.add(wall.getDirectionVec()), world.getBlockState(p)));
+        iterateBlockPos(srd.getWallCorner1(wall, 0, 0),srd.getWallCorner2(wall, 0, 0), p->world.setBlock(p.offset(wall.getNormal()), world.getBlockState(p), Constants.BlockFlags.DEFAULT_AND_RERENDER));
         /**second we carve inside the old walls*/
-        iterateBlockPos(srd.getWallCorner1(wall, 0, -1),srd.getWallCorner2(wall, 0, -1), p->world.setBlockState(p, airState));
+        iterateBlockPos(srd.getWallCorner1(wall, 0, -1),srd.getWallCorner2(wall, 0, -1), p->world.setBlock(p, airState, Constants.BlockFlags.DEFAULT_AND_RERENDER));
         /**third we add the new gateways*/
-        iterateBlockPos(srd.getWallCorner1(wall, 2, 1),srd.getWallCorner2(wall, 2, 1), p->world.setBlockState(p, gatewayState));
+        iterateBlockPos(srd.getWallCorner1(wall, 2, 1),srd.getWallCorner2(wall, 2, 1), p->world.setBlock(p, gatewayState, Constants.BlockFlags.DEFAULT_AND_RERENDER));
         srd.setWallOffset(wall, off + 1);
-        data.markDirty();
+        data.setDirty();
         return true;
     }
 
@@ -580,12 +653,13 @@ public class SubRoomsManager extends WorldSavedDataManager.EyeWorldSavedData {
     }
 
     @Override
-    public void read(CompoundNBT nbt) {
+    public void load(CompoundNBT nbt) {
         ListNBT listSubRooms = nbt.getList("SubRooms", 10);
         subRooms = new ArrayList<>();
         posToSubRoomId = new HashMap<>();
         activePads = new ArrayList<>();
         selectedPad = nbt.getInt("SelectedPad");
+        isLoaded = nbt.getBoolean("IsLoaded");
         for (int i = 0; i < listSubRooms.size(); ++i) {
             CompoundNBT entry = listSubRooms.getCompound(i);
             subRooms.add(i, SubRoomData.fromNBT(entry));
@@ -596,7 +670,7 @@ public class SubRoomsManager extends WorldSavedDataManager.EyeWorldSavedData {
     }
 
     @Override
-    public CompoundNBT write(CompoundNBT nbt) {
+    public CompoundNBT save(CompoundNBT nbt) {
         ListNBT listSubRooms = new ListNBT();
         for (SubRoomData li : subRooms)
             listSubRooms.add(li.toNBT());
@@ -611,18 +685,13 @@ public class SubRoomsManager extends WorldSavedDataManager.EyeWorldSavedData {
         }
         nbt.put("ActivePads", pads);
         nbt.putInt("SelectedPad", selectedPad);
+        nbt.putBoolean("IsLoaded", isLoaded);
         return nbt;
     }
 
-    static public SubRoomsManager getInstance(int id) {
-        return WorldSavedDataManager.getInstance(SubRoomsManager.class, null, id);
-    }
+    static public SubRoomsManager getInstance(int id) { return WorldSavedDataManager.getInstance(SubRoomsManager.class, id); }
 
-    static public <T> T execute(int id, Function<SubRoomsManager, T> executable, T onErrorReturn) {
-        return WorldSavedDataManager.execute(SubRoomsManager.class, null, id, executable, onErrorReturn);
-    }
+    static public <T> T execute(int id, Function<SubRoomsManager, T> executable, T onErrorReturn) { return WorldSavedDataManager.execute(SubRoomsManager.class, id, executable, onErrorReturn); }
 
-    static public boolean execute(int id, Consumer<SubRoomsManager> executable) {
-        return WorldSavedDataManager.execute(SubRoomsManager.class, null, id, data->{executable.accept(data); return true;}, false);
-    }
+    static public boolean execute(int id, Consumer<SubRoomsManager> executable) { return WorldSavedDataManager.execute(SubRoomsManager.class, id, data->{executable.accept(data); return true;}, false); }
 }

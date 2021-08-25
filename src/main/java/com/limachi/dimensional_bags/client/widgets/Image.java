@@ -4,6 +4,7 @@ import com.limachi.dimensional_bags.client.render.TextureCutout;
 import com.mojang.blaze3d.matrix.MatrixStack;
 
 public class Image extends Base {
+    /*
     TextureCutout[] frames;
     int frameRate;
     int currentFrame = 0;
@@ -40,5 +41,5 @@ public class Image extends Base {
     @Override
     public void onRender(MatrixStack matrixStack, int mouseX, int mouseY, float partialTicks) {
         frames[currentFrame].blit(matrixStack, coords, getScreen().getBlitOffset(), TextureCutout.TextureApplicationPattern.STRETCH);
-    }
+    }*/
 }

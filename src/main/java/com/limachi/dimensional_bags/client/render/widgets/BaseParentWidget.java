@@ -21,7 +21,7 @@ public class BaseParentWidget extends TextWidget {
     protected final SimpleContainerScreen<?> parentScreen;
 
     public BaseParentWidget(int x, int y, int width, int height, ITextComponent title, SimpleContainerScreen<?> parentScreen) {
-        super(x, y, width, height, MINECRAFT.fontRenderer, title, 0xFFFFFF);
+        super(x, y, width, height, MINECRAFT.font, title, 0xFFFFFF);
         this.parentScreen = parentScreen;
     }
 
@@ -48,8 +48,8 @@ public class BaseParentWidget extends TextWidget {
     }
 
     @Override
-    public void renderWidget(MatrixStack matrixStack, int mouseX, int mouseY, float partialTicks) {
-        super.renderWidget(matrixStack, mouseX, mouseY, partialTicks);
+    public void renderButton(MatrixStack matrixStack, int mouseX, int mouseY, float partialTicks) {
+        super.renderButton(matrixStack, mouseX, mouseY, partialTicks);
         glEnable(GL_SCISSOR_TEST);
         scissor(x, y, width, height); //make sure the children widgets will not 'bleed' outside the parent
         isRenderingChildren = true; //trick to signify to children that they are allowed to render (by checking the state of the parent)

@@ -10,6 +10,7 @@ import com.limachi.dimensional_bags.common.readers.EntityReader;
 import net.minecraft.entity.Entity;
 
 import com.limachi.dimensional_bags.StaticInit;
+import net.minecraftforge.common.util.Constants;
 
 @StaticInit
 public class BrainTileEntity extends BaseTileEntity implements IisBagTE {
@@ -26,26 +27,26 @@ public class BrainTileEntity extends BaseTileEntity implements IisBagTE {
 //    private String command = EntityReader.Commands.RANGE.name() + ";fall_distance;-0.1;5;"; //test if the user is falling (the longer the distance, the stronger the signal)
     private int cachedPower = 0;
 
-    public BrainTileEntity() { super(Registries.getTileEntityType(NAME)); }
+    public BrainTileEntity() { super(Registries.getBlockEntityType(NAME)); }
 
     public String getCommand() { return getTileData().getString(NBT_KEY_COMMAND); }
 
-    public void setCommand(String command) { getTileData().putString(NBT_KEY_COMMAND, command); markDirty(); }
+    public void setCommand(String command) { getTileData().putString(NBT_KEY_COMMAND, command); setChanged(); }
 
     public Entity getHolder() {
-        return HolderData.execute(SubRoomsManager.getEyeId(world, pos, false), HolderData::getEntity, null);
+        return HolderData.execute(SubRoomsManager.getEyeId(level, worldPosition, false), HolderData::getEntity, null);
     }
 
     @Override
     public void tick(int tick) {
-        if (world == null || !DimBag.isServer(world) || (tick % 4) != 0) return;
+        if (level == null || !DimBag.isServer(level) || (tick % 4) != 0) return;
         Entity holder = getHolder();
         String command = getCommand();
-        if (holder != null && command.length() != 0 && EnergyData.execute(SubRoomsManager.getEyeId(world, pos, false), energyData -> energyData.extractEnergy(8, true) == 8, false)) {
-            EnergyData.execute(SubRoomsManager.getEyeId(world, pos, false), energyData -> energyData.extractEnergy(8, false));
+        if (holder != null && command.length() != 0 && EnergyData.execute(SubRoomsManager.getEyeId(level, worldPosition, false), energyData -> energyData.extractEnergy(8, true) == 8, false)) {
+            EnergyData.execute(SubRoomsManager.getEyeId(level, worldPosition, false), energyData -> energyData.extractEnergy(8, false));
             int r = new EntityReader(holder).redstoneFromCommand(command);
             if (r != cachedPower) {
-                world.setBlockState(pos, getBlockState().with(Brain.POWER, r));
+                level.setBlock(worldPosition, getBlockState().setValue(Brain.POWER, r), Constants.BlockFlags.DEFAULT_AND_RERENDER);
                 cachedPower = r;
             }
         }

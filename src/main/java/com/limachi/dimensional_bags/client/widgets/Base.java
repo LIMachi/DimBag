@@ -13,7 +13,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 public class Base {
-
+/*
     public static final Matrix4f DEFAULT_TRANSFORM = new Matrix4f(new float[]{1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1});
 
     public boolean isCut;
@@ -78,7 +78,7 @@ public class Base {
     public boolean onKeyReleased(int keyCode, int scanCode, int modifiers) { return false; }
     public boolean onCharTyped(char codePoint, int modifiers) { return false; }
 
-    public boolean isFocused() { return /*screen(s->s.getFocusedWidget() == this, false)*/false; }
+    public boolean isFocused() { return screen(s->s.getFocusedWidget() == this, false); }
     public boolean isHovered() { return isHovered; }
 
     public double getInitialDragX() { return initialDragX; }
@@ -227,11 +227,11 @@ public class Base {
         return !isFocused() && onCharTyped(codePoint, modifiers);
     }
 
-    public final boolean changeFocus(boolean isFocused) {/*
+    public final boolean changeFocus(boolean isFocused) {
         if (isFocused)
             screen(s->s.setFocusedWidget(this));
         else if (isFocused())
-            screen(s->s.setFocusedWidget(null));*/
+            screen(s->s.setFocusedWidget(null));
         return isFocused;
     }
 
@@ -239,5 +239,5 @@ public class Base {
         if (!isActive) return false;
         Box2d b = getTransformedCoords();
         return isHovered = mouseX >= b.getX1() && mouseX <= b.getX2() && mouseY >= b.getY1() && mouseY <= b.getY2();
-    }
+    }*/
 }

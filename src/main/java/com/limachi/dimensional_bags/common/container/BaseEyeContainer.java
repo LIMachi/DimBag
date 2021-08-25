@@ -4,6 +4,8 @@ import com.limachi.dimensional_bags.common.Registries;
 import com.limachi.dimensional_bags.common.data.EyeDataMK2.SubRoomsManager;
 import com.limachi.dimensional_bags.common.entities.BagEntity;
 import com.limachi.dimensional_bags.common.items.Bag;
+import com.limachi.dimensional_bags.common.tileentities.BagProxyTileEntity;
+import com.limachi.dimensional_bags.utils.WorldUtils;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.inventory.container.ContainerType;
@@ -32,8 +34,10 @@ public abstract class BaseEyeContainer<C extends BaseContainer<C>> extends BaseC
     public void writeToBuff(PacketBuffer buff) { buff.writeInt(eyeId); }
 
     @Override
-    public boolean canInteractWith(@Nonnull PlayerEntity playerIn) { //can interact if: player has bag on itself, player is inside the bag, or player is close to a bag entity (4 blocks)
-        if (Bag.hasBag(eyeId, playerIn) || eyeId == SubRoomsManager.getEyeId(playerIn.world, playerIn.getPosition(), false)) return true;
-        return !playerIn.world.getEntitiesWithinAABB(Registries.getEntityType(BagEntity.NAME), new AxisAlignedBB(playerIn.getPosition().add(-4, -4, -4), playerIn.getPosition().add(4, 4, 4)), entity -> ((BagEntity)entity).getEyeId() == eyeId && entity.getPositionVec().distanceTo(playerIn.getPositionVec()) < 4).isEmpty();
+    public boolean stillValid(@Nonnull PlayerEntity playerIn) { //can interact if: player has bag on itself, player is inside the bag, or player is close to a bag entity (4 blocks)
+        if (Bag.hasBag(eyeId, playerIn) || eyeId == SubRoomsManager.getEyeId(playerIn.level, playerIn.blockPosition(), false)) return true;
+        AxisAlignedBB area = new AxisAlignedBB(playerIn.blockPosition().offset(-4, -4, -4), playerIn.blockPosition().offset(4, 4, 4));
+        if (!WorldUtils.getTileEntitiesWithinAABB(playerIn.level, BagProxyTileEntity.class, area, te->te.eyeId() == eyeId).isEmpty()) return true;
+        return !playerIn.level.getEntities(Registries.getEntityType(BagEntity.NAME), area, entity -> ((BagEntity)entity).getEyeId() == eyeId).isEmpty();
     }
 }

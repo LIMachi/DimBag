@@ -32,7 +32,7 @@ public class ParentToggleWidget extends BaseParentWidget {
     public void setHeightOpened(int value) { heightOpened = value; }
 
     @Override
-    public void renderWidget(MatrixStack matrixStack, int mouseX, int mouseY, float partialTicks) {
+    public void renderButton(MatrixStack matrixStack, int mouseX, int mouseY, float partialTicks) {
         if (isSelected) {
             glEnable(GL_SCISSOR_TEST);
             scissor(x, y + heightClosed, width, heightOpened - heightClosed); //make sure the children widgets will not 'bleed' outside the parent
@@ -43,7 +43,7 @@ public class ParentToggleWidget extends BaseParentWidget {
             glDisable(GL_SCISSOR_TEST);
             renderStandardBackground(matrixStack, partialTicks, x, y, width, heightClosed, active, isHovered ? HOVERED : 0);
         }
-        font.drawText(matrixStack, text, x + 3, y + (heightClosed - font.FONT_HEIGHT) / 2.f, color);
+        font.draw(matrixStack, text, x + 3, y + (heightClosed - font.lineHeight) / 2.f, color);
     }
 
     @Override

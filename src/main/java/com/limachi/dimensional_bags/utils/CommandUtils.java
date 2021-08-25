@@ -10,7 +10,7 @@ import net.minecraft.util.SoundEvents;
 import java.util.Collection;
 
 public class CommandUtils {
-
+/*
     public static void give(Collection<PlayerEntity> targets, ItemStack stack) { //based on GiveCommand::giveItem
         for(PlayerEntity playerentity : targets) {
             if (!(playerentity instanceof ServerPlayerEntity)) continue; //tricky way of allowing this method to run client side
@@ -20,7 +20,7 @@ public class CommandUtils {
                 i -= j;
                 ItemStack itemstack = stack.copy();
                 stack.setCount(j);
-                boolean flag = playerentity.inventory.addItemStackToInventory(itemstack);
+                boolean flag = playerentity.inventory.addItem(itemstack);
                 if (flag && itemstack.isEmpty()) {
                     itemstack.setCount(1);
                     ItemEntity itementity1 = playerentity.dropItem(itemstack, false);
@@ -29,15 +29,15 @@ public class CommandUtils {
                     }
 
                     playerentity.world.playSound((PlayerEntity)null, playerentity.getPosX(), playerentity.getPosY(), playerentity.getPosZ(), SoundEvents.ENTITY_ITEM_PICKUP, SoundCategory.PLAYERS, 0.2F, ((playerentity.getRNG().nextFloat() - playerentity.getRNG().nextFloat()) * 0.7F + 1.0F) * 2.0F);
-                    playerentity.container.detectAndSendChanges();
+                    playerentity.container.broadcastChanges();
                 } else {
                     ItemEntity itementity = playerentity.dropItem(itemstack, false);
                     if (itementity != null) {
                         itementity.setNoPickupDelay();
-                        itementity.setOwnerId(playerentity.getUniqueID());
+                        itementity.setOwnerId(playerentity.getUUID());
                     }
                 }
             }
         }
-    }
+    }*/
 }

@@ -23,13 +23,15 @@ public abstract class BaseTileEntity extends TileEntity implements ITickableTile
 
     protected boolean hasTileData = true; //does this tile hold data that hould be sync and saved (rendering/ticking entities don't always need to store data to disc)
     protected boolean updateUpstream = false; //can this tile be modified client side and should be sync back to the server?
-    private BlockState cachedBlockState; //used to shunt the 'private' nature of cachedBlockState in TileEntity (only used in 3 methods: getBlockState, updateContainingBlockInfo and markDirty)
+    private BlockState cachedBlockState; //used to shunt the 'private' nature of cachedBlockState in TileEntity (only used in 3 methods: getBlockState, updateContainingBlockInfo and setChanged)
     private CompoundNBT customTileData; //same as the blockstate, we need this to rewrite the way the custom tile data is handled
     private CompoundNBT cachedData; //used to test if the customTileData was changed and produce a diff (a diff is a special CompoundNBT that should be interpreted)
     private int tick = -1;
     private boolean isDirty;
 
     public BaseTileEntity(TileEntityType<?> tileEntityTypeIn) { super(tileEntityTypeIn); }
+
+    public boolean hasTileData() { return hasTileData; }
 
     public boolean hasComparatorOutput() { return false; }
 
@@ -38,14 +40,27 @@ public abstract class BaseTileEntity extends TileEntity implements ITickableTile
      */
     public boolean validateUpstreamUpdate(CompoundNBT nbt) { return true; }
 
+    protected void afterTileDataUpdate() {}
+
     @Override
-    final public void read(BlockState state, CompoundNBT nbt) {
-        if (nbt.contains("X") && nbt.contains("Y") && nbt.contains("Z")) pos = new BlockPos(nbt.getInt("x"), nbt.getInt("y"), nbt.getInt("z"));
+    final public void load(BlockState state, CompoundNBT nbt) {
+        if (nbt.contains("x") && nbt.contains("y") && nbt.contains("z")) worldPosition = new BlockPos(nbt.getInt("x"), nbt.getInt("y"), nbt.getInt("z"));
         if (nbt.contains("ForgeData")) {
             customTileData = nbt.getCompound("ForgeData");
             cachedData = customTileData.copy();
+            afterTileDataUpdate();
         }
         if (getCapabilities() != null && nbt.contains("ForgeCaps")) deserializeCaps(nbt.getCompound("ForgeCaps"));
+    }
+
+    final public CompoundNBT populateBlockEntityTag() {
+        CompoundNBT out = new CompoundNBT();
+        if (customTileData != null && !customTileData.isEmpty()) out.put("ForgeData", customTileData.copy());
+        if (getCapabilities() != null) {
+            CompoundNBT caps = serializeCaps();
+            if (caps != null && !caps.isEmpty()) out.put("ForgeCaps", caps);
+        }
+        return out;
     }
 
     /**
@@ -65,65 +80,68 @@ public abstract class BaseTileEntity extends TileEntity implements ITickableTile
     }
 
     @Override
-    final public CompoundNBT write(CompoundNBT compound) {
-        ResourceLocation resourcelocation = TileEntityType.getId(this.getType());
+    final public CompoundNBT save(CompoundNBT compound) {
+        ResourceLocation resourcelocation = TileEntityType.getKey(this.getType());
         if (resourcelocation == null) {
             throw new RuntimeException(this.getClass() + " is missing a mapping! This is a bug!");
         } else {
             compound.putString("id", resourcelocation.toString());
-            compound.putInt("x", this.pos.getX());
-            compound.putInt("y", this.pos.getY());
-            compound.putInt("z", this.pos.getZ());
-            if (this.customTileData != null) compound.put("ForgeData", this.customTileData);
-            if (getCapabilities() != null) compound.put("ForgeCaps", serializeCaps());
+            compound.putInt("x", worldPosition.getX());
+            compound.putInt("y", worldPosition.getY());
+            compound.putInt("z", worldPosition.getZ());
+            if (customTileData != null && !customTileData.isEmpty()) compound.put("ForgeData", this.customTileData);
+            if (getCapabilities() != null) {
+                CompoundNBT caps = serializeCaps();
+                if (caps != null && !caps.isEmpty()) compound.put("ForgeCaps", caps);
+            }
             return compound;
         }
     }
 
-    final public boolean isClient() { return world != null && world.isRemote(); }
+    final public boolean isClient() { return level != null && level.isClientSide(); }
 
     final public boolean shouldUpdateData() { return customTileData != null && !customTileData.equals(cachedData); }
 
     @Override
-    final public void markDirty() { isDirty = true; }
+    final public void setChanged() { isDirty = true; }
 
     final protected void processMarkDirty(boolean reloadCache) {
-        if (world != null && isDirty) {
+        if (level != null && isDirty) {
             if (reloadCache)
-                cachedBlockState = world.getBlockState(pos);
-            world.markChunkDirty(pos, this);
+                cachedBlockState = level.getBlockState(worldPosition);
+            level.blockEntityChanged(worldPosition, this);
             if (hasComparatorOutput() && !isClient())
-                world.updateComparatorOutputLevel(pos, cachedBlockState.getBlock());
+                level.updateNeighbourForOutputSignal(worldPosition, cachedBlockState.getBlock());
             if (updateUpstream && hasTileData && isClient() && shouldUpdateData())
-                PacketHandler.toServer(new UpstreamTileUpdateMsg(pos, getTileData()));
+                PacketHandler.toServer(new UpstreamTileUpdateMsg(worldPosition, getTileData()));
             isDirty = false;
         }
     }
 
     @Override
     final public BlockState getBlockState() {
-        if (cachedBlockState == null && world != null)
-            cachedBlockState = world.getBlockState(pos);
+        if (cachedBlockState == null && level != null)
+            cachedBlockState = level.getBlockState(worldPosition);
         return cachedBlockState;
     }
 
     @Override
-    final public void updateContainingBlockInfo() { cachedBlockState = null; }
+    final public void clearCache() { cachedBlockState = null; }
 
     @Override
-    final public SUpdateTileEntityPacket getUpdatePacket() { return hasTileData && shouldUpdateData() ? new SUpdateTileEntityPacket(getPos(), 0, getTileData()) : null; }
+    final public SUpdateTileEntityPacket getUpdatePacket() { return hasTileData && shouldUpdateData() ? new SUpdateTileEntityPacket(worldPosition, 0, getTileData()) : null; }
 
     @Override
-    final public void onDataPacket(NetworkManager net, SUpdateTileEntityPacket pkt) { if (hasTileData) readDataPacket(pkt.getNbtCompound()); }
+    final public void onDataPacket(NetworkManager net, SUpdateTileEntityPacket pkt) { if (hasTileData) readDataPacket(pkt.getTag()); }
 
     @Nonnull
     @Override
-    final public CompoundNBT getUpdateTag() { return write(new CompoundNBT()); }
+    final public CompoundNBT getUpdateTag() { return save(new CompoundNBT()); }
 
     @Override
-    final public void handleUpdateTag(BlockState state, CompoundNBT tag) { read(state, tag); }
+    final public void handleUpdateTag(BlockState state, CompoundNBT tag) { load(state, tag); }
 
-    final public void readDataPacket(CompoundNBT nbt) { customTileData = nbt; cachedData = nbt.copy(); }
+    final public void readDataPacket(CompoundNBT nbt) { customTileData = nbt; cachedData = nbt.copy(); afterTileDataUpdate(); }
 
     @Override
     final public CompoundNBT getTileData() {

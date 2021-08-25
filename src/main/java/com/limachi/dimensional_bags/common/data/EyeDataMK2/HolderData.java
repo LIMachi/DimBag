@@ -1,12 +1,11 @@
 package com.limachi.dimensional_bags.common.data.EyeDataMK2;
 
 import com.limachi.dimensional_bags.DimBag;
+import com.limachi.dimensional_bags.common.inventory.EntityInventoryProxy;
 import com.limachi.dimensional_bags.utils.UUIDUtils;
 import com.limachi.dimensional_bags.utils.WorldUtils;
 import com.limachi.dimensional_bags.common.data.IEyeIdHolder;
 import net.minecraft.entity.Entity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.util.RegistryKey;
 import net.minecraft.util.math.BlockPos;
@@ -22,6 +21,7 @@ import java.util.function.Function;
 
 public class HolderData extends WorldSavedDataManager.EyeWorldSavedData {
 
+    private EntityInventoryProxy invProxy = new EntityInventoryProxy(null);
     private WeakReference<Entity> holderRef = new WeakReference<>(null);
     private UUID id = UUIDUtils.NULL_UUID;
     private String name = "";
@@ -34,16 +34,17 @@ public class HolderData extends WorldSavedDataManager.EyeWorldSavedData {
 
     public void setHolder(Entity entity) {
         boolean dirty = false;
-        if (entity != null && getEyeId() != SubRoomsManager.getEyeId(entity.getEntityWorld(), entity.getPosition(), false) && (!entity.getPositionVec().equals(lastKnownPosition) || !entity.getEntityWorld().getDimensionKey().equals(lastKnownDimension))) {
-            lastKnownPosition = entity.getPositionVec();
-            lastKnownDimension = entity.getEntityWorld().getDimensionKey();
+        if (entity != null && getEyeId() != SubRoomsManager.getEyeId(entity.level, entity.blockPosition(), false) && (!entity.position().equals(lastKnownPosition) || !entity.level.dimension().equals(lastKnownDimension))) {
+            lastKnownPosition = entity.position();
+            lastKnownDimension = entity.level.dimension();
             dirty = true;
         }
         if (holderRef.get() != entity) {
             holderRef = new WeakReference<>(entity);
+            invProxy.setEntity(entity);
             if (entity != null) {
                 name = entity.getDisplayName().getString();
-                id = entity.getUniqueID();
+                id = entity.getUUID();
             } else {
                 name = "";
                 id = UUIDUtils.NULL_UUID;
@@ -51,14 +52,7 @@ public class HolderData extends WorldSavedDataManager.EyeWorldSavedData {
             dirty = true;
         }
         if (dirty)
-            markDirty();
-    }
-
-    public PlayerInventory getPlayerInventory() {
-        Entity e = holderRef.get();
-        if (e instanceof PlayerEntity)
-            return ((PlayerEntity)e).inventory;
-        return null;
+            setDirty();
     }
 
     public RegistryKey<World> getLastKnownDimension() { return lastKnownDimension; }
@@ -79,6 +73,8 @@ public class HolderData extends WorldSavedDataManager.EyeWorldSavedData {
         return null;
     }
 
+    public EntityInventoryProxy getEntityInventory() { return invProxy; }
+
     /**
      * @return if available (not removed from the chunk), return the last known holder of this eye, will load the chunk to refresh the reference of the holder if needed
      */
@@ -93,8 +89,9 @@ public class HolderData extends WorldSavedDataManager.EyeWorldSavedData {
                 entity = WorldUtils.getEntityByUUIDInChunk((Chunk) world.getChunk(new BlockPos(lastKnownPosition)), id);
                 if (entity != null && !entity.removed) {
                     holderRef = new WeakReference<>(entity);
+                    invProxy.setEntity(entity);
                     name = entity.getDisplayName().getString();
-                    lastKnownPosition = entity.getPositionVec();
+                    lastKnownPosition = entity.position();
                 }
             }
         }
@@ -124,19 +121,20 @@ public class HolderData extends WorldSavedDataManager.EyeWorldSavedData {
     public UUID getEntityUUID() { return id; }
 
     @Override
-    public void read(CompoundNBT nbt) {
-        id = nbt.getUniqueId("Id");
+    public void load(CompoundNBT nbt) {
+        id = nbt.getUUID("Id");
         name = nbt.getString("Name");
         lastKnownDimension = WorldUtils.stringToWorldRK(nbt.getString("Dimension"));
         lastKnownPosition = new Vector3d(nbt.getDouble("X"), nbt.getDouble("Y"), nbt.getDouble("Z"));
         holderRef = new WeakReference<>(null);
+        invProxy.setEntity(null);
         if (!id.equals(UUIDUtils.NULL_UUID) && lastKnownPosition != null && lastKnownDimension != null)
             getEntityForceLoad();
     }
 
     @Override
-    public CompoundNBT write(CompoundNBT nbt) {
-        nbt.putUniqueId("Id", id);
+    public CompoundNBT save(CompoundNBT nbt) {
+        nbt.putUUID("Id", id);
         nbt.putString("Name", name);
         if (lastKnownPosition != null) {
             nbt.putDouble("X", lastKnownPosition.x);
@@ -148,15 +146,9 @@ public class HolderData extends WorldSavedDataManager.EyeWorldSavedData {
         return nbt;
     }
 
-    static public HolderData getInstance(int id) {
-        return WorldSavedDataManager.getInstance(HolderData.class, null, id);
-    }
+    static public HolderData getInstance(int id) { return WorldSavedDataManager.getInstance(HolderData.class, id); }
 
-    static public <T> T execute(int id, Function<HolderData, T> executable, T onErrorReturn) {
-        return WorldSavedDataManager.execute(HolderData.class, null, id, executable, onErrorReturn);
-    }
+    static public <T> T execute(int id, Function<HolderData, T> executable, T onErrorReturn) { return WorldSavedDataManager.execute(HolderData.class, id, executable, onErrorReturn); }
 
-    static public boolean execute(int id, Consumer<HolderData> executable) {
-        return WorldSavedDataManager.execute(HolderData.class, null, id, data->{executable.accept(data); return true;}, false);
-    }
+    static public boolean execute(int id, Consumer<HolderData> executable) { return WorldSavedDataManager.execute(HolderData.class, id, data->{executable.accept(data); return true;}, false); }
 }

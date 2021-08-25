@@ -31,7 +31,7 @@ public class PadContainer extends BaseEyeContainer<PadContainer> {
     @Override
     public void readFromBuff(PacketBuffer buff) {
         super.readFromBuff(buff);
-        TileEntity t = playerInv.player.world.getTileEntity(buff.readBlockPos());
+        TileEntity t = playerInv.player.level.getBlockEntity(buff.readBlockPos());
         if (t instanceof PadTileEntity)
             this.te = (PadTileEntity)t;
         else
@@ -42,14 +42,14 @@ public class PadContainer extends BaseEyeContainer<PadContainer> {
     public void writeToBuff(PacketBuffer buff) {
         super.writeToBuff(buff);
         if (te != null)
-            buff.writeBlockPos(te.getPos());
+            buff.writeBlockPos(te.getBlockPos());
         else
             buff.writeBlockPos(new BlockPos(0, -1, 0));
     }
 
     public PadContainer(int windowId, PlayerInventory playerInv, PacketBuffer extraData) {
         super(Registries.getContainerType(NAME), windowId, playerInv, extraData);
-        TileEntity t = playerInv.player.world.getTileEntity(extraData.readBlockPos());
+        TileEntity t = playerInv.player.level.getBlockEntity(extraData.readBlockPos());
         if (t instanceof PadTileEntity)
             this.te = (PadTileEntity)t;
         else

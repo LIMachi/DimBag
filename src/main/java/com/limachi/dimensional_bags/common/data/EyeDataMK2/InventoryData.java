@@ -5,6 +5,7 @@ import com.limachi.dimensional_bags.common.inventory.PillarInventory;
 import com.limachi.dimensional_bags.utils.UUIDUtils;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundNBT;
+import net.minecraft.nbt.IntArrayNBT;
 import net.minecraft.nbt.ListNBT;
 import net.minecraft.nbt.NBTUtil;
 import net.minecraft.network.PacketBuffer;
@@ -45,15 +46,15 @@ public class InventoryData extends WorldSavedDataManager.EyeWorldSavedData imple
             pillarsOrder.add(inv.getId());
             pillars.add(inv);
         }
-        inv.notifyDirt = this::markDirty;
-        markDirty();
+        inv.notifyDirt = this::setDirty;
+        setDirty();
     }
 
     public void removePillar(UUID id) {
         PillarInventory inv = (PillarInventory)getPillarInventory(id);
         inv.notifyDirt = null;
         pillars.remove(inv);
-        markDirty();
+        setDirty();
     }
 
     public ISimpleItemHandlerSerializable getPillarInventory(@Nullable UUID id) {
@@ -64,17 +65,11 @@ public class InventoryData extends WorldSavedDataManager.EyeWorldSavedData imple
         return null;
     }
 
-    static public InventoryData getInstance(int id) {
-        return WorldSavedDataManager.getInstance(InventoryData.class, null, id);
-    }
+    static public InventoryData getInstance(int id) { return WorldSavedDataManager.getInstance(InventoryData.class, id); }
 
-    static public <T> T execute(int id, Function<InventoryData, T> executable, T onErrorReturn) {
-        return WorldSavedDataManager.execute(InventoryData.class, null, id, executable, onErrorReturn);
-    }
+    static public <T> T execute(int id, Function<InventoryData, T> executable, T onErrorReturn) { return WorldSavedDataManager.execute(InventoryData.class, id, executable, onErrorReturn); }
 
-    static public boolean execute(int id, Consumer<InventoryData> executable) {
-        return WorldSavedDataManager.execute(InventoryData.class, null, id, data->{executable.accept(data); return true;}, false);
-    }
+    static public boolean execute(int id, Consumer<InventoryData> executable) { return WorldSavedDataManager.execute(InventoryData.class, id, data->{executable.accept(data); return true;}, false); }
 
     @Override
     public void readFromBuff(PacketBuffer buff) {
@@ -83,11 +78,11 @@ public class InventoryData extends WorldSavedDataManager.EyeWorldSavedData imple
         int np = buff.readInt();
         int no = buff.readInt();
         for (int i = 0; i < no; ++i)
-            pillarsOrder.add(buff.readUniqueId());
+            pillarsOrder.add(buff.readUUID());
         for (int i = 0; i < np; ++i) {
             PillarInventory inv = new PillarInventory();
             inv.readFromBuff(buff);
-            inv.notifyDirt = this::markDirty;
+            inv.notifyDirt = this::setDirty;
             pillars.add(inv);
         }
     }
@@ -97,32 +92,32 @@ public class InventoryData extends WorldSavedDataManager.EyeWorldSavedData imple
         buff.writeInt(pillars.size());
         buff.writeInt(pillarsOrder.size());
         for (UUID id : pillarsOrder)
-            buff.writeUniqueId(id);
+            buff.writeUUID(id);
         for (PillarInventory inv : pillars)
             inv.writeToBuff(buff);
     }
 
     @Override
-    public void read(CompoundNBT nbt) {
+    public void load(CompoundNBT nbt) {
         pillars.clear();
         pillarsOrder.clear();
         ListNBT ord = nbt.getList("Order", 11);
         for (int i = 0; i < ord.size(); ++i)
-            pillarsOrder.add(UUIDCodec.decodeUUID(ord.getIntArray(i)));
+            pillarsOrder.add(UUIDCodec.uuidFromIntArray(ord.getIntArray(i)));
         ListNBT pil = nbt.getList("Pillars", 10);
         for (int i = 0; i < pil.size(); ++i) {
             PillarInventory inv = new PillarInventory();
             inv.deserializeNBT(pil.getCompound(i));
-            inv.notifyDirt = this::markDirty;
+            inv.notifyDirt = this::setDirty;
             pillars.add(inv);
         }
     }
 
     @Override
-    public CompoundNBT write(CompoundNBT compound) {
+    public CompoundNBT save(CompoundNBT compound) {
         ListNBT ord = new ListNBT();
         for (UUID id : pillarsOrder)
-            ord.add(NBTUtil.func_240626_a_(id));
+            ord.add(new IntArrayNBT(UUIDCodec.uuidToIntArray(id)));
         compound.put("Order", ord);
         ListNBT pil = new ListNBT();
         for (PillarInventory inv : pillars)

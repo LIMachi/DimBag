@@ -146,6 +146,30 @@ public class ReflectionUtils {
     }
 
     /**
+     * try to assign the given static 'field' in 'clazz' with the new 'value' (ignoring private, protected and final)
+     * @param clazz any class
+     * @param field a valid field name in 'object'
+     * @param mcp_alternative a valid obfuscated field name to use as default alternative TODO: when upgrading, dont forget to update obfuscated names
+     * @param value the new value of the field, must be of the corresponding type
+     * @return true if the assignation succeeded, false if an error was caught
+     */
+    public static boolean setField (Class<?> clazz, String field, String mcp_alternative, Object value) {
+        DimBag.debug(clazz, 1, "accessing field " + field + " to set to " + value);
+        try {
+            Field f = classField(clazz, field, mcp_alternative);
+            if (f == null) return false;
+            f.setAccessible(true);
+            Field modifiersField = Field.class.getDeclaredField("modifiers");
+            modifiersField.setAccessible(true);
+            modifiersField.setInt(f, f.getModifiers() & ~Modifier.FINAL);
+            f.set(null, value);
+            return true;
+        } catch (ReflectiveOperationException e) {
+            return false;
+        }
+    }
+
+    /**
      * try to assign the given 'field' in 'object' with the new 'value' (ignoring private, protected and final)
      * @param object any object
      * @param field a valid field in 'object'
@@ -192,6 +216,25 @@ public class ReflectionUtils {
             if (f == null) return null;
             f.setAccessible(true);
             return f.get(object);
+        } catch (ReflectiveOperationException | NullPointerException e) {
+            return null;
+        }
+    }
+
+    /**
+     * try to get the given static 'field' in 'clazz' (ignoring private and protected)
+     * @param clazz any class
+     * @param field a valid field name in 'objet', does not require the field to be public
+     * @param mcp_alternative a valid obfuscated field name to use as default alternative TODO: when upgrading, dont forget to update obfuscated names
+     * @return the accessed object (null on error or if the object is null)
+     */
+    public static Object getField(Class<?> clazz, String field, String mcp_alternative) {
+        DimBag.debug(clazz, 1, "accessing field " + field + " to read");
+        try {
+            Field f = classField(clazz, field, mcp_alternative);
+            if (f == null) return null;
+            f.setAccessible(true);
+            return f.get(null);
         } catch (ReflectiveOperationException | NullPointerException e) {
             return null;
         }
@@ -501,7 +544,7 @@ public class ReflectionUtils {
             if (m == null) return; //failed to get the field
             CompoundNBT n = (CompoundNBT)nbt;
             m.clear();
-            for (String k : n.keySet()) {
+            for (String k : n.getAllKeys()) {
                 Object key = fromString(k, ck);
                 INBT tv = n.get(k);
                 if (tv != null) {

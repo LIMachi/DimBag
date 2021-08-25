@@ -27,17 +27,14 @@ public class FluidItem extends Item {
         return out;
     }
 
-    public FluidItem() { super(new Properties()); }
-
-    @Override //should prevent merge/stacking
-    public int getItemStackLimit(ItemStack stack) { return 0; }
+    public FluidItem() { super(new Properties().stacksTo(0)); }
 
     @Nonnull
     @Override
-    public ITextComponent getDisplayName(ItemStack stack) {
+    public ITextComponent getName(ItemStack stack) {
         FluidStack fluid = FluidStack.loadFluidStackFromNBT(stack.getTag());
         if (fluid.isEmpty())
             return new TranslationTextComponent("item.fluid_item.empty_name");
-        return ((IFormattableTextComponent)fluid.getDisplayName()).appendSibling(new TranslationTextComponent("item.fluid_item.append_qty_to_name", fluid.getAmount()));
+        return ((IFormattableTextComponent)fluid.getDisplayName()).append(new TranslationTextComponent("item.fluid_item.append_qty_to_name", fluid.getAmount()));
     }
 }

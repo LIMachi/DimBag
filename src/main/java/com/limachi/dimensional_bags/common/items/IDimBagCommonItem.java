@@ -36,6 +36,7 @@ public interface IDimBagCommonItem {
     }
      */
 
+    /*
     static int getFirstValidItemFromPlayer(PlayerEntity player, Class<? extends Item> clazz, Predicate<? super ItemStack> predicate) { //will search in order: the main hand, the off hand, the armor then the rest of the inventory, returns -1 if no bag was found
         ItemStack stack = player.inventory.mainInventory.get(player.inventory.currentItem);
         if (clazz.isInstance(stack.getItem()) && predicate.test(stack)) return player.inventory.currentItem;
@@ -61,7 +62,7 @@ public interface IDimBagCommonItem {
         if (slot < player.inventory.mainInventory.size() + player.inventory.offHandInventory.size() + player.inventory.armorInventory.size()) return player.inventory.armorInventory.get(slot - player.inventory.mainInventory.size() - player.inventory.offHandInventory.size());
         return null;
     }
-
+*/
 //    static int getFirstValidItemFromBag(EyeData data, Class<? extends Item> clazz, Predicate<? super ItemStack> predicate) {
 //        IItemHandler inv = data.getInventory();
 //        for (int i = 0; i < inv.getSlots(); ++i) {
@@ -106,7 +107,7 @@ public interface IDimBagCommonItem {
     }*/
 
     static int slotFromHand(PlayerEntity player, Hand hand) {
-        return hand == Hand.OFF_HAND ? player.inventory.getSizeInventory() - player.inventory.offHandInventory.size() : player.inventory.currentItem;
+        return hand == Hand.OFF_HAND ? player.inventory.getContainerSize() - player.inventory.offhand.size() : player.inventory.selected;
     }
 
     /*
@@ -123,7 +124,7 @@ public interface IDimBagCommonItem {
         } else {
             search.searchedInventory = null;
             search.index = 0;
-            search.stack = entity.getHeldEquipment().iterator().next();
+            search.stack = entity.getHandSlots().iterator().next();
         }
         search.searchedItemHandler = null;
         search.stacks = new ItemStack[depth];
@@ -144,14 +145,14 @@ public interface IDimBagCommonItem {
         int d = 5;
         if (isPlayer) {
             s = player.inventory.offHandInventory.size();
-            d = player.inventory.getSizeInventory() - s;
+            d = player.inventory.getContainerSize() - s;
         }
         for (int i = 0; i < s; ++i) {
             search.index = d + i;
             if (isPlayer)
                 search.stack = player.inventory.getStackInSlot(search.index);
             else {
-                it = entity.getHeldEquipment().iterator();
+                it = entity.getHandSlots().iterator();
                 it.next();
                 search.stack = it.next();
             }
@@ -169,11 +170,11 @@ public interface IDimBagCommonItem {
         }
         if (isPlayer) {
             s = player.inventory.armorInventory.size();
-            d = player.inventory.getSizeInventory() - ((PlayerEntity) entity).inventory.offHandInventory.size() - s;
+            d = player.inventory.getContainerSize() - ((PlayerEntity) entity).inventory.offHandInventory.size() - s;
         } else {
             s = 4;
             d = 1;
-            it = entity.getArmorInventoryList().iterator();
+            it = entity.getArmorSlots().iterator();
         }
         for (int i = 0; i < s; ++i) {
             search.index = d + i;
@@ -238,17 +239,17 @@ public interface IDimBagCommonItem {
                 ListNBT list = shulkerBox.getTag().getCompound("BlockEntityTag").getList("Items", 10);
                 for (int i = 0; i < list.size(); ++i) {
                     CompoundNBT nbt = list.getCompound(i);
-                    stacks[nbt.getInt("Slot")] = ItemStack.read(nbt);
+                    stacks[nbt.getInt("Slot")] = ItemStack.of(nbt);
                 }
             }
             this.parentDirty = parentDirty;
         }
 
         @Override
-        public void markDirty() {
+        public void setChanged() {
             write();
             if (parentDirty != null)
-                parentDirty.markDirty();
+                parentDirty.setChanged();
         }
 
         protected void write() {
@@ -281,7 +282,7 @@ public interface IDimBagCommonItem {
         @Override
         public ItemStack insertItem(int slot, @Nonnull ItemStack stack, boolean simulate) {
             if (stack.isEmpty()) return ItemStack.EMPTY;
-            if (!isItemValid(slot, stack)) return stack;
+            if (!mayPlace(slot, stack)) return stack;
             ItemStack stackInSlot = getStackInSlot(slot);
 
             int stackLimit = Math.min(stack.getMaxStackSize(), getSlotLimit(slot));
@@ -296,7 +297,7 @@ public interface IDimBagCommonItem {
                         ItemStack copy = stack.copy();
                         copy.grow(stackInSlot.getCount());
                         stacks[slot] = copy;
-                        markDirty();
+                        setChanged();
                     }
                     return ItemStack.EMPTY;
                 } else {//not enough room, we will return a truncated stack
@@ -306,7 +307,7 @@ public interface IDimBagCommonItem {
                         ItemStack copy = stack.split(stackLimit);
                         copy.grow(stackInSlot.getCount());
                         stacks[slot] = copy;
-                        markDirty();
+                        setChanged();
                         return stack;
                     } else {
                         stack.shrink(stackLimit);
@@ -318,7 +319,7 @@ public interface IDimBagCommonItem {
                     stack = stack.copy();
                     if (!simulate) {
                         stacks[slot] = stack.split(stackLimit);
-                        markDirty();
+                        setChanged();
                         return stack;
                     } else {
                         stack.shrink(stackLimit);
@@ -327,7 +328,7 @@ public interface IDimBagCommonItem {
                 } else {
                     if (!simulate) {
                         stacks[slot] = stack;
-                        markDirty();
+                        setChanged();
                     }
                     return ItemStack.EMPTY;
                 }
@@ -353,9 +354,9 @@ public interface IDimBagCommonItem {
                     return copy;
                 }
             } else {
-                ItemStack decrStackSize = amount > 0 ? stacks[slot].split(amount) : ItemStack.EMPTY;
-                markDirty();
-                return decrStackSize;
+                ItemStack remove = amount > 0 ? stacks[slot].split(amount) : ItemStack.EMPTY;
+                setChanged();
+                return remove;
             }
         }
 
@@ -365,7 +366,7 @@ public interface IDimBagCommonItem {
         }
 
         @Override
-        public boolean isItemValid(int slot, @Nonnull ItemStack stack) {
+        public boolean mayPlace(int slot, @Nonnull ItemStack stack) {
             return slot >= 0 && slot < 27 && (stacks[slot].isEmpty() || (stacks[slot].isItemEqual(stack) && ItemStack.areItemStackTagsEqual(stacks[slot], stack)));
         }
     }*/
@@ -383,10 +384,10 @@ public interface IDimBagCommonItem {
         public void setStackDirty() {
             if (searchedItemHandler != null) {
                 if (searchedItemHandler instanceof IMarkDirty)
-                    ((IMarkDirty) searchedItemHandler).markDirty();
+                    ((IMarkDirty) searchedItemHandler).setChanged();
             }
             else if (searchedInventory != null)
-                searchedInventory.markDirty();
+                searchedInventory.setChanged();
         }
     }*/
 
@@ -429,7 +430,7 @@ public interface IDimBagCommonItem {
                 ItemStack cpy = stack.copy();
                 cpy.setCount(qty);
                 resetStringList(cpy, onCreateCommands);
-                ((ServerPlayerEntity) entityIn).addItemStackToInventory(cpy);
+                ((ServerPlayerEntity) entityIn).addItem(cpy);
             }
         }
         if (s.startsWith("multiply.") && entityIn instanceof ServerPlayerEntity) {
@@ -446,7 +447,7 @@ public interface IDimBagCommonItem {
                 ItemStack cpy = stack.copy();
                 cpy.setCount(qty);
                 resetStringList(cpy, onCreateCommands);
-                ((ServerPlayerEntity) entityIn).addItemStackToInventory(cpy);
+                ((ServerPlayerEntity) entityIn).addItem(cpy);
             }
         }
     }
@@ -462,7 +463,7 @@ public interface IDimBagCommonItem {
     }
 
     @OnlyIn(Dist.CLIENT)
-    default void addInformation(ItemStack stack, World world, List<ITextComponent> tooltip, ITooltipFlag flagIn) {
+    default void appendHoverText(ItemStack stack, World world, List<ITextComponent> tooltip, ITooltipFlag flagIn) {
         String[] pending = getStringList(stack, onTickCommands);
         for (String s : pending)
             if (s.startsWith("msg.")) {

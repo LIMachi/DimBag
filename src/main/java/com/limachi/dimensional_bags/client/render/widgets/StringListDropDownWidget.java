@@ -41,7 +41,7 @@ public class StringListDropDownWidget extends ParentToggleWidget {
         this.maxHeight = maxHeight;
         this.isEditor = isEditor;
         if (isEditor) {
-            input = new TextFieldWidget(x, y + height, width - 16, 16, MINECRAFT.fontRenderer, null, null, this::onValidation);
+            input = new TextFieldWidget(x, y + height, width - 16, 16, MINECRAFT.font, null, null, this::onValidation);
             addChild(input);
             addChild(new ImageWidget(x + width - 16, y + height, 16, 16, validate_texture){
                 @Override

@@ -11,10 +11,10 @@ public class NullModel<T extends LivingEntity> extends BipedModel<T> {
     public NullModel() { super(0f); }
 
     @Override
-    public void setRotationAngles(T entity, float limbSwing, float limbSwingAmount, float age, float headYaw, float headPitch) {}
+    public void setupAnim(T entity, float limbSwing, float limbSwingAmount, float age, float headYaw, float headPitch) {}
 
     public void setRotationAngle(ModelRenderer renderer, float x, float y, float z) {}
 
     @Override
-    public void render(MatrixStack matrixStack, IVertexBuilder buffer, int packedLight, int overlay, float red, float green, float blue, float alpha) {}
+    public void renderToBuffer(MatrixStack matrixStack, IVertexBuilder buffer, int packedLight, int overlay, float red, float green, float blue, float alpha) {}
 }

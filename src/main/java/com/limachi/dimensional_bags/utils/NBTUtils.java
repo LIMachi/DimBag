@@ -58,7 +58,7 @@ public class NBTUtils {
 //    }
 
     public static CompoundNBT clear(CompoundNBT comp) {
-        Object[] keys = comp.keySet().toArray();
+        Object[] keys = comp.getAllKeys().toArray();
         for (Object key : keys)
             comp.remove((String)key);
         return comp;
@@ -72,14 +72,14 @@ public class NBTUtils {
                 ListNBT sk = (ListNBT)((CompoundNBT)k).get("list");
                 nbt.put(s, removeKeys(nbt.getCompound(s), sk));
             } else
-                nbt.remove(((StringNBT)k).getString());
+                nbt.remove(((StringNBT)k).getAsString());
         }
         return nbt;
     }
 
     protected static ListNBT removedKeys(@Nonnull CompoundNBT valid, @Nonnull CompoundNBT diff) {
         ListNBT list = new ListNBT();
-        for (String key : diff.keySet())
+        for (String key : diff.getAllKeys())
             if (!valid.contains(key))
                 list.add(StringNBT.valueOf(key));
             else {
@@ -104,7 +104,7 @@ public class NBTUtils {
         CompoundNBT added = new CompoundNBT();
         ListNBT removed = new ListNBT();
         CompoundNBT changed = new CompoundNBT();
-        for (String key : valid.keySet())
+        for (String key : valid.getAllKeys())
             if (diff.contains(key) && !diff.get(key).equals(valid.get(key))) {
                 INBT tv = valid.get(key);
                 INBT td = diff.get(key);
@@ -115,7 +115,7 @@ public class NBTUtils {
             }
             else if (!diff.contains(key))
                 added.put(key, valid.get(key));
-        for (String key : diff.keySet())
+        for (String key : diff.getAllKeys())
             if (!valid.contains(key))
                 removed.add(StringNBT.valueOf(key));
         CompoundNBT out = new CompoundNBT();
@@ -136,10 +136,10 @@ public class NBTUtils {
         for (int i = 0; i < removed.size(); ++i)
             toChange.remove(removed.getString(i));
         CompoundNBT added = diff.getCompound("Diff_Added");
-        for (String key : added.keySet())
+        for (String key : added.getAllKeys())
             toChange.put(key, added.get(key));
         CompoundNBT changed = diff.getCompound("Diff_Changed");
-        for (String key : changed.keySet()) {
+        for (String key : changed.getAllKeys()) {
             INBT c = changed.get(key);
             if (toChange.contains(key) && c instanceof CompoundNBT && toChange.get(key) instanceof CompoundNBT)
                 toChange.put(key, applyDiff((CompoundNBT) toChange.get(key), (CompoundNBT) c));
@@ -190,7 +190,7 @@ public class NBTUtils {
         if (from.getType() == CompoundNBT.TYPE) {
             CompoundNBT tc = (CompoundNBT) to;
             CompoundNBT fc = (CompoundNBT) from;
-            for (String key : fc.keySet()) {
+            for (String key : fc.getAllKeys()) {
                 INBT p = deepMergeNBTInternal(tc.get(key), fc.get(key));
                 if (p != null)
                     tc.put(key, p);
@@ -253,7 +253,7 @@ public class NBTUtils {
                         v.add(ad);
                         return v;
                     });
-        for (Type ct : constructionMap.keySet()) {
+        for (Type ct : constructionMap.getAllKeys()) {
             ArrayList<ModFileScanData.AnnotationData> adl = constructionMap.get(ct);
             final ArrayList<BiConsumer<Object, CompoundNBT>> ser = new ArrayList<>();
             final ArrayList<BiConsumer<CompoundNBT, Object>> deser = new ArrayList<>();
@@ -340,7 +340,7 @@ public class NBTUtils {
         else if (o instanceof String)
             return StringNBT.valueOf((String)o);
         else if (o instanceof UUID)
-            return new IntArrayNBT(UUIDCodec.encodeUUID((UUID)o));
+            return new IntArrayNBT(UUIDCodec.uuidToIntArray((UUID)o));
         else if (o instanceof Boolean)
             return ByteNBT.valueOf((Boolean)o);
         else if (o instanceof Byte)
@@ -363,7 +363,7 @@ public class NBTUtils {
         } /*else if (o instanceof AbstractMap<?, ?>) { //beyond hacky, let's give up on maps for now
             CompoundNBT compound = new CompoundNBT();
             AbstractMap<?, ?> tm = (AbstractMap<?, ?>)o;
-            for (Object k : tm.keySet())
+            for (Object k : tm.getAllKeys())
                 compound.put(k.toString(), toNBT(tm.get(k)));
             return compound;
         } else if (o.getClass().getComponentType() != null)
@@ -387,6 +387,10 @@ public class NBTUtils {
 //        return fromNBT (nbt, (Class<T>)instance.getClass());
 //    }
 
+    public static UUID readUUID(IntArrayNBT nbt) {
+        return UUIDCodec.uuidFromIntArray(nbt.getAsIntArray());
+    }
+
     /**
      * alternative function where you can manually set the expected class
      * @param nbt
@@ -404,23 +408,23 @@ public class NBTUtils {
         if (clazz.isInstance(nbt))
             return (T)nbt;
         else if (clazz.isAssignableFrom(String.class) && nbt instanceof StringNBT)
-            return (T)((StringNBT)nbt).getString();
+            return (T)((StringNBT)nbt).getAsString();
         else if (clazz.isAssignableFrom(UUID.class) && nbt instanceof IntArrayNBT)
-            return (T)NBTUtil.readUniqueId(nbt); //do I have no shame? maybe
+            return (T)readUUID((IntArrayNBT) nbt); //do I have no shame? maybe
         else if ((clazz.isAssignableFrom(Boolean.class) || clazz.isAssignableFrom(boolean.class)) && nbt instanceof ByteNBT)
             return (T)(Boolean)ByteNBT.ONE.equals(nbt);
         else if ((clazz.isAssignableFrom(Byte.class) || clazz.isAssignableFrom(byte.class)) && nbt instanceof ByteNBT)
-            return (T)(Byte)((ByteNBT)nbt).getByte();
+            return (T)(Byte)((ByteNBT)nbt).getAsByte();
         else if ((clazz.isAssignableFrom(Short.class) || clazz.isAssignableFrom(short.class)) && nbt instanceof ShortNBT)
-            return (T)(Short)((ShortNBT)nbt).getShort();
+            return (T)(Short)((ShortNBT)nbt).getAsShort();
         else if ((clazz.isAssignableFrom(Integer.class) || clazz.isAssignableFrom(int.class)) && nbt instanceof IntNBT)
-            return (T)(Integer)((IntNBT)nbt).getInt();
+            return (T)(Integer)((IntNBT)nbt).getAsInt();
         else if ((clazz.isAssignableFrom(Long.class) || clazz.isAssignableFrom(long.class)) && nbt instanceof LongNBT)
-            return (T)(Long)((LongNBT)nbt).getLong();
+            return (T)(Long)((LongNBT)nbt).getAsLong();
         else if ((clazz.isAssignableFrom(Float.class) || clazz.isAssignableFrom(float.class)) && nbt instanceof FloatNBT)
-            return (T)(Float)((FloatNBT)nbt).getFloat();
+            return (T)(Float)((FloatNBT)nbt).getAsFloat();
         else if ((clazz.isAssignableFrom(Double.class) || clazz.isAssignableFrom(double.class)) && nbt instanceof DoubleNBT)
-            return (T)(Double)((DoubleNBT)nbt).getDouble();
+            return (T)(Double)((DoubleNBT)nbt).getAsDouble();
         else if (nbt instanceof ListNBT)
             return (T) fromListNBT((ListNBT) nbt); //might go boum
         throw new IllegalArgumentException("unknown fromNBT resolver for converting '" + nbt.getClass() + "' to '" + clazz + "'");
@@ -483,7 +487,7 @@ public class NBTUtils {
         } catch (IllegalAccessException | InstantiationException e) {
             out = (T)new HashMap<K, V>();
         }
-        for (String k : nbt.keySet())
+        for (String k : nbt.getAllKeys())
             out.put((K)kc.apply(k), (V)fromNBT(nbt.get(k)));
         return out;
     }
@@ -572,8 +576,8 @@ public class NBTUtils {
     public static HashMap<String, Pair<INBT, INBT>> getNBTDiff(CompoundNBT nbt1, CompoundNBT nbt2) {
         HashMap<String, Pair<INBT, INBT>> out = new HashMap<>();
         HashSet<String> keys = new HashSet<>();
-        keys.addAll(nbt1.keySet());
-        keys.addAll(nbt2.keySet());
+        keys.addAll(nbt1.getAllKeys());
+        keys.addAll(nbt2.getAllKeys());
         for (String key : keys) {
             INBT n1 = nbt1.get(key);
             INBT n2 = nbt2.get(key);
@@ -614,15 +618,15 @@ public class NBTUtils {
                 return def;
             }
         }
-        if (def instanceof String && t instanceof StringNBT) return (T)((StringNBT)t).getString();
-        if (def instanceof Boolean && t instanceof ByteNBT) return (T)(Boolean)(((ByteNBT)t).getByte() != (byte)0);
-        if (def instanceof Byte && t instanceof ByteNBT) return (T)(Byte)((ByteNBT)t).getByte();
-        if (def instanceof Short && t instanceof ShortNBT) return (T)(Short)((ShortNBT)t).getShort();
-        if (def instanceof Integer && t instanceof IntNBT) return (T)(Integer)((IntNBT)t).getInt();
-        if (def instanceof Long && t instanceof LongNBT) return (T)(Long)((LongNBT)t).getLong();
-        if (def instanceof Float && t instanceof FloatNBT) return (T)(Float)((FloatNBT)t).getFloat();
-        if (def instanceof Double && t instanceof DoubleNBT) return (T)(Double)((DoubleNBT)t).getDouble();
-        if (def instanceof UUID && t instanceof IntArrayNBT) return (T)NBTUtil.readUniqueId(t);
+        if (def instanceof String && t instanceof StringNBT) return (T)((StringNBT)t).getAsString();
+        if (def instanceof Boolean && t instanceof ByteNBT) return (T)(Boolean)(((ByteNBT)t).getAsByte() != (byte)0);
+        if (def instanceof Byte && t instanceof ByteNBT) return (T)(Byte)((ByteNBT)t).getAsByte();
+        if (def instanceof Short && t instanceof ShortNBT) return (T)(Short)((ShortNBT)t).getAsShort();
+        if (def instanceof Integer && t instanceof IntNBT) return (T)(Integer)((IntNBT)t).getAsInt();
+        if (def instanceof Long && t instanceof LongNBT) return (T)(Long)((LongNBT)t).getAsLong();
+        if (def instanceof Float && t instanceof FloatNBT) return (T)(Float)((FloatNBT)t).getAsFloat();
+        if (def instanceof Double && t instanceof DoubleNBT) return (T)(Double)((DoubleNBT)t).getAsDouble();
+        if (def instanceof UUID && t instanceof IntArrayNBT) return (T)readUUID((IntArrayNBT) t);
         return def;
     }
 
@@ -646,6 +650,6 @@ public class NBTUtils {
         if (val instanceof Long) nbt.putLong(key, (Long)val);
         if (val instanceof Float) nbt.putFloat(key, (Float)val);
         if (val instanceof Double) nbt.putDouble(key, (Double)val);
-        if (val instanceof UUID) nbt.putUniqueId(key, (UUID)val);
+        if (val instanceof UUID) nbt.putUUID(key, (UUID)val);
     }
 }

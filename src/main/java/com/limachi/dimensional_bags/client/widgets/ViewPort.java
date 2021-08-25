@@ -8,6 +8,7 @@ import org.lwjgl.glfw.GLFW;
  * building block of window, scrollable list, etc...
  */
 public class ViewPort extends Base {
+    /*
     double areaW;
     double areaH;
     double viewX;
@@ -110,5 +111,5 @@ public class ViewPort extends Base {
             if (view != null)
                 view.detachChild(child);
         }
-    }
+    }*/
 }

@@ -38,17 +38,22 @@ size pearl (stabilized proto pearl in size mode) will change your size when cons
 -double your size if you are standing (limited to 2 times or 8 blocks height)
 
 
+!!!!FIXME!!!!: since upgrading to official mappings, oppening an inventory results in a BIG desync
+
 -----------------------------------------------------------------------
 TODO ADDITION EDITION:
 -----------------------------------------------------------------------
+add white/blacklist support for time distortion upgrade (accepts position or name for te, name for entities)
 add documentation (book/tooltips/UI text) (might look into Patchouli)
-add back the 'player pillar' features
-finish the WII block (fluids)
+add back the 'player pillar' features + new features: energy can be inserted/removed (from items in the user inventory), xp can be drained in liquid form, xp, water, milk and lava can be pumped in the player
+finish the WII block (fluids) (fluids: drain/place fluids, no interaction with player)
 almost finished --- add a new block placeable outside the bag to access the bag as a block (proxy) (allowing interactions with the inventory, tanks and batteries of the bag. note: interaction is passive, needs modded conduits/hoppers to work) (low tier: need the bag inside the block, high tier: bound to a bag)
 
 -----------------------------------------------------------------------
 TODO DEBUG EDITION:
 -----------------------------------------------------------------------
+fix item duplication by shift click in user interface
+fix sleeping in the bag not working with other mods adding dimensions (might need to hack something)
 finish those god-damn UI
 finish modeling/texturing
 look into sync bag and TE config in better ways (and maybe test for hacks/invalid values' server side)

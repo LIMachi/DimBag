@@ -7,5 +7,5 @@ import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import org.lwjgl.opengl.GL11;
 
 public class RenderTypes {
-    public static final RenderType FOUNTAIN_FLUID = RenderType.makeType(DimBag.MOD_ID + ".fountain_fluid", DefaultVertexFormats.POSITION_COLOR_TEX, GL11.GL_QUADS, 128, RenderType.State.getBuilder().texture(new RenderState.TextureState()).writeMask(new RenderState.WriteMaskState(false, true)).build(false));
+    public static final RenderType FOUNTAIN_FLUID = RenderType.create(DimBag.MOD_ID + ".fountain_fluid", DefaultVertexFormats.POSITION_COLOR_TEX, GL11.GL_QUADS, 128, RenderType.State.builder().setTextureState(new RenderState.TextureState()).setWriteMaskState(new RenderState.WriteMaskState(false, true)).createCompositeState(false));
 }

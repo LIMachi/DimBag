@@ -17,9 +17,7 @@ public class OwnerData extends WorldSavedDataManager.EyeWorldSavedData {
     private WeakReference<PlayerEntity> playerRef = new WeakReference<>(null);
     private String name = "";
 
-    public OwnerData(String suffix, int id, boolean client) {
-        super(suffix, id, client, false);
-    }
+    public OwnerData(String suffix, int id, boolean client) { super(suffix, id, client, false); }
 
     /**
      * @param player: the player to be stored as owner
@@ -28,12 +26,12 @@ public class OwnerData extends WorldSavedDataManager.EyeWorldSavedData {
         playerRef = new WeakReference<>(player);
         if (player != null) {
             name = player.getDisplayName().getString();
-            id = player.getUniqueID();
+            id = player.getUUID();
         } else {
             name = "";
             id = UUIDUtils.NULL_UUID;
         }
-        markDirty();
+        setDirty();
     }
 
     /**
@@ -45,11 +43,11 @@ public class OwnerData extends WorldSavedDataManager.EyeWorldSavedData {
         if (player == null) {
             MinecraftServer server = DimBag.getServer();
             if (server != null) {
-                player = server.getPlayerList().getPlayerByUUID(id);
+                player = server.getPlayerList().getPlayer(id);
                 if (player != null) {
                     playerRef = new WeakReference<>(player);
                     name = player.getDisplayName().getString();
-                    markDirty();
+                    setDirty();
                 }
             }
         }
@@ -67,31 +65,25 @@ public class OwnerData extends WorldSavedDataManager.EyeWorldSavedData {
     public UUID getPlayerUUID() { return id; }
 
     @Override
-    public void read(CompoundNBT nbt) {
-        id = nbt.getUniqueId("Id");
+    public void load(CompoundNBT nbt) {
+        id = nbt.getUUID("Id");
         name = nbt.getString("Name");
         if (DimBag.isServer(null) && !id.equals(UUIDUtils.NULL_UUID))
-            playerRef = new WeakReference<>(DimBag.getServer().getPlayerList().getPlayerByUUID(id));
+            playerRef = new WeakReference<>(DimBag.getServer().getPlayerList().getPlayer(id));
         else
             playerRef = new WeakReference<>(null);
     }
 
     @Override
-    public CompoundNBT write(CompoundNBT nbt) {
-        nbt.putUniqueId("Id", id);
+    public CompoundNBT save(CompoundNBT nbt) {
+        nbt.putUUID("Id", id);
         nbt.putString("Name", name);
         return nbt;
     }
 
-    static public OwnerData getInstance(int id) {
-        return WorldSavedDataManager.getInstance(OwnerData.class, null, id);
-    }
+    static public OwnerData getInstance(int id) { return WorldSavedDataManager.getInstance(OwnerData.class, id); }
 
-    static public <T> T execute(int id, Function<OwnerData, T> executable, T onErrorReturn) {
-        return WorldSavedDataManager.execute(OwnerData.class, null, id, executable, onErrorReturn);
-    }
+    static public <T> T execute(int id, Function<OwnerData, T> executable, T onErrorReturn) { return WorldSavedDataManager.execute(OwnerData.class, id, executable, onErrorReturn); }
 
-    static public boolean execute(int id, Consumer<OwnerData> executable) {
-        return WorldSavedDataManager.execute(OwnerData.class, null, id, data->{executable.accept(data); return true;}, false);
-    }
+    static public boolean execute(int id, Consumer<OwnerData> executable) { return WorldSavedDataManager.execute(OwnerData.class, id, data->{executable.accept(data); return true;}, false); }
 }

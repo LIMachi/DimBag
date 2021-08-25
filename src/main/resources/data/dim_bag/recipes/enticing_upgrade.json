@@ -1,0 +1,41 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "ACW",
+    "SUF",
+    "RBP"
+  ],
+  "key": {
+    "U": {
+      "item": "dim_bag:blank_upgrade"
+    },
+    "A": {
+      "item": "minecraft:golden_apple"
+    },
+    "C": {
+      "item": "minecraft:golden_carrot"
+    },
+    "W": {
+      "item": "minecraft:wheat"
+    },
+    "S": {
+      "item": "minecraft:wheat_seeds"
+    },
+    "F": {
+      "item": "minecraft:chorus_fruit"
+    },
+    "R": {
+      "item": "minecraft:rotten_flesh"
+    },
+    "B": {
+      "item": "minecraft:sweet_berries"
+    },
+    "P": {
+      "tag": "minecraft:fishes"
+    }
+  },
+  "result": {
+    "item": "dim_bag:enticing_upgrade",
+    "count": 1
+  }
+}

@@ -10,11 +10,11 @@ public class DisabledSlot extends LockedSlot {
     public DisabledSlot(int xPosition, int yPosition) { super(EMPTY_INVENTORY, 0, xPosition, yPosition); }
 
     @Override
-    public boolean isEnabled() { return false; }
+    public boolean isActive() { return false; }
 
     @Override
-    public int getSlotStackLimit() { return 0; }
+    public int getMaxStackSize() { return 0; }
 
     @Override
-    public int getItemStackLimit(ItemStack stack) { return 0; }
+    public int getMaxStackSize(ItemStack stack) { return 0; }
 }

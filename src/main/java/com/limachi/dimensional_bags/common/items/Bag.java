@@ -7,10 +7,12 @@ import com.limachi.dimensional_bags.common.Registries;
 import com.limachi.dimensional_bags.common.blocks.IBagWrenchable;
 import com.limachi.dimensional_bags.common.blocks.IHasBagSettings;
 import com.limachi.dimensional_bags.common.data.DimBagData;
-import com.limachi.dimensional_bags.common.data.EyeDataMK2.ClientDataManager;
 import com.limachi.dimensional_bags.common.data.EyeDataMK2.HolderData;
+import com.limachi.dimensional_bags.common.data.EyeDataMK2.OwnerData;
+import com.limachi.dimensional_bags.common.data.EyeDataMK2.SettingsData;
 import com.limachi.dimensional_bags.common.data.IEyeIdHolder;
 import com.limachi.dimensional_bags.common.entities.BagEntity;
+import com.limachi.dimensional_bags.common.inventory.BagProxy;
 import com.limachi.dimensional_bags.common.items.entity.BagEntityItem;
 import com.limachi.dimensional_bags.common.items.upgrades.BaseUpgrade;
 import com.limachi.dimensional_bags.common.managers.ModeManager;
@@ -32,20 +34,19 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockRayTraceResult;
 import net.minecraft.util.math.RayTraceContext;
 import net.minecraft.util.text.ITextComponent;
+import net.minecraft.util.text.StringTextComponent;
 import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraft.world.World;
 import net.minecraft.world.server.ServerWorld;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.ICapabilityProvider;
 import net.minecraftforge.common.util.FakePlayer;
 import net.minecraftforge.common.util.FakePlayerFactory;
-import net.minecraftforge.common.util.LazyOptional;
 
-import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.lang.ref.WeakReference;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Supplier;
@@ -63,7 +64,7 @@ public class Bag extends Item {
 
     public static final Supplier<Bag> INSTANCE = Registries.registerItem(NAME, Bag::new);
 
-    public Bag() { super(new Properties().group(DimBag.ITEM_GROUP).maxStackSize(1)); }
+    public Bag() { super(DimBag.DEFAULT_PROPERTIES.stacksTo(1)); }
 
     public static ItemStack bag(int id) {
         ItemStack out = new ItemStack(INSTANCE.get());
@@ -75,8 +76,8 @@ public class Bag extends Item {
 
     public static void giveBag(int id, PlayerEntity player) {
         ItemStack bag = bag(id);
-        if (!player.addItemStackToInventory(bag))
-            player.dropItem(bag, false);
+        if (!player.addItem(bag))
+            player.drop(bag, false);
     }
 
     public static boolean hasBag(int id, Entity entity) {
@@ -95,11 +96,11 @@ public class Bag extends Item {
     }
 
     public static boolean unequippedBags(LivingEntity entity, int eyeId, @Nullable BlockPos pos) {
-        List<CuriosIntegration.ProxyItemStackModifier> res = CuriosIntegration.searchItem(entity, Bag.class, o->(!(o.getItem() instanceof GhostBag) && Bag.getEyeId(o) == eyeId), true);
+        List<CuriosIntegration.ProxySlotModifier> res = CuriosIntegration.searchItem(entity, Bag.class, o->(!(o.getItem() instanceof GhostBag) && Bag.getEyeId(o) == eyeId), true);
         boolean did_unequip = false;
         if (!res.isEmpty()) {
-            for (CuriosIntegration.ProxyItemStackModifier p : res) {
-                BagEntity.spawn(entity.world, pos == null ? entity.getPosition() : pos, p.get());
+            for (CuriosIntegration.ProxySlotModifier p : res) {
+                BagEntity.spawn(entity.level, pos == null ? entity.blockPosition() : pos, p.get());
                 p.set(ItemStack.EMPTY);
                 did_unequip = true;
             }
@@ -110,11 +111,11 @@ public class Bag extends Item {
 
     @Override
     public ActionResultType onItemUseFirst(ItemStack stack, ItemUseContext context) {
-        BlockState state = context.getWorld().getBlockState(context.getPos());
+        BlockState state = context.getLevel().getBlockState(context.getClickedPos());
         Block block = state.getBlock();
         if ((block instanceof IBagWrenchable || block instanceof IHasBagSettings) && ModeManager.execute(getEyeId(stack), mm -> mm.getSelectedMode().equals(Settings.ID), false)) {
             if (block instanceof IBagWrenchable && KeyMapController.KeyBindings.SNEAK_KEY.getState(context.getPlayer())) //if the player is crouching and using the bag, then use it as a wrench
-                return ((IBagWrenchable) block).wrenchWithBag(context.getWorld(), context.getPos(), state, context.getFace());
+                return ((IBagWrenchable) block).wrenchWithBag(context.getLevel(), context.getClickedPos(), state, context.getClickedFace());
             if (block instanceof IHasBagSettings)
                 return ((IHasBagSettings) block).openSettings(context.getPlayer());
         }
@@ -139,14 +140,7 @@ public class Bag extends Item {
     @Override
     @Nullable
     public ICapabilityProvider initCapabilities(ItemStack stack, @Nullable CompoundNBT nbt) {
-        return new ICapabilityProvider() {
-            @Nonnull
-            @Override
-            public <T> LazyOptional<T> getCapability(@Nonnull Capability<T> cap, @Nullable Direction side) {
-//                EyeData data = getData(stack, true);
-                return /*data != null ? data.getCapability(cap, side) :*/ LazyOptional.empty();
-            }
-        };
+        return new BagProxy().setEyeID(Bag.getEyeId(stack));
     }
 
     public static int getEyeId(ItemStack stack) {
@@ -155,15 +149,14 @@ public class Bag extends Item {
         return 0;
     }
 
-    public static ClientDataManager getClientData(ItemStack stack) {
-        return ClientDataManager.getInstance(stack);
-    }
+//    public static ClientDataManager getClientData(ItemStack stack) { return ClientDataManager.getInstance(stack); }
 
     public static float getModeProperty(ItemStack stack, World world, Entity entity) {
         CompoundNBT nbt = stack.getTag();
         if (nbt != null && nbt.contains("OVERRIDE_MODE_PROPERTY"))
             return nbt.getFloat("OVERRIDE_MODE_PROPERTY");
-        ModeManager modeManager = ClientDataManager.getInstance(stack).getModeManager();
+//        ModeManager modeManager = ClientDataManager.getInstance(stack).getModeManager();
+        ModeManager modeManager = ModeManager.getInstance(getEyeId(stack));
         if (modeManager != null)
             return ModeManager.getModeIndex(modeManager.getSelectedMode());
         return ModeManager.getModeIndex("Default");
@@ -181,26 +174,31 @@ public class Bag extends Item {
     @Nullable
     @Override
     public Entity createEntity(World world, Entity location, ItemStack itemstack) {
-        BagEntityItem entity = new BagEntityItem(world, location.getPosX(), location.getPosY(), location.getPosZ(), itemstack);
-        entity.setMotion(location.getMotion());
+        BagEntityItem entity = new BagEntityItem(world, location.position().x, location.position().y, location.position().z, itemstack);
+        entity.setDeltaMovement(location.getDeltaMovement());
         return entity;
     }
 
     @Override
     @OnlyIn(Dist.CLIENT)
-    public void addInformation(ItemStack stack, World world, List<ITextComponent> tooltip, ITooltipFlag flagIn) {
-        ClientDataManager data = getClientData(stack);
-        if (data.getId() <= 0)
+    public void appendHoverText(ItemStack stack, World world, List<ITextComponent> tooltip, ITooltipFlag flagIn) {
+        int eye = getEyeId(stack);
+        if (eye <= 0)
             tooltip.add(new TranslationTextComponent("tooltip.bag.missing_id"));
         else {
-            tooltip.add(new TranslationTextComponent("tooltip.bag.mode", new TranslationTextComponent("bag.mode." + data.getModeManager().getSelectedMode())));
-            tooltip.add(new TranslationTextComponent("tooltip.bag.id", data.getId(), data.getOwnerName()));
+            String ownerName = OwnerData.execute(eye, OwnerData::getPlayerName, "Missing Server Data");
+            String selectedMode = ModeManager.execute(eye, ModeManager::getSelectedMode, "missing_server_data");
+            tooltip.add(new TranslationTextComponent("tooltip.bag.mode", new TranslationTextComponent("bag.mode." + selectedMode)));
+            tooltip.add(new TranslationTextComponent("tooltip.bag.id", eye, ownerName));
         }
-        super.addInformation(stack, world, tooltip, flagIn);
-        if (Screen.hasShiftDown() && data != null) {
-            for (String upgrade : data.getUpgradeManager().getInstalledUpgrades()) {
+        ModeManager.execute(eye, mm->mm.onAddInformation(stack, world, tooltip, flagIn));
+        super.appendHoverText(stack, world, tooltip, flagIn);
+        if (Screen.hasShiftDown() && eye > 0) {
+            UpgradeManager upData = UpgradeManager.getInstance(eye);
+            ArrayList<String> installedUpgrades = UpgradeManager.execute(eye, UpgradeManager::getInstalledUpgrades, new ArrayList<>());
+            for (String upgrade : installedUpgrades) {
                 BaseUpgrade up = UpgradeManager.getUpgrade(upgrade);
-                tooltip.add(new TranslationTextComponent("tooltip.bag.upgrade_count", up.upgradeName(), up.getCount(data.getUpgradeManager()), up.getMaxCount()));
+                tooltip.add(new TranslationTextComponent("tooltip.bag.upgrade_count", up.upgradeName(), up.getCount(upData), up.getMaxCount()));
             }
         }
         else
@@ -211,7 +209,7 @@ public class Bag extends Item {
     public void inventoryTick(ItemStack stack, World worldIn, Entity entityIn, int itemSlot, boolean isSelected) {
         int eyeId;
         if ((eyeId = getEyeId(stack)) == 0 && entityIn instanceof ServerPlayerEntity && DimBag.isServer(worldIn))
-            eyeId = DimBagData.get(worldIn.getServer()).newEye((ServerPlayerEntity) entityIn, stack);
+            eyeId = DimBagData.get().newEye((ServerPlayerEntity) entityIn, stack);
         tickEye(eyeId, worldIn, entityIn, isSelected);
     }
 
@@ -219,18 +217,27 @@ public class Bag extends Item {
         if (eye > 0) {
             ModeManager.execute(eye, modeManager -> modeManager.inventoryTick(world, entity, isSelected));
             UpgradeManager.execute(eye, upgradeManager -> upgradeManager.inventoryTick(world, entity));
-            if (DimBag.isServer(world))
-                HolderData.execute(eye, holderData -> holderData.setHolder(entity));
+            if (DimBag.isServer(world) && !(entity instanceof FakePlayer)) //protection to make sure we don't override the last known position of a bag by a proxy
+                HolderData.execute(eye, holderData -> holderData.setHolder(entity)); //FIXME: since this is what is used to determine a player's position when leaving a bag, we should add a system to exit a bag through a proxy (if we entered through a proxy), this fix only needs to be aplied to players, since the proxy can't absorb other entities
         }
     }
 
-    public static int getBag(Entity entity, int eyeId) {
-        CuriosIntegration.ProxyItemStackModifier res = CuriosIntegration.searchItem(entity, Bag.class, t->t.getTag() != null && t.getTag().getInt(IEyeIdHolder.EYE_ID_KEY) != 0 && (eyeId == 0 || t.getTag().getInt(IEyeIdHolder.EYE_ID_KEY) == eyeId));
+    /**
+     * retrieve a bag on an entity, if 'eyeid' is not 0, will only try to find the given eyeid, if 'realBagOnly' is true, ignore ghost bags
+     * @return found id or 0 if not found
+     */
+    public static int getBag(Entity entity, int eyeId, boolean realBagOnly) {
+        CuriosIntegration.ProxySlotModifier res = CuriosIntegration.searchItem(entity, Bag.class, t->(!realBagOnly || !(t.getItem() instanceof GhostBag)) && t.getTag() != null && t.getTag().getInt(IEyeIdHolder.EYE_ID_KEY) != 0 && (eyeId == 0 || t.getTag().getInt(IEyeIdHolder.EYE_ID_KEY) == eyeId));
         return res != null ? res.get().getTag().getInt(IEyeIdHolder.EYE_ID_KEY) : 0;
     }
 
     @Override
-    public boolean isDamageable() { return false; }
+    public ITextComponent getName(ItemStack stack) {
+        return new StringTextComponent(SettingsData.execute(getEyeId(stack), SettingsData::getBagName, super.getName(stack).getString()));
+    }
+
+    @Override
+    public boolean isDamageable(ItemStack stack) { return false; }
 
     @Override
     public boolean shouldCauseReequipAnimation(ItemStack oldStack, ItemStack newStack, boolean slotChanged) {
@@ -238,12 +245,12 @@ public class Bag extends Item {
     }
 
     public static BlockRayTraceResult rayTrace(World worldIn, PlayerEntity player, RayTraceContext.FluidMode fluidMode) {
-        return Items.AIR.rayTrace(worldIn, player, fluidMode);
+        return getPlayerPOVHitResult(worldIn, player, fluidMode);
     }
 
     @Override
-    public ActionResultType onItemUse(ItemUseContext context) {
-        return onItemUse(context.getWorld(), context.getPlayer(), getEyeId(context.getItem()), new BlockRayTraceResult(context.getHitVec(), context.getFace(), context.getPos(), context.isInside()));
+    public ActionResultType useOn(ItemUseContext context) {
+        return onItemUse(context.getLevel(), context.getPlayer(), getEyeId(context.getItemInHand()), new BlockRayTraceResult(context.getClickLocation(), context.getClickedFace(), context.getClickedPos(), context.isInside()));
     }
 
     public static ActionResultType onItemUse(World world, PlayerEntity player, int eyeId, BlockRayTraceResult ray) {
@@ -251,19 +258,19 @@ public class Bag extends Item {
     }
 
     public static ActionResult<ItemStack> onItemRightClick(World world, PlayerEntity player, int slot, int eyeId) {
-        return new ActionResult<>(ModeManager.execute(eyeId, modeManager -> modeManager.onItemRightClick(world, player), ActionResultType.PASS), player.inventory.getStackInSlot(slot));
+        return new ActionResult<>(ModeManager.execute(eyeId, modeManager -> modeManager.onItemRightClick(world, player), ActionResultType.PASS), player.inventory.getItem(slot));
     }
 
     @Override
-    public ActionResult<ItemStack> onItemRightClick(World world, PlayerEntity player, Hand hand) {
-        return onItemRightClick(world, player, IDimBagCommonItem.slotFromHand(player, hand), getEyeId(player.getHeldItem(hand)));
+    public ActionResult<ItemStack> use(World world, PlayerEntity player, Hand hand) {
+        return onItemRightClick(world, player, IDimBagCommonItem.slotFromHand(player, hand), getEyeId(player.getItemInHand(hand)));
     }
 
     /**
      * static helper function that might also be called by a ghost bag
      */
     public static boolean onLeftClickEntity(int eyeId, PlayerEntity player, Entity entity) {
-        return ModeManager.execute(eyeId, modeManager -> modeManager.onAttack(player, entity).isSuccessOrConsume(), false);
+        return ModeManager.execute(eyeId, modeManager -> modeManager.onAttack(player, entity).consumesAction(), false);
     }
 
     @Override

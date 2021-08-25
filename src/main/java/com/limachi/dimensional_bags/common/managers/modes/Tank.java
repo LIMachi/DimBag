@@ -37,11 +37,11 @@ public class Tank extends Mode {
 
     public static final String ID = "Tank";
 
-    public Tank() { super(ID, false, true); }
+    public Tank() { super(ID, false, false); }
 
     protected void playEmptySound(@Nullable PlayerEntity player, IWorld worldIn, BlockPos pos, Fluid fluid) {
         SoundEvent soundevent = fluid.getAttributes().getEmptySound();
-        if(soundevent == null) soundevent = fluid.isIn(FluidTags.LAVA) ? SoundEvents.ITEM_BUCKET_EMPTY_LAVA : SoundEvents.ITEM_BUCKET_EMPTY;
+        if(soundevent == null) soundevent = fluid.is(FluidTags.LAVA) ? SoundEvents.BUCKET_EMPTY_LAVA : SoundEvents.BUCKET_EMPTY;
         worldIn.playSound(player, pos, soundevent, SoundCategory.BLOCKS, 1.0F, 1.0F);
     }
 
@@ -49,31 +49,31 @@ public class Tank extends Mode {
         BlockState blockstate = world.getBlockState(pos);
         Block block = blockstate.getBlock();
         Material material = blockstate.getMaterial();
-        boolean flag = blockstate.isReplaceable(fluid);
-        boolean flag1 = blockstate.isAir() || flag || block instanceof ILiquidContainer && ((ILiquidContainer)block).canContainFluid(world, pos, blockstate, fluid);
+        boolean flag = blockstate.canBeReplaced(fluid);
+        boolean flag1 = blockstate.isAir() || flag || block instanceof ILiquidContainer && ((ILiquidContainer)block).canPlaceLiquid(world, pos, blockstate, fluid);
         if (!flag1) {
-            return rayTrace != null && this.placeFluid(world, player, rayTrace.getPos().offset(rayTrace.getFace()), fluid, null);
-        } else if (world.getDimensionType().isUltrawarm() && fluid.isIn(FluidTags.WATER)) {
+            return rayTrace != null && this.placeFluid(world, player, rayTrace.getBlockPos().offset(rayTrace.getDirection().getNormal()), fluid, null);
+        } else if (world.dimensionType().ultraWarm() && fluid.is(FluidTags.WATER)) {
             int i = pos.getX();
             int j = pos.getY();
             int k = pos.getZ();
-            world.playSound(player, pos, SoundEvents.BLOCK_FIRE_EXTINGUISH, SoundCategory.BLOCKS, 0.5F, 2.6F + (world.rand.nextFloat() - world.rand.nextFloat()) * 0.8F);
+            world.playSound(player, pos, SoundEvents.FIRE_EXTINGUISH, SoundCategory.BLOCKS, 0.5F, 2.6F + (world.random.nextFloat() - world.random.nextFloat()) * 0.8F);
 
             for(int l = 0; l < 8; ++l) {
                 world.addParticle(ParticleTypes.LARGE_SMOKE, (double)i + Math.random(), (double)j + Math.random(), (double)k + Math.random(), 0.0D, 0.0D, 0.0D);
             }
 
             return true;
-        } else if (block instanceof ILiquidContainer && ((ILiquidContainer)block).canContainFluid(world, pos, blockstate, fluid)) {
-            ((ILiquidContainer)block).receiveFluid(world, pos, blockstate, ((FlowingFluid)fluid).getStillFluidState(false));
+        } else if (block instanceof ILiquidContainer && ((ILiquidContainer)block).canPlaceLiquid(world, pos, blockstate, fluid)) {
+            ((ILiquidContainer)block).placeLiquid(world, pos, blockstate, ((FlowingFluid)fluid).getSource(false));
             this.playEmptySound(player, world, pos, fluid);
             return true;
         } else {
-            if (!world.isRemote && flag && !material.isLiquid()) {
+            if (!world.isClientSide && flag && !material.isLiquid()) {
                 world.destroyBlock(pos, true);
             }
 
-            if (!world.setBlockState(pos, fluid.getDefaultState().getBlockState(), 11) && !blockstate.getFluidState().isSource()) {
+            if (!world.setBlock(pos, fluid.defaultFluidState().createLegacyBlock(), 11) && !blockstate.getFluidState().isSource()) {
                 return false;
             } else {
                 this.playEmptySound(player, world, pos, fluid);
@@ -84,7 +84,7 @@ public class Tank extends Mode {
 
     private boolean canBlockContainFluid(World world, BlockPos pos, BlockState blockstate, Fluid fluid)
     {
-        return blockstate.getBlock() instanceof ILiquidContainer && ((ILiquidContainer)blockstate.getBlock()).canContainFluid(world, pos, blockstate, fluid);
+        return blockstate.getBlock() instanceof ILiquidContainer && ((ILiquidContainer)blockstate.getBlock()).canPlaceLiquid(world, pos, blockstate, fluid);
     }
 
     @Override
@@ -124,14 +124,14 @@ public class Tank extends Mode {
             if (cf) {
                 if (output.isEmpty())
                     output = holding;
-                else if (output.isStackable() && output.getCount() < output.getMaxStackSize() && ItemStack.areItemStackTagsEqual(output, holding))
+                else if (output.isStackable() && output.getCount() < output.getMaxStackSize() && ItemStack.tagMatches(output, holding))
                     output.grow(1);
                 else {
-                    int t = playerinventory.getFirstEmptyStack();
+                    int t = playerinventory.getFreeSlot();
                     if (t == -1)
                         break; //hover fill, cancel the current try (only the copied itemstack was modified by the above actions, so we are good to leave)
                     else
-                        playerinventory.setInventorySlotContents(t, output);
+                        playerinventory.setItem(t, output);
                     output = holding;
                 }
             }
@@ -157,16 +157,16 @@ public class Tank extends Mode {
             RayTraceResult ray = Bag.rayTrace(world, player, mode);
             if (ray.getType() == RayTraceResult.Type.BLOCK) { //we found a source block, first we try to take it, if we can't and the tank is of different fluid type, try to replace the fluid block
                 BlockRayTraceResult blockraytraceresult = (BlockRayTraceResult)ray;
-                BlockPos blockHit = blockraytraceresult.getPos();
-                BlockPos blockOffset = blockHit.offset(blockraytraceresult.getFace());
-                if (world.isBlockModifiable(player, blockHit) && player.canPlayerEdit(blockOffset, blockraytraceresult.getFace(), new ItemStack(new Bag()))) {
+                BlockPos blockHit = blockraytraceresult.getBlockPos();
+                BlockPos blockOffset = blockHit.offset(blockraytraceresult.getDirection().getNormal());
+                if (world.mayInteract(player, blockHit) && player.mayUseItemAt(blockOffset, blockraytraceresult.getDirection(), new ItemStack(new Bag()))) {
                     BlockState blockState = world.getBlockState(blockHit);
                     if (blockState.getBlock() instanceof IBucketPickupHandler && !blockState.getFluidState().isEmpty()) {
-                        FluidStack targetedFluid = new FluidStack(blockState.getFluidState().getFluid(), 1000);
+                        FluidStack targetedFluid = new FluidStack(blockState.getFluidState().getType(), 1000);
                         if (mt.fill(targetedFluid, IFluidHandler.FluidAction.SIMULATE) == 1000) { //we should be able to add this stack to the tank
-                            ((IBucketPickupHandler)blockState.getBlock()).pickupFluid(world, blockHit, blockState); //we remove the fluid from the block (should be compatible with waterlogged blocks)
+                            ((IBucketPickupHandler)blockState.getBlock()).takeLiquid(world, blockHit, blockState); //we remove the fluid from the block (should be compatible with waterlogged blocks)
                             SoundEvent soundevent = targetedFluid.getFluid().getAttributes().getEmptySound();
-                            if (soundevent == null) soundevent = targetedFluid.getFluid().isIn(FluidTags.LAVA) ? SoundEvents.ITEM_BUCKET_FILL_LAVA : SoundEvents.ITEM_BUCKET_FILL;
+                            if (soundevent == null) soundevent = targetedFluid.getFluid().is(FluidTags.LAVA) ? SoundEvents.BUCKET_EMPTY_LAVA : SoundEvents.BUCKET_EMPTY;
                             player.playSound(soundevent, 1.0F, 1.0F);
                             mt.fill(targetedFluid, IFluidHandler.FluidAction.EXECUTE);
                             return ActionResultType.SUCCESS;

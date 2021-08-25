@@ -16,15 +16,13 @@ import net.minecraft.state.IntegerProperty;
 import net.minecraft.state.StateContainer;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.shapes.ISelectionContext;
-import net.minecraft.util.math.shapes.VoxelShape;
-import net.minecraft.util.math.shapes.VoxelShapes;
 import net.minecraft.util.math.vector.Vector3d;
 import net.minecraft.world.IBlockReader;
 import net.minecraft.world.World;
 import net.minecraft.world.server.ServerWorld;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+import net.minecraftforge.common.util.Constants;
 
 import java.util.Random;
 import java.util.function.Supplier;
@@ -40,35 +38,27 @@ public class Cloud extends Block {
     public static final IntegerProperty AGE = IntegerProperty.create("age", 0, 6);
 
     public Cloud() {
-        super(Properties.create(new Material(MaterialColor.SNOW, false, false, true, false, false, true, PushReaction.DESTROY)).notSolid().zeroHardnessAndResistance().sound(SoundType.SNOW).setAllowsSpawn((s,r,p,e)->false).setOpaque((s,r,p)->false).setSuffocates((s,r,p)->false).setBlocksVision((s,r,p)->false));
-        this.setDefaultState(getDefaultState().with(AGE, 1));
+        super(Properties.of(new Material(MaterialColor.SNOW, false, false, true, false, false, true, PushReaction.DESTROY)).strength(0).sound(SoundType.SNOW).isValidSpawn((s,r,p,e)->false).isRedstoneConductor((s,r,p)->false).isSuffocating((s,r,p)->false).isViewBlocking((s,r,p)->false));
+        this.registerDefaultState(defaultBlockState().setValue(AGE, 1));
     }
 
     @Override
-    protected void fillStateContainer(StateContainer.Builder<Block, BlockState> builder) {
-        super.fillStateContainer(builder);
+    protected void createBlockStateDefinition(StateContainer.Builder<Block, BlockState> builder) {
+        super.createBlockStateDefinition(builder);
         builder.add(AGE);
     }
 
+
     @Override
-    public void onFallenUpon(World worldIn, BlockPos pos, Entity entityIn, float fallDistance) {
-        entityIn.onLivingFall(fallDistance, 0.0F);
+    public void fallOn(World worldIn, BlockPos pos, Entity entityIn, float fallDistance) {
+        entityIn.causeFallDamage(fallDistance, 0.0F);
     }
 
     @Override
-    public void onLanded(IBlockReader worldIn, Entity entityIn) {
-        Vector3d vector3d = entityIn.getMotion();
-        entityIn.setMotion(vector3d.x, 0, vector3d.z);
+    public void updateEntityAfterFallOn(IBlockReader worldIn, Entity entityIn) {
+        Vector3d vector3d = entityIn.getDeltaMovement();
+        entityIn.setDeltaMovement(vector3d.x, 0, vector3d.z);
     }
-
-    @Override
-    public boolean isTransparent(BlockState state) { return true; }
-
-    @Override
-    public int getOpacity(BlockState state, IBlockReader worldIn, BlockPos pos) { return 0; }
-
-    @Override
-    public VoxelShape getRayTraceShape(BlockState state, IBlockReader reader, BlockPos pos, ISelectionContext context) { return VoxelShapes.empty(); }
 
     @OnlyIn(Dist.CLIENT)
     public float getAmbientOcclusionLightValue(BlockState state, IBlockReader worldIn, BlockPos pos) { return 1.0F; }
@@ -80,23 +70,22 @@ public class Cloud extends Block {
     }
 
     @Override
-    public boolean ticksRandomly(BlockState state) {
-        return state.get(AGE) != 0 || super.ticksRandomly(state);
-    }
+    public boolean isRandomlyTicking(BlockState state) { return state.getValue(AGE) != 0 || super.isRandomlyTicking(state); }
 
     @Override
-    public void onBlockAdded(BlockState state, World worldIn, BlockPos pos, BlockState oldState, boolean isMoving) {
-        if (state.get(AGE) != 0)
-            worldIn.getPendingBlockTicks().scheduleTick(pos, this, 10);
-        super.onBlockAdded(state, worldIn, pos, oldState, isMoving);
+    public void onPlace(BlockState state, World worldIn, BlockPos pos, BlockState oldState, boolean isMoving) {
+        if (state.getValue(AGE) != 0)
+            worldIn.getBlockTicks().scheduleTick(pos, this, 10);
+        
+        super.onPlace(state, worldIn, pos, oldState, isMoving);
     }
 
     @Override
     public void tick(BlockState state, ServerWorld worldIn, BlockPos pos, Random rand) {
-        int age = state.get(AGE);
+        int age = state.getValue(AGE);
         if (age != 0) {
-            worldIn.setBlockState(pos, age < 6 ? state.with(AGE, age + 1) : Blocks.AIR.getDefaultState());
-            worldIn.getPendingBlockTicks().scheduleTick(pos, this, MathHelper.nextInt(rand, 10, 40));
+            worldIn.setBlock(pos, age < 6 ? state.setValue(AGE, age + 1) : Blocks.AIR.defaultBlockState(), Constants.BlockFlags.DEFAULT_AND_RERENDER);
+            worldIn.getBlockTicks().scheduleTick(pos, this, MathHelper.nextInt(rand, 10, 40));
         }
         super.tick(state, worldIn, pos, rand);
     }

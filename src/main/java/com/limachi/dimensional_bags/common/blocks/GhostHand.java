@@ -20,6 +20,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockRayTraceResult;
 import net.minecraft.world.IBlockReader;
 import net.minecraft.world.World;
+import net.minecraftforge.common.util.Constants;
 
 import javax.annotation.Nullable;
 
@@ -35,59 +36,55 @@ public class GhostHand extends Block implements ITileEntityProvider {
 
     public static final BooleanProperty POWERED = BooleanProperty.create("powered");
 
-    public GhostHand() {
-        super(Properties.create(Material.ROCK).sound(SoundType.STONE));
-    }
+    public GhostHand() { super(Properties.of(Material.HEAVY_METAL).sound(SoundType.STONE)); }
 
     @Override
-    protected void fillStateContainer(StateContainer.Builder<Block, BlockState> builder) {
-        super.fillStateContainer(builder);
+    protected void createBlockStateDefinition(StateContainer.Builder<Block, BlockState> builder) {
+        super.createBlockStateDefinition(builder);
         builder.add(POWERED);
     }
 
     @Nullable
     @Override
-    public TileEntity createNewTileEntity(IBlockReader worldIn) { return Registries.getTileEntityType(GhostHandTileEntity.NAME).create(); }
+    public TileEntity newBlockEntity(IBlockReader worldIn) { return Registries.getBlockEntityType(GhostHandTileEntity.NAME).create(); }
 
     @Override
-    public void onReplaced(BlockState state, World worldIn, BlockPos pos, BlockState newState, boolean isMoving) {
+    public void onRemove(BlockState state, World worldIn, BlockPos pos, BlockState newState, boolean isMoving) {
         if (state.getBlock() != newState.getBlock()) //only do the default behavior if the new state is of a different block
-            super.onReplaced(state, worldIn, pos, newState, isMoving);
-        worldIn.notifyNeighborsOfStateChange(pos, this);
+            super.onRemove(state, worldIn, pos, newState, isMoving);
+        worldIn.updateNeighbourForOutputSignal(pos, this);
     }
 
-    public static boolean isPowered(BlockState state) {
-        return state.get(POWERED);
-    }
+    public static boolean isPowered(BlockState state) { return state.getValue(POWERED); }
 
     public static void setPowered(World world, BlockPos pos, boolean state) {
         if (world.getBlockState(pos).getBlock() instanceof GhostHand && isPowered(world.getBlockState(pos)) != state)
-            world.setBlockState(pos, Registries.getBlock(NAME).getDefaultState().with(POWERED, state));
+            world.setBlock(pos, Registries.getBlock(NAME).defaultBlockState().setValue(POWERED, state), Constants.BlockFlags.DEFAULT_AND_RERENDER);
     }
 
     @Override
     public void neighborChanged(BlockState state, World worldIn, BlockPos pos, Block blockIn, BlockPos fromPos, boolean isMoving) {
-        if (!worldIn.isRemote) {
-            TileEntity tileentity = worldIn.getTileEntity(pos);
+        if (!worldIn.isClientSide()) {
+            TileEntity tileentity = worldIn.getBlockEntity(pos);
             if (tileentity instanceof GhostHandTileEntity) {
                 GhostHandTileEntity ghosthand = (GhostHandTileEntity)tileentity;
-                boolean flag = worldIn.isBlockPowered(pos);
+                boolean flag = worldIn.hasNeighborSignal(pos);
                 boolean flag1 = isPowered(state);
                 setPowered(worldIn, pos, flag);
                 if (!flag1 && flag) {
                     ghosthand.runCommand();
-                    worldIn.getPendingBlockTicks().scheduleTick(pos, this, 1);
+                    worldIn.getBlockTicks().scheduleTick(pos, this, 1);
                 }
             }
         }
     }
 
     @Override
-    public ActionResultType onBlockActivated(BlockState state, World worldIn, BlockPos pos, PlayerEntity player, Hand handIn, BlockRayTraceResult hit) {
-        if (worldIn.isRemote) {
+    public ActionResultType use(BlockState state, World worldIn, BlockPos pos, PlayerEntity player, Hand handIn, BlockRayTraceResult hit) {
+        if (worldIn.isClientSide()) {
             return ActionResultType.SUCCESS;
         } else {
-            TileEntity tileentity = worldIn.getTileEntity(pos);
+            TileEntity tileentity = worldIn.getBlockEntity(pos);
 //            if (tileentity instanceof GhostHandTileEntity)
 //                Network.openGhostHandInterface((ServerPlayerEntity)player, (GhostHandTileEntity)tileentity);
             return ActionResultType.SUCCESS;

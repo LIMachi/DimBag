@@ -28,7 +28,7 @@ public class CrystalTileEntity extends BaseTileEntity implements IEnergyStorage,
         Registries.registerTileEntity(NAME, CrystalTileEntity::new, ()->Registries.getBlock(Crystal.NAME), null);
     }
 
-    public CrystalTileEntity() { super(Registries.getTileEntityType(NAME)); hasTileData = false; }
+    public CrystalTileEntity() { super(Registries.getBlockEntityType(NAME)); hasTileData = false; }
 
     public int getLocalEnergy() {
         EnergyData ed = data.get();
@@ -38,12 +38,12 @@ public class CrystalTileEntity extends BaseTileEntity implements IEnergyStorage,
     }
 
     public <T> List<T> getSurroundingCapabilities(Capability<T> capability, boolean push){
-        if(this.world == null)
+        if(this.level == null)
             return Collections.emptyList();
         ArrayList<T> list = new ArrayList<>();
         for(Direction facing : Direction.values()){
-            TileEntity tile = this.world.getTileEntity(this.pos.offset(facing));
-            if(tile != null && !(tile instanceof CrystalTileEntity) && getBlockState().get(Crystal.PULL) != push)
+            TileEntity tile = this.level.getBlockEntity(this.worldPosition.offset(facing.getNormal()));
+            if(tile != null && !(tile instanceof CrystalTileEntity) && getBlockState().getValue(Crystal.PULL) != push)
                 tile.getCapability(capability, facing.getOpposite()).ifPresent(list::add);
         }
         return list;
@@ -72,7 +72,7 @@ public class CrystalTileEntity extends BaseTileEntity implements IEnergyStorage,
 
     protected EnergyData getEnergyData() {
         if (data.get() == null)
-            data = new WeakReference<>(EnergyData.getInstance(SubRoomsManager.getEyeId(world, pos, false)));
+            data = new WeakReference<>(EnergyData.getInstance(SubRoomsManager.getEyeId(level, worldPosition, false)));
         return data.get();
     }
 

@@ -21,11 +21,11 @@ public class BagEntityRender extends MobRenderer<BagEntity, BagEntityModel> {
     @Override
     public void render(BagEntity entity, float yaw, float partialTicks, MatrixStack matrix, IRenderTypeBuffer buffer, int packeLight) {
         super.render(entity, yaw, partialTicks, matrix, buffer, packeLight);
-        matrix.push();
+        matrix.pushPose();
         //do the extra render here
-        matrix.pop();
+        matrix.popPose();
     }
 
     @Override
-    public ResourceLocation getEntityTexture(BagEntity entity) { return TEXTURE; }
+    public ResourceLocation getTextureLocation(BagEntity entity) { return TEXTURE; }
 }

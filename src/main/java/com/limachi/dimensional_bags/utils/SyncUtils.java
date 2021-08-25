@@ -9,6 +9,7 @@ import net.minecraft.network.play.server.SEntityEquipmentPacket;
 import net.minecraft.network.play.server.SSetExperiencePacket;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.server.ServerWorld;
+import net.minecraftforge.common.util.FakePlayer;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -19,20 +20,20 @@ public class SyncUtils {
     public static void resyncPlayerHands(@Nonnull ServerPlayerEntity player, boolean main, boolean off) {
         List<Pair<EquipmentSlotType, ItemStack>> hands = new ArrayList<>();
         if (main)
-            hands.add(new Pair<>(EquipmentSlotType.MAINHAND, player.getHeldItemMainhand()));
+            hands.add(new Pair<>(EquipmentSlotType.MAINHAND, player.getMainHandItem()));
         if (off)
-            hands.add(new Pair<>(EquipmentSlotType.OFFHAND, player.getHeldItemOffhand()));
-        player.connection.sendPacket(new SEntityEquipmentPacket(player.getEntityId(), hands));
+            hands.add(new Pair<>(EquipmentSlotType.OFFHAND, player.getOffhandItem()));
+        player.connection.send(new SEntityEquipmentPacket(player.getId(), hands));
     }
 
     public static void resyncBlock(@Nullable ServerPlayerEntity player, @Nonnull ServerWorld world, @Nonnull BlockPos pos) {
-        if (player != null && !player.world.getDimensionKey().equals(world.getDimensionKey())) return; //we will not send a resync to a player that isn't in the dimension where the block was desync
+        if (player != null && !player.level.dimension().equals(world.dimension())) return; //we will not send a resync to a player that isn't in the dimension where the block was desync
         SChangeBlockPacket packet = new SChangeBlockPacket(pos, world.getBlockState(pos));
         if (player != null)
-            player.connection.sendPacket(packet);
+            player.connection.send(packet);
         else
-            for (ServerPlayerEntity p: world.getPlayers())
-                p.connection.sendPacket(packet);
+            for (ServerPlayerEntity p: world.getPlayers(p->!(p instanceof FakePlayer)))
+                p.connection.send(packet);
     }
 
     public static class XPSnapShot {
@@ -50,7 +51,7 @@ public class SyncUtils {
     }
 
     public static void resyncXP(@Nonnull ServerPlayerEntity player, XPSnapShot xp) {
-        player.connection.sendPacket(new SSetExperiencePacket(xp.xp, xp.total, xp.lvl));
+        player.connection.send(new SSetExperiencePacket(xp.xp, xp.total, xp.lvl));
     }
 
 //    public static void resyncWindowSlot(@Nonnull ServerPlayerEntity player, int slot) {

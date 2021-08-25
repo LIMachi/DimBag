@@ -6,7 +6,7 @@ import com.limachi.dimensional_bags.DimBag;
 import com.limachi.dimensional_bags.common.data.EyeDataMK2.SubRoomsManager;
 import com.limachi.dimensional_bags.common.items.TunnelPlacer;
 import com.limachi.dimensional_bags.utils.TextUtils;
-import com.limachi.dimensional_bags.common.data.EyeDataMK2.ClientDataManager;
+//import com.limachi.dimensional_bags.common.data.EyeDataMK2.ClientDataManager;
 import com.limachi.dimensional_bags.common.items.Bag;
 import com.limachi.dimensional_bags.common.items.GhostBag;
 import com.mojang.blaze3d.matrix.MatrixStack;
@@ -63,11 +63,12 @@ public class EventManager {
         }
     }
 
+    /*
     @SubscribeEvent
     public static void addBagInformationToOverlay(RenderGameOverlayEvent.Pre event) { //might be used at some point to add hud ellements
         if (event.getType() == RenderGameOverlayEvent.ElementType.ALL) {
             PlayerEntity player = DimBag.getPlayer();
-            ItemStack mainHand = player.getHeldItemMainhand();
+            ItemStack mainHand = player.getMainHandItem();
             if (!mainHand.isEmpty() && (mainHand.getItem() instanceof Bag || mainHand.getItem() instanceof GhostBag)) {
                 ClientDataManager data = GhostBag.getClientData(mainHand);
                 if (data != null) {
@@ -75,7 +76,7 @@ public class EventManager {
                     return;
                 }
             }
-            ItemStack offHand = player.getHeldItemOffhand();
+            ItemStack offHand = player.getOffHandItem();
             if (!offHand.isEmpty() && (offHand.getItem() instanceof Bag || offHand.getItem() instanceof GhostBag)) {
                 ClientDataManager data = GhostBag.getClientData(offHand);
                 if (data != null) {
@@ -83,7 +84,7 @@ public class EventManager {
                     return;
                 }
             }
-            ItemStack chestPlate = player.getItemStackFromSlot(EquipmentSlotType.CHEST);
+            ItemStack chestPlate = player.getItemBySlot(EquipmentSlotType.CHEST);
             if (!chestPlate.isEmpty() && (chestPlate.getItem() instanceof Bag || chestPlate.getItem() instanceof GhostBag)) {
                 ClientDataManager data = GhostBag.getClientData(chestPlate);
                 if (data != null) {
@@ -93,27 +94,28 @@ public class EventManager {
             }
         }
     }
+    */
 
     @SubscribeEvent
     static void removeHighlightOnTunnelPlacer(DrawHighlightEvent event) {
         ClientPlayerEntity player = Minecraft.getInstance().player;
         if (player == null) return;
-        if (player.getHeldItemMainhand().getItem() instanceof TunnelPlacer || player.getHeldItemOffhand().getItem() instanceof TunnelPlacer)
+        if (player.getMainHandItem().getItem() instanceof TunnelPlacer || player.getOffhandItem().getItem() instanceof TunnelPlacer)
             event.setCanceled(true);
     }
 
     public static class RenderTypes extends RenderType {
-        public static final RenderType TunnelPlacerOverlayRenderType = makeType("MiningLaserBlockOverlay",
+        public static final RenderType TunnelPlacerOverlayRenderType = create("TunnelPlacerBlockOverlay",
                 DefaultVertexFormats.POSITION_COLOR, GL11.GL_QUADS, 256,
-                RenderType.State.getBuilder()
-                        .layer(VIEW_OFFSET_Z_LAYERING)
-                        .transparency(TRANSLUCENT_TRANSPARENCY)
-                        .texture(NO_TEXTURE)
-                        .depthTest(DEPTH_LEQUAL)
-                        .cull(CULL_ENABLED)
-                        .lightmap(LIGHTMAP_DISABLED)
-                        .writeMask(COLOR_DEPTH_WRITE)
-                        .build(false));
+                RenderType.State.builder()
+                        .setLayeringState(VIEW_OFFSET_Z_LAYERING)
+                        .setTransparencyState(TRANSLUCENT_TRANSPARENCY)
+                        .setTextureState(NO_TEXTURE)
+                        .setDepthTestState(LEQUAL_DEPTH_TEST)
+                        .setCullState(CULL)
+                        .setLightmapState(NO_LIGHTMAP)
+                        .setWriteMaskState(COLOR_DEPTH_WRITE)
+                        .createCompositeState(false));
 
         public RenderTypes(String nameIn, VertexFormat formatIn, int drawModeIn, int bufferSizeIn, boolean useDelegateIn, boolean needsSortingIn, Runnable setupTaskIn, Runnable clearTaskIn) {
             super(nameIn, formatIn, drawModeIn, bufferSizeIn, useDelegateIn, needsSortingIn, setupTaskIn, clearTaskIn);
@@ -126,40 +128,40 @@ public class EventManager {
         float startX = 0, startY = 0, startZ = -1, endX = 1, endY = 1, endZ = 0;
 
         //down
-        builder.pos(matrix, startX, startY, startZ).color(red, green, blue, alpha).endVertex();
-        builder.pos(matrix, endX, startY, startZ).color(red, green, blue, alpha).endVertex();
-        builder.pos(matrix, endX, startY, endZ).color(red, green, blue, alpha).endVertex();
-        builder.pos(matrix, startX, startY, endZ).color(red, green, blue, alpha).endVertex();
+        builder.vertex(matrix, startX, startY, startZ).color(red, green, blue, alpha).endVertex();
+        builder.vertex(matrix, endX, startY, startZ).color(red, green, blue, alpha).endVertex();
+        builder.vertex(matrix, endX, startY, endZ).color(red, green, blue, alpha).endVertex();
+        builder.vertex(matrix, startX, startY, endZ).color(red, green, blue, alpha).endVertex();
 
         //up
-        builder.pos(matrix, startX, endY, startZ).color(red, green, blue, alpha).endVertex();
-        builder.pos(matrix, startX, endY, endZ).color(red, green, blue, alpha).endVertex();
-        builder.pos(matrix, endX, endY, endZ).color(red, green, blue, alpha).endVertex();
-        builder.pos(matrix, endX, endY, startZ).color(red, green, blue, alpha).endVertex();
+        builder.vertex(matrix, startX, endY, startZ).color(red, green, blue, alpha).endVertex();
+        builder.vertex(matrix, startX, endY, endZ).color(red, green, blue, alpha).endVertex();
+        builder.vertex(matrix, endX, endY, endZ).color(red, green, blue, alpha).endVertex();
+        builder.vertex(matrix, endX, endY, startZ).color(red, green, blue, alpha).endVertex();
 
         //east
-        builder.pos(matrix, startX, startY, startZ).color(red, green, blue, alpha).endVertex();
-        builder.pos(matrix, startX, endY, startZ).color(red, green, blue, alpha).endVertex();
-        builder.pos(matrix, endX, endY, startZ).color(red, green, blue, alpha).endVertex();
-        builder.pos(matrix, endX, startY, startZ).color(red, green, blue, alpha).endVertex();
+        builder.vertex(matrix, startX, startY, startZ).color(red, green, blue, alpha).endVertex();
+        builder.vertex(matrix, startX, endY, startZ).color(red, green, blue, alpha).endVertex();
+        builder.vertex(matrix, endX, endY, startZ).color(red, green, blue, alpha).endVertex();
+        builder.vertex(matrix, endX, startY, startZ).color(red, green, blue, alpha).endVertex();
 
         //west
-        builder.pos(matrix, startX, startY, endZ).color(red, green, blue, alpha).endVertex();
-        builder.pos(matrix, endX, startY, endZ).color(red, green, blue, alpha).endVertex();
-        builder.pos(matrix, endX, endY, endZ).color(red, green, blue, alpha).endVertex();
-        builder.pos(matrix, startX, endY, endZ).color(red, green, blue, alpha).endVertex();
+        builder.vertex(matrix, startX, startY, endZ).color(red, green, blue, alpha).endVertex();
+        builder.vertex(matrix, endX, startY, endZ).color(red, green, blue, alpha).endVertex();
+        builder.vertex(matrix, endX, endY, endZ).color(red, green, blue, alpha).endVertex();
+        builder.vertex(matrix, startX, endY, endZ).color(red, green, blue, alpha).endVertex();
 
         //south
-        builder.pos(matrix, endX, startY, startZ).color(red, green, blue, alpha).endVertex();
-        builder.pos(matrix, endX, endY, startZ).color(red, green, blue, alpha).endVertex();
-        builder.pos(matrix, endX, endY, endZ).color(red, green, blue, alpha).endVertex();
-        builder.pos(matrix, endX, startY, endZ).color(red, green, blue, alpha).endVertex();
+        builder.vertex(matrix, endX, startY, startZ).color(red, green, blue, alpha).endVertex();
+        builder.vertex(matrix, endX, endY, startZ).color(red, green, blue, alpha).endVertex();
+        builder.vertex(matrix, endX, endY, endZ).color(red, green, blue, alpha).endVertex();
+        builder.vertex(matrix, endX, startY, endZ).color(red, green, blue, alpha).endVertex();
 
         //north
-        builder.pos(matrix, startX, startY, startZ).color(red, green, blue, alpha).endVertex();
-        builder.pos(matrix, startX, startY, endZ).color(red, green, blue, alpha).endVertex();
-        builder.pos(matrix, startX, endY, endZ).color(red, green, blue, alpha).endVertex();
-        builder.pos(matrix, startX, endY, startZ).color(red, green, blue, alpha).endVertex();
+        builder.vertex(matrix, startX, startY, startZ).color(red, green, blue, alpha).endVertex();
+        builder.vertex(matrix, startX, startY, endZ).color(red, green, blue, alpha).endVertex();
+        builder.vertex(matrix, startX, endY, endZ).color(red, green, blue, alpha).endVertex();
+        builder.vertex(matrix, startX, endY, startZ).color(red, green, blue, alpha).endVertex();
     }
 
     @SubscribeEvent
@@ -167,31 +169,31 @@ public class EventManager {
         final Minecraft mc = Minecraft.getInstance();
         final ClientPlayerEntity player = mc.player;
         if (player == null) return;
-        if (player.getHeldItemMainhand().getItem() instanceof TunnelPlacer || player.getHeldItemOffhand().getItem() instanceof TunnelPlacer) {
-            List<Pair<BlockPos, Boolean>> coords = SubRoomsManager.collectPlacerOverlays(player, player.getHeldItemMainhand().getItem() instanceof TunnelPlacer ? player.getHeldItemMainhand() : player.getHeldItemOffhand());
+        if (player.getMainHandItem().getItem() instanceof TunnelPlacer || player.getOffhandItem().getItem() instanceof TunnelPlacer) {
+            List<Pair<BlockPos, Boolean>> coords = SubRoomsManager.collectPlacerOverlays(player, player.getMainHandItem().getItem() instanceof TunnelPlacer ? player.getMainHandItem() : player.getOffhandItem());
             if (coords.isEmpty()) return;
-            IRenderTypeBuffer.Impl rtb = mc.getRenderTypeBuffers().getBufferSource();
-            Vector3d view = mc.gameRenderer.getActiveRenderInfo().getProjectedView();
+            IRenderTypeBuffer.Impl rtb = mc.renderBuffers().bufferSource();
+            Vector3d b = mc.gameRenderer.getMainCamera().getPosition();
             MatrixStack matrix = event.getMatrixStack();
-            matrix.push();
-            matrix.translate(-view.getX(), -view.getY(), -view.getZ());
+            matrix.pushPose();
+            matrix.translate(-b.x(), -b.y(), -b.z());
             IVertexBuilder builder;
             builder = rtb.getBuffer(RenderTypes.TunnelPlacerOverlayRenderType);
             coords.forEach(p -> {
                 BlockPos pos = p.getKey();
-                matrix.push();
+                matrix.pushPose();
                 matrix.translate(pos.getX(), pos.getY(), pos.getZ());
                 matrix.translate(-0.0005f, -0.0005f, -0.0005f);
                 matrix.scale(1.001f, 1.001f, 1.001f);
-                matrix.rotate(Vector3f.YP.rotationDegrees(-90.0F));
+                matrix.mulPose(Vector3f.YP.rotationDegrees(-90.0F));
 
-                Matrix4f positionMatrix = matrix.getLast().getMatrix();
+                Matrix4f positionMatrix = matrix.last().pose();
                 renderTunnelPlacerOverlay(positionMatrix, builder, pos, p.getValue() ? Color.GREEN : Color.RED);
-                matrix.pop();
+                matrix.popPose();
             });
-            matrix.pop();
+            matrix.popPose();
             RenderSystem.disableDepthTest();
-            rtb.finish(RenderTypes.TunnelPlacerOverlayRenderType);
+            rtb.endBatch(RenderTypes.TunnelPlacerOverlayRenderType);
         }
     }
 

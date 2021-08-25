@@ -64,7 +64,7 @@ public class TextFieldWidget extends BaseWidget {
                 leftCorrection = MathHelper.clamp(cursor - characterPadding, 0, text.length() - 1);
             else {
                 String vt = getVisibleText();
-                if (cursor + characterPadding > leftCorrection + vt.length() && font.getStringWidth(vt) + font.getStringWidth("|_|_") >= width)
+                if (cursor + characterPadding > leftCorrection + vt.length() && font.width(vt) + font.width("|_|_") >= width)
                     leftCorrection = MathHelper.clamp(cursor - vt.length() + characterPadding, 0, text.length() - 1);
             }
         }
@@ -107,9 +107,7 @@ public class TextFieldWidget extends BaseWidget {
         return text.length() == 0 || selection == cursor ? "" : text.substring(Math.min(selection, cursor), Math.max(selection, cursor));
     }
 
-    public String getVisibleText() {
-        return font.trimStringToWidth(text.substring(leftCorrection), width - 6);
-    }
+    public String getVisibleText() { return font.plainSubstrByWidth(text.substring(leftCorrection), width - 6); }
 
     public void pushToHistory() {
         history.add(++historyPage, new Pair<>(cursor, new String(text)));
@@ -127,7 +125,7 @@ public class TextFieldWidget extends BaseWidget {
     }
 
     public void writeText(String add) {
-        add = SharedConstants.filterAllowedCharacters(add);
+        add = SharedConstants.filterText(add);
         String start = text.substring(0, Math.min(selection, cursor));
         String end = text.substring(Math.max(selection, cursor));
         if (!insertMode)
@@ -161,13 +159,13 @@ public class TextFieldWidget extends BaseWidget {
             selection = 0;
             return true;
         } else if (Screen.isCopy(keyCode)) {
-            Minecraft.getInstance().keyboardListener.setClipboardString(getSelectedText());
+            Minecraft.getInstance().keyboardHandler.setClipboard(getSelectedText());
             return true;
         } else if (Screen.isPaste(keyCode)) {
-            writeText(Minecraft.getInstance().keyboardListener.getClipboardString());
+            writeText(Minecraft.getInstance().keyboardHandler.getClipboard());
             return true;
         } else if (Screen.isCut(keyCode)) {
-            Minecraft.getInstance().keyboardListener.setClipboardString(getSelectedText());
+            Minecraft.getInstance().keyboardHandler.setClipboard(getSelectedText());
             writeText("");
             return true;
         } else {
@@ -226,7 +224,7 @@ public class TextFieldWidget extends BaseWidget {
     @Override
     public boolean charTyped(char codePoint, int modifiers) {
         if (!isFocused()) return false;
-        if (SharedConstants.isAllowedCharacter(codePoint)) {
+        if (SharedConstants.isAllowedChatCharacter(codePoint)) {
             writeText(Character.toString(codePoint));
             return true;
         }
@@ -237,7 +235,7 @@ public class TextFieldWidget extends BaseWidget {
         String s = getVisibleText();
         int i = 1;
         double lx = /*getTransformedCoords().getX1()*/x;
-        while (i <= s.length() && lx + /*RenderUtils.getPrintedStringWidth(getLocalMatrix(), font, s.substring(0, i))*/font.getStringWidth(s.substring(0, i)) < mouseX)
+        while (i <= s.length() && lx + /*RenderUtils.getPrintedStringWidth(getLocalMatrix(), font, s.substring(0, i))*/font.width(s.substring(0, i)) < mouseX)
             ++i;
         setCursorPos(i - 1 + leftCorrection, shouldSelect());
     }
@@ -276,13 +274,13 @@ public class TextFieldWidget extends BaseWidget {
     }
 
     @Override
-    public void renderWidget(MatrixStack matrixStack, int mouseX, int mouseY, float partialTicks) {
-        int dy = (height - font.FONT_HEIGHT) / 2;
-        int cursorPos = leftCorrection < cursor ? font.getStringWidth((text + " ").substring(leftCorrection, cursor)) : 0;
+    public void renderButton(MatrixStack matrixStack, int mouseX, int mouseY, float partialTicks) {
+        int dy = (height - font.lineHeight) / 2;
+        int cursorPos = leftCorrection < cursor ? font.width((text + " ").substring(leftCorrection, cursor)) : 0;
         if (selection != cursor) {
             int selectionPos = 0;
             if (selection >= leftCorrection)
-                selectionPos = font.getStringWidth(text.substring(leftCorrection, selection));
+                selectionPos = font.width(text.substring(leftCorrection, selection));
             int start = Math.min(selectionPos, cursorPos);
             int end = Math.max(selectionPos, cursorPos);
             RenderUtils.drawBox(matrixStack, new Box2d(x + 4 + start, y + dy, end - start + 3, height - dy * 2), selectionColor, 0);

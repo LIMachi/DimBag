@@ -19,7 +19,7 @@ import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_PAGE_DOWN;
 
 public class TextField extends Base {
-
+/*
     protected FontRenderer font;
     protected String text = "";
     protected int selection = 0;
@@ -77,7 +77,6 @@ public class TextField extends Base {
         setCursorPos(end, true);
     }
 
-    /** expand the current selection to the word */
     public void selectWord(boolean left) {
         int start = 0;
         int end;
@@ -292,5 +291,5 @@ public class TextField extends Base {
             else
                 RenderUtils.drawString(matrixStack, getFont(), "_", coords.copy().move(cursorPos + 1, 1), cursorColor, true, false);
         }
-    }
+    }*/
 }

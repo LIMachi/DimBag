@@ -13,7 +13,7 @@ import java.util.function.Function;
 import static com.limachi.dimensional_bags.common.references.GUIs.ScreenParts.*;
 
 public class SlotWidget extends Base {
-
+/*
     public static final TextureCutout VANILLA_SLOT = new TextureCutout(SLOT, SLOT_SIZE_X, SLOT_SIZE_Y, 0, 0, SLOT_SIZE_X, SLOT_SIZE_Y);
     public static final int VANILLA_SLOT_SELECTION_TINT = -2130706433;
 
@@ -58,5 +58,5 @@ public class SlotWidget extends Base {
     @Override
     public boolean onMouseClicked(double mouseX, double mouseY, int button) {
         return onClick != null && isHovered() && onClick.apply(button);
-    }
+    }*/
 }

@@ -14,7 +14,7 @@ public class UpstreamTileUpdateMsg extends PacketHandler.Message {
 
     public UpstreamTileUpdateMsg(PacketBuffer buffer) {
         this.pos = buffer.readBlockPos();
-        this.data = buffer.readCompoundTag();
+        this.data = buffer.readAnySizeNbt();
     }
 
     public UpstreamTileUpdateMsg(BlockPos pos, CompoundNBT dataIn) {
@@ -25,18 +25,18 @@ public class UpstreamTileUpdateMsg extends PacketHandler.Message {
     @Override
     public void toBytes(PacketBuffer buffer) {
         buffer.writeBlockPos(pos);
-        buffer.writeCompoundTag(data);
+        buffer.writeNbt(data);
     }
 
     @Override
     public void serverWork(ServerPlayerEntity player) {
         if (player != null) {
-            TileEntity t = player.world.getTileEntity(pos);
+            TileEntity t = player.level.getBlockEntity(pos);
             if (!(t instanceof BaseTileEntity)) return;
             BaseTileEntity te = (BaseTileEntity)t;
             if (te.validateUpstreamUpdate(data))
                 te.readDataPacket(data);
-            te.markDirty();
+            te.setChanged();
         }
     }
 }

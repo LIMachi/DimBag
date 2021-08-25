@@ -31,7 +31,6 @@ import net.minecraft.item.ItemModelsProperties;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.ModelRegistryEvent;
-import net.minecraftforge.client.model.ModelLoaderRegistry;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.client.registry.ClientRegistry;
 import net.minecraftforge.fml.client.registry.RenderingRegistry;
@@ -48,34 +47,34 @@ public class ClientEventSubscriber {
     @SubscribeEvent
     public static void clientSetup(FMLClientSetupEvent event) {
 
-       ClientRegistry.bindTileEntityRenderer(Registries.getTileEntityType(FountainTileEntity.NAME), Fountain::new);
+       ClientRegistry.bindTileEntityRenderer(Registries.getBlockEntityType(FountainTileEntity.NAME), Fountain::new);
 ///       RenderTypeLookup.setRenderLayer(Registries.getBlock(Wall.NAME), rt->true);
 
-//        ScreenManager.registerFactory(Registries.getContainerType(BagContainer.NAME), InventoryGUI::new);
-//        ScreenManager.registerFactory(Registries.getContainerType(SimpleContainer.NAME), SimpleContainerScreen::new); //FIXME: go back to 1-1 (1 container -> 1 screen)
-//        ScreenManager.registerFactory(Registries.getContainerType(WrappedPlayerInventoryContainer.NAME), PlayerInterfaceGUI::new);
-//        ScreenManager.registerFactory(Registries.getContainerType(BrainContainer.NAME), BrainGUI::new);
-//        ScreenManager.registerFactory(Registries.getContainerType(GhostHandContainer.NAME), GhostHandGUI::new);
-        ScreenManager.registerFactory(Registries.getContainerType(SettingsContainer.NAME), SettingsScreen::new);
-        ScreenManager.registerFactory(Registries.getContainerType(PillarContainer.NAME), SimpleContainerScreen<PillarContainer>::new);
-        ScreenManager.registerFactory(Registries.getContainerType(FountainContainer.NAME), SimpleContainerScreen<FountainContainer>::new);
+//        ScreenManager.register(Registries.getContainerType(BagContainer.NAME), InventoryGUI::new);
+//        ScreenManager.register(Registries.getContainerType(SimpleContainer.NAME), SimpleContainerScreen::new); //FIXME: go back to 1-1 (1 container -> 1 screen)
+        ScreenManager.register(Registries.getContainerType(UserPillarContainer.NAME), UserPillarGUI::new);
+//        ScreenManager.register();(Registries.getContainerType(BrainContainer.NAME), BrainGUI::new);
+//        ScreenManager.register();(Registries.getContainerType(GhostHandContainer.NAME), GhostHandGUI::new);
+        ScreenManager.register(Registries.getContainerType(SettingsContainer.NAME), SettingsScreen::new);
+        ScreenManager.register(Registries.getContainerType(PillarContainer.NAME), SimpleContainerScreen<PillarContainer>::new);
+        ScreenManager.register(Registries.getContainerType(FountainContainer.NAME), SimpleContainerScreen<FountainContainer>::new);
 
         RenderingRegistry.registerEntityRenderingHandler(Registries.getEntityType(BagEntityItem.NAME), EntityItemRenderer::new);
 
-        RenderTypeLookup.setRenderLayer(Cloud.INSTANCE.get(), RenderType.getTranslucent());
+        RenderTypeLookup.setRenderLayer(Cloud.INSTANCE.get(), RenderType.translucent());
 
         KeyMapController.KeyBindings.registerKeybindings();
 
-        ItemModelsProperties.registerProperty(Registries.getItem(Bag.NAME), new ResourceLocation(MOD_ID, "bag_mode_property"), Bag::getModeProperty);
-        ItemModelsProperties.registerProperty(Registries.getItem(GhostBag.NAME), new ResourceLocation(MOD_ID, "bag_mode_property"), GhostBag::getModeProperty);
+        ItemModelsProperties.register(Registries.getItem(Bag.NAME), new ResourceLocation(MOD_ID, "bag_mode_property"), Bag::getModeProperty);
+        ItemModelsProperties.register(Registries.getItem(GhostBag.NAME), new ResourceLocation(MOD_ID, "bag_mode_property"), GhostBag::getModeProperty);
 
-        Map<String, PlayerRenderer> skin = Minecraft.getInstance().getRenderManager().getSkinMap();
+        Map<String, PlayerRenderer> skin = Minecraft.getInstance().getEntityRenderDispatcher().getSkinMap();
         for (String key : skin.keySet()) {
             PlayerRenderer renderer = skin.get(key);
             renderer.addLayer(new BagLayer<>(renderer, new BipedModel(0.5F), new BipedModel(1.0F)));
         }
 
-        Map<EntityType<?>, EntityRenderer<?>> renderers = Minecraft.getInstance().getRenderManager().renderers;
+        Map<EntityType<?>, EntityRenderer<?>> renderers = Minecraft.getInstance().getEntityRenderDispatcher().renderers;
     }
 
     @SubscribeEvent

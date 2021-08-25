@@ -10,6 +10,7 @@ public abstract class LivingEntityReader {
     static {
         EntityReader.register(LivingEntity.class, "health", LivingEntity::getHealth);
         EntityReader.register(LivingEntity.class, "max_health", LivingEntity::getMaxHealth);
+        /*
         EntityReader.register(LivingEntity.class, "arrow_count_in_entity", LivingEntity::getArrowCountInEntity);
         EntityReader.register(LivingEntity.class, "bee_sting_count_in_entity", LivingEntity::getBeeStingCount);
         EntityReader.register(LivingEntity.class, "bed_position_x", t -> t.getBedPosition().isPresent() ? t.getBedPosition().get().getX() : 0);
@@ -34,7 +35,7 @@ public abstract class LivingEntityReader {
         EntityReader.register(LivingEntity.class, "rotation_yaw_head", t ->t.rotationYawHead);
         EntityReader.register(LivingEntity.class, "prev_rotation_yaw_head", t ->t.prevRotationYawHead);
         EntityReader.register(LivingEntity.class, "jump_movement_factor", t ->t.jumpMovementFactor);
-        EntityReader.register(LivingEntity.class, "attacking_entity", LivingEntity::getAttackingEntity);
+        EntityReader.register(LivingEntity.class, "attacking_entity", LivingEntity::getAttackingEntity);*/
         //TODO: finish to add the other properties
     }
 }

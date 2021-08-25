@@ -20,7 +20,7 @@ public class FluidSlot extends Slot {
     }
 
     @Override
-    public void putStack(ItemStack stack) {
+    public void set(ItemStack stack) {
         if (stack.getItem() instanceof FluidItem) {
             FluidStack fluid = FluidStack.loadFluidStackFromNBT(stack.getTag());
             int ps = fluidHandler.getSelectedTank();
@@ -40,12 +40,12 @@ public class FluidSlot extends Slot {
             }
             fluidHandler.selectTank(ps);
         }
-        this.onSlotChanged();
+        this.setChanged();
     }
 
     @Nonnull
     @Override
-    public ItemStack getStack() {
+    public ItemStack getItem() {
         FluidStack fluid = getFluid();
         if (fluid.isEmpty())
             return ItemStack.EMPTY;
@@ -57,17 +57,17 @@ public class FluidSlot extends Slot {
     public boolean isSelected() { return fluidHandler.getSelectedTank() == getSlotIndex(); }
 
     @Override
-    public boolean getHasStack() { return !fluidHandler.getFluidInTank(getSlotIndex()).isEmpty(); }
+    public boolean hasItem() { return !fluidHandler.getFluidInTank(getSlotIndex()).isEmpty(); }
 
     @Override
-    public boolean isItemValid(@Nonnull ItemStack stack) { return false; }
+    public boolean mayPlace(@Nonnull ItemStack stack) { return false; }
 
     @Override
-    public boolean canTakeStack(PlayerEntity playerIn) { return false; }
+    public boolean mayPickup(PlayerEntity playerIn) { return false; }
 
     @Nonnull
     @Override
-    public ItemStack decrStackSize(int amount) { return ItemStack.EMPTY; }
+    public ItemStack remove(int amount) { return ItemStack.EMPTY; }
 
     @Nonnull
     public FluidStack getFluid() { return fluidHandler.getFluidInTank(getSlotIndex()); }

@@ -33,20 +33,20 @@ public class Pad extends RSReactiveBlock implements ITileEntityProvider {
     public static final Supplier<Pad> INSTANCE = Registries.registerBlock(NAME, Pad::new);
     public static final Supplier<BlockItem> INSTANCE_ITEM = Registries.registerBlockItem(NAME, NAME, DimBag.DEFAULT_PROPERTIES);
 
-    public Pad() { super(Properties.create(Material.ROCK).sound(SoundType.STONE)); }
+    public Pad() { super(Properties.of(Material.HEAVY_METAL).sound(SoundType.STONE)); }
 
     @Nullable
     @Override
-    public TileEntity createNewTileEntity(IBlockReader worldIn) {
-        return Registries.getTileEntityType(PadTileEntity.NAME).create();
+    public TileEntity newBlockEntity(IBlockReader worldIn) {
+        return Registries.getBlockEntityType(PadTileEntity.NAME).create();
     }
 
     @Override
-    public void onReplaced(BlockState state, World worldIn, BlockPos pos, BlockState newState, boolean isMoving) {
-        super.onReplaced(state, worldIn, pos, newState, isMoving);
+    public void onRemove(BlockState state, World worldIn, BlockPos pos, BlockState newState, boolean isMoving) {
+        super.onRemove(state, worldIn, pos, newState, isMoving);
         if (state.getBlock() == newState.getBlock()) {
             if (isPowered(state) != isPowered(newState)) {
-                TileEntity te = worldIn.getTileEntity(pos);
+                TileEntity te = worldIn.getBlockEntity(pos);
                 if (te instanceof PadTileEntity)
                     ((PadTileEntity) te).needUpdate();
             }
@@ -54,13 +54,13 @@ public class Pad extends RSReactiveBlock implements ITileEntityProvider {
     }
 
     @Override
-    public ActionResultType onBlockActivated(BlockState state, World worldIn, BlockPos pos, PlayerEntity player, Hand handIn, BlockRayTraceResult hit) {
+    public ActionResultType use(BlockState state, World worldIn, BlockPos pos, PlayerEntity player, Hand handIn, BlockRayTraceResult hit) {
         int eyeId = SubRoomsManager.getEyeId(worldIn, pos, false);
         if (eyeId <= 0) return ActionResultType.FAIL;
         if (KeyMapController.KeyBindings.SNEAK_KEY.getState(player))
             SubRoomsManager.execute(eyeId, sm->sm.leaveBag(player, false, null, null));
         else
-            PadScreen.open((PadTileEntity) worldIn.getTileEntity(pos));
+            PadScreen.open((PadTileEntity) worldIn.getBlockEntity(pos));
         return ActionResultType.CONSUME;
     }
 }

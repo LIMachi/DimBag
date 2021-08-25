@@ -12,6 +12,7 @@ public class PlayerReader {
     static {
         EntityReader.register(PlayerEntity.class, "absorbtion", PlayerEntity::getAbsorptionAmount);
         EntityReader.register(PlayerEntity.class, "score", PlayerEntity::getScore);
+        /*
         EntityReader.register(PlayerEntity.class, "main_hand", t -> t.getPrimaryHand().toString());
         EntityReader.register(PlayerEntity.class, "food_level", t -> t.getFoodStats().getFoodLevel());
         EntityReader.register(PlayerEntity.class, "saturation_level", t -> t.getFoodStats().getSaturationLevel());
@@ -33,7 +34,7 @@ public class PlayerReader {
         EntityReader.register(PlayerEntity.class, "is_sneaking", Entity::isCrouching);
         EntityReader.register(PlayerEntity.class, "is_sneaking_key_down", KeyMapController.KeyBindings.SNEAK_KEY::getState);
         EntityReader.register(PlayerEntity.class, "is_bag_key_down", KeyMapController.KeyBindings.BAG_KEY::getState);
-        EntityReader.register(PlayerEntity.class, "max_portal_time", PlayerEntity::getMaxInPortalTime);
+        EntityReader.register(PlayerEntity.class, "max_portal_time", PlayerEntity::getMaxInPortalTime);*/
         //TODO: finish to add the other properties
     }
 }
