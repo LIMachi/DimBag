@@ -1,5 +1,6 @@
 package com.limachi.dimensional_bags.common;
 
+import com.limachi.dimensional_bags.common.container.BaseContainer;
 import com.limachi.dimensional_bags.common.items.FluidItem;
 import net.minecraft.block.AbstractBlock;
 import net.minecraft.block.Block;
@@ -7,12 +8,14 @@ import net.minecraft.block.FlowingFluidBlock;
 import net.minecraft.block.material.Material;
 import net.minecraft.client.util.ITooltipFlag;
 import net.minecraft.entity.EntityType;
+import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.fluid.FlowingFluid;
 import net.minecraft.fluid.Fluid;
 import net.minecraft.inventory.container.ContainerType;
 import net.minecraft.item.BlockItem;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import net.minecraft.network.PacketBuffer;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.tileentity.TileEntityType;
 import net.minecraft.util.text.ITextComponent;

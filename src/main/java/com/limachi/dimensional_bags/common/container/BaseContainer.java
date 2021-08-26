@@ -65,36 +65,23 @@ public abstract class BaseContainer<I extends BaseContainer<I>> extends Containe
         public boolean stillValid(PlayerEntity player) { return true; }
     }
 
-    public static final class NullContainer extends BaseContainer<NullContainer> {
-        public static final NullContainer NULL_CONTAINER = new NullContainer();
+    public static abstract class NullContainer extends BaseContainer<NullContainer> {
+        public static final NullContainer NULL_CONTAINER = new NullContainer(null, -1, NullPlayerInventory.NULL_PLAYER_CONTAINER){};
 
-        protected NullContainer() {
-            super(null, -1, NullPlayerInventory.NULL_PLAYER_CONTAINER);
-        }
-
-        protected NullContainer(int windowId, PlayerInventory playerInv, PacketBuffer buffer) {
-            super(null, -1, NullPlayerInventory.NULL_PLAYER_CONTAINER, buffer);
-        }
+        protected NullContainer(ContainerType<?> containerType, int windowId, PlayerInventory playerInv) { super(containerType, windowId, playerInv); }
+        protected NullContainer(ContainerType<?> containerType, int windowId, PlayerInventory playerInv, @Nullable PacketBuffer buffer) { super(containerType, windowId, playerInv, buffer); }
 
         @Override
-        public ITextComponent getDisplayName() {
-            return StringTextComponent.EMPTY;
-        }
+        final public ITextComponent getDisplayName() { return StringTextComponent.EMPTY; }
 
         @Override
-        public boolean stillValid(PlayerEntity playerIn) {
-            return true;
-        }
+        final public boolean stillValid(PlayerEntity playerIn) { return true; }
 
         @Override
-        public void readFromBuff(PacketBuffer buff) {
-
-        }
+        final public void readFromBuff(PacketBuffer buff) {}
 
         @Override
-        public void writeToBuff(PacketBuffer buff) {
-
-        }
+        final public void writeToBuff(PacketBuffer buff) {}
     }
 
     @OnlyIn(Dist.CLIENT)

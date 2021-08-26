@@ -4,29 +4,22 @@ import com.limachi.dimensional_bags.KeyMapController;
 import com.limachi.dimensional_bags.client.entity.layer.BagLayer;
 import com.limachi.dimensional_bags.client.entity.render.BagEntityRender;
 import com.limachi.dimensional_bags.client.itemEntity.EntityItemRenderer;
-//import com.limachi.dimensional_bags.client.models.loaders.WallModelLoader;
 import com.limachi.dimensional_bags.client.render.screen.*;
-//import com.limachi.dimensional_bags.client.tileEntity.BagGatewayTileEntityRenderer;
 import com.limachi.dimensional_bags.client.render.tileEntity.Fountain;
 import com.limachi.dimensional_bags.common.Registries;
 import com.limachi.dimensional_bags.common.blocks.Cloud;
-//import com.limachi.dimensional_bags.common.blocks.Wall;
 import com.limachi.dimensional_bags.common.container.*;
 import com.limachi.dimensional_bags.common.entities.BagEntity;
 import com.limachi.dimensional_bags.common.items.Bag;
 import com.limachi.dimensional_bags.common.items.GhostBag;
 import com.limachi.dimensional_bags.common.items.entity.BagEntityItem;
-//import com.limachi.dimensional_bags.common.tileentities.BagGatewayTileEntity;
-//import com.limachi.dimensional_bags.common.tileentities.WallTileEntity;
 import com.limachi.dimensional_bags.common.tileentities.FountainTileEntity;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.ScreenManager;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.RenderTypeLookup;
-import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.PlayerRenderer;
 import net.minecraft.client.renderer.entity.model.BipedModel;
-import net.minecraft.entity.EntityType;
 import net.minecraft.item.ItemModelsProperties;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.api.distmarker.Dist;
@@ -46,20 +39,15 @@ public class ClientEventSubscriber {
 
     @SubscribeEvent
     public static void clientSetup(FMLClientSetupEvent event) {
-
-       ClientRegistry.bindTileEntityRenderer(Registries.getBlockEntityType(FountainTileEntity.NAME), Fountain::new);
-///       RenderTypeLookup.setRenderLayer(Registries.getBlock(Wall.NAME), rt->true);
-
-//        ScreenManager.register(Registries.getContainerType(BagContainer.NAME), InventoryGUI::new);
-//        ScreenManager.register(Registries.getContainerType(SimpleContainer.NAME), SimpleContainerScreen::new); //FIXME: go back to 1-1 (1 container -> 1 screen)
+        ClientRegistry.bindTileEntityRenderer(Registries.getBlockEntityType(FountainTileEntity.NAME), Fountain::new);
         ScreenManager.register(Registries.getContainerType(UserPillarContainer.NAME), UserPillarGUI::new);
-//        ScreenManager.register();(Registries.getContainerType(BrainContainer.NAME), BrainGUI::new);
-//        ScreenManager.register();(Registries.getContainerType(GhostHandContainer.NAME), GhostHandGUI::new);
         ScreenManager.register(Registries.getContainerType(SettingsContainer.NAME), SettingsScreen::new);
         ScreenManager.register(Registries.getContainerType(PillarContainer.NAME), SimpleContainerScreen<PillarContainer>::new);
         ScreenManager.register(Registries.getContainerType(FountainContainer.NAME), SimpleContainerScreen<FountainContainer>::new);
 
         RenderingRegistry.registerEntityRenderingHandler(Registries.getEntityType(BagEntityItem.NAME), EntityItemRenderer::new);
+
+        ScreenManager.register(Registries.getContainerType(ClientSideOnlyScreenHandler.NAME), ClientSideOnlyScreenHandler::new);
 
         RenderTypeLookup.setRenderLayer(Cloud.INSTANCE.get(), RenderType.translucent());
 
@@ -73,13 +61,10 @@ public class ClientEventSubscriber {
             PlayerRenderer renderer = skin.get(key);
             renderer.addLayer(new BagLayer<>(renderer, new BipedModel(0.5F), new BipedModel(1.0F)));
         }
-
-        Map<EntityType<?>, EntityRenderer<?>> renderers = Minecraft.getInstance().getEntityRenderDispatcher().renderers;
     }
 
     @SubscribeEvent
     public static void onModelRegistry(ModelRegistryEvent event) {
         RenderingRegistry.registerEntityRenderingHandler(Registries.getEntityType(BagEntity.NAME), BagEntityRender::new);
-//        ModelLoaderRegistry.registerLoader(new ResourceLocation(MOD_ID, "wall_model_loader"), new WallModelLoader());
     }
 }
