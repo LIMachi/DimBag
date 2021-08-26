@@ -34,6 +34,7 @@
   "block.dim_bag.wall": "Wall",
   "block.dim_bag.user_pillar": "User Interface",
   "block.dim_bag.world_access_point": "World Interface",
+  "block.dim_bag.bag_proxy": "Dimensional Bag Proxy",
 
   "itemGroup.tab_dim_bag": "Dimensional Bags",
 

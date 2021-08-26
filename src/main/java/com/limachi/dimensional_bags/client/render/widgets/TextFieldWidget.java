@@ -48,6 +48,7 @@ public class TextFieldWidget extends BaseWidget {
         this.onFinishInput = onFinishInput;
         this.validateText = validateText;
         renderStandardBackground = false;
+        consumeEscKey = true;
     }
 
     public void finishInput(boolean withCallback) {

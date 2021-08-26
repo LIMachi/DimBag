@@ -37,9 +37,6 @@ size pearl (stabilized proto pearl in size mode) will change your size when cons
 -halve your size if you are sneaking (limited to 2 times or 1/2 of a block height)
 -double your size if you are standing (limited to 2 times or 8 blocks height)
 
-
-!!!!FIXME!!!!: since upgrading to official mappings, oppening an inventory results in a BIG desync
-
 -----------------------------------------------------------------------
 TODO ADDITION EDITION:
 -----------------------------------------------------------------------

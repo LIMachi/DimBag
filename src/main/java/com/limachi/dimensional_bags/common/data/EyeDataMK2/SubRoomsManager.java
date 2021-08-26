@@ -84,8 +84,8 @@ public class SubRoomsManager extends WorldSavedDataManager.EyeWorldSavedData {
         /**
          * @return all the chunks that intersects with this room (useful for ticking/loadding)
          */
-        public ArrayList<ChunkPos> getComposingChunks() {
-            ArrayList<ChunkPos> out = new ArrayList<>();
+        public Set<ChunkPos> getComposingChunks() {
+            HashSet<ChunkPos> out = new HashSet<>();
             for (int x = (center.getX() - westWall) >> 4; x <= (int)Math.ceil((center.getX() + eastWall) / 16.); ++x)
                 for (int z = (center.getZ() - northWall) >> 4; z <= (int)Math.ceil((center.getZ() + southWall) / 16.); ++z)
                     out.add(new ChunkPos(x, z));
@@ -263,6 +263,13 @@ public class SubRoomsManager extends WorldSavedDataManager.EyeWorldSavedData {
         super(suffix, id, client, false);
         posToSubRoomId.put(new Vector3i(0, 0, 0), 0);
         subRooms.add(0, new SubRoomData().setPos(new Vector3i(0, 0, 0)).setCenter(getEyePos(id)).setRadius(DEFAULT_RADIUS, null));
+    }
+
+    public Set<ChunkPos> getComposingChunks() {
+        HashSet<ChunkPos> out = new HashSet<>();
+        for (SubRoomData d : subRooms)
+            out.addAll(d.getComposingChunks());
+        return out;
     }
 
     /**

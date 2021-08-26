@@ -35,6 +35,7 @@ import net.minecraft.util.text.ITextComponent;
 import net.minecraftforge.fluids.FluidStack;
 import org.lwjgl.opengl.GL11;
 
+import javax.annotation.Nullable;
 import java.util.HashMap;
 import java.util.Stack;
 import java.util.function.Consumer;
@@ -52,6 +53,26 @@ public class SimpleContainerScreen<C extends BaseContainer<C>> extends DisplayEf
     public int ticks = 0;
 
     public FontRenderer getFont() { return font; }
+
+    /**
+     * dirty fix for widgets that change their focus without notifying it to the screen
+     * @return
+     */
+    @Nullable
+    @Override
+    public IGuiEventListener getFocused() {
+        IGuiEventListener f = super.getFocused();
+        if (f instanceof Widget && !((Widget)f).isFocused()) {
+            f = null;
+            setFocused(null);
+        }
+        return f;
+    }
+
+    @Override
+    public boolean shouldCloseOnEsc() {
+        return !(getFocused() instanceof BaseWidget && ((BaseWidget)getFocused()).consumeEscKey());
+    }
 
     public void scissor(MatrixStack matrixStack, double x1, double y1, double x2, double y2) {
         if (scissors.empty())

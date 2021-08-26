@@ -45,5 +45,6 @@ public class PadScreen extends SimpleContainerScreen<BaseContainer.NullContainer
     public void onClose() {
         this.minecraft.keyboardHandler.setSendRepeatsToGui(false);
         pad.updateList(isWhitelist.selected(), list.finalEntries().collect(Collectors.toList()));
+        super.onClose();
     }
 }

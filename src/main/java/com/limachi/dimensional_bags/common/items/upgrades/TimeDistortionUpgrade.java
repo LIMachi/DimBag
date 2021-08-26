@@ -1,6 +1,6 @@
 package com.limachi.dimensional_bags.common.items.upgrades;
 
-import com.limachi.dimensional_bags.ConfigManager;
+import com.limachi.dimensional_bags.ConfigManager.Config;
 import com.limachi.dimensional_bags.DimBag;
 import com.limachi.dimensional_bags.StaticInit;
 import com.limachi.dimensional_bags.common.EventManager;
@@ -11,22 +11,33 @@ import com.limachi.dimensional_bags.common.entities.BagEntity;
 import com.limachi.dimensional_bags.common.managers.UpgradeManager;
 import com.limachi.dimensional_bags.common.tileentities.IisBagTE;
 import com.limachi.dimensional_bags.utils.WorldUtils;
+import net.minecraft.block.BlockState;
 import net.minecraft.client.util.ITooltipFlag;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.item.FallingBlockEntity;
 import net.minecraft.entity.item.ItemEntity;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.fluid.FluidState;
 import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.BeaconTileEntity;
 import net.minecraft.tileentity.ConduitTileEntity;
 import net.minecraft.tileentity.ITickableTileEntity;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.ActionResultType;
+import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.ChunkPos;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraft.util.text.TranslationTextComponent;
+import net.minecraft.world.GameRules;
 import net.minecraft.world.World;
+import net.minecraft.world.chunk.Chunk;
+import net.minecraft.world.chunk.ChunkSection;
+import net.minecraft.world.server.ServerWorld;
 
 import javax.annotation.Nullable;
+import java.util.HashSet;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -37,17 +48,23 @@ public class TimeDistortionUpgrade extends BaseUpgrade<TimeDistortionUpgrade> {
 
     public static final String NAME = "time_distortion_upgrade";
 
-    @ConfigManager.Config(cmt = "can this upgrade be installed")
+    @Config(cmt = "can this upgrade be installed")
     public static boolean ACTIVE = true;
 
-    @ConfigManager.Config(cmt = "the time at will be distorted in the range 2^[-MAX_FACTOR, MAX_FACTOR] (0 = vanilla time, 6 = 64x the vanilla time, -6 = 1/64x vanilla time)")
+    @Config(cmt = "the time at will be distorted in the range 2^[-MAX_FACTOR, MAX_FACTOR] (0 = vanilla time, 6 = 64x the vanilla time, -6 = 1/64x vanilla time)")
     public static int MAX_FACTOR = 6;
 
-    @ConfigManager.Config(cmt = "how much energy should be used per extra tick and per TE", min = "0")
+    @Config(cmt = "how much energy should be used per extra tick and per TE and Entity", min = "0")
     public static int ENERGY_CONSUMPTION = 16;
 
-    @ConfigManager.Config(cmt = "how much energy should be created per skipped tick and per TE", min = "0")
+    @Config(cmt = "how much energy should be created per skipped tick for each TE and Entity", min = "0")
     public static int ENERGY_PRODUCTION = 16;
+
+    @Config(cmt = "blacklist those Tile Entities from being manipulated by this upgrade (ResourceLocation regex style notation, 'dim_bag:bag_proxy' would ignore any \"Dimensional Bag Proxy\", 'mekanism:.*' would ignore any mekanism machine), please include the default blacklist (to prevent crashes with other mods)")
+    public static String[] BLACK_LIST_TE = {"mininggadgets:renderblock", "mininggadgets:modificationtable"};
+
+    @Config(cmt = "blacklist those Entities from being manipulated by this upgrade (ResourceLocation regex style notation, 'dim_bag:bag_entity' would ignore any bag in entity form, 'minecraft:.*' would ignore any vanilla mobs), please include the default blacklist (to prevent crashes with other mods)")
+    public static String[] BLACK_LIST_ENTITY = {};
 
     static {
         UpgradeManager.registerUpgrade(NAME, TimeDistortionUpgrade::new);
@@ -66,12 +83,42 @@ public class TimeDistortionUpgrade extends BaseUpgrade<TimeDistortionUpgrade> {
     @Override
     public String upgradeName() { return NAME; }
 
+    public static boolean isValidByList(@Nullable ResourceLocation toTest, String[] against, boolean isWhiteList, boolean testPath) {
+        if (toTest == null) return false;
+        String test = toTest.toString();
+        for (String a : against)
+            if (test.matches(a))
+                return isWhiteList;
+        if (testPath) {
+            test = toTest.getPath();
+            for (String a : against)
+                if (test.matches(a))
+                    return isWhiteList;
+        }
+        return !isWhiteList;
+    }
+
+    public static boolean isValidByList(@Nullable ResourceLocation toTest, Iterable<String> against, boolean isWhiteList, boolean testPath) {
+        if (toTest == null) return false;
+        String test = toTest.toString();
+        for (String a : against)
+            if (test.matches(a))
+                return isWhiteList;
+        if (testPath) {
+            test = toTest.getPath();
+            for (String a : against)
+                if (test.matches(a))
+                    return isWhiteList;
+        }
+        return !isWhiteList;
+    }
+
     public static boolean filterTE(int eye, TileEntity te) {
-        return !(te instanceof IisBagTE || te instanceof BeaconTileEntity || te instanceof ConduitTileEntity) && (te.getBlockPos().getX() - SubRoomsManager.ROOM_OFFSET_X + SubRoomsManager.HALF_ROOM) / SubRoomsManager.ROOM_SPACING + 1 == eye;
+        return !(te instanceof IisBagTE || te instanceof BeaconTileEntity || te instanceof ConduitTileEntity) && (te.getBlockPos().getX() - SubRoomsManager.ROOM_OFFSET_X + SubRoomsManager.HALF_ROOM) / SubRoomsManager.ROOM_SPACING + 1 == eye && isValidByList(te.getType().getRegistryName(), BLACK_LIST_TE, false, false);
     }
 
     public static boolean filterEntity(int eye, Entity e) {
-        return !(e instanceof ItemEntity || e instanceof PlayerEntity || e instanceof BagEntity);
+        return !(e instanceof ItemEntity || e instanceof PlayerEntity || e instanceof BagEntity || e instanceof FallingBlockEntity) && isValidByList(e.getType().getRegistryName(), BLACK_LIST_ENTITY, false, false);
     }
 
     /**
@@ -94,6 +141,32 @@ public class TimeDistortionUpgrade extends BaseUpgrade<TimeDistortionUpgrade> {
 
     public static void forEachEntityInBag(int eye, World world, Consumer<Entity> run) {
         SubRoomsManager.getRoomsAABB(eye).forEach(aabb->world.getEntities(null, aabb).forEach(e->{if (filterEntity(eye, e)) run.accept(e);}));
+    }
+
+    /**
+     * derived from ServerWorld#tickChunk(Chunk, int):498
+     */
+
+    public static void randomTickBagBlocks(int eye, ServerWorld world, int iterations) {
+        for (ChunkPos chunkPos : SubRoomsManager.execute(eye, SubRoomsManager::getComposingChunks, new HashSet<ChunkPos>())) {
+            int chunkX = chunkPos.getMinBlockX();
+            int chunkZ = chunkPos.getMinBlockZ();
+            for (ChunkSection chunkSection : world.getChunk(chunkPos.x, chunkPos.z).getSections())
+                if (chunkSection != Chunk.EMPTY_SECTION && chunkSection.isRandomlyTicking()) {
+                    int y = chunkSection.bottomBlockY();
+                    for (int i = 0; i < iterations; ++i) {
+                        BlockPos blockPos = world.getBlockRandomPos(chunkX, y, chunkZ, 15);
+                        BlockState blockstate = chunkSection.getBlockState(blockPos.getX() - chunkX, blockPos.getY() - y, blockPos.getZ() - chunkZ);
+                        if (blockstate.isRandomlyTicking()) {
+                            blockstate.randomTick(world, blockPos, world.random);
+                        }
+                        FluidState fluidstate = blockstate.getFluidState();
+                        if (fluidstate.isRandomlyTicking()) {
+                            fluidstate.randomTick(world, blockPos, world.random);
+                        }
+                    }
+                }
+        }
     }
 
     @Override
@@ -138,6 +211,9 @@ public class TimeDistortionUpgrade extends BaseUpgrade<TimeDistortionUpgrade> {
                     e.tick();
                 }
             });
+            int randomTick = world.getGameRules().getInt(GameRules.RULE_RANDOMTICKING);
+            if (randomTick > 0 && world instanceof ServerWorld)
+                randomTickBagBlocks(eyeId, (ServerWorld)world, randomTick * (mi - 1));
         } else
             EnergyData.receiveEnergy(eyeId, (int) (ENERGY_PRODUCTION * iterTickingTEInBag(eyeId, world).count()));
         return ActionResultType.SUCCESS;

@@ -97,6 +97,8 @@ dependencies {
     runtimeOnly fg.deobf("curse.maven:mekanism-268560:3206392")
 //    runtimeOnly fg.deobf("curse.maven:immersive-engineering-231951:3431122")
     runtimeOnly fg.deobf("curse.maven:the-one-probe-245211:3319255")
+//    runtimeOnly fg.deobf("pneumaticcraft-repressurized-281849:3438567")
+//    runtimeOnly "industrial-foregoing-266515:3425277"
 //    runtimeOnly fg.deobf("curse.maven:mouse-tweaks-60089:3202662")
 //    runtimeOnly fg.deobf("curse.maven:cofh-core-69162:3407019")
 //    compileOnly fg.deobf("curse.maven:flywheel-486392:3419392")
@@ -104,6 +106,8 @@ dependencies {
     compileOnly fg.deobf("curse.maven:mekanism-268560:3206392")
 //    compileOnly fg.deobf("curse.maven:immersive-engineering-231951:3431122")
     compileOnly fg.deobf("curse.maven:the-one-probe-245211:3319255")
+//    compileOnly fg.deobf("pneumaticcraft-repressurized-281849:3438567")
+//    compileOnly "industrial-foregoing-266515:3425277"
 //    compileOnly fg.deobf("curse.maven:mouse-tweaks-60089:3202662")
 //    compileOnly fg.deobf("curse.maven:cofh-core-69162:3407019")
 }

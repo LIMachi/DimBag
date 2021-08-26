@@ -26,6 +26,7 @@ public class BaseWidget extends Widget {
     public static final TextureCutout DISABLED_TEXTURE = SELECTED_TEXTURE;
     public static final TextureCutout[] STATE_ARRAY = {IDLE_TEXTURE, SELECTED_TEXTURE, HOVERED_TEXTURE, HOVERED_SELECTED_TEXTURE};
     public static final Minecraft MINECRAFT = Minecraft.getInstance();
+    protected boolean consumeEscKey = false;
     protected boolean isSelected = false;
     protected boolean renderTitle = true;
     protected boolean renderStandardBackground = true;
@@ -43,6 +44,8 @@ public class BaseWidget extends Widget {
     public void attachToScreen(SimpleContainerScreen<?> screen) { this.screen = screen; }
     public void detachFromScreen() { screen = null; }
     public SimpleContainerScreen<?> getScreen() { return screen; }
+
+    public boolean consumeEscKey() { return consumeEscKey; }
 
     public boolean changeFocus(boolean focus) {
         if (this.active && this.visible && focus != isFocused()) {
