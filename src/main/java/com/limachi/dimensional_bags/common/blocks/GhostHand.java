@@ -6,7 +6,6 @@ import com.limachi.dimensional_bags.common.Registries;
 import com.limachi.dimensional_bags.common.tileentities.GhostHandTileEntity;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
-import net.minecraft.block.ITileEntityProvider;
 import net.minecraft.block.SoundType;
 import net.minecraft.block.material.Material;
 import net.minecraft.entity.player.PlayerEntity;
@@ -27,7 +26,7 @@ import javax.annotation.Nullable;
 import java.util.function.Supplier;
 
 @StaticInit
-public class GhostHand extends Block implements ITileEntityProvider {
+public class GhostHand extends AbstractTileEntityBlock<GhostHandTileEntity> {
 
     public static final String NAME = "ghost_hand";
 
@@ -36,13 +35,19 @@ public class GhostHand extends Block implements ITileEntityProvider {
 
     public static final BooleanProperty POWERED = BooleanProperty.create("powered");
 
-    public GhostHand() { super(Properties.of(Material.HEAVY_METAL).sound(SoundType.STONE)); }
+    public GhostHand() { super(NAME, Properties.of(Material.HEAVY_METAL).sound(SoundType.STONE), GhostHandTileEntity.class, GhostHandTileEntity.NAME); }
 
     @Override
     protected void createBlockStateDefinition(StateContainer.Builder<Block, BlockState> builder) {
         super.createBlockStateDefinition(builder);
         builder.add(POWERED);
     }
+
+    @Override
+    public <B extends AbstractTileEntityBlock<GhostHandTileEntity>> B getInstance() { return (B)INSTANCE.get(); }
+
+    @Override
+    public BlockItem getItemInstance() { return INSTANCE_ITEM.get(); }
 
     @Nullable
     @Override

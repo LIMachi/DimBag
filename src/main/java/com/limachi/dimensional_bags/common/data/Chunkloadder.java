@@ -10,10 +10,11 @@ import net.minecraft.world.server.ServerWorld;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 public class Chunkloadder {
 
-    private class CLEntry {
+    private static class CLEntry {
         public int x;
         public int y;
         public String dimReg;
@@ -30,8 +31,17 @@ public class Chunkloadder {
             dimReg = dim;
         }
 
-        public boolean equal(ServerWorld world1, int x1, int y1) {
-            return dimReg.equals(WorldUtils.worldRKToString(world1.dimension())) && x == x1 && y == y1;
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            CLEntry clEntry = (CLEntry) o;
+            return x == clEntry.x && y == clEntry.y && Objects.equals(dimReg, clEntry.dimReg);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(x, y, dimReg);
         }
     }
 
@@ -53,7 +63,7 @@ public class Chunkloadder {
         arc.put(entry, r + 1);
         if (by != 0) {
             CLEntry mapEntry = map.get(by); //if possible, get the previous chunk loaded by this id
-            if (mapEntry != null && !entry.equal(world, cx, cy)) { //the bag is not in the same chunk as before, should try an unload
+            if (mapEntry != null && !mapEntry.equals(entry)) { //the bag is not in the same chunk as before, should try an unload
                 Integer r1 = arc.getOrDefault(mapEntry, 0);
                 if (r1 <= 1) //this was the last id loading this chunk, so it is time to unload it
                     WorldUtils.getWorld(DimBag.getServer(), mapEntry.dimReg).setChunkForced(mapEntry.x, mapEntry.y, false);
@@ -63,10 +73,8 @@ public class Chunkloadder {
                     arc.put(mapEntry, r1 - 1);
             }
             map.put(by, entry); //override the position of the id
-        } else {
-            if (!list.contains(entry))
-                list.add(entry);
-        }
+        } else if (!list.contains(entry))
+            list.add(entry);
     }
 
     public void unloadChunk(int by) { //this id is now unloaded/missing, if possible try to unload the chunk it was in

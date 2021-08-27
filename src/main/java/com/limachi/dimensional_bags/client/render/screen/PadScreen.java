@@ -1,5 +1,6 @@
 package com.limachi.dimensional_bags.client.render.screen;
 
+import com.limachi.dimensional_bags.client.render.Box2d;
 import com.limachi.dimensional_bags.client.render.widgets.StringListDropDownWidget;
 import com.limachi.dimensional_bags.common.tileentities.PadTileEntity;
 import net.minecraft.client.gui.widget.button.CheckboxButton;
@@ -63,8 +64,9 @@ public class PadScreen extends ClientSideOnlyScreenHandler.ClientSideOnlyScreen 
 
     @Override
     public void first() {
-        isWhitelist = new CheckboxButton(154, 10, 16, 16, isWhitelistTitle, pad.isWhitelist());
-        list = new StringListDropDownWidget(10, 10, 128, 16, new TranslationTextComponent("screen.pad.drop_list.title"), 256, this.handler, true, pad.getNameList().collect(Collectors.toList()));
+        handler.fullBackground = new Box2d(handler.getGuiLeft(), handler.getGuiTop(), 300, 250);
+        isWhitelist = new CheckboxButton(handler.getGuiLeft() + 154, handler.getGuiTop() + 10, 16, 16, isWhitelistTitle, pad.isWhitelist());
+        list = new StringListDropDownWidget(handler.getGuiLeft() + 10, handler.getGuiTop() + 10, 128, 16, new TranslationTextComponent("screen.pad.drop_list.title"), 230, this.handler, true, pad.getNameList().collect(Collectors.toList()));
     }
 
     @Override

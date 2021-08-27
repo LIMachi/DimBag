@@ -96,7 +96,7 @@ public class Tank extends Mode {
         ItemStack held = stack.copy();
         ItemStack output = ItemStack.EMPTY;
         FluidStack tmpFluid = FluidStack.EMPTY;
-        while(!held.isEmpty()) { //we iterate on the stack, to handle if the player has
+        while(!held.isEmpty()) { //we iterate on the stack, to handle if the player has a stack with a size greater than one
             ItemStack holding = held.copy();
             if (!holding.isEmpty())
                 holding.setCount(1);

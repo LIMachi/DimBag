@@ -198,15 +198,13 @@ public abstract class BaseUpgrade<T extends BaseUpgrade<?>> extends Item {
 
     @Override
     public void appendHoverText(ItemStack stack, @Nullable World worldIn, List<ITextComponent> tooltip, ITooltipFlag flagIn) {
-        if (stack.getItem() instanceof BaseUpgrade) {
-            if (!((BaseUpgrade) stack.getItem()).canBeInstalled())
-                tooltip.add(new TranslationTextComponent("tooltip.upgrade.disabled").withStyle(TextFormatting.BOLD, TextFormatting.RED));
-            if (Screen.hasShiftDown()) {
-                tooltip.add(upgradeInfo().withStyle(TextFormatting.YELLOW));
-                tooltip.add(new TranslationTextComponent("tooltip.upgrades.install_info").withStyle(TextFormatting.AQUA));
-            }  else
-                tooltip.add(new TranslationTextComponent("tooltip.shift_for_info"));
-        }
+        if (!((BaseUpgrade) stack.getItem()).canBeInstalled())
+            tooltip.add(new TranslationTextComponent("tooltip.upgrade.disabled").withStyle(TextFormatting.BOLD, TextFormatting.RED));
+        if (Screen.hasShiftDown()) {
+            tooltip.add(upgradeInfo().withStyle(TextFormatting.YELLOW));
+            tooltip.add(new TranslationTextComponent("tooltip.upgrades.install_info").withStyle(TextFormatting.AQUA));
+        }  else
+            tooltip.add(new TranslationTextComponent("tooltip.shift_for_info"));
         super.appendHoverText(stack, worldIn, tooltip, flagIn);
     }
 

@@ -58,7 +58,7 @@ public class GhostBag extends Bag {
         out.getTag().put(ORIGINAL_STACK_KEY, stack.save(new CompoundNBT()));
         out.getTag().putInt(IEyeIdHolder.EYE_ID_KEY, eyeId);
         if (!stack.isEmpty()) {
-            String name = out.getDisplayName().getString() + "(" + (stack.getCount() != 1 ? stack.getCount() + "x " : "") + stack.getDisplayName().getString() + ")";
+            String name = out.getHoverName().getString() + "(" + (stack.getCount() != 1 ? stack.getCount() + "x " : "") + stack.getHoverName().getString() + ")";
             CompoundNBT display = new CompoundNBT();
             display.putString("Name", "{\"text\":\"" + name + "\",\"italic\":false}");
             out.getTag().put("display", display);

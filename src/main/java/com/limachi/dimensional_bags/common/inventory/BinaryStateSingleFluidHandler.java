@@ -11,8 +11,10 @@ import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.fluids.IFluidTank;
 import net.minecraftforge.fluids.capability.IFluidHandler;
 import net.minecraftforge.fluids.capability.IFluidHandlerItem;
+import net.minecraftforge.registries.ObjectHolder;
 
 import javax.annotation.Nonnull;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Predicate;
@@ -30,6 +32,47 @@ public class BinaryStateSingleFluidHandler implements IFluidHandler, IFluidTank 
     public static final BinaryStateSingleFluidHandlerItem WATER_BOTTLE = BinaryStateSingleFluidHandlerItem.registerPotion(Fluids.WATER, Potions.WATER);
     public static final BinaryStateSingleFluidHandlerItem DEBUG_TEST_1 = BinaryStateSingleFluidHandlerItem.registerPotion(Fluids.LAVA, Potions.LONG_FIRE_RESISTANCE);
     public static final BinaryStateSingleFluidHandlerItem DEBUG_TEST_2 = BinaryStateSingleFluidHandlerItem.registerSplashPotion(Fluids.FLOWING_LAVA, Potions.LONG_FIRE_RESISTANCE);
+
+    @ObjectHolder("pneumaticcraft:memory_essence")
+    public static final Fluid pneumaticcraft_xp_fluid = null;
+    @ObjectHolder("cofh_core:experience")
+    public static final Fluid cofh_xp_fluid = null;
+    @ObjectHolder("industrial_foregoing:memory_essence")
+    public static final Fluid industrial_foregoing_xp_fluid = null;
+    public static ArrayList<BinaryStateSingleFluidHandlerItem> XP_BOTTLES = new ArrayList<>();
+
+    /**
+     * xp conversion by default: 1xp -> 20mb, 1 bottle -> 250mb ~> 12.5xp, 1 bottle broken -> 3-11 ~7 (in accordance with other mods, if it was me, a bottle would cost less mb to fill)
+     */
+
+    static {
+        if (pneumaticcraft_xp_fluid != null)
+            XP_BOTTLES.add(BinaryStateSingleFluidHandlerItem.registerBottle(pneumaticcraft_xp_fluid, 250, new ItemStack(Items.EXPERIENCE_BOTTLE)));
+        if (cofh_xp_fluid != null)
+            XP_BOTTLES.add(BinaryStateSingleFluidHandlerItem.registerBottle(cofh_xp_fluid, 250, new ItemStack(Items.EXPERIENCE_BOTTLE)));
+        if (industrial_foregoing_xp_fluid != null)
+            XP_BOTTLES.add(BinaryStateSingleFluidHandlerItem.registerBottle(industrial_foregoing_xp_fluid, 250, new ItemStack(Items.EXPERIENCE_BOTTLE)));
+    }
+
+    @ObjectHolder("create:honey")
+    public static final Fluid create_honey_fluid = null;
+    @ObjectHolder("cofh_core:honey")
+    public static final Fluid cofh_honey_fluid = null;
+    @ObjectHolder("resourcefulbees:honey")
+    public static final Fluid resourcefulbees_honey_fluid = null;
+    public static ArrayList<BinaryStateSingleFluidHandlerItem> HONEY_BOTTLES = new ArrayList<>();
+
+    static {
+        if (create_honey_fluid != null)
+            HONEY_BOTTLES.add(BinaryStateSingleFluidHandlerItem.registerBottle(create_honey_fluid, 250, new ItemStack(Items.HONEY_BOTTLE)));
+        if (cofh_honey_fluid != null)
+            HONEY_BOTTLES.add(BinaryStateSingleFluidHandlerItem.registerBottle(cofh_honey_fluid, 250, new ItemStack(Items.HONEY_BOTTLE)));
+        if (resourcefulbees_honey_fluid != null)
+            HONEY_BOTTLES.add(BinaryStateSingleFluidHandlerItem.registerBottle(resourcefulbees_honey_fluid, 250, new ItemStack(Items.HONEY_BOTTLE)));
+    }
+
+    @ObjectHolder("mekanism:oxygen")
+    public static final Fluid mekanism_air_fluid = null;
 
     /**
      * try to find a valid BinaryStateSingleFluidHandlerItem for the given fluid and item (example: if you have a glass bottle and water or a water bottle and water, will return WATER_BOTTLE)
@@ -60,6 +103,7 @@ public class BinaryStateSingleFluidHandler implements IFluidHandler, IFluidTank 
                 REGISTERED_HANDLERS.add(this);
         }
 
+        private static BinaryStateSingleFluidHandlerItem registerBottle(Fluid fluid, int mb, ItemStack filled) { return new BinaryStateSingleFluidHandlerItem(new FluidStack(fluid, mb), filled, new ItemStack(Items.GLASS_BOTTLE), true, true); }
         /**
          * potions are standardised to use 333mb of fluid, their empty state is always a glass_bottle, and their full state is a Potion item with potion nbt
          */

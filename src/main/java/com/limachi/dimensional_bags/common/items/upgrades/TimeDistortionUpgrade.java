@@ -173,7 +173,7 @@ public class TimeDistortionUpgrade extends BaseUpgrade<TimeDistortionUpgrade> {
     public void appendHoverText(ItemStack stack, @Nullable World worldIn, List<ITextComponent> tooltip, ITooltipFlag flagIn) {
         super.appendHoverText(stack, worldIn, tooltip, flagIn);
         if (stack.getItem() instanceof BaseUpgrade && ((BaseUpgrade)stack.getItem()).canBeInstalled())
-            tooltip.add(new TranslationTextComponent("tooltip.upgrade.time_distortion_upgrade.warning").withStyle(TextFormatting.RED));
+            tooltip.add(new TranslationTextComponent("tooltip.upgrades.time_distortion_upgrade.warning").withStyle(TextFormatting.RED));
     }
 
     /**

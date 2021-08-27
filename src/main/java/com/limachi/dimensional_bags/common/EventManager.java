@@ -7,7 +7,6 @@ import com.limachi.dimensional_bags.DimBag;
 import com.limachi.dimensional_bags.KeyMapController;
 import com.limachi.dimensional_bags.common.blocks.Cloud;
 import com.limachi.dimensional_bags.common.data.DimBagData;
-//import com.limachi.dimensional_bags.common.data.EyeDataMK2.ClientDataManager;
 import com.limachi.dimensional_bags.common.data.EyeDataMK2.HolderData;
 import com.limachi.dimensional_bags.common.data.EyeDataMK2.SubRoomsManager;
 import com.limachi.dimensional_bags.common.entities.BagEntity;
@@ -190,6 +189,8 @@ public class EventManager {
                     dbd.chunkloadder.unloadChunk(i);
                 }
             }
+            if (l >= 1)
+                dbd.setDirty();
         }
     }
 

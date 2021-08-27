@@ -63,7 +63,7 @@ public class SubRoomsManager extends WorldSavedDataManager.EyeWorldSavedData {
 
     private HashMap<Vector3i, Integer> posToSubRoomId = new HashMap<>();
     private int selectedPad = -1;
-    private boolean isLoaded = true;
+    private boolean isLoaded = false;
     private ArrayList<Vector3i> activePads = new ArrayList<>();
     private ArrayList<SubRoomData> subRooms = new ArrayList<>();
 
@@ -289,6 +289,7 @@ public class SubRoomsManager extends WorldSavedDataManager.EyeWorldSavedData {
                 else
                     for (SubRoomData srd : subRooms)
                         srd.getComposingChunks().forEach(c -> dbd.chunkloadder.unloadChunk(world, c.x, c.z));
+                dbd.setDirty();
             }
             isLoaded = active;
             setDirty();
@@ -527,8 +528,10 @@ public class SubRoomsManager extends WorldSavedDataManager.EyeWorldSavedData {
             if (isLoaded && world instanceof ServerWorld) {
                 ServerWorld w = (ServerWorld) world;
                 DimBagData dbd = DimBagData.get();
-                if (dbd != null)
-                    subRooms.get(room).getComposingChunks().forEach(c->dbd.chunkloadder.loadChunk(w, c.x, c.z, 0));
+                if (dbd != null) {
+                    subRooms.get(room).getComposingChunks().forEach(c -> dbd.chunkloadder.loadChunk(w, c.x, c.z, 0));
+                    dbd.setDirty();
+                }
             }
             setDirty();
         }

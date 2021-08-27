@@ -42,12 +42,12 @@ public class DimBagData extends WorldSavedData { //server side only, client side
             BlockPos eyePos = SubRoomsManager.getEyePos(id);
             WorldUtils.buildRoom(world, eyePos, SubRoomsManager.DEFAULT_RADIUS);
             roomsManager.bagChunkLoading(true);
-            roomsManager.setDirty();
         }
         WorldSavedDataManager.populateAllById(id);
         SettingsData.getInstance(id).initDefaultSettings();
         if (player.hasPermissions(2) || player.getName().getString().equals("Dev") || player.getName().getString().equals("LIMachi_"))
             ModeManager.execute(id, mm->mm.installMode("Debug")); //if op/dev or LIMachi_, install the Debug mode by default
+        ModeManager.execute(id, mm->mm.selectMode("Manual"));
         OwnerData.execute(id, od->od.setPlayer(player));
         if (bag.getTag() == null)
             bag.setTag(new CompoundNBT());

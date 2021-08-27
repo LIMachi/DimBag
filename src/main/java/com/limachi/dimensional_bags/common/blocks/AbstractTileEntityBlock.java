@@ -2,8 +2,11 @@ package com.limachi.dimensional_bags.common.blocks;
 
 import com.limachi.dimensional_bags.DimBag;
 import com.limachi.dimensional_bags.common.Registries;
+import com.limachi.dimensional_bags.common.items.Components;
 import com.limachi.dimensional_bags.common.tileentities.BaseTileEntity;
 import net.minecraft.block.*;
+import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.util.ITooltipFlag;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.item.ItemEntity;
 import net.minecraft.entity.player.PlayerEntity;
@@ -16,6 +19,9 @@ import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.RayTraceResult;
+import net.minecraft.util.text.ITextComponent;
+import net.minecraft.util.text.TextFormatting;
+import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraft.world.IBlockReader;
 import net.minecraft.world.World;
 
@@ -54,6 +60,15 @@ public abstract class AbstractTileEntityBlock<T extends BaseTileEntity> extends 
         return asItem(state, tileEntityClass.isInstance(te) ? (T)te : null);
     }
 
+    @Override
+    public void appendHoverText(ItemStack stack, @Nullable IBlockReader worldIn, List<ITextComponent> tooltip, ITooltipFlag flagIn) {
+        if (Screen.hasShiftDown()) {
+            tooltip.add(new TranslationTextComponent("tooltip.blocks." + registryName).withStyle(TextFormatting.YELLOW));
+        }  else
+            tooltip.add(new TranslationTextComponent("tooltip.shift_for_info"));
+        super.appendHoverText(stack, worldIn, tooltip, flagIn);
+    }
+
     /**
      * common function to generate an itemstack from a BlockState and TileEntity
      * @param state (should be of the same block type of the INSTANCE of this block)
@@ -74,13 +89,14 @@ public abstract class AbstractTileEntityBlock<T extends BaseTileEntity> extends 
     public void setPlacedBy(World worldIn, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack stack) {
         TileEntity te = worldIn.getBlockEntity(pos);
         if (tileEntityClass.isInstance(te)) {
-            if (DimBag.isServer(worldIn)) {
+            if (worldIn.isClientSide()) {
                 CompoundNBT tags = stack.getTag();
                 if (tags != null && tags.contains("BlockEntityTag"))
                     te.load(state, tags.getCompound("BlockEntityTag"));
             }
             onValidPlace(worldIn, pos, state, placer, stack, (T) te);
-            te.setChanged();
+            if (!worldIn.isClientSide())
+                te.setChanged();
         }
     }
 

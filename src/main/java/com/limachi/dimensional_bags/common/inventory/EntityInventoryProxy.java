@@ -19,6 +19,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.item.SaddleItem;
 import net.minecraft.network.PacketBuffer;
+import net.minecraft.tags.FluidTags;
 import net.minecraft.util.Direction;
 import net.minecraft.util.Hand;
 import net.minecraftforge.common.Tags;
@@ -38,7 +39,6 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.items.CapabilityItemHandler;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.IItemHandlerModifiable;
-import net.minecraftforge.registries.ObjectHolder;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -67,9 +67,6 @@ public class EntityInventoryProxy implements IItemHandlerModifiable, IEntityInve
     public static final int ARMOR_SIZE = 4;
     public static final int OFF_HAND_SIZE = 1;
     public static final int TOTAL_INVENTORY_SIZE = HOTBAR_SIZE + INVENTORY_SIZE + ARMOR_SIZE + OFF_HAND_SIZE;
-
-//    @ObjectHolder()
-//    public static final Fluid
 
     @ConfigManager.Config(cmt = "does pumping water inside the entity through an interface protect it from fall damage (by consuming and placing water on a landing that would damage the entity)")
     public static final boolean ADD_MLG_BEHAVIOR = true;
@@ -256,19 +253,29 @@ public class EntityInventoryProxy implements IItemHandlerModifiable, IEntityInve
     @Override
     public int getTanks() { return 1; }
 
+    @ConfigManager.Config(cmt = "1xp -> this many mb, 20 is the default for most mods")
+    public static final int PLAYER_XP_TO_MB_FACTOR = 20;
+
     @Nonnull
     @Override //should return a fluidstack of xp
     public FluidStack getFluidInTank(int tank) {
-        return null;
+        Entity t = getEntity();
+        if (!(t instanceof PlayerEntity) || BinaryStateSingleFluidHandler.XP_BOTTLES.isEmpty()) return FluidStack.EMPTY;
+        return new FluidStack(BinaryStateSingleFluidHandler.XP_BOTTLES.get(0).getFluid().getFluid(), ((PlayerEntity)t).totalExperience * PLAYER_XP_TO_MB_FACTOR);
     }
 
-    @Override //xp should not have a limit
-    public int getTankCapacity(int tank) {
-        return Integer.MAX_VALUE;
-    }
+    @Override //xp is cap at Integer.MAX_VALUE in vanilla
+    public int getTankCapacity(int tank) { return Integer.MAX_VALUE; }
 
     @Override //accept xp, milk, water, air, other compats (potions)/xp is only valid for players
     public boolean isFluidValid(int tank, @Nonnull FluidStack stack) {
+        Entity e = getEntity();
+        if (e == null) return false;
+        if (stack.getFluid().is(FluidTags.WATER) && stack.getAmount() >= 1000) return true;
+        if (stack.getFluid().is(Tags.Fluids.MILK) && stack.getAmount() >= 1000) return true;
+        if (e instanceof PlayerEntity)
+            for (BinaryStateSingleFluidHandler.BinaryStateSingleFluidHandlerItem t : BinaryStateSingleFluidHandler.XP_BOTTLES)
+                if (t.isFluidValid(stack)) return true;
         return false;
     }
 
@@ -286,11 +293,13 @@ public class EntityInventoryProxy implements IItemHandlerModifiable, IEntityInve
 
     public static final ItemStack MILK = new ItemStack(Items.MILK_BUCKET);
 
+    //TODO: we could make a compat with tinker: injecting lava in an entity would produce the molten version of the entity while damaging it, the fluid produced could be retrieved before the entity dies
+
     @Override //xp -> fill xp bar, milk -> 1 bucket, water -> 1 bucket
     public int fill(FluidStack resource, FluidAction action) {
         Fluid fluid = resource.getFluid();
         Entity entity = getEntity();
-        if (entity == null) return 0;
+        if (entity == null || resource.getAmount() <= 0) return 0;
         if (Tags.Fluids.MILK.contains(fluid) && resource.getAmount() >= 1000 && entity instanceof LivingEntity) {
             if (action.execute())
                 ((LivingEntity)entity).curePotionEffects(MILK);
@@ -299,16 +308,41 @@ public class EntityInventoryProxy implements IItemHandlerModifiable, IEntityInve
             if (action.execute())
                 entity.getPersistentData().putInt("MLG_water", 1 + entity.getPersistentData().getInt("MLG_water"));
             return 1000;
-        } else if (false /*XP*/) {
-
-        } else if (false /*Air*/) {
+        } else if (BinaryStateSingleFluidHandler.mekanism_air_fluid != null && resource.getFluid().isSame(BinaryStateSingleFluidHandler.mekanism_air_fluid)) { //100mb -> 1 bubble -> 1 tenth of the max air supply, only works if the entity as lost some air, for a player, it's about 4mb/tick
+            int mb = (int)((double)entity.getAirSupply() / (double)entity.getMaxAirSupply() * 1000.);
+            if (mb == 1000) return 0;
+            int add = Integer.min(1000 - mb, resource.getAmount());
+            if (action.execute())
+                entity.setAirSupply((mb + add) * entity.getMaxAirSupply() / 1000);
+            return add;
+        } else if (entity instanceof PlayerEntity) {
+            for (BinaryStateSingleFluidHandler.BinaryStateSingleFluidHandlerItem t : BinaryStateSingleFluidHandler.XP_BOTTLES)
+                if (t.isFluidValid(resource)) {
+                    if (action.execute())
+                        ((PlayerEntity)entity).giveExperiencePoints(resource.getAmount() / PLAYER_XP_TO_MB_FACTOR);
+                    return resource.getAmount();
+                }
 
         }
         return 0;
     }
 
+    /**
+     * dirty but simple way of removing a set amount of XP from a player
+     * @param player
+     * @param amount
+     */
+    public static void PlayerEntity_takeExperiencePoints(PlayerEntity player, int amount) {
+        int newAmount = Integer.max(player.totalExperience - amount, 0);
+        player.experienceLevel = 0;
+        player.experienceProgress = 0.0F;
+        player.totalExperience = 0;
+        if (newAmount > 0)
+            player.giveExperiencePoints(newAmount);
+    }
+
     @Nonnull
-    @Override //drain xp or water (water only ! bucket at a time)
+    @Override //drain xp or water (water only 1 bucket at a time)
     public FluidStack drain(FluidStack resource, FluidAction action) {
         Entity entity = getEntity();
         if (entity == null) return FluidStack.EMPTY;
@@ -320,15 +354,35 @@ public class EntityInventoryProxy implements IItemHandlerModifiable, IEntityInve
                     entity.getPersistentData().putInt("MLG_water", mlg - use);
                 return new FluidStack(Fluids.WATER, use * 1000);
             }
-        } else if (false /*XP*/) {
-
+        } else if (entity instanceof PlayerEntity /*XP*/) {
+            for (BinaryStateSingleFluidHandler.BinaryStateSingleFluidHandlerItem t : BinaryStateSingleFluidHandler.XP_BOTTLES)
+                if (t.isFluidValid(resource)) {
+                    int exp = ((PlayerEntity) entity).totalExperience * PLAYER_XP_TO_MB_FACTOR;
+                    int take = Integer.min(exp, resource.getAmount());
+                    if (take == 0) return FluidStack.EMPTY;
+                    if (action.execute())
+                        PlayerEntity_takeExperiencePoints((PlayerEntity) entity, take / PLAYER_XP_TO_MB_FACTOR);
+                    FluidStack out = resource.copy();
+                    out.setAmount(take);
+                    return out;
+                }
         }
         return FluidStack.EMPTY;
     }
 
     @Nonnull
-    @Override //drain only xp
+    @Override //drain only xp from player, might add compat with blood magic or tinker
     public FluidStack drain(int maxDrain, FluidAction action) {
+        if (maxDrain <= 0) return FluidStack.EMPTY;
+        Entity entity = getEntity();
+        if (entity instanceof PlayerEntity && ((PlayerEntity)entity).totalExperience > 0 && !BinaryStateSingleFluidHandler.XP_BOTTLES.isEmpty()) {
+            FluidStack out = getFluidInTank(0).copy();
+            int take = Integer.min(out.getAmount(), maxDrain);
+            if (action.execute())
+                PlayerEntity_takeExperiencePoints((PlayerEntity) entity, take / PLAYER_XP_TO_MB_FACTOR);
+            out.setAmount(take);
+            return out;
+        }
         return FluidStack.EMPTY;
     }
 

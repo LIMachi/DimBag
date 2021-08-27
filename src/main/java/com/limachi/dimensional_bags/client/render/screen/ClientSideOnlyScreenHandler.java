@@ -37,13 +37,6 @@ public class ClientSideOnlyScreenHandler extends SimpleContainerScreen<ClientSid
         Registries.registerContainer(NAME, ClientSideOnlyFakeContainer::new);
     }
 
-    private ClientSideOnlyScreenHandler(ClientSideOnlyScreen screen, PlayerInventory inv) {
-        super(new ClientSideOnlyFakeContainer(-1, BaseContainer.NullPlayerInventory.NULL_PLAYER_CONTAINER, null), inv, screen.getTitle());
-        screen.handler = this;
-        this.screen = screen;
-        screen.first();
-    }
-
     public ClientSideOnlyScreenHandler(ClientSideOnlyFakeContainer screenContainer, PlayerInventory inv, ITextComponent titleIn) {
         super(screenContainer, inv, titleIn);
         this.screen = null;
@@ -65,6 +58,13 @@ public class ClientSideOnlyScreenHandler extends SimpleContainerScreen<ClientSid
 
         @Override
         public boolean stillValid(PlayerEntity player) { return true; }
+    }
+
+    private ClientSideOnlyScreenHandler(ClientSideOnlyScreen screen, PlayerInventory inv) {
+        super(new ClientSideOnlyFakeContainer(-1, BaseContainer.NullPlayerInventory.NULL_PLAYER_CONTAINER, null), inv, screen.getTitle());
+        screen.handler = this;
+        this.screen = screen;
+        screen.first();
     }
 
     @Override

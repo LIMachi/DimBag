@@ -142,13 +142,13 @@ public class SimpleContainerScreen<C extends BaseContainer<C>> extends DisplayEf
     public SimpleContainerScreen(C screenContainer, PlayerInventory inv, ITextComponent titleIn) {
         super(screenContainer, inv, titleIn);
         screenContainer.screen = this;
+        itemRenderer = SimpleItemRenderer.INSTANCE;
     }
 
     @Override
     protected void init() {
         Minecraft.getInstance().keyboardHandler.setSendRepeatsToGui(true);
         super.init();
-        this.itemRenderer = SimpleItemRenderer.INSTANCE;
         calculateBackGround();
     }
 

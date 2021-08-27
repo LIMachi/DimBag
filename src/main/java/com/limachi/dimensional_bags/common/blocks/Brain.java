@@ -3,6 +3,7 @@ package com.limachi.dimensional_bags.common.blocks;
 import com.limachi.dimensional_bags.DimBag;
 import com.limachi.dimensional_bags.StaticInit;
 import com.limachi.dimensional_bags.common.Registries;
+import com.limachi.dimensional_bags.common.tileentities.BrainTileEntity;
 import net.minecraft.block.*;
 import net.minecraft.block.material.Material;
 import net.minecraft.entity.player.PlayerEntity;
@@ -23,7 +24,7 @@ import javax.annotation.Nullable;
 import java.util.function.Supplier;
 
 @StaticInit
-public class Brain extends Block implements ITileEntityProvider {
+public class Brain extends AbstractTileEntityBlock<BrainTileEntity> {
 
     public static final String NAME = "brain";
 
@@ -33,7 +34,7 @@ public class Brain extends Block implements ITileEntityProvider {
     public static final IntegerProperty POWER = IntegerProperty.create("power", 0, 15);
 
     public Brain() {
-        super(Block.Properties.of(Material.HEAVY_METAL).sound(SoundType.STONE).strength(1.5F, 180000000).isValidSpawn((s, r, p, e)->false));
+        super(NAME, Block.Properties.of(Material.HEAVY_METAL).sound(SoundType.STONE).strength(1.5F, 180000000).isValidSpawn((s, r, p, e)->false), BrainTileEntity.class, BrainTileEntity.NAME);
         this.registerDefaultState(defaultBlockState().setValue(POWER, 0)/*.with(TICK_RATE, 2)*/);
     }
     
@@ -49,6 +50,12 @@ public class Brain extends Block implements ITileEntityProvider {
     @Nullable
     @Override
     public TileEntity newBlockEntity(IBlockReader worldIn) { return Registries.getBlockEntityType(NAME).create(); }
+
+    @Override
+    public <B extends AbstractTileEntityBlock<BrainTileEntity>> B getInstance() { return (B)INSTANCE.get(); }
+
+    @Override
+    public BlockItem getItemInstance() { return INSTANCE_ITEM.get(); }
 
     @Override
     public void onRemove(BlockState state, World worldIn, BlockPos pos, BlockState newState, boolean isMoving) {

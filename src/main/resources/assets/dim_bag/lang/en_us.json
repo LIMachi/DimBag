@@ -19,6 +19,10 @@
   "item.dim_bag.kinetic_generator_upgrade": "Kinetic Generator Upgrade",
   "item.dim_bag.sweet_fabric_upgrade": "Sweet Fabric Upgrade",
   "item.dim_bag.turtle_upgrade": "Turtle Upgrade",
+  "item.dim_bag.enticing_upgrade": "Enticing Upgrade",
+  "item.dim_bag.capture_upgrade": "Capture Upgrade",
+  "item.dim_bag.paradox_upgrade": "Paradox Upgrade",
+  "item.dim_bag.time_distortion_upgrade": "Time Distortion Upgrade",
 
   "block.dim_bag.bag_eye": "The All Seeing Eye Of The Dimensional Rift",
   "block.dim_bag.pillar": "Pillar",
@@ -61,6 +65,22 @@
   "tooltip.upgrades.enticing_upgrade": "Make entities around the bag item able to pick it up",
   "tooltip.upgrades.capture_upgrade": "Install a new Mode for the bag: the Capture mode, which you can use to capture entities inside the bag (require Pads) and remove entities from the bag",
 
+  "tooltip.upgrades.time_distortion_upgrade.warning": "This upgrade can have a HUGE impact on the server (or even crash with some mods, please report any bug found), use with caution and moderation",
+
+  "tooltip.items.blank_upgrade": "Base for all upgrades, the bag will not be consumed by the craft",
+  "tooltip.items.tunnel_placer": "Create new rooms and/or create a portal to travel to and from this room (you can close a portal and get it back by shift left clicking it, based on configs, you might only use a salvaged tunnel placer on the same wall it was salvaged from)",
+  "tooltip.items.wall_pusher": "Expands a room size by clicking a wall, which will... hem... push said wall :)",
+
+  "tooltip.blocks.bag_proxy": "This block allows to interact with a bag in a block form by placing a bag inside (right click with a bag/virtual bag), you can also add a nether star to have it work without requiring a bag inside. Right click opens the bag inventory, shift right click to enter the bag, shift left click to get the bag or nether start back. can be used with hopper and modded way of transporting items/fluids/energy",
+  "tooltip.blocks.brain": "This programmable block can emmit redstone based on the status of the bag's user",
+  "tooltip.blocks.crystal": "This acts as an FE/RF battery inside the bag, no need for wires, all crystals in a bag are linked and share all the bag FE/RF. Crystals can be picked by breaking them (no need for tools) and will keep a fraction of the bag's current power.",
+  "tooltip.blocks.fountain": "This allows bags to store and manipulate fluids, once installed you will see a new mode for the bag 'Tank' that allows you to pick and place fluids, you can select the tank that will be used by clicking a slot on the Tank mode. Can interact with pipes. Like Crystalls and Pillars, this block can be picked up and will retain it's inventory",
+  "tooltip.blocks.ghost_hand": "This programmable block can 'force' the user to do some actions using redstone. AFK now has a whole new meaning :p",
+  "tooltip.blocks.pad": "The pad allows you to set specific destinations for entities when entering the bag (including players) while redstone powered. Filtering is done via a list of names, if you wanted any pig that is not renamed to arrive on a pad, you would whitelist 'Pig'",
+  "tooltip.blocks.pillar": "Also known as the base of the bag, Pillars each add a slot to the bag. They can be upgraded, and interacted with hoppers/pipes. Will keep it's inventory when broken (no tools needed)",
+  "tooltip.blocks.user_pillar": "Allows you to interact with the User inventory, energy (of items in the inventory) and fluids (like xp for players, if you have a mod compatible)",
+  "tooltip.blocks.world_access_point": "Allows the bag (through it's User) to interact with the world, inserting an item will simulate a right click, inserting fluids will place them, pumping out fluids will remove them (from the feets of the User), and removing items will absorb items on the ground close to the User.",
+
   "inventory.player_interface.name": "Player Inventory: %s",
   "inventory.upgrades.row.description": "add an extra row to your bag inventory, increasing it's storage capacity",
   "inventory.upgrades.column.description": "add an extra column to your bag inventory, increasing it's storage capacity",
@@ -77,9 +97,11 @@
   "notification.upgrade.max_upgrades_reached": "Max upgrade count reached for %s",
 
   "bag.mode.Default": "Default",
-  "bag.mode.Debug": "Default",
+  "bag.mode.Debug": "Debug",
   "bag.mode.Settings": "Settings",
   "bag.mode.Capture": "Capture",
+  "bag.mode.Manual": "Manual",
+  "bag.mode.Tank": "Tank",
 
   "mode.error.no_valid_pad": "Could not find a valid pad for this entity name: %s",
 
@@ -98,5 +120,5 @@
   "container.display_name.ghost_hand": "Ghost Hand",
 
   "book.name": "All you need to know about Dimensional Bag",
-  "book.front_page": "Welcome to the wonderful (parallel) world of dimensional bags."
+  "screen.manual.default": "Welcome to the wonderful (parallel) world of dimensional bags."
 }

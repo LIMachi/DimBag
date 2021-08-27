@@ -20,7 +20,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import com.limachi.dimensional_bags.StaticInit;
-import net.minecraft.potion.Effects;
 import net.minecraft.util.math.AxisAlignedBB;
 
 import static net.minecraft.potion.Effects.*;
@@ -38,7 +37,7 @@ public class PadTileEntity extends BaseTileEntity implements IisBagTE {
         Registries.registerTileEntity(NAME, PadTileEntity::new, ()->Registries.getBlock(Pad.NAME), null);
     }
 
-    public PadTileEntity() { super(Registries.getBlockEntityType(NAME)); }
+    public PadTileEntity() { super(Registries.getBlockEntityType(NAME)); updateUpstream = true; }
 
     public void needUpdate() { this.needUpdate = true; }
 

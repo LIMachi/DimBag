@@ -1,6 +1,0 @@
-{
-  "parent": "dim_bag:item/bag",
-  "textures": {
-    "layer1": "dim_bag:item/mode/elytra"
-  }
-}

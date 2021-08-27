@@ -31,11 +31,12 @@ import java.util.function.Function;
 
 public class ModeManager extends WorldSavedDataManager.EyeWorldSavedData {
     public static final Mode[] MODES = {
-        new Default(),
-        new Settings(),
-        new Capture(), //FIXME: add upgrade to add this mode
-        new Tank(), //FIXME: set this mode to disabled while no fountain has been installed inside the bag for the first time
-        new Debug() //FIXME: only usable by OP and "LIMachi_"
+            new Default(),
+            new Tank(),
+            new Settings(),
+            new Capture(),
+            new Debug(),
+            new Manual()
     };
 
     //should be changed to offer to modes to change the behavior

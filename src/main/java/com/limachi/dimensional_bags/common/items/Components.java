@@ -3,7 +3,17 @@ package com.limachi.dimensional_bags.common.items;
 import com.limachi.dimensional_bags.DimBag;
 import com.limachi.dimensional_bags.StaticInit;
 import com.limachi.dimensional_bags.common.Registries;
+import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.util.ITooltipFlag;
 import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
+import net.minecraft.util.text.ITextComponent;
+import net.minecraft.util.text.TextFormatting;
+import net.minecraft.util.text.TranslationTextComponent;
+import net.minecraft.world.World;
+
+import javax.annotation.Nullable;
+import java.util.List;
 
 /**
  * components are blank items that are only used as a step in a craft, they do have models, names, etc... (note: we could use a file to generate those items)
@@ -20,6 +30,15 @@ public class Components extends Item {
 
     public static void registerComponents(String ...names) {
         for (String name : names)
-            Registries.registerItem(name, Components::new);
+            Registries.registerItem(name, ()->new Components(){
+                @Override
+                public void appendHoverText(ItemStack stack, @Nullable World worldIn, List<ITextComponent> tooltip, ITooltipFlag flagIn) {
+                    if (Screen.hasShiftDown()) {
+                        tooltip.add(new TranslationTextComponent("tooltip.items." + name).withStyle(TextFormatting.YELLOW));
+                    }  else
+                        tooltip.add(new TranslationTextComponent("tooltip.shift_for_info"));
+                    super.appendHoverText(stack, worldIn, tooltip, flagIn);
+                }
+            });
     }
 }

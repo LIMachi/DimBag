@@ -40,8 +40,9 @@ size pearl (stabilized proto pearl in size mode) will change your size when cons
 -----------------------------------------------------------------------
 TODO ADDITION EDITION:
 -----------------------------------------------------------------------
-add white/blacklist support for time distortion upgrade (accepts position or name for te, name for entities)
-add documentation (book/tooltips/UI text) (might look into Patchouli)
+add option on pad to change the direction (up/down? cardinals?)
+add white/blacklist support for time distortion upgrade (accepts position/name/registry for te, name/registry for entities) (done in the config, need to also add in settings)
+add documentation (book/tooltips/UI text) (might look into Patchouli) (might NOT look into patchouli and do my own thing as a mode for the bag)
 add back the 'player pillar' features + new features: energy can be inserted/removed (from items in the user inventory), xp can be drained in liquid form, xp, water, milk and lava can be pumped in the player
 finish the WII block (fluids) (fluids: drain/place fluids, no interaction with player)
 almost finished --- add a new block placeable outside the bag to access the bag as a block (proxy) (allowing interactions with the inventory, tanks and batteries of the bag. note: interaction is passive, needs modded conduits/hoppers to work) (low tier: need the bag inside the block, high tier: bound to a bag)
@@ -49,12 +50,13 @@ almost finished --- add a new block placeable outside the bag to access the bag 
 -----------------------------------------------------------------------
 TODO DEBUG EDITION:
 -----------------------------------------------------------------------
-fix item duplication by shift click in user interface
+fix some blocks don't drop when broken (pad, user interface, ghost hand, brain -> common trait: they do not extend AbstractTileEntityBlock, which rework the drops)
+fix item duplication by shift click in user interface (again: prevent merge of items from two inventories that are the same)
 fix sleeping in the bag not working with other mods adding dimensions (might need to hack something)
 finish those god-damn UI
 finish modeling/texturing
 look into sync bag and TE config in better ways (and maybe test for hacks/invalid values' server side)
 use 'Flight Recorder' and 'Coverage' to test how much the mod impact the performances of the game (RIP bag gateway renderers, too heavy)
-test against other mods/throw in a modpack
-test/balance upgrades and crafts (early, mid, late game, again the best way is playing on a modpack)
+test against other mods/throw in a modpack - currently tested against enigmatica 6 for 1.16.5, two major bugs fixed with minning gadget and transport
+test/balance upgrades and crafts (early, mid, late game, again the best way is playing on a modpack), currently crafts and default values doesn't feel right
 prevent or un-equip bag when using another mod to teleport a player inside a bag (waystone, I'm looking at you)
