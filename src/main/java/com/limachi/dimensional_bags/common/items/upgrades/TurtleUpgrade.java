@@ -49,7 +49,7 @@ public class TurtleUpgrade extends BaseUpgrade<TurtleUpgrade> {
     public static void turtleUpgrade(LivingDamageEvent event) { //protect and tp the player in the bag if it would take damage setting it's health below a threshold
         LivingEntity entity = event.getEntityLiving();
         if (!entity.isAlive() || event.getAmount() <= 0) return;
-        int id = Bag.getBag(entity, 0, true);
+        int id = Bag.getBag(entity, 0, true, false);
         if (id == 0) return;
         TurtleUpgrade turtleUpgrade = getInstance(NAME);
         if (!turtleUpgrade.isActive(id)) return;

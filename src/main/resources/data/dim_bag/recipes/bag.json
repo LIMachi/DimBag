@@ -1,7 +1,7 @@
 {
   "type": "minecraft:crafting_shaped",
   "pattern": [
-    "LTL",
+    "LEL",
     "SCS",
     "LIL"
   ],
@@ -9,8 +9,8 @@
     "I": {
       "item": "minecraft:iron_ingot"
     },
-    "T": {
-      "item": "minecraft:tripwire_hook"
+    "E": {
+      "item": "minecraft:ender_pearl"
     },
     "S": {
       "item": "minecraft:string"

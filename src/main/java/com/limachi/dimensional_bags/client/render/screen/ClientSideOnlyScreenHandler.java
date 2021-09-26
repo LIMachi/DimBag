@@ -40,6 +40,7 @@ public class ClientSideOnlyScreenHandler extends SimpleContainerScreen<ClientSid
     public ClientSideOnlyScreenHandler(ClientSideOnlyFakeContainer screenContainer, PlayerInventory inv, ITextComponent titleIn) {
         super(screenContainer, inv, titleIn);
         this.screen = null;
+        dynamicBackground = false;
     }
 
     public static void open(ClientSideOnlyScreen screen) {
@@ -61,7 +62,10 @@ public class ClientSideOnlyScreenHandler extends SimpleContainerScreen<ClientSid
     }
 
     private ClientSideOnlyScreenHandler(ClientSideOnlyScreen screen, PlayerInventory inv) {
-        super(new ClientSideOnlyFakeContainer(-1, BaseContainer.NullPlayerInventory.NULL_PLAYER_CONTAINER, null), inv, screen.getTitle());
+        super(new ClientSideOnlyFakeContainer(-1, inv, null), inv, screen.getTitle());
+        hideContainerTitle = true;
+        imageWidth = 176;
+        imageHeight = 167;
         screen.handler = this;
         this.screen = screen;
         screen.first();

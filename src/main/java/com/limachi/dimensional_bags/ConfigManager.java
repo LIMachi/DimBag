@@ -1,8 +1,16 @@
 package com.limachi.dimensional_bags;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonElement;
 import javafx.util.Pair;
 
+import net.minecraft.client.resources.JsonReloadListener;
+import net.minecraft.profiler.IProfiler;
+import net.minecraft.resources.IResourceManager;
+import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.common.ForgeConfigSpec;
+import net.minecraftforge.event.AddReloadListenerEvent;
 import net.minecraftforge.fml.ModList;
 import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.config.ModConfig;
@@ -77,6 +85,8 @@ public class ConfigManager {
 
     private final ForgeConfigSpec SPEC;
 
+//    private final JsonReloadListener reloadListener;
+
     private boolean isBuilt = false;
     private boolean isBaked = false;
     private final HashMap<String, ConfigValueP<?>> CONFIG_BUILDERS = new HashMap<>();
@@ -106,6 +116,13 @@ public class ConfigManager {
         }
         final org.apache.commons.lang3.tuple.Pair<ConfigBuilder, ForgeConfigSpec> specPair = new ForgeConfigSpec.Builder().configure(ConfigBuilder::new);
         SPEC = specPair.getRight();
+//        reloadListener = new JsonReloadListener((new GsonBuilder()).setPrettyPrinting().disableHtmlEscaping().create(), MOD_ID) {
+//
+//            @Override
+//            protected void apply(Map<ResourceLocation, JsonElement> json, IResourceManager rm, IProfiler profiler) {
+//
+//            }
+//        };
     }
 
     protected String cleanPath(String path) {
@@ -216,12 +233,21 @@ public class ConfigManager {
                     }
     }
 
+    public enum ConfigReload {
+        DATA, //need a data reload (using F3 + T or '/reload') ReloadListener
+        WORLD, //need the world to shut down and restart (leave the world and come back in SP, restart server in MP) WorldLoad
+        GAME //need a full minecraft reload (shut down MC/server and restart) ModLoad
+    }
+
+    //TODO: i would love to have support for Item/ItemStack/Block/Entity etc using registry keys in string form "MODID:KEY"
+
     /** <pre>
      * all of those values are facultative and in string format (except for valid which is an array of strings)
      * min -> string representation of minimal value of a range (will be ignored if the field is not instanceof Compare)
      * max -> string representation of maximal value of a range (will be ignored if the field is not instanceof Compare)
-     * valid -> an array of string representation of valid values that this field can accept
+     * valid -> an array of string representation of valid values that this field can accept (regex)
      * cmt -> a string comment
+     * reload -> when will the change of the config be applied (full reload of the game, reload of the world, reload of datapacks)
      * </pre>
      */
     public @interface Config {
@@ -229,6 +255,7 @@ public class ConfigManager {
         java.lang.String max() default "";
         java.lang.String[] valid() default {};
         java.lang.String cmt() default "";
+        ConfigReload reload() default ConfigReload.GAME; //TODO: will require a huge rewrite of the configs to work (probably having to redo the SPEC provided by forge myself to  be callable whenever i want and only on parts of the config)
     }
 
     private static final HashMap<Class<?>, Pair<Object[], Function<String, ?>>> DEFAULTS = new HashMap<>();
@@ -291,6 +318,11 @@ public class ConfigManager {
     }
 
     static { FMLJavaModLoadingContext.get().getModEventBus().addListener(ConfigManager::onModConfigEvent); }
+
+//    private static void onReloadData(AddReloadListenerEvent event) {
+//        for (ConfigManager instance : INSTANCES)
+//            event.addListener(instance.reloadListener);
+//    }
 
     private static void onModConfigEvent(final ModConfig.ModConfigEvent event) {
         for (ConfigManager instance : INSTANCES) {

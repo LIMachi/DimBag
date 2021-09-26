@@ -13,41 +13,45 @@ import net.minecraft.block.SoundType;
 import net.minecraft.block.material.Material;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.BlockItem;
+import net.minecraft.state.BooleanProperty;
 import net.minecraft.state.IntegerProperty;
 import net.minecraft.state.StateContainer;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.ActionResultType;
+import net.minecraft.util.Direction;
 import net.minecraft.util.Hand;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockRayTraceResult;
 import net.minecraft.world.World;
 import net.minecraftforge.common.util.Constants;
 
+import javax.annotation.Nonnull;
 import java.util.function.Supplier;
 
 @StaticInit
-public class Pad extends AbstractTileEntityBlock<PadTileEntity> {
+public class Pad extends AbstractTileEntityBlock<PadTileEntity> implements IBagWrenchable, IGetUseSneakWithItemEvent {
 
     public static final String NAME = "pad";
 
     public static final IntegerProperty POWER_RECEIVED = IntegerProperty.create("power_received", 0, 15);
+    public static final BooleanProperty DOWN = BooleanProperty.create("down");
 
     public static final Supplier<Pad> INSTANCE = Registries.registerBlock(NAME, Pad::new);
     public static final Supplier<BlockItem> INSTANCE_ITEM = Registries.registerBlockItem(NAME, NAME, DimBag.DEFAULT_PROPERTIES);
 
     public Pad() {
-        super(NAME, Properties.of(Material.HEAVY_METAL).strength(1.5f, 3600000f).sound(SoundType.STONE), PadTileEntity.class, PadTileEntity.NAME);
-        this.registerDefaultState(defaultBlockState().setValue(POWER_RECEIVED, 0));
+        super(NAME, Properties.of(Material.HEAVY_METAL).strength(1.5f, 3600000f).sound(SoundType.STONE).isSuffocating((s, w, p)->false), PadTileEntity.class, PadTileEntity.NAME);
+        this.registerDefaultState(defaultBlockState().setValue(POWER_RECEIVED, 0).setValue(DOWN, false));
     }
 
     @Override
     protected void createBlockStateDefinition(StateContainer.Builder<Block, BlockState> builder) {
         super.createBlockStateDefinition(builder);
-        builder.add(POWER_RECEIVED);
+        builder.add(POWER_RECEIVED).add(DOWN);
     }
 
     @Override
-    public void onRemove(BlockState state, World worldIn, BlockPos pos, BlockState newState, boolean isMoving) {
+    public void onRemove(BlockState state, @Nonnull World worldIn, @Nonnull BlockPos pos, BlockState newState, boolean isMoving) {
         if (state.getBlock() != newState.getBlock()) //only do the default behavior if the new state is of a different block
             super.onRemove(state, worldIn, pos, newState, isMoving);
         worldIn.updateNeighbourForOutputSignal(pos, this);
@@ -86,9 +90,21 @@ public class Pad extends AbstractTileEntityBlock<PadTileEntity> {
         int eyeId = SubRoomsManager.getEyeId(worldIn, pos, false);
         if (eyeId <= 0) return ActionResultType.FAIL;
         if (KeyMapController.KeyBindings.SNEAK_KEY.getState(player))
-            SubRoomsManager.execute(eyeId, sm->sm.leaveBag(player, false, null, null));
+            SubRoomsManager.execute(eyeId, sm->sm.leaveBag(player));
         else
             PadScreen.open((PadTileEntity) worldIn.getBlockEntity(pos));
         return ActionResultType.CONSUME;
+    }
+
+    public static boolean isDownFacing(BlockState state) {
+        if (state.getBlock() instanceof Pad)
+            return state.getValue(DOWN);
+        return false;
+    }
+
+    @Override
+    public ActionResultType wrenchWithBag(World world, BlockPos pos, BlockState state, Direction face) {
+        world.setBlock(pos, state.setValue(DOWN, !state.getValue(DOWN)), Constants.BlockFlags.DEFAULT_AND_RERENDER);
+        return ActionResultType.SUCCESS;
     }
 }

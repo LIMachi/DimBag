@@ -20,7 +20,7 @@ import net.minecraft.world.World;
 import java.util.function.Supplier;
 
 @StaticInit
-public class TheEye extends Block {
+public class TheEye extends Block implements IGetUseSneakWithItemEvent {
 
     public static final String NAME = "bag_eye";
 
@@ -41,7 +41,7 @@ public class TheEye extends Block {
         if (eyeId <= 0)
             return ActionResultType.FAIL;
         if (KeyMapController.KeyBindings.SNEAK_KEY.getState(player))
-            EventManager.delayedTask(0, ()->SubRoomsManager.execute(eyeId, sm->sm.leaveBag(player, false, null, null)));
+            EventManager.delayedTask(0, ()->SubRoomsManager.execute(eyeId, sm->sm.leaveBag(player)));
         else
             PillarContainer.open(player, eyeId, null);
 //            Network.openEyeInventory((ServerPlayerEntity) player, eyeId, null);

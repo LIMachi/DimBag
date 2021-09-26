@@ -5,7 +5,7 @@ import com.limachi.dimensional_bags.common.Registries;
 import com.limachi.dimensional_bags.common.blocks.Fountain;
 import com.limachi.dimensional_bags.common.data.EyeDataMK2.SubRoomsManager;
 import com.limachi.dimensional_bags.common.data.EyeDataMK2.TankData;
-import com.limachi.dimensional_bags.common.inventory.FountainTank;
+import com.limachi.dimensional_bags.common.fluids.FountainTank;
 import net.minecraft.util.Direction;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.util.LazyOptional;

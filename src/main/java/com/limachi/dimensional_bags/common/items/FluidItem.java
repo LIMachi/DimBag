@@ -2,6 +2,10 @@ package com.limachi.dimensional_bags.common.items;
 
 import com.limachi.dimensional_bags.StaticInit;
 import com.limachi.dimensional_bags.common.Registries;
+import com.mojang.blaze3d.matrix.MatrixStack;
+import net.minecraft.client.renderer.IRenderTypeBuffer;
+import net.minecraft.client.renderer.model.ItemCameraTransforms;
+import net.minecraft.client.renderer.tileentity.ItemStackTileEntityRenderer;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundNBT;
@@ -27,7 +31,7 @@ public class FluidItem extends Item {
         return out;
     }
 
-    public FluidItem() { super(new Properties().stacksTo(0)); }
+    public FluidItem() { super(new Properties().stacksTo(0).setISTER(()->()->FluidItemRenderer.INSTANCE)); }
 
     @Nonnull
     @Override
@@ -36,5 +40,14 @@ public class FluidItem extends Item {
         if (fluid.isEmpty())
             return new TranslationTextComponent("item.fluid_item.empty_name");
         return ((IFormattableTextComponent)fluid.getDisplayName()).append(new TranslationTextComponent("item.fluid_item.append_qty_to_name", fluid.getAmount()));
+    }
+
+    protected static class FluidItemRenderer extends ItemStackTileEntityRenderer {
+        protected static FluidItemRenderer INSTANCE = new FluidItemRenderer();
+
+        @Override
+        public void renderByItem(ItemStack p_239207_1_, ItemCameraTransforms.TransformType p_239207_2_, MatrixStack p_239207_3_, IRenderTypeBuffer p_239207_4_, int p_239207_5_, int p_239207_6_) {
+            super.renderByItem(p_239207_1_, p_239207_2_, p_239207_3_, p_239207_4_, p_239207_5_, p_239207_6_);
+        }
     }
 }

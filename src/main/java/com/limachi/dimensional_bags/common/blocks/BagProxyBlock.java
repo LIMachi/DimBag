@@ -1,9 +1,6 @@
 package com.limachi.dimensional_bags.common.blocks;
 
-import com.limachi.dimensional_bags.CuriosIntegration;
-import com.limachi.dimensional_bags.DimBag;
-import com.limachi.dimensional_bags.KeyMapController;
-import com.limachi.dimensional_bags.StaticInit;
+import com.limachi.dimensional_bags.*;
 import com.limachi.dimensional_bags.common.Registries;
 import com.limachi.dimensional_bags.common.container.PillarContainer;
 import com.limachi.dimensional_bags.common.data.EyeDataMK2.SubRoomsManager;
@@ -31,12 +28,16 @@ import net.minecraft.util.text.ITextComponent;
 import net.minecraft.world.IBlockReader;
 import net.minecraft.world.World;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.List;
 import java.util.function.Supplier;
 
 @StaticInit
-public class BagProxyBlock extends AbstractTileEntityBlock<BagProxyTileEntity> {
+public class BagProxyBlock extends AbstractTileEntityBlock<BagProxyTileEntity> implements IGetUseSneakWithItemEvent {
+
+//    @ConfigManager.Config()
+//    public static final String
 
     public static final Item OP_MODULE = Items.NETHER_STAR; //TODO: use another item instead
 
@@ -47,10 +48,11 @@ public class BagProxyBlock extends AbstractTileEntityBlock<BagProxyTileEntity> {
 
     public BagProxyBlock() {
         super(NAME, Properties.of(Material.HEAVY_METAL).strength(1.5f, 3600000f).sound(SoundType.GLASS), BagProxyTileEntity.class, BagProxyTileEntity.NAME);
+        bagOnlyPlacement = false;
     }
     
     @Override
-    public void appendHoverText(ItemStack stack, @Nullable IBlockReader worldIn, List<ITextComponent> tooltip, ITooltipFlag flagIn) {
+    public void appendHoverText(@Nonnull ItemStack stack, @Nullable IBlockReader worldIn, @Nonnull List<ITextComponent> tooltip, @Nonnull ITooltipFlag flagIn) {
         super.appendHoverText(stack, worldIn, tooltip, flagIn);
     }
 

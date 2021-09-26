@@ -1,0 +1,17 @@
+{
+  "name": "Glossary",
+  "icon": "minecraft:writable_book",
+  "category": "dim_bag:bases",
+  "pages": [
+    {
+      "anchor": "1",
+      "type": "patchouli:text",
+      "text": "Sometimes, I will refer to entities, items, blocks and concepts by using a capitalized word. Those are:$(li)Virtual bag: ghostly version of the bag item, linked to the equipped bag or the bag you are into.$(li)#Bag: the bag item or the Virtual bag.$(li)User: the entity holding the bag or the bag in entity form.$(li)Owner: the original creator of the bag."
+    },
+    {
+      "anchor": "2",
+      "type": "patchouli:text",
+      "text": "$(li)#Equip: pick the Bag entity in item form.$(li)#Unequip: placing the Bag in entity form, removing it from your inventory.$(li)Pad: active (by redstone signal) pad inside the bag.$(li)Wrench: sneak+use ($(k:sneak) + $(k:use)) the #Bag in #Settings mode on a block."
+    }
+  ]
+}

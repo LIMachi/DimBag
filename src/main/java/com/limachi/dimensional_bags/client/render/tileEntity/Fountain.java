@@ -2,7 +2,7 @@ package com.limachi.dimensional_bags.client.render.tileEntity;
 
 import com.limachi.dimensional_bags.client.render.FluidStackRenderer;
 import com.limachi.dimensional_bags.client.render.RenderTypes;
-import com.limachi.dimensional_bags.common.inventory.FountainTank;
+import com.limachi.dimensional_bags.common.fluids.FountainTank;
 import com.limachi.dimensional_bags.common.tileentities.FountainTileEntity;
 import com.mojang.blaze3d.matrix.MatrixStack;
 import com.mojang.blaze3d.vertex.IVertexBuilder;
@@ -47,10 +47,10 @@ public class Fountain extends TileEntityRenderer<FountainTileEntity> {
                     //render the center flowing overlay (sides)
                 }
                 //render the still overlay
-                buffer.vertex(mat, -7, fullness, 7).color(1, 1, 1, 1).uv(stillFluid.getU0(), stillFluid.getV1()).endVertex();
-                buffer.vertex(mat, 7, fullness, 7).color(1, 1, 1, 1).uv(stillFluid.getU1(), stillFluid.getV1()).endVertex();
-                buffer.vertex(mat, 7, fullness, -7).color(1, 1, 1, 1).uv(stillFluid.getU1(), stillFluid.getV0()).endVertex();
-                buffer.vertex(mat, -7, fullness, -7).color(1, 1, 1, 1).uv(stillFluid.getU0(), stillFluid.getV0()).endVertex();
+                buffer.vertex(mat, -7f/16f, fullness, 7f/16f).color(1, 1, 1, 1).uv(stillFluid.getU0(), stillFluid.getV1()).endVertex();
+                buffer.vertex(mat, 7f/16f, fullness, 7f/16f).color(1, 1, 1, 1).uv(stillFluid.getU1(), stillFluid.getV1()).endVertex();
+                buffer.vertex(mat, 7f/16f, fullness, -7f/16f).color(1, 1, 1, 1).uv(stillFluid.getU1(), stillFluid.getV0()).endVertex();
+                buffer.vertex(mat, -7f/16f, fullness, -7f/16f).color(1, 1, 1, 1).uv(stillFluid.getU0(), stillFluid.getV0()).endVertex();
                 matrixStackIn.popPose();
             }
         }

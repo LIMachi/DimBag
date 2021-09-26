@@ -1,15 +1,11 @@
 package com.limachi.dimensional_bags.common.entities;
 
-import com.limachi.dimensional_bags.DimBag;
 import com.limachi.dimensional_bags.KeyMapController;
 import com.limachi.dimensional_bags.common.Registries;
 import com.limachi.dimensional_bags.common.container.PillarContainer;
-import com.limachi.dimensional_bags.common.data.EyeDataMK2.HolderData;
 import com.limachi.dimensional_bags.common.data.EyeDataMK2.SubRoomsManager;
 import com.limachi.dimensional_bags.common.data.IEyeIdHolder;
 import com.limachi.dimensional_bags.common.items.Bag;
-import com.limachi.dimensional_bags.common.managers.ModeManager;
-import com.limachi.dimensional_bags.common.managers.UpgradeManager;
 import net.minecraft.entity.*;
 import net.minecraft.entity.ai.attributes.AttributeModifierMap;
 import net.minecraft.entity.ai.attributes.Attributes;
@@ -25,14 +21,17 @@ import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.util.text.ITextComponent;
-import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraft.world.IWorld;
 import net.minecraft.world.World;
 
 import static com.limachi.dimensional_bags.DimBag.MOD_ID;
 
 import com.limachi.dimensional_bags.StaticInit;
+import net.minecraftforge.common.capabilities.Capability;
+import net.minecraftforge.common.util.LazyOptional;
+import net.minecraftforge.items.CapabilityItemHandler;
 
+import javax.annotation.Nonnull;
 import java.util.Collections;
 import java.util.List;
 
@@ -49,9 +48,7 @@ public class BagEntity extends MobEntity implements IEyeIdHolder {
 
     public static String ITEM_KEY = "BagItemStack";
 
-    public BagEntity(EntityType<? extends MobEntity> type, World world) {
-        super(type, world);
-    }
+    public BagEntity(EntityType<? extends MobEntity> type, World world) { super(type, world); }
 
     public static AttributeModifierMap.MutableAttribute getAttributeMap() {
         return LivingEntity.createLivingAttributes().add(Attributes.FOLLOW_RANGE, 16.0D);
@@ -66,7 +63,7 @@ public class BagEntity extends MobEntity implements IEyeIdHolder {
     public ITextComponent getName() {
         ItemStack stack = getBagItem();
         if (stack.getItem() instanceof Bag)
-            return new TranslationTextComponent(stack.getItem().getDescriptionId(stack));
+            return stack.getItem().getName(stack);
         return super.getName();
     }
 
@@ -125,6 +122,14 @@ public class BagEntity extends MobEntity implements IEyeIdHolder {
     @Override
     public Iterable<ItemStack> getArmorSlots() { return EMPTY_EQUIPMENT; }
 
+    @Nonnull
+    @Override
+    public <T> LazyOptional<T> getCapability(@Nonnull Capability<T> cap) {
+        if (CapabilityItemHandler.ITEM_HANDLER_CAPABILITY.equals(cap))
+            return LazyOptional.empty(); //FIXME: remap capability to the bag content (bag proxy cap)
+        return super.getCapability(cap);
+    }
+
     @Override
     public ItemStack getItemBySlot(EquipmentSlotType slotIn) { return ItemStack.EMPTY; }
 
@@ -142,18 +147,6 @@ public class BagEntity extends MobEntity implements IEyeIdHolder {
 
     @Override
     public boolean setSlot(int inventorySlot, ItemStack itemStackIn) { return false; }
-
-    @Override
-    public void tick() {
-        super.tick();
-        int eyeId = getEyeId();
-        if (eyeId > 0) {
-            if (DimBag.isServer(level))
-                HolderData.execute(eyeId, holderData->holderData.setHolder(this));
-            ModeManager.execute(eyeId, modeManager -> modeManager.inventoryTick(level, this, true));
-            UpgradeManager.execute(eyeId, upgradeManager -> upgradeManager.inventoryTick(level, this));
-        }
-    }
 
     @Override
     protected ActionResultType mobInteract(PlayerEntity player, Hand hand) {

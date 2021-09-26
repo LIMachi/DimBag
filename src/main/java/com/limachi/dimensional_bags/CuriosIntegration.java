@@ -297,14 +297,22 @@ public class CuriosIntegration {
             d = inv.getContainerSize() - s;
             if (clazz.isInstance(inv.offhand.get(0).getItem()) && predicate.test(inv.offhand.get(0))) {
                 int slot = d;
-                out.add(new ProxySlotModifier(() -> inv.offhand.get(slot), stack -> inv.setItem(slot, stack)));
+                out.add(new ProxySlotModifier(() -> inv.offhand.get(0), stack -> inv.setItem(slot, stack)));
             }
         } else {
             it = entity.getHandSlots().iterator();
-            it.next();
-            ItemStack test = it.next();
-            if (clazz.isInstance(test.getItem()) && predicate.test(test))
-                out.add(new ProxySlotModifier(()->{Iterator<ItemStack> i = entity.getHandSlots().iterator(); i.next(); return i.next();}, stack->entity.setItemSlot(EquipmentSlotType.OFFHAND, stack)));
+            if (it.hasNext()) {
+                it.next();
+                if (it.hasNext()) {
+                    ItemStack test = it.next();
+                    if (clazz.isInstance(test.getItem()) && predicate.test(test))
+                        out.add(new ProxySlotModifier(() -> {
+                            Iterator<ItemStack> i = entity.getHandSlots().iterator();
+                            i.next();
+                            return i.next();
+                        }, stack -> entity.setItemSlot(EquipmentSlotType.OFFHAND, stack)));
+                }
+            }
         }
         if (!continueAfterOne && out.size() > 0)
             return out;
@@ -340,8 +348,8 @@ public class CuriosIntegration {
         }
         for (int i = 0; i < s; ++i) {
             int ind = d + i;
-            ItemStack test = isPlayer ? inv.getItem(ind) : it.next();
-            if (clazz.isInstance(test.getItem()) && predicate.test(test)) {
+            ItemStack test = isPlayer ? inv.getItem(ind) : it.hasNext() ? it.next() : null;
+            if (test != null && clazz.isInstance(test.getItem()) && predicate.test(test)) {
                 if (isPlayer)
                     out.add(new ProxySlotModifier(()->inv.getItem(ind), stack->inv.setItem(ind, stack)));
                 else

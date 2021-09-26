@@ -23,7 +23,7 @@ import java.util.List;
 public class Components extends Item {
 
     static {
-        registerComponents("battery_component", "blank_upgrade", "compression_field");
+        registerComponents(/*"battery_component",*/ "blank_upgrade", /*"compression_field",*/ "end_fragment");
     }
 
     public Components() { super(DimBag.DEFAULT_PROPERTIES); }

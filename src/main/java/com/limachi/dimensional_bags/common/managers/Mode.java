@@ -16,7 +16,6 @@ import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.ai.attributes.Attribute;
 import net.minecraft.entity.ai.attributes.AttributeModifier;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.inventory.EquipmentSlotType;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundNBT;
@@ -95,7 +94,7 @@ public class Mode {
 
     public void getAttributeModifiers(int eyeId, boolean selected, EquipmentSlotType slot, ImmutableMultimap.Builder<Attribute, AttributeModifier> builder) {}
 //    public ActionResultType onPlayerTick(int eyeId, ItemStack stack, World world, Entity player, int itemSlot, boolean isSelected) { return ActionResultType.CONSUME; } //called while the bag is ticking inside a player inventory
-    public ActionResultType onEntityTick(int eyeId, World world, Entity entity, boolean isSelected) { return ActionResultType.PASS; } //called every X ticks by the bag manager
+    public ActionResultType onEntityTick(int eyeId, World world, Entity entity) { return ActionResultType.PASS; } //called every X ticks by the bag manager
     public ActionResultType onItemUse(int eyeId, World world, PlayerEntity player, BlockRayTraceResult ray) { return ActionResultType.CONSUME; } //called when the bag is right clicked on something, before the bag does anything
     public ActionResultType onItemRightClick(int eyeId, World world, PlayerEntity player) { //called when the bag is right clicked in the air or shift-right-clicked, before the bag does anything (except set the id if needed and accessing data)
         return onActivateItem(eyeId, player);

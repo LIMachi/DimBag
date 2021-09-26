@@ -23,6 +23,7 @@ import com.limachi.dimensional_bags.StaticInit;
 
 import javax.annotation.Nullable;
 import java.util.List;
+import java.util.function.Supplier;
 
 @StaticInit
 public class TunnelPlacer extends Item implements IDimBagCommonItem {
@@ -32,9 +33,7 @@ public class TunnelPlacer extends Item implements IDimBagCommonItem {
 
     public static String NAME = "tunnel_placer";
 
-    static {
-        Registries.registerItem(NAME, TunnelPlacer::new);
-    }
+    public static Supplier<TunnelPlacer> INSTANCE = Registries.registerItem(NAME, TunnelPlacer::new);
 
     public TunnelPlacer() { super(DimBag.DEFAULT_PROPERTIES); }
 
@@ -56,7 +55,7 @@ public class TunnelPlacer extends Item implements IDimBagCommonItem {
         if (!SubRoomsManager.isWall(world, pos)) return ActionResultType.PASS;
 
         ItemStack stack = context.getItemInHand();
-        if (SubRoomsManager.tunnel((ServerWorld)world, pos, context.getPlayer(), true, false, stack.getTag())) {
+        if (SubRoomsManager.tunnel((ServerWorld)world, pos, context.getPlayer(), true, false, stack.getTag(), true)) {
             if (!context.getPlayer().isCreative())
                 stack.shrink(1);
             WorldUtils.replaceBlockAndGiveBack(pos, Registries.getBlock(Tunnel.NAME), context.getPlayer());

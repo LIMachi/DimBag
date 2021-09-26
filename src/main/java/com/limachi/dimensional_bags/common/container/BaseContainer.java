@@ -201,7 +201,7 @@ public abstract class BaseContainer<I extends BaseContainer<I>> extends Containe
         for(int i = 0; i < this.slots.size(); ++i) {
             ItemStack itemstack = this.slots.get(i).getItem();
             ItemStack itemstack1 = this.lastSlots.get(i);
-            if (!ItemStack.isSame(itemstack1, itemstack)) {
+            if (!ItemStack.matches(itemstack1, itemstack)) {
                 boolean clientStackChanged = !itemstack1.equals(itemstack, true);
                 ItemStack itemstack2 = itemstack.copy();
                 this.lastSlots.set(i, itemstack2);
@@ -271,6 +271,8 @@ public abstract class BaseContainer<I extends BaseContainer<I>> extends Containe
                 return true;
         }
         if (slotO.container.getContainerSize() != 0 && slotT.container.getContainerSize() != 0 && slotO.container == slotT.container)
+            return false;
+        if ((slotT.isSameInventory(slotO) || slotO.isSameInventory(slotT)) && slotO.getSlotIndex() == slotT.getSlotIndex())
             return false;
         return true;
     }

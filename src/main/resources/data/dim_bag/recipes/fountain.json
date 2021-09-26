@@ -1,25 +1,19 @@
 {
   "type": "minecraft:crafting_shaped",
   "pattern": [
-    "SES",
-    "BFB",
-    "BCB"
+    "EGE",
+    "GBG",
+    "EGE"
   ],
   "key": {
-    "S": {
-      "item": "minecraft:end_stone_brick_stairs"
-    },
     "E": {
-      "item": "minecraft:ender_pearl"
+      "item": "dim_bag:end_fragment"
     },
     "B": {
-      "item": "minecraft:end_stone_bricks"
-    },
-    "F": {
       "item": "minecraft:bucket"
     },
-    "C": {
-      "item": "minecraft:crying_obsidian"
+    "G": {
+      "item": "minecraft:glass_pane"
     }
   },
   "result": {

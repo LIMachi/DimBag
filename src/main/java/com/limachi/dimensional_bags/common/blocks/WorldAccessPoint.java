@@ -17,6 +17,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraftforge.common.util.Constants;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.function.Supplier;
 
@@ -58,7 +59,7 @@ public class WorldAccessPoint extends AbstractTileEntityBlock<WorldAccessPointTi
     }
 
     @Override
-    public void onRemove(BlockState state, World worldIn, BlockPos pos, BlockState newState, boolean isMoving) {
+    public void onRemove(BlockState state, @Nonnull World worldIn, @Nonnull BlockPos pos, BlockState newState, boolean isMoving) {
         if (state.getBlock() != newState.getBlock()) //only do the default behavior if the new state is of a different block
             super.onRemove(state, worldIn, pos, newState, isMoving);
         worldIn.updateNeighbourForOutputSignal(pos, this);

@@ -15,7 +15,7 @@ public class BagEntityRender extends MobRenderer<BagEntity, BagEntityModel> {
     private static final ResourceLocation TEXTURE = new ResourceLocation(MOD_ID, "textures/entity/bag_entity.png");
 
     public BagEntityRender(EntityRendererManager renderManager) {
-        super(renderManager, new BagEntityModel(false,false), 0.5f);
+        super(renderManager, new BagEntityModel(false), 0.5f);
     }
 
     @Override

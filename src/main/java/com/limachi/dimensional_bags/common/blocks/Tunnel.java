@@ -16,6 +16,8 @@ import net.minecraft.util.ActionResultType;
 import net.minecraft.util.Hand;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockRayTraceResult;
+import net.minecraft.util.math.RayTraceResult;
+import net.minecraft.world.IBlockReader;
 import net.minecraft.world.World;
 import net.minecraft.world.server.ServerWorld;
 import net.minecraftforge.common.util.Constants;
@@ -23,7 +25,7 @@ import net.minecraftforge.common.util.Constants;
 import java.util.function.Supplier;
 
 @StaticInit
-public class Tunnel extends Block {
+public class Tunnel extends Block implements IGetUseSneakWithItemEvent {
 
     public static final String NAME = "tunnel";
 
@@ -46,6 +48,19 @@ public class Tunnel extends Block {
     }
 
     @Override
+    public ItemStack getPickBlock(BlockState state, RayTraceResult target, IBlockReader world, BlockPos pos, PlayerEntity player) {
+        ItemStack out = new ItemStack(TunnelPlacer.INSTANCE.get());
+        if (TunnelPlacer.NERF_TUNNEL_PLACER && world instanceof ServerWorld) {
+            CompoundNBT nbt = new CompoundNBT();
+            SubRoomsManager.tunnel((ServerWorld)world, pos, player, false, false, nbt, false);
+            if (!out.hasTag())
+                out.setTag(new CompoundNBT());
+            out.getTag().merge(nbt);
+        }
+        return out;
+    }
+
+    @Override
     public void attack(BlockState state, World worldIn, BlockPos pos, PlayerEntity player) { //'left-click' behavior (punch/mine)
         if (!DimBag.isServer(worldIn)) {
             super.attack(state, worldIn, pos, player);
@@ -58,9 +73,8 @@ public class Tunnel extends Block {
                 return;
             }
             CompoundNBT nbt = new CompoundNBT();
-            if (SubRoomsManager.tunnel((ServerWorld)worldIn, pos, player, false, true, nbt)) {
+            if (SubRoomsManager.tunnel((ServerWorld)worldIn, pos, player, false, true, nbt, true)) {
                 worldIn.setBlock(pos, Registries.getBlock(Wall.NAME).defaultBlockState(), Constants.BlockFlags.DEFAULT_AND_RERENDER);
-//                worldIn.setBlock(pos, Blocks.BROWN_WOOL.defaultBlockState()); //TODO
                 ItemStack out = new ItemStack(Registries.getItem(TunnelPlacer.NAME));
                 if (TunnelPlacer.NERF_TUNNEL_PLACER) {
                     if (!out.hasTag())

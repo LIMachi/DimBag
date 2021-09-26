@@ -3,6 +3,8 @@ package com.limachi.dimensional_bags.common.inventory;
 import com.limachi.dimensional_bags.ConfigManager;
 import com.limachi.dimensional_bags.CuriosIntegration;
 import com.limachi.dimensional_bags.common.EventManager;
+import com.limachi.dimensional_bags.common.fluids.BinaryStateSingleFluidHandler;
+import com.limachi.dimensional_bags.common.fluids.ModCompat;
 import com.limachi.dimensional_bags.utils.ReflectionUtils;
 import net.minecraft.block.Blocks;
 import net.minecraft.entity.Entity;
@@ -14,6 +16,7 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.fluid.Fluid;
 import net.minecraft.fluid.Fluids;
 import net.minecraft.inventory.EquipmentSlotType;
+import net.minecraft.inventory.IInventory;
 import net.minecraft.inventory.Inventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
@@ -102,26 +105,27 @@ public class EntityInventoryProxy implements IItemHandlerModifiable, IEntityInve
         if (entity instanceof PlayerEntity)
             return ((PlayerEntity)entity).inventory.getItem(slot);
         if (entity instanceof LivingEntity) {
-            if (slot == CHEST) return CuriosIntegration.onNthEllem(entity.getArmorSlots(), 2, i->i, null);
             if (entity instanceof AbstractHorseEntity) {
-                Inventory horseChest = (Inventory) ReflectionUtils.getField(entity, "horseChest", "field_110296_bG");
-                if (horseChest != null && ((!(entity instanceof LlamaEntity) && slot == LEGS) || (slot >= INVENTORY_OFFSET && slot < ARMOR_OFFSET))) {
+                if (!(slot == CHEST || slot == LEGS || slot == MAIN_HAND)) return null;
+                if (slot == MAIN_HAND) return ((LivingEntity)entity).getItemInHand(Hand.MAIN_HAND);
+                if (slot == CHEST && !(entity instanceof LlamaEntity)) return CuriosIntegration.onNthEllem(entity.getArmorSlots(), 2, i->i, null);
+                Inventory horseChest = (Inventory) ReflectionUtils.getField(entity, "inventory", "field_110296_bG");
+                if (horseChest != null && (!(entity instanceof LlamaEntity) || slot == CHEST)) {
                     if (slot == LEGS) return horseChest.getContainerSize() > 0 ? horseChest.getItem(0) : null;
-                    return horseChest.getContainerSize() > 2 + slot - INVENTORY_OFFSET ? horseChest.getItem(2 + slot - INVENTORY_OFFSET) : null;
+                    return horseChest.getContainerSize() > 1 ? horseChest.getItem(1) : null;
                 }
             } else {
-                if ((slot == MAIN_HAND || slot == OFF_HAND))
-                    return ((LivingEntity) entity).getItemInHand(slot == MAIN_HAND ? Hand.MAIN_HAND : Hand.OFF_HAND);
-                if (slot >= ARMOR_OFFSET)
-                    return CuriosIntegration.onNthEllem(entity.getArmorSlots(), slot - ARMOR_OFFSET, i->i, ItemStack.EMPTY);
                 //FIXME: missing: PillagerEntity, PiglinEntity, AbstractVillagerEntity
             }
-            return null;
         }
-        if (slot >= INVENTORY_OFFSET && slot < ARMOR_OFFSET) {
-            IItemHandler t = entity.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY).orElse(null);
-            return t == null || slot - INVENTORY_OFFSET >= t.getSlots() ? null : t.getStackInSlot(slot - INVENTORY_OFFSET);
-        }
+        if ((slot == MAIN_HAND || slot == OFF_HAND))
+            return CuriosIntegration.onNthEllem(entity.getHandSlots(), slot == MAIN_HAND ? 0 : 1, i->i, null);
+        if (slot >= ARMOR_OFFSET)
+            return CuriosIntegration.onNthEllem(entity.getArmorSlots(), slot - ARMOR_OFFSET, i->i, null);
+//        if (slot >= INVENTORY_OFFSET) {
+//            IItemHandler t = entity.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY).orElse(null);
+//            return t == null || slot - INVENTORY_OFFSET >= t.getSlots() ? null : t.getStackInSlot(slot - INVENTORY_OFFSET);
+//        } FIXME: for now, disable the extra slots (those are usually the mirror of armor and hands)
         return null;
     }
 
@@ -253,15 +257,15 @@ public class EntityInventoryProxy implements IItemHandlerModifiable, IEntityInve
     @Override
     public int getTanks() { return 1; }
 
-    @ConfigManager.Config(cmt = "1xp -> this many mb, 20 is the default for most mods")
+    @ConfigManager.Config(cmt = "1xp -> this many mb of fluid xp, 20 is the default for most mods")
     public static final int PLAYER_XP_TO_MB_FACTOR = 20;
 
     @Nonnull
     @Override //should return a fluidstack of xp
     public FluidStack getFluidInTank(int tank) {
         Entity t = getEntity();
-        if (!(t instanceof PlayerEntity) || BinaryStateSingleFluidHandler.XP_BOTTLES.isEmpty()) return FluidStack.EMPTY;
-        return new FluidStack(BinaryStateSingleFluidHandler.XP_BOTTLES.get(0).getFluid().getFluid(), ((PlayerEntity)t).totalExperience * PLAYER_XP_TO_MB_FACTOR);
+        if (!(t instanceof PlayerEntity) || ModCompat.xpBottles().isEmpty()) return FluidStack.EMPTY;
+        return new FluidStack(ModCompat.xpBottles().get(0).getFluid().getFluid(), ((PlayerEntity)t).totalExperience * PLAYER_XP_TO_MB_FACTOR);
     }
 
     @Override //xp is cap at Integer.MAX_VALUE in vanilla
@@ -274,7 +278,7 @@ public class EntityInventoryProxy implements IItemHandlerModifiable, IEntityInve
         if (stack.getFluid().is(FluidTags.WATER) && stack.getAmount() >= 1000) return true;
         if (stack.getFluid().is(Tags.Fluids.MILK) && stack.getAmount() >= 1000) return true;
         if (e instanceof PlayerEntity)
-            for (BinaryStateSingleFluidHandler.BinaryStateSingleFluidHandlerItem t : BinaryStateSingleFluidHandler.XP_BOTTLES)
+            for (BinaryStateSingleFluidHandler.BinaryStateSingleFluidHandlerItem t : ModCompat.xpBottles())
                 if (t.isFluidValid(stack)) return true;
         return false;
     }
@@ -308,7 +312,7 @@ public class EntityInventoryProxy implements IItemHandlerModifiable, IEntityInve
             if (action.execute())
                 entity.getPersistentData().putInt("MLG_water", 1 + entity.getPersistentData().getInt("MLG_water"));
             return 1000;
-        } else if (BinaryStateSingleFluidHandler.mekanism_air_fluid != null && resource.getFluid().isSame(BinaryStateSingleFluidHandler.mekanism_air_fluid)) { //100mb -> 1 bubble -> 1 tenth of the max air supply, only works if the entity as lost some air, for a player, it's about 4mb/tick
+        } else if (ModCompat.mekanism_air_fluid != null && resource.getFluid().isSame(ModCompat.mekanism_air_fluid)) { //100mb -> 1 bubble -> 1 tenth of the max air supply, only works if the entity as lost some air, for a player, it's about 4mb/tick
             int mb = (int)((double)entity.getAirSupply() / (double)entity.getMaxAirSupply() * 1000.);
             if (mb == 1000) return 0;
             int add = Integer.min(1000 - mb, resource.getAmount());
@@ -316,7 +320,7 @@ public class EntityInventoryProxy implements IItemHandlerModifiable, IEntityInve
                 entity.setAirSupply((mb + add) * entity.getMaxAirSupply() / 1000);
             return add;
         } else if (entity instanceof PlayerEntity) {
-            for (BinaryStateSingleFluidHandler.BinaryStateSingleFluidHandlerItem t : BinaryStateSingleFluidHandler.XP_BOTTLES)
+            for (BinaryStateSingleFluidHandler.BinaryStateSingleFluidHandlerItem t : ModCompat.xpBottles())
                 if (t.isFluidValid(resource)) {
                     if (action.execute())
                         ((PlayerEntity)entity).giveExperiencePoints(resource.getAmount() / PLAYER_XP_TO_MB_FACTOR);
@@ -355,7 +359,7 @@ public class EntityInventoryProxy implements IItemHandlerModifiable, IEntityInve
                 return new FluidStack(Fluids.WATER, use * 1000);
             }
         } else if (entity instanceof PlayerEntity /*XP*/) {
-            for (BinaryStateSingleFluidHandler.BinaryStateSingleFluidHandlerItem t : BinaryStateSingleFluidHandler.XP_BOTTLES)
+            for (BinaryStateSingleFluidHandler.BinaryStateSingleFluidHandlerItem t : ModCompat.xpBottles())
                 if (t.isFluidValid(resource)) {
                     int exp = ((PlayerEntity) entity).totalExperience * PLAYER_XP_TO_MB_FACTOR;
                     int take = Integer.min(exp, resource.getAmount());
@@ -375,7 +379,7 @@ public class EntityInventoryProxy implements IItemHandlerModifiable, IEntityInve
     public FluidStack drain(int maxDrain, FluidAction action) {
         if (maxDrain <= 0) return FluidStack.EMPTY;
         Entity entity = getEntity();
-        if (entity instanceof PlayerEntity && ((PlayerEntity)entity).totalExperience > 0 && !BinaryStateSingleFluidHandler.XP_BOTTLES.isEmpty()) {
+        if (entity instanceof PlayerEntity && ((PlayerEntity)entity).totalExperience > 0 && !ModCompat.xpBottles().isEmpty()) {
             FluidStack out = getFluidInTank(0).copy();
             int take = Integer.min(out.getAmount(), maxDrain);
             if (action.execute())
@@ -447,7 +451,7 @@ public class EntityInventoryProxy implements IItemHandlerModifiable, IEntityInve
                 ((MobEntity)entity).requiresCustomPersistence(); //fix to guarantee the content will not be lost because of entity despawn (note: if the bag was equipped by an entity, vanilla should have enabled this by default)
             if (slot == CHEST) entity.setItemSlot(EquipmentSlotType.CHEST, stack);
             else if (entity instanceof AbstractHorseEntity) {
-                Inventory horseChest = (Inventory) ReflectionUtils.getField(entity, "horseChest", "field_110296_bG");
+                Inventory horseChest = (Inventory) ReflectionUtils.getField(entity, "inventory", "field_110296_bG");
                 if (horseChest != null && ((!(entity instanceof LlamaEntity) && slot == LEGS) || (slot >= INVENTORY_OFFSET && slot < ARMOR_OFFSET)))
                     horseChest.setItem(slot == LEGS ? 0 : 2 + slot - INVENTORY_OFFSET, stack);
             } else {
@@ -520,8 +524,12 @@ public class EntityInventoryProxy implements IItemHandlerModifiable, IEntityInve
             if (slot == CHEST) return horse.isArmor(stack);
             return !(entity instanceof LlamaEntity) && stack.getItem() instanceof SaddleItem;
         }
-        return MobEntity.getEquipmentSlotForItem(stack).getIndex() == slot - ARMOR_OFFSET;
+        EquipmentSlotType t = MobEntity.getEquipmentSlotForItem(stack);
+        return t.getType() == EquipmentSlotType.Group.ARMOR && t.getIndex() == slot - ARMOR_OFFSET;
     }
+
+    @Override
+    public boolean canPlaceItem(int slot, @Nonnull ItemStack stack) { return isItemValid(slot, stack); }
 
     @Override
     public void clearContent() {

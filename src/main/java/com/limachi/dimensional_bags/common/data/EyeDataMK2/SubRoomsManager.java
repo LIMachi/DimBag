@@ -364,16 +364,18 @@ public class SubRoomsManager extends WorldSavedDataManager.EyeWorldSavedData {
         if (world.dimension() != WorldUtils.DimBagRiftKey) return Optional.empty();
         int x = pos.getX() - ROOM_OFFSET_X;
         int z = pos.getZ() - ROOM_OFFSET_Z;
+        int id = (x + HALF_ROOM) / ROOM_SPACING + 1;
+        int guess = (z + HALF_ROOM) / ROOM_SPACING;
+        if (includeOutside)
+            return Optional.of(new Pair<>(id < 1 ? 1 : id, guess < 0 ? 0 : guess));
         if (eye) {
             if ((x % ROOM_SPACING) == 0 && pos.getY() == ROOM_CENTER_Y && z == 0)
                 return Optional.of(new Pair<>(x / ROOM_SPACING + 1, 0));
         } else if (((x + HALF_ROOM) % ROOM_SPACING) <= ROOM_MAX_SIZE) {
-            int id = (x + HALF_ROOM) / ROOM_SPACING + 1;
             SubRoomsManager manager = getInstance(id);
             if (manager != null) {
-                int guess = (z + HALF_ROOM) / ROOM_SPACING;
                 if (guess >= manager.subRooms.size()) return Optional.empty();
-                if (includeOutside || manager.subRooms.get(guess).isInsideOrWall(pos))
+                if (manager.subRooms.get(guess).isInsideOrWall(pos))
                     return Optional.of(new Pair<>(id, guess));
             }
         }
@@ -383,7 +385,7 @@ public class SubRoomsManager extends WorldSavedDataManager.EyeWorldSavedData {
     public static ArrayList<AxisAlignedBB> getRoomsAABB(int eye) { return (ArrayList<AxisAlignedBB>) SubRoomsManager.execute(eye, srm->srm.subRooms.stream().map(SubRoomData::asAABB).collect(Collectors.toList()), new ArrayList<AxisAlignedBB>()); }
 
     public void tpTunnel(Entity entity, BlockPos portalPos) { //teleport an entity to the next room, the position of the portal determine the destination
-        tunnel((ServerWorld)entity.level, portalPos, entity, false, false, null);
+        tunnel((ServerWorld)entity.level, portalPos, entity, false, false, null, true);
     }
 
     /**
@@ -392,7 +394,7 @@ public class SubRoomsManager extends WorldSavedDataManager.EyeWorldSavedData {
      * @param reequipIfAble
      * @return
      */
-    public boolean leaveBag(Entity entity, boolean reequipIfAble, @Nullable BlockPos pos, @Nullable RegistryKey<World> world) {
+    public boolean leaveBag(Entity entity, boolean reequipIfAble, @Nullable BlockPos pos, @Nullable RegistryKey<World> world, @Nullable CompoundNBT proxyData) {
         //store the position inside the entity
         //tp out
         //if reequipIfAble is true, try to reequip the bag to the entity and remove the bag entity
@@ -401,12 +403,14 @@ public class SubRoomsManager extends WorldSavedDataManager.EyeWorldSavedData {
         nbt.putInt("Y", entity.blockPosition().getY());
         nbt.putInt("Z", entity.blockPosition().getZ());
         if (pos == null || world == null) {
-            CompoundNBT t = entity.getPersistentData().getCompound(DimBag.MOD_ID).getCompound(Integer.toString(getEyeId()));
-            if (t.contains("proxy")) {
-                CompoundNBT proxy = t.getCompound("proxy");
+            proxyData = proxyData == null || proxyData.isEmpty() ? null : proxyData;
+            CompoundNBT t = proxyData == null ? entity.getPersistentData().getCompound(DimBag.MOD_ID).getCompound(Integer.toString(getEyeId())) : null;
+            if (proxyData != null || t.contains("proxy")) {
+                CompoundNBT proxy = proxyData != null ? proxyData : t.getCompound("proxy");
                 RegistryKey<World> wrk = WorldUtils.stringToWorldRK(proxy.getString("Dimension"));
                 BlockPos dst = new BlockPos(proxy.getInt("X"), proxy.getInt("Y"), proxy.getInt("Z"));
-                t.remove("proxy");
+                if (proxyData == null)
+                    t.remove("proxy");
                 WorldUtils.teleportEntity(entity, wrk, dst);
             }
             else
@@ -416,6 +420,10 @@ public class SubRoomsManager extends WorldSavedDataManager.EyeWorldSavedData {
             WorldUtils.teleportEntity(entity, world, pos);
         //TODO: reequip code
         return true;
+    }
+
+    public boolean leaveBag(Entity entity) {
+        return leaveBag(entity, entity instanceof PlayerEntity && (false/*quick equip setting*/), null, null, null);
     }
 
     /**
@@ -460,7 +468,7 @@ public class SubRoomsManager extends WorldSavedDataManager.EyeWorldSavedData {
                         continue;
                     }
                     if (((PadTileEntity)te).isValidEntity(entity)) { //should take this chance to clear invalid pads
-                        arrival = new BlockPos(pos).above();
+                        arrival = ((PadTileEntity)te).targetBlock();
                         break;
                     }
                 }
@@ -475,6 +483,7 @@ public class SubRoomsManager extends WorldSavedDataManager.EyeWorldSavedData {
         if (arrival == null) { //default position if all previous position weren't found
             arrival = getEyePos(getEyeId()).offset(0, 1, 0);
         }
+        entity.fallDistance = 0;
         return WorldUtils.teleportEntity(entity, WorldUtils.DimBagRiftKey, arrival);
     }
 
@@ -581,7 +590,7 @@ public class SubRoomsManager extends WorldSavedDataManager.EyeWorldSavedData {
         return out;
     }
 
-    public static boolean tunnel(ServerWorld world, BlockPos tunnel, Entity entity, boolean create, boolean destroy, @Nullable CompoundNBT nbt) { //create mode: build (if needed) a room and place a portal, !create mode: teleport the entity to the next portal
+    public static boolean tunnel(ServerWorld world, BlockPos tunnel, Entity entity, boolean create, boolean destroy, @Nullable CompoundNBT nbt, boolean doTp) { //create mode: build (if needed) a room and place a portal, !create mode: teleport the entity to the next portal
         Optional<Pair<Integer, Integer>> req = getRoomIds(world, tunnel, false, false);
         if (!req.isPresent()) return false;
         int id = req.get().getKey();
@@ -617,7 +626,7 @@ public class SubRoomsManager extends WorldSavedDataManager.EyeWorldSavedData {
             WorldUtils.replaceBlockAndGiveBack(output, Registries.getBlock(Tunnel.NAME), (PlayerEntity)entity);
         else if (destroy)
             world.setBlock(output, Registries.getBlock(Wall.NAME).defaultBlockState(), Constants.BlockFlags.DEFAULT_AND_RERENDER); //destroy the tunnel
-        else {
+        else if (doTp) {
             output = output.offset(wall.getNormal());
             if (entity instanceof PlayerEntity && world.getBlockState(output.offset(Direction.DOWN.getNormal())).getBlock() == Blocks.AIR) //special code to try to keep the tunnel at eye level of a player on teleport
                 output = output.offset(Direction.DOWN.getNormal());
@@ -658,8 +667,16 @@ public class SubRoomsManager extends WorldSavedDataManager.EyeWorldSavedData {
         return true;
     }
 
+    private static final Pair<Integer, Integer> INVALID_ROOM_PAIR = new Pair<>(0, 0);
+
     public static int getEyeId(World world, BlockPos pos, boolean eye) {
-        return getRoomIds(world, pos, eye, false).orElse(new Pair<>(0, 0)).getKey();
+        return getRoomIds(world, pos, eye, false).orElse(INVALID_ROOM_PAIR).getKey();
+    }
+
+    public static int getClosestBag(World world, BlockPos pos) {
+        int close = getRoomIds(world, pos, false, true).orElse(INVALID_ROOM_PAIR).getKey();
+        int last = DimBagData.getLastId();
+        return last < close ? last : close;
     }
 
     @Override

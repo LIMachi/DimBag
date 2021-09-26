@@ -4,6 +4,7 @@ import com.limachi.dimensional_bags.DimBag;
 import com.limachi.dimensional_bags.common.EventManager;
 import com.limachi.dimensional_bags.common.Registries;
 import com.limachi.dimensional_bags.common.blocks.*;
+import com.limachi.dimensional_bags.common.data.EyeDataMK2.SubRoomsManager;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
@@ -18,6 +19,7 @@ import net.minecraft.item.BlockItem;
 import net.minecraft.item.BlockItemUseContext;
 import net.minecraft.item.DirectionalPlaceContext;
 import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.network.play.server.SPlayerPositionLookPacket;
 import net.minecraft.potion.EffectInstance;
 import net.minecraft.server.MinecraftServer;
@@ -31,6 +33,7 @@ import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.server.ServerWorld;
 import net.minecraft.world.server.TicketType;
 import net.minecraftforge.common.util.Constants;
+import net.minecraftforge.event.entity.EntityEvent;
 import net.minecraftforge.event.entity.EntityTravelToDimensionEvent;
 import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -153,6 +156,42 @@ public class WorldUtils { //TODO: remove bloat once MCP/Forge mappings are bette
         }
     }
 
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
+    public static void preventKeepingBagWhileTeleportingInRiftDimensionPartOne(EntityTravelToDimensionEvent event) {
+        Entity e = event.getEntity();
+        if (WorldUtils.DimBagRiftKey.equals(event.getDimension()) && !WorldUtils.DimBagRiftKey.equals(e.level.dimension())) {
+            CompoundNBT d = new CompoundNBT();
+            d.putDouble("X", e.getX());
+            d.putDouble("Y", e.getY());
+            d.putDouble("Z", e.getZ());
+            d.putString("D", worldRKToString(e.level.dimension()));
+            e.getPersistentData().put("PKBDTP", d);
+        }
+    }
+/*
+    @SubscribeEvent
+    public static void preventKeepingBagWhileTeleportingInRiftDimensionPartTwo(EntityEvent.EnteringChunk event) {
+        Entity e = event.getEntity();
+        if (WorldUtils.DimBagRiftKey.equals(e.level.dimension())) {
+            BlockPos pbp;
+            int e1 = 0;
+            CompoundNBT PKBDTP = e.getPersistentData().getCompound("PKBDTP");
+            RegistryKey<World> rw = DimBagRiftKey;
+            if (!PKBDTP.isEmpty()) {
+                pbp = new BlockPos(PKBDTP.getDouble("X"), PKBDTP.getDouble("Y"), PKBDTP.getDouble("Z"));
+                rw = stringToWorldRK(PKBDTP.getString("D"));
+                e.getPersistentData().remove("PKBDTP");
+            } else {
+                pbp = new BlockPos(e.xo, e.yo, e.zo);
+                e1 = SubRoomsManager.getEyeId(e.level, pbp, false);
+            }
+            int e2 = SubRoomsManager.getEyeId(e.level, e.blockPosition(), false);
+            if (e1 != e2) {
+                DimBag.LOGGER.warn("Ya Bobo -> pos1: {}, world1: {}, eye1: {}, pos2: {}, world2: bag, eye2: {}", pbp, rw, e1, e.blockPosition(), e2); //FIXME: finish this protection against outside teleport
+            }
+        }
+    }
+*/
     private static Entity teleport(Entity entityIn, ServerWorld worldIn, double x, double y, double z, float yaw, float pitch) { //modified version of TeleportCommand.java: 123: TeleportCommand#teleport(CommandSource source, Entity entityIn, ServerWorld worldIn, double x, double y, double z, Set<SPlayerPositionLookPacket.Flags> relativeList, float yaw, float pitch, @Nullable TeleportCommand.Facing facing) throws CommandSyntaxException
         if (entityIn.removed) return entityIn;
         SyncUtils.XPSnapShot xp = entityIn instanceof ServerPlayerEntity ? new SyncUtils.XPSnapShot(((PlayerEntity)entityIn).experienceProgress, ((PlayerEntity)entityIn).experienceLevel, ((PlayerEntity)entityIn).totalExperience) : SyncUtils.XPSnapShot.ZERO;
@@ -213,18 +252,18 @@ public class WorldUtils { //TODO: remove bloat once MCP/Forge mappings are bette
         return teleport(entity, world, destPos.getX() + 0.5, destPos.getY(), destPos.getZ() + 0.5, entity.yRot, entity.xRot);
     }
 
-    public static void teleportEntity(Entity entity, RegistryKey<World> destType, Vector3d vec) {
-        teleportEntity(entity, destType, vec.x, vec.y, vec.z);
+    public static Entity teleportEntity(Entity entity, RegistryKey<World> destType, Vector3d vec) {
+        return teleportEntity(entity, destType, vec.x, vec.y, vec.z);
     }
 
-    public static void teleportEntity(Entity entity, RegistryKey<World> destType, double x, double y, double z) {
-        if (entity == null || entity.level.isClientSide()) return;
+    public static Entity teleportEntity(Entity entity, RegistryKey<World> destType, double x, double y, double z) {
+        if (entity == null || entity.level.isClientSide()) return entity;
         ServerWorld world;
         if (destType != null && entity.getServer() != null)
             world = entity.getServer().getLevel(destType);
         else
             world = (ServerWorld)entity.level;
-        teleport(entity, world, x, y, z, entity.yRot, entity.xRot);
+        return teleport(entity, world, x, y, z, entity.yRot, entity.xRot);
     }
 
     public static void buildRoom(World world, BlockPos center, int radius) {

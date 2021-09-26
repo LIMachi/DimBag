@@ -7,14 +7,15 @@ import com.limachi.dimensional_bags.client.render.TextureCutout;
 import com.limachi.dimensional_bags.client.render.widgets.BaseWidget;
 import com.limachi.dimensional_bags.common.container.BaseContainer;
 import com.limachi.dimensional_bags.common.container.slot.FluidSlot;
-import com.limachi.dimensional_bags.common.container.widgets.BaseContainerWidget;
 import com.limachi.dimensional_bags.common.items.FluidItem;
 import com.mojang.blaze3d.matrix.MatrixStack;
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.datafixers.util.Pair;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.DisplayEffectsScreen;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.IGuiEventListener;
+import net.minecraft.client.gui.IRenderable;
 import net.minecraft.client.gui.screen.IScreen;
 import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.client.gui.widget.Widget;
@@ -24,6 +25,7 @@ import net.minecraft.client.renderer.model.IBakedModel;
 import net.minecraft.client.renderer.model.ItemCameraTransforms;
 import net.minecraft.client.renderer.model.ModelManager;
 import net.minecraft.client.renderer.texture.ITickable;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.renderer.texture.TextureManager;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.entity.player.PlayerInventory;
@@ -32,9 +34,11 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.vector.Vector4f;
 import net.minecraft.util.text.ITextComponent;
+import net.minecraft.util.text.StringTextComponent;
 import net.minecraftforge.fluids.FluidStack;
 import org.lwjgl.opengl.GL11;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.HashMap;
 import java.util.Stack;
@@ -43,14 +47,36 @@ import java.util.function.Consumer;
 import static com.limachi.dimensional_bags.DimBag.MOD_ID;
 import static com.limachi.dimensional_bags.common.references.GUIs.ScreenParts.*;
 
-public class SimpleContainerScreen<C extends BaseContainer<C>> extends DisplayEffectsScreen<C> {
+public class SimpleContainerScreen<C extends BaseContainer<C>> extends /*DisplayEffectsScreen<C>*/ContainerScreenUnprivatized<C> {
 
     Box2d playerBackGround;
     Box2d containerBackGround;
     Box2d fullBackground;
+    boolean dynamicBackground;
 
     public Stack<int[]> scissors = new Stack<>();
     public int ticks = 0;
+
+    protected boolean hideTitle = false;
+    protected boolean hideContainerTitle = false;
+
+    @Override
+    public void render(@Nonnull MatrixStack matrixStack, int mouseX, int mouseY, float partialTick) {
+        this.renderBackground(matrixStack);
+        super.render(matrixStack, mouseX, mouseY, partialTick);
+        this.renderTooltip(matrixStack, mouseX, mouseY);
+    }
+
+    protected void renderTooltip(MatrixStack matrixStack, int mouseX, int mouseY) {
+        if (this.minecraft.player.inventory.getCarried().isEmpty() && this.hoveredSlot != null && this.hoveredSlot.hasItem()) {
+            this.renderTooltip(matrixStack, this.hoveredSlot.getItem(), mouseX, mouseY);
+        }
+        else {
+            for (Widget w : buttons)
+                if (w.isHovered())
+                    w.renderToolTip(matrixStack, mouseX, mouseY);
+        }
+    }
 
     public FontRenderer getFont() { return font; }
 
@@ -149,7 +175,8 @@ public class SimpleContainerScreen<C extends BaseContainer<C>> extends DisplayEf
     protected void init() {
         Minecraft.getInstance().keyboardHandler.setSendRepeatsToGui(true);
         super.init();
-        calculateBackGround();
+        if (dynamicBackground)
+            calculateBackGround();
     }
 
     @Override
@@ -204,8 +231,9 @@ public class SimpleContainerScreen<C extends BaseContainer<C>> extends DisplayEf
         SIMPLE_BACKGROUND.blit(matrixStack, size, getBlitOffset(), TextureCutout.TextureApplicationPattern.MIDDLE_EXPANSION);
     }
 
-    private void blitGuiFull(MatrixStack matrixStack, int x, int y, int w, int h) {
-        this.blit(matrixStack, x + leftPos, y + topPos, 0, 0, w, h, w, h);
+    private void blitGuiFull(MatrixStack matrixStack, int x, int y, int w, int h, int depth) {
+//        this.blit(matrixStack, x + leftPos, y + topPos, 0, 0, w, h, w, h);
+        this.blit(matrixStack, x + leftPos, y + topPos, depth, 0, 0, w, h, w, h);
     }
 
     protected void renderPlayerBackground(MatrixStack matrixStack, TextureManager tm) {
@@ -213,32 +241,76 @@ public class SimpleContainerScreen<C extends BaseContainer<C>> extends DisplayEf
 
     }
 
+    protected void renderSlot(MatrixStack matrixStack, Slot slot) {
+        int i = slot.x;
+        int j = slot.y;
+        ItemStack itemstack = slot.getItem();
+//        boolean flag = false;
+        boolean alreadyRendered = false;
+//        boolean flag1 = slot == this.clickedSlot && !this.draggingItem.isEmpty() && !this.isSplittingStack;
+        ItemStack itemstack1 = this.minecraft.player.inventory.getCarried();
+        String s = null;
+        /*if (slot == this.clickedSlot && !this.draggingItem.isEmpty() && this.isSplittingStack && !itemstack.isEmpty()) {
+            itemstack = itemstack.copy();
+            itemstack.setCount(itemstack.getCount() / 2);
+        } else if (this.isQuickCrafting && this.quickCraftSlots.contains(slot) && !itemstack1.isEmpty()) {
+            if (this.quickCraftSlots.size() == 1) {
+                return;
+            }
+
+            if (Container.canItemQuickReplace(slot, itemstack1, true) && this.menu.canDragTo(slot)) {
+                itemstack = itemstack1.copy();
+                flag = true;
+                Container.getQuickCraftSlotCount(this.quickCraftSlots, this.quickCraftingType, itemstack, slot.getItem().isEmpty() ? 0 : slot.getItem().getCount());
+                int k = Math.min(itemstack.getMaxStackSize(), slot.getMaxStackSize(itemstack));
+                if (itemstack.getCount() > k) {
+                    s = TextFormatting.YELLOW.toString() + k;
+                    itemstack.setCount(k);
+                }
+            } else {
+                this.quickCraftSlots.remove(slot);
+                this.recalculateQuickCraftRemaining();
+            }
+        }*/
+
+        this.setBlitOffset(100);
+        this.itemRenderer.blitOffset = 100.0F;
+        if (itemstack.isEmpty() && slot.isActive()) {
+            Pair<ResourceLocation, ResourceLocation> pair = slot.getNoItemIcon();
+            if (pair != null) {
+                TextureAtlasSprite textureatlassprite = this.minecraft.getTextureAtlas(pair.getFirst()).apply(pair.getSecond());
+                this.minecraft.getTextureManager().bind(textureatlassprite.atlas().location());
+                blit(matrixStack, i, j, this.getBlitOffset(), 16, 16, textureatlassprite);
+                alreadyRendered = true;
+            }
+        }
+
+        if (!alreadyRendered) {
+//            if (flag) {
+//                fill(matrixStack, i, j, i + 16, j + 16, -2130706433);
+//            }
+
+            RenderSystem.enableDepthTest();
+            this.itemRenderer.renderAndDecorateItem(this.minecraft.player, itemstack, i, j);
+            this.itemRenderer.renderGuiItemDecorations(this.font, itemstack, i, j, s);
+        }
+
+        this.itemRenderer.blitOffset = 0.0F;
+        this.setBlitOffset(0);
+    }
+
     @Override
-    public void render(MatrixStack matrixStack, int mouseX, int mouseY, float partialTicks) {
-        renderBackground(matrixStack);
-        super.render(matrixStack, mouseX, mouseY, partialTicks);
-        renderTooltip(matrixStack, mouseX, mouseY);
+    public ITextComponent getTitle() {
+        if (hideTitle)
+            return StringTextComponent.EMPTY;
+        return super.getTitle();
     }
 
     @Override
     protected void renderLabels(MatrixStack matrixStack, int mouseX, int mouseY) {
-        for (Slot slot : menu.slots)
-            if (slot instanceof FluidSlot) {
-                FluidStack fluid = ((FluidSlot) slot).getFluid();
-                FluidStackRenderer.INSTANCE.render(matrixStack, slot.x, slot.y, fluid);
-                int amountInMB = fluid.getAmount();
-                if (amountInMB > 0) {
-                    String amount = amountInMB >= 1000 ? (amountInMB / 1000) + I18n.get("screen.fluid.bucket_acronym") : amountInMB + I18n.get("screen.fluid.milli_bucket_acronym");
-                    RenderSystem.pushMatrix();
-                    RenderSystem.translatef(slot.x, slot.y, 250);
-                    if (amount.length() > 3) {
-                        RenderSystem.scalef(0.5f, 0.5f, 1);
-                        font.drawShadow(matrixStack, amount, 31 - font.width(amount), 23, 16777215);
-                    } else
-                        font.drawShadow(matrixStack, amount, 17 - font.width(amount), 9, 16777215);
-                    RenderSystem.popMatrix();
-                }
-            }
+        this.font.draw(matrixStack, getTitle(), (float)this.titleLabelX, (float)this.titleLabelY, 4210752);
+        if (!hideContainerTitle)
+            this.font.draw(matrixStack, inventory.getDisplayName(), (float)this.inventoryLabelX, (float)this.inventoryLabelY, 4210752);
     }
 
     @Override
@@ -246,32 +318,25 @@ public class SimpleContainerScreen<C extends BaseContainer<C>> extends DisplayEf
         RenderSystem.color4f(1.0f, 1.0f, 1.0f, 1.0f);
         if (this.minecraft == null) return;
         TextureManager tm = this.minecraft.getTextureManager();
-        if (playerBackGround == null || containerBackGround == null)
-            calculateBackGround();
+        if (fullBackground == null)
+            fullBackground = new Box2d(getGuiLeft(), getGuiTop(), imageWidth, imageHeight);
         if (fullBackground.getX1() != -1) {
             defaultBackground(matrixStack, fullBackground);
             tm.bind(SLOT);
             boolean shouldResetTexture = false;
             for (Slot slot : menu.slots) {
-                if (slot.isActive() && slot instanceof FluidSlot && ((FluidSlot) slot).isSelected() && menu.slots.size() > 1) {
-                    tm.bind(SELECTED_FLUID_SLOT);
-                    shouldResetTexture = true;
-                }
+                if (slot instanceof IRenderable) continue;
                 if (!slot.isActive()) {
                     tm.bind(LOCKED_SLOT);
                     shouldResetTexture = true;
                 }
-                this.blitGuiFull(matrixStack, slot.x - 1, slot.y - 1, SLOT_SIZE_X, SLOT_SIZE_Y);
+                this.blitGuiFull(matrixStack, slot.x - 1, slot.y - 1, SLOT_SIZE_X, SLOT_SIZE_Y, 200);
                 if (shouldResetTexture) {
                     tm.bind(SLOT);
                     shouldResetTexture = false;
                 }
             }
         }
-        if (containerBackGround.getX1() != -1)
-            font.draw(matrixStack, title.getString(), (float)(fullBackground.getX1() + 9), (float)(fullBackground.getY1() + 6), 4210752);
-        if (playerBackGround.getX1() != -1)
-            font.draw(matrixStack, inventory.getDisplayName().getString(), (float)(playerBackGround.getX1() + 9), (float)(playerBackGround.getY1() + 3), 4210752);
     }
 
     @Override
@@ -280,6 +345,12 @@ public class SimpleContainerScreen<C extends BaseContainer<C>> extends DisplayEf
         if (button instanceof BaseWidget)
             ((BaseWidget)button).attachToScreen(this);
         return super.addButton(button);
+    }
+
+    public <T extends Widget> T addButton(T button, int relX, int relY) {
+        button.x = getGuiLeft() + relX;
+        button.y = getGuiTop() + relY;
+        return addButton(button);
     }
 
     public <T extends Widget> void removeButton(T button) {

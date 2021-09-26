@@ -8,7 +8,7 @@ import com.limachi.dimensional_bags.common.Registries;
 import com.limachi.dimensional_bags.common.container.FountainContainer;
 import com.limachi.dimensional_bags.common.data.EyeDataMK2.TankData;
 import com.limachi.dimensional_bags.common.data.EyeDataMK2.SubRoomsManager;
-import com.limachi.dimensional_bags.common.inventory.FountainTank;
+import com.limachi.dimensional_bags.common.fluids.FountainTank;
 import com.limachi.dimensional_bags.common.managers.ModeManager;
 import com.limachi.dimensional_bags.common.managers.modes.Tank;
 import com.limachi.dimensional_bags.common.tileentities.FountainTileEntity;
@@ -19,7 +19,6 @@ import net.minecraft.block.material.Material;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.BlockItem;
-import net.minecraft.item.BlockItemUseContext;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.tileentity.TileEntity;
@@ -32,6 +31,7 @@ import net.minecraft.util.math.shapes.VoxelShape;
 import net.minecraft.world.IBlockReader;
 import net.minecraft.world.World;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.function.Supplier;
 
@@ -47,22 +47,15 @@ public class Fountain extends AbstractTileEntityBlock<FountainTileEntity> {
         super(NAME, Properties.of(Material.HEAVY_METAL).strength(1.5f, 3600000f).sound(SoundType.STONE), FountainTileEntity.class, FountainTileEntity.NAME);
     }
 
+    @Nonnull
     @Override
-    public VoxelShape getShape(BlockState state, IBlockReader worldIn, BlockPos pos, ISelectionContext context) { return SHAPE; }
+    public VoxelShape getShape(@Nonnull BlockState state, @Nonnull IBlockReader worldIn, @Nonnull BlockPos pos, @Nonnull ISelectionContext context) { return SHAPE; }
 
     @Override
     public <B extends AbstractTileEntityBlock<FountainTileEntity>> B getInstance() { return (B)INSTANCE.get(); }
 
     @Override
     public BlockItem getItemInstance() { return INSTANCE_ITEM.get(); }
-
-    @Nullable
-    @Override //this block can only be placed in a subroom
-    public BlockState getStateForPlacement(BlockItemUseContext context) {
-        int eyeId = SubRoomsManager.getEyeId(context.getLevel(), context.getClickedPos(), false);
-        if (eyeId <= 0) return null;
-        return super.getStateForPlacement(context);
-    }
 
     @Override
     public ItemStack asItem(BlockState state, FountainTileEntity fountain) {
@@ -106,8 +99,9 @@ public class Fountain extends AbstractTileEntityBlock<FountainTileEntity> {
     @Config(cmt = "does clicking a fountain with a tank item (bucket, glass bottle, etc...) should empty or fill it (set to false if you want players to be forced to use strict fluid mechanics)")
     public static final boolean CAN_FILL_AND_EMPTY_ITEM_TANKS = true;
 
+    @Nonnull
     @Override
-    public ActionResultType use(BlockState state, World world, BlockPos pos, PlayerEntity player, Hand hand, BlockRayTraceResult ray) {
+    public ActionResultType use(@Nonnull BlockState state, @Nonnull World world, @Nonnull BlockPos pos, @Nonnull PlayerEntity player, @Nonnull Hand hand, @Nonnull BlockRayTraceResult ray) {
         if (!DimBag.isServer(world)) return ActionResultType.SUCCESS;
         int eyeId = DimBag.debug(SubRoomsManager.getEyeId(world, pos, false), "eye id");
         if (eyeId <= 0) return ActionResultType.SUCCESS;

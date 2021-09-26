@@ -6,6 +6,8 @@ import com.limachi.dimensional_bags.CuriosIntegration;
 import com.limachi.dimensional_bags.DimBag;
 import com.limachi.dimensional_bags.KeyMapController;
 import com.limachi.dimensional_bags.common.blocks.Cloud;
+import com.limachi.dimensional_bags.common.blocks.IBagWrenchable;
+import com.limachi.dimensional_bags.common.blocks.IGetUseSneakWithItemEvent;
 import com.limachi.dimensional_bags.common.data.DimBagData;
 import com.limachi.dimensional_bags.common.data.EyeDataMK2.HolderData;
 import com.limachi.dimensional_bags.common.data.EyeDataMK2.SubRoomsManager;
@@ -24,6 +26,8 @@ import net.minecraft.entity.monster.EndermanEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.inventory.EquipmentSlotType;
+import net.minecraft.item.BlockItem;
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.tags.BlockTags;
@@ -42,6 +46,7 @@ import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.event.world.BlockEvent;
 import net.minecraftforge.event.world.SleepFinishedTimeEvent;
+import net.minecraftforge.eventbus.api.Event;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
@@ -55,8 +60,14 @@ public class EventManager {
 
     public static Random RANDOM = new Random();
 
+    /**
+     * queue a delayed task to be run in X ticks (minimum 1 tick)
+     */
     public static void delayedTask(int ticksToWait, Runnable run) { if (ticksToWait <= 0) ticksToWait = 1; pendingTasks.put(ticksToWait + tick, run); }
 
+    /**
+     * handles delayed tasks on the TickEvent server side, if you need something delayed client side, please use the same function but in the client package
+     */
     @SubscribeEvent
     public static void onTick(TickEvent.ServerTickEvent event) {
         if (event.phase == TickEvent.Phase.START) {
@@ -80,6 +91,9 @@ public class EventManager {
 
     public static final BlockState CHORUS_FLOWER = Blocks.CHORUS_FLOWER.defaultBlockState();
 
+    /**
+     * might add chorus flowers or endstone to the hands of newly spawned enderman, chance is config dependent
+     */
     @SubscribeEvent
     public static void addRandomEndstoneAndChorusFlowerToNewEnderman(EntityEvent.EntityConstructing event) {
         Entity ent = event.getEntity();
@@ -94,47 +108,52 @@ public class EventManager {
         }
     }
 
+    /**
+     * prevent mining animation of wall blocks (no need to check for creative players, they plain remove the block without animation)
+     */
     @SubscribeEvent
     public static void wallBlocksCannotBeMined(PlayerEvent.BreakSpeed event) {
         if (SubRoomsManager.isWall(event.getPlayer().level, event.getPos()))
             event.setCanceled(true);
     }
 
+    /**
+     * prevent destruction of wall blocks (except if the player breaking is in creative)
+     */
     @SubscribeEvent
     public static void wallBlocksCannotBeBroken(BlockEvent.BreakEvent event) {
         if (!event.getPlayer().isCreative() && SubRoomsManager.isWall((World)event.getWorld(), event.getPos()))
             event.setCanceled(true);
     }
 
-    /*
-    public static class ReloadListenerConfig extends JsonReloadListener {
-
-        private static final Gson GSON = (new GsonBuilder()).create();
-
-        public ReloadListenerConfig() {
-            super(GSON, "fake_folder");
-        }
-
-        @Override
-        protected void apply(Map<ResourceLocation, JsonElement> objectIn, IResourceManager resourceManagerIn, IProfiler profilerIn) {
-            //virtually does nothing with json for now, only does a new bake
-            ConfigEvents.bakeAll();
+    /**
+     * allow blocks flagged by the IGetUseSneakWithItemEvent interface to accept sneaking use while holding an item (if the item is not a block, and if the item is not a bag wrench if the block can be wrenched)
+     */
+    @SubscribeEvent
+    public static void acceptSneakUseOfBlockWithItem(PlayerInteractEvent.RightClickBlock event) {
+        Block block = event.getWorld().getBlockState(event.getHitVec().getBlockPos()).getBlock();
+        Item item = event.getPlayer().getItemInHand(event.getHand()).getItem();
+        if (block instanceof IGetUseSneakWithItemEvent && !(item instanceof BlockItem || (block instanceof IBagWrenchable && item instanceof Bag))) {
+            event.setUseBlock(Event.Result.ALLOW);
+            event.setUseItem(Event.Result.DENY);
         }
     }
 
-    @SubscribeEvent
-    public static void addReloadListenerEvent(AddReloadListenerEvent e) {
-        e.addListener(new ReloadListenerConfig());
-    }*/
-
-    @SubscribeEvent
+    /**
+     * try to skip the night when players sleep inside the bag
+     */
+    @SubscribeEvent //FIXME: not working with a few mods
     public static void onSleepFinishedInBag(SleepFinishedTimeEvent event) { //sync the sleep in the rift dimension with the sleep in the overworld
         if (event.getWorld() instanceof ServerWorld && ((ServerWorld)event.getWorld()).dimension().compareTo(WorldUtils.DimBagRiftKey) == 0) { //players just finished sleeping in the rift dimension
             TimeCommand.setTime(DimBag.silentCommandSource(), 0); //use a set time command instead
         }
     }
 
-    @SubscribeEvent
+    /**
+     * all-purpose tick function, but mainly used to tick bags that are not on players or in entity form
+     */
+    /*
+    @SubscribeEvent //FIXME: rework some behaviors (should only generate tick for items that are not on players and use the tick method instead of doing this here)
     public static void everyBodyDoTheTick(TickEvent.ServerTickEvent event) {
         if (event.phase == TickEvent.Phase.END || event.side.isClient()) return;
         if ((tick & 7) == 0) { //determine how often i run the logic, for now, once every 8 ticks (every 0.4s)
@@ -176,7 +195,7 @@ public class EventManager {
                         DimBag.LOGGER.info("Everybody's lava jumpin'! (" + i + ")");
 //                    DimBag.LOGGER.info("Ima load this chunk: (" + WorldUtils.worldRKToString(WorldUtils.worldRKFromWorld(user.level)) + ") " + user.getPosition().getX() + ", " + user.getPosition().getY() + ", " + user.getPosition().getZ() + " (" + i + ")");
                     dbd.chunkloadder.loadChunk((ServerWorld) user.level, user.blockPosition(), i);
-                    if ((user instanceof BagEntity || user instanceof BagEntityItem /*|| data.shouldCreateCloudInVoid()*/) && user.position().y <= 3) { //this bag might fall in the void, time to fix this asap, FIXME: should be done in the IA of the bag entity/item
+                    if ((user instanceof BagEntity || user instanceof BagEntityItem) && user.position().y <= 3) { //this bag might fall in the void, time to fix this asap, FIXME: should be done in the IA of the bag entity/item
                         generateCloud(user.level, new BlockPos(user.blockPosition().getX(), 0, user.blockPosition().getZ()), 2f, 1.5f);
                         if (user.position().y < 1) {
                             WorldUtils.teleportEntity(user, user.level.dimension(), user.position().x, 1, user.position().z);
@@ -192,8 +211,12 @@ public class EventManager {
             if (l >= 1)
                 dbd.setDirty();
         }
-    }
+    }*/
 
+    /**
+     * when a bag holder is about to fall in the void, generate a platform of cloud blocks
+     */
+    //FIXME: should be an upgrade
     private static void generateCloud(World world, BlockPos pos, float treshold, float divider) {
         if (treshold < 0.001 || divider < 0.001) return;
         for (Direction dir : Direction.values()) {
@@ -206,17 +229,23 @@ public class EventManager {
         }
     }
 
-    @SubscribeEvent
-    public static void entityEquipsABag(LivingEquipmentChangeEvent event) { //used to track non-player entity holding a bag
-        //DimBag.LOGGER.info("InventoryChangeEvent: " + event.getEntity() + " slot: " + event.getSlot() + ", " + event.getFrom() + " -> " + event.getTo());
-        if (event.getEntity() instanceof ServerPlayerEntity) return; //tracking of the bag for players is done by the item ticking in their inventory
-        if (event.getTo().getItem() instanceof Bag) { //this entity equiped a bag
-            HolderData.execute(Bag.getEyeId(event.getTo()), holderData -> holderData.setHolder(event.getEntity()));
-            if (event.getEntity() instanceof MobEntity)
-                ((MobEntity)event.getEntity()).requiresCustomPersistence();
-        }
-    }
+    /**
+     * track when non player entity pickup bags (so they can be set as the current user of the bag)
+     */
+//    @SubscribeEvent
+//    public static void entityEquipsABag(LivingEquipmentChangeEvent event) {
+//        //DimBag.LOGGER.info("InventoryChangeEvent: " + event.getEntity() + " slot: " + event.getSlot() + ", " + event.getFrom() + " -> " + event.getTo());
+//        if (event.getEntity() instanceof ServerPlayerEntity) return; //tracking of the bag for players is done by the item ticking in their inventory
+//        if (event.getTo().getItem() instanceof Bag) { //this entity equiped a bag
+//            HolderData.execute(Bag.getEyeId(event.getTo()), holderData -> holderData.setHolder(event.getEntity()));
+//            if (event.getEntity() instanceof MobEntity)
+//                ((MobEntity)event.getEntity()).requiresCustomPersistence();
+//        }
+//    }
 
+    /**
+     * detect a bag being attacked by a player, so they can pick it up (or quick equip if sneaking)
+     */
     @SubscribeEvent
     public static void onAttackEntity(AttackEntityEvent event) { //FIXME: move this to the bag entity (on tacking damage)
         if (!event.getPlayer().level.isClientSide()) {
@@ -225,25 +254,11 @@ public class EventManager {
                 event.setCanceled(true);
                 PlayerEntity player = event.getPlayer();
                 ItemStack new_bag = ItemStack.of(event.getTarget().getPersistentData().getCompound(BagEntity.ITEM_KEY));
-//                ClientDataManager.getInstance(Bag.getEyeId(new_bag)).store(new_bag); //resync the bag data
                 if ((KeyMapController.KeyBindings.SNEAK_KEY.getState(player) && !(player.inventory.armor.get(EquipmentSlotType.CHEST.getIndex()).getItem() instanceof Bag) && Bag.equipBagOnCuriosSlot(new_bag, player)) || player.addItem(new_bag))
                     event.getTarget().remove();
             }
         }
     }
-
-//    public static class ForceEnterTheBag extends Event {
-//
-//    }
-//
-//    @SubscribeEvent
-//    public static void forceEnterTheBag(ForceEnterTheBag event) {
-//
-//    }
-
-
-
-
 
     @SubscribeEvent
     public static void blockPlaceWatcher(BlockEvent.EntityPlaceEvent event) { //FIXME: not used/not working for now
@@ -273,32 +288,9 @@ public class EventManager {
 //        }
 //    }
 
-//    @SubscribeEvent(priority = EventPriority.LOWEST)
-//    public static void tombstoneModule(LivingDamageEvent event) { //need to refine how the items will be stored/given back, also we need to look for compatibility with other mods
-//        LivingEntity entity = event.getEntityLiving();
-//        if (!entity.isAlive() || event.getAmount() <= 0 || entity.getHealth() - event.getAmount() > 0) return; //only work on entities that are about to die due to damage
-//        int id = Bag.getBag(entity, 0);
-//        if (id == 0) return;
-//        UpgradeManager up = UpgradeManager.getInstance(id);
-//        if (!up.getInstalledUpgrades().contains("tombstone")) return;
-//        Upgrade tombstone = UpgradeManager.getUpgrade("tombstone");
-//    }
-
-    /*@SubscribeEvent
-    public static void onItemRightClick(PlayerInteractEvent.RightClickItem event) {
-        PlayerEntity player = event.getPlayer();
-        if (player != null) {
-            if (KeyMapController.getKey(player, KeyMapController.BAG_ACTION_KEY)) {
-                IDimBagCommonItem.ItemSearchResult src = IDimBagCommonItem.searchItem(player, 0, Bag.class, (x)->true);
-                if (src != null) {
-                    ActionResult<ItemStack> res = ((Bag)src.stack.getItem()).onItemRightClick(player.world, player, src.index);
-                    if (res.getType().isSuccessOrConsume())
-                        event.setCanceled(true);
-                }
-            }
-        }
-    }*/
-
+    /**
+     * handles when a player right click a bag on another player to interact with it (should be changed to allow non sneak interact to access bag inventory, this might require to rework the rule for the container to be "still visible by a player")
+     */
     @SubscribeEvent
     public static void interactWithBagOnOtherPlayer(PlayerInteractEvent.EntityInteract event) {
         if (!event.getPlayer().level.isClientSide()) {
@@ -308,74 +300,33 @@ public class EventManager {
                 Vector3d deltaXZ = target.position().subtract(player.position()).multiply(1, 0, 1).normalize(); //where is the player relative to the target, only in XZ coordinates
                 double lookDelta = deltaXZ.dot(target.getLookAngle().multiply(1, 0, 1).normalize()); //dot product, which can be used as the angle between two vectors
                 if (lookDelta > 0.25) {//range [-1,1] -1 -> oposite vectors: entities look each other, 0 -> perpendicular, 1 -> aligned vectors (entities look in the same directon, so we can assume the clicker is behind the clicked)
-                    //will now look if the target has a bag equiped (armor slot), and if the bag can be invaded
-                    ItemStack stack = target.inventory.getArmor(EquipmentSlotType.CHEST.getIndex());
-                    if (!stack.isEmpty() && stack.getItem() instanceof Bag) {
+                    //will now look if the target has a bag equipped, and if the bag can be invaded
+                    int bag = Bag.getBag(target, 0, true, true);
+                    if (bag > 0) {
                         event.setCanceled(true);
-                        SubRoomsManager.execute(Bag.getEyeId(stack), sm->sm.enterBag(player));
-//                        EyeData data = EyeData.get(Bag.getId(stack));
-//                        if (data != null && data.canInvade(player)) {
-//                            event.setCanceled(true);
-//                            data.tpIn(player);
-//                        }
+                        SubRoomsManager.execute(bag, sm->sm.enterBag(player));
                     }
                 }
             }
         }
     }
 
+    /**
+     * handles when a players hold the bag action key, giving them a ghost bag for as long as the key stays held
+     */
     @SubscribeEvent
     public static void ghostBagItemGiver(KeyMapController.KeyMapChangedEvent event) {
         if (!event.getPlayer().level.isClientSide()) {
             if (event.getChangedKeys()[KeyMapController.KeyBindings.BAG_KEY.ordinal()]) {
                 if (event.getKeys()[KeyMapController.KeyBindings.BAG_KEY.ordinal()]) {
-//                    IDimBagCommonItem.ItemSearchResult res = IDimBagCommonItem.searchItem(event.getPlayer(), 0, Bag.class, o -> true, false);
-//                    List<CuriosIntegration.ProxyItemStackModifier> res = CuriosIntegration.searchItem(event.getPlayer(), Bag.class, o->true, false);
-                    if (!(event.getPlayer().getItemInHand(Hand.MAIN_HAND).getItem() instanceof Bag) && !(event.getPlayer().getItemInHand(Hand.MAIN_HAND).getItem() instanceof GhostBag) && !(event.getPlayer().getItemInHand(Hand.OFF_HAND).getItem() instanceof Bag) && !(event.getPlayer().getItemInHand(Hand.OFF_HAND).getItem() instanceof GhostBag))
+                    if (event.getPlayer().containerMenu == event.getPlayer().inventoryMenu && !(event.getPlayer().getItemInHand(Hand.MAIN_HAND).getItem() instanceof Bag) && !(event.getPlayer().getItemInHand(Hand.MAIN_HAND).getItem() instanceof GhostBag) && !(event.getPlayer().getItemInHand(Hand.OFF_HAND).getItem() instanceof Bag) && !(event.getPlayer().getItemInHand(Hand.OFF_HAND).getItem() instanceof GhostBag))
                         event.getPlayer().setSlot(IDimBagCommonItem.slotFromHand(event.getPlayer(), Hand.MAIN_HAND), GhostBag.ghostBagFromStack(event.getPlayer().getItemInHand(Hand.MAIN_HAND), event.getPlayer()));
                 } else {
-//                    IDimBagCommonItem.ItemSearchResult res = IDimBagCommonItem.searchItem(event.getPlayer(), 0, GhostBag.class, o -> true, false);
                     CuriosIntegration.ProxySlotModifier res = CuriosIntegration.searchItem(event.getPlayer(), GhostBag.class, o->true);
                     if (res != null)
-//                        event.getPlayer().setSlot(res.index, GhostBag.getOriginalStack(res.stack));
                         res.set(GhostBag.getOriginalStack(res.get()));
                 }
             }
         }
     }
-
-    /*
-    @SubscribeEvent
-    public static void onRightClickBlock(PlayerInteractEvent.RightClickBlock event) {
-        BlockState bs = event.getPlayer().level.getBlockState(event.getPos());
-        if (bs == Registries.TUNNEL_BLOCK.get().defaultBlockState()) { //trying to use a tunnel (
-
-        }
-    }
-    */
-
-    /*@SubscribeEvent
-    public static void onItemEntity(ItemEvent event) {
-        if (event.getEntityItem().getItem().getItem() instanceof Bag)
-            DimBag.LOGGER.info(event.toString());
-    }*/
-
-    /*
-    private static int tick = 0;
-    private static ArrayListMultimap<Integer, Runnable> pendingTasks = ArrayListMultimap.create();
-
-    public static <T> void delayedTask(int ticksToWait, Runnable run) { pendingTasks.put(ticksToWait + tick, run); }
-
-    @SubscribeEvent
-    public static void onTick(TickEvent.ServerTickEvent event) {
-        if (event.phase == TickEvent.Phase.START) {
-            List<Runnable> tasks = pendingTasks.get(tick);
-            if (tasks != null)
-                for (Runnable task : tasks)
-                    task.run();
-        } else if (event.phase == TickEvent.Phase.END) {
-            pendingTasks.removeAll(tick);
-            ++tick;
-        }
-    }*/
 }

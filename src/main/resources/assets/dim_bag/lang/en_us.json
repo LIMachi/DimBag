@@ -11,6 +11,7 @@
   "item.dim_bag.battery_component": "Battery Component",
   "item.dim_bag.blank_upgrade": "Blank Upgrade",
   "item.dim_bag.compression_field": "Compression Field",
+  "item.dim_bag.end_fragment": "Ender Fragment",
 
   "item.dim_bag.charger_aura_upgrade": "Charger Aura Upgrade",
   "item.dim_bag.death_hopper_upgrade": "Death Hopper Upgrade",
@@ -70,6 +71,7 @@
   "tooltip.items.blank_upgrade": "Base for all upgrades, the bag will not be consumed by the craft",
   "tooltip.items.tunnel_placer": "Create new rooms and/or create a portal to travel to and from this room (you can close a portal and get it back by shift left clicking it, based on configs, you might only use a salvaged tunnel placer on the same wall it was salvaged from)",
   "tooltip.items.wall_pusher": "Expands a room size by clicking a wall, which will... hem... push said wall :)",
+  "tooltip.items.end_fragment": "Obtained by cutting an ender pearl in a stone cutter",
 
   "tooltip.blocks.bag_proxy": "This block allows to interact with a bag in a block form by placing a bag inside (right click with a bag/virtual bag), you can also add a nether star to have it work without requiring a bag inside. Right click opens the bag inventory, shift right click to enter the bag, shift left click to get the bag or nether start back. can be used with hopper and modded way of transporting items/fluids/energy",
   "tooltip.blocks.brain": "This programmable block can emmit redstone based on the status of the bag's user",
@@ -81,7 +83,7 @@
   "tooltip.blocks.user_pillar": "Allows you to interact with the User inventory, energy (of items in the inventory) and fluids (like xp for players, if you have a mod compatible)",
   "tooltip.blocks.world_access_point": "Allows the bag (through it's User) to interact with the world, inserting an item will simulate a right click, inserting fluids will place them, pumping out fluids will remove them (from the feets of the User), and removing items will absorb items on the ground close to the User.",
 
-  "inventory.player_interface.name": "Player Inventory: %s",
+  "inventory.user_interface.name": "%s's Inventory",
   "inventory.upgrades.row.description": "add an extra row to your bag inventory, increasing it's storage capacity",
   "inventory.upgrades.column.description": "add an extra column to your bag inventory, increasing it's storage capacity",
   "inventory.upgrades.radius.description": "increase the size of the current room (main room if applied to the bag directly) by 1 block in all directions",
@@ -120,5 +122,17 @@
   "container.display_name.ghost_hand": "Ghost Hand",
 
   "book.name": "All you need to know about Dimensional Bag",
-  "screen.manual.default": "Welcome to the wonderful (parallel) world of dimensional bags."
+
+  "screen.pad.drop_list.title": "Name list",
+  "screen.pad.checkbox_whitelist": "Whitelist",
+  "screen.pad.title": "Pad",
+
+  "screen.pad.tooltip.title": "Pad name, used for easier identification when selecting a Pad (sneak action scroll on the capture mode)",
+  "screen.pad.tooltip.whitelist": "Does the list should be used to only allow named entities (whitelist) or allow any entity that has not its name listed here (blacklist)",
+  "screen.pad.tooltip.list": "List of names that will be (dis)allowed, for unnamed entities (like pigs), use the default server name for this entity (for most servers: english and capitalized, example: Pig)",
+
+  "screen.manual.missing_patchouli": "You are missing the patchouli mod by Vazkii, the manual requires this mod to work. Please install patchouli for your minecraft version, downloads can be found there: https://www.curseforge.com/minecraft/mc-mods/patchouli",
+
+  "manual.name": "Dimensional Bags Manual",
+  "manual.front_page": "Welcome $(playername) to the wonderful world of dimensional bags.$(p)In this book, you will find all the information on how to use your bag modes, upgrades and also how to use blocks and items provided by this mod."
 }

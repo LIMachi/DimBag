@@ -10,7 +10,7 @@
       "item": "minecraft:iron_ingot"
     },
     "E": {
-      "item": "minecraft:ender_pearl"
+      "item": "dim_bag:end_fragment"
     },
     "B": {
       "item": "dim_bag:bag"

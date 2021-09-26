@@ -3,7 +3,7 @@ package com.limachi.dimensional_bags.common.container;
 import com.limachi.dimensional_bags.StaticInit;
 import com.limachi.dimensional_bags.common.Registries;
 import com.limachi.dimensional_bags.common.data.EyeDataMK2.TankData;
-import com.limachi.dimensional_bags.common.inventory.ISimpleFluidHandlerSerializable;
+import com.limachi.dimensional_bags.common.fluids.ISimpleFluidHandlerSerializable;
 import com.limachi.dimensional_bags.common.references.GUIs;
 import com.limachi.dimensional_bags.utils.UUIDUtils;
 import net.minecraft.entity.player.PlayerEntity;

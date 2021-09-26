@@ -25,20 +25,27 @@ import net.minecraft.world.IBlockReader;
 import net.minecraft.world.World;
 import net.minecraftforge.common.util.Constants;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.function.Supplier;
 
 @StaticInit
 public class Crystal extends AbstractTileEntityBlock<CrystalTileEntity> implements IBagWrenchable {
 
-    @Config(min = "128", max = "65536", cmt = "how much a single crystal adds to the global energy capacity of a bag")
-    public static int ENERGY_PER_CRYSTAL = 1024;
+    @Config(min = "128", max = "16777216", cmt = "how much a single crystal adds to the global energy capacity of a bag")
+    public static int ENERGY_PER_CRYSTAL = 65536;
+    @Config(min = "1048576", max = "2147483647", cmt = "maximum amount of energy that can be stored in a network of crystals (per bag)")
+    public static int TOTAL_MAX_ENERGY = 1073741824;
 
-    @Config(min = "8", max = "65536", cmt = "how much a crystal can output to a side (each side can output this amount on the same tick)")
-    public static int OUTPUT = 128;
+    @Config(min = "8", max = "65536", cmt = "how much a single crystal adds to the global output capacity of crystals (each additional crystal will increase the amount of energy each crystal can output by this amount)")
+    public static int OUTPUT_PER_CRYSTAL = 128;
+    @Config(min = "8", max = "2147483647", cmt = "maximum amount of energy that can be extracted by crystals, machines and upgrades, per tick and per face")
+    public static int TOTAL_MAX_OUTPUT = 2097152;
 
-    @Config(min = "8", max = "65536", cmt = "how much a crystal can input from a side (each side can input this amount on the same tick)")
-    public static int INPUT = 128;
+    @Config(min = "8", max = "65536", cmt = "how much a single crystal adds to the global input capacity of crystals (each additional crystal will increase the amount of energy each crystal can input by this amount)")
+    public static int INPUT_PER_CRYSTAL = 128;
+    @Config(min = "8", max = "2147483647", cmt = "maximum amount of energy that can be inserted by crystals, machines and upgrades, per tick and per face")
+    public static int TOTAL_MAX_INPUT = 2097152;
 
     public static final String NAME = "crystal";
 
@@ -51,24 +58,17 @@ public class Crystal extends AbstractTileEntityBlock<CrystalTileEntity> implemen
         super(NAME, Properties.of(Material.HEAVY_METAL).strength(1.5f, 3600000f).sound(SoundType.GLASS), CrystalTileEntity.class, CrystalTileEntity.NAME);
     }
 
-
+    @Override
+    protected boolean canPlace(BlockItemUseContext context) {
+        return EnergyData.execute(SubRoomsManager.getEyeId(context.getLevel(), context.getClickedPos(), false), EnergyData::canAddCrystal, false);
+    }
 
     @Override
-    protected void createBlockStateDefinition(StateContainer.Builder<Block, BlockState> builder) {
-        builder.add(PULL);
-    }
-
-    @Nullable
-    @Override //this block can only be placed in a subroom
-    public BlockState getStateForPlacement(BlockItemUseContext context) {
-        int eyeId = SubRoomsManager.getEyeId(context.getLevel(), context.getClickedPos(), false);
-        if (eyeId <= 0) return null;
-        return super.getStateForPlacement(context);
-    }
+    protected void createBlockStateDefinition(StateContainer.Builder<Block, BlockState> builder) { builder.add(PULL); }
 
     @Nullable
     @Override
-    public TileEntity newBlockEntity(IBlockReader worldIn) { return Registries.getBlockEntityType(CrystalTileEntity.NAME).create(); }
+    public TileEntity newBlockEntity(@Nonnull IBlockReader worldIn) { return Registries.getBlockEntityType(CrystalTileEntity.NAME).create(); }
 
     @Override
     public <B extends AbstractTileEntityBlock<CrystalTileEntity>> B getInstance() { return (B)INSTANCE.get(); }
@@ -79,18 +79,19 @@ public class Crystal extends AbstractTileEntityBlock<CrystalTileEntity> implemen
     @Override
     public ItemStack asItem(BlockState state, @Nullable CrystalTileEntity tileEntity) {
         ItemStack out = super.asItem(state, tileEntity);
-        out.getTag().putInt("LocalEnergy", tileEntity.getLocalEnergy());
+        if (tileEntity != null && out.getTag() != null)
+            out.getTag().putInt("LocalEnergy", tileEntity.getLocalEnergy());
         return out;
     }
 
     @Override
     public void onValidPlace(World worldIn, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack stack, CrystalTileEntity crystal) {
-        EnergyData.execute(SubRoomsManager.getEyeId(worldIn, pos, false), ed->ed.changeBatterySize(ed.getMaxEnergyStored() + ENERGY_PER_CRYSTAL).receiveEnergy(stack.getTag() != null ? stack.getTag().getInt("LocalEnergy") : 0, false));
+        EnergyData.execute(SubRoomsManager.getEyeId(worldIn, pos, false), ed->ed.addCrystal(stack.getTag() != null ? stack.getTag().getInt("LocalEnergy") : 0));
     }
 
     @Override
     public void onRemove(BlockState state, World worldIn, BlockPos pos, BlockState newState, boolean isMoving, CrystalTileEntity crystal) {
-        EnergyData.execute(SubRoomsManager.getEyeId(worldIn, pos, false), ed->{int extract = ed.getSingleCrystalEnergy(); ed.changeBatterySize(ed.getMaxEnergyStored() - ENERGY_PER_CRYSTAL).extractEnergy(extract, false);});
+        EnergyData.execute(SubRoomsManager.getEyeId(worldIn, pos, false), EnergyData::removeCrystal);
     }
 
     @Override //cycle the face state (push, pull, both, none)

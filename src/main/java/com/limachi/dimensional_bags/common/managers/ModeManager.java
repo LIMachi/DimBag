@@ -9,6 +9,8 @@ import com.limachi.dimensional_bags.common.data.EyeDataMK2.WorldSavedDataManager
 import com.limachi.dimensional_bags.common.items.Bag;
 import com.limachi.dimensional_bags.common.items.GhostBag;
 import com.limachi.dimensional_bags.common.managers.modes.*;
+import com.mojang.blaze3d.matrix.MatrixStack;
+import net.minecraft.client.MainWindow;
 import net.minecraft.client.entity.player.ClientPlayerEntity;
 import net.minecraft.client.util.ITooltipFlag;
 import net.minecraft.entity.Entity;
@@ -159,16 +161,16 @@ public class ModeManager extends WorldSavedDataManager.EyeWorldSavedData {
         getMode("Default").onAddInformation(getEyeId(), stack, world, tooltip, flagIn);
     }
 
-    public void inventoryTick(World world, Entity player, boolean isSelected) {
-        ActionResultType res = getMode(selectedMode).onEntityTick(getEyeId(), world, player, isSelected);
+    public void inventoryTick(World world, Entity player) {
+        ActionResultType res = getMode(selectedMode).onEntityTick(getEyeId(), world, player);
         if (res != ActionResultType.PASS) return;
         for (int i = getInstalledModes().size() - 1; i >= 0; --i) {
             String name = getInstalledMode(i);
             if (name.equals(selectedMode) || name.equals("Default") || !getMode(name).CAN_BACKGROUND) continue;
-            res = getMode(name).onEntityTick(getEyeId(), world, player, isSelected);
+            res = getMode(name).onEntityTick(getEyeId(), world, player);
             if (res != ActionResultType.PASS) return;
         }
-        getMode("Default").onEntityTick(getEyeId(), world, player, isSelected);
+        getMode("Default").onEntityTick(getEyeId(), world, player);
     }
 
     public ActionResultType onItemUse(World world, PlayerEntity player, BlockRayTraceResult ray) {
@@ -217,5 +219,12 @@ public class ModeManager extends WorldSavedDataManager.EyeWorldSavedData {
             if (res != ActionResultType.PASS) return res;
         }
         return getMode("Default").onActivateItem(getEyeId(), player);
+    }
+
+    public void onRenderHud(PlayerEntity player, MainWindow window, MatrixStack matrixStack, float partialTick) {
+        for (int i = getInstalledModes().size() - 1; i >= 0; --i) {
+            String name = getInstalledMode(i);
+            getMode(name).onRenderHud(getEyeId(), name.equals(selectedMode), player, window, matrixStack, partialTick);
+        }
     }
 }

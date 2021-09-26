@@ -1,6 +1,5 @@
 package com.limachi.dimensional_bags.common.data.EyeDataMK2;
 
-import com.limachi.dimensional_bags.ConfigManager.Config;
 import com.limachi.dimensional_bags.common.blocks.Crystal;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraftforge.energy.IEnergyStorage;
@@ -11,11 +10,8 @@ import java.util.function.Function;
 
 public class EnergyData extends WorldSavedDataManager.EyeWorldSavedData implements IEnergyStorage {
 
-    @Config
-    public static int MAX_STORAGE = 2147483647;
-
+    private int crystalCount;
     private int energy;
-    private int capacity;
     private int tickCursor;
     public static final int ENERGY = 0;
     public static final int RECEIVED = 1;
@@ -27,15 +23,36 @@ public class EnergyData extends WorldSavedDataManager.EyeWorldSavedData implemen
     public EnergyData(String suffix, int id, boolean client) {
         super(suffix, id, client, false);
         energy = 0;
-        capacity = 0;
         tickCursor = 0;
+        crystalCount = 0;
     }
 
-    public EnergyData changeBatterySize(int newSize) {
-        capacity = Integer.max(0, Integer.min(newSize, MAX_STORAGE));
+    public boolean addCrystal(int charge) {
+        if (!canAddCrystal()) return false;
+        crystalCount += 1;
+        energy += charge;
+        receivedLastMinute[tickCursor] += charge;
+        if (energy > getMaxEnergyStored())
+            energy = getMaxEnergyStored();
+        energyStateLastMinute[tickCursor] = energy;
         setDirty();
-        return this;
+        return true;
     }
+
+    public int removeCrystal() {
+        if (crystalCount <= 0) return 0;
+        crystalCount -= 1;
+        int e = getSingleCrystalEnergy();
+        energy -= e;
+        extractedLastMinute[tickCursor] = e;
+        energyStateLastMinute[tickCursor] = energy;
+        setDirty();
+        return e;
+    }
+
+    public boolean canAddCrystal() { return crystalCount * Crystal.ENERGY_PER_CRYSTAL < Crystal.TOTAL_MAX_ENERGY || crystalCount * Crystal.OUTPUT_PER_CRYSTAL < Crystal.TOTAL_MAX_OUTPUT || crystalCount * Crystal.INPUT_PER_CRYSTAL < Crystal.TOTAL_MAX_INPUT; }
+
+    public boolean canRemoveCrystal() { return crystalCount > 0; }
 
     public int getSingleCrystalEnergy() { return (int)Math.round(getEnergyStored() * (Crystal.ENERGY_PER_CRYSTAL / (double)getMaxEnergyStored())); }
 
@@ -61,13 +78,13 @@ public class EnergyData extends WorldSavedDataManager.EyeWorldSavedData implemen
 
     @Override
     public void load(CompoundNBT nbt) {
-        capacity = nbt.getInt("Capacity");
+        crystalCount = nbt.getInt("CrystalCount");
         energy = nbt.getInt("Energy");
     }
 
     @Override
     public CompoundNBT save(CompoundNBT nbt) {
-        nbt.putLong("Capacity", capacity);
+        nbt.putLong("CrystalCount", crystalCount);
         nbt.putLong("Energy", energy);
         return nbt;
     }
@@ -92,14 +109,14 @@ public class EnergyData extends WorldSavedDataManager.EyeWorldSavedData implemen
 
     @Override
     public int receiveEnergy(int receive, boolean simulate) {
-        int energyReceived = Integer.max(0, Integer.min(capacity - energy, receive));
+        int energyReceived = Math.max(0, Math.min(getMaxEnergyStored() - energy, Math.min(receive, getMaxEnergyInput())));
         if (!simulate && energyReceived != 0) {
             energy += energyReceived;
             receivedLastMinute[tickCursor] += energyReceived;
             energyStateLastMinute[tickCursor] = energy;
             setDirty();
         }
-        return (int)energyReceived;
+        return energyReceived;
     }
 
     public static int transferTo(int eye, int extract, @Nonnull IEnergyStorage to, boolean exactOnly) {
@@ -116,7 +133,7 @@ public class EnergyData extends WorldSavedDataManager.EyeWorldSavedData implemen
 
     @Override
     public int extractEnergy(int extract, boolean simulate) {
-        int energyExtracted = Math.min(energy, extract);
+        int energyExtracted = Math.min(energy, Math.min(extract, getMaxEnergyOutput()));
         if (!simulate && energyExtracted != 0) {
             energy -= energyExtracted;
             extractedLastMinute[tickCursor] += energyExtracted;
@@ -126,19 +143,18 @@ public class EnergyData extends WorldSavedDataManager.EyeWorldSavedData implemen
         return energyExtracted;
     }
 
-    public static int getEnergyStored(int eye) {
-        return execute(eye, EnergyData::getEnergyStored, 0);
-    }
+    public static int getEnergyStored(int eye) { return execute(eye, EnergyData::getEnergyStored, 0); }
 
     @Override
-    public int getEnergyStored() { return (int)energy; }
+    public int getEnergyStored() { return energy; }
 
-    public static int getMaxEnergyStored(int eye) {
-        return execute(eye, EnergyData::getMaxEnergyStored, 0);
-    }
+    public static int getMaxEnergyStored(int eye) { return execute(eye, EnergyData::getMaxEnergyStored, 0); }
 
     @Override
-    public int getMaxEnergyStored() { return (int)capacity; }
+    public int getMaxEnergyStored() { return Integer.min(crystalCount * Crystal.ENERGY_PER_CRYSTAL, Crystal.TOTAL_MAX_ENERGY); }
+
+    public int getMaxEnergyInput() { return Integer.min(crystalCount * Crystal.INPUT_PER_CRYSTAL, Crystal.TOTAL_MAX_INPUT); }
+    public int getMaxEnergyOutput() { return Integer.min(crystalCount * Crystal.OUTPUT_PER_CRYSTAL, Crystal.TOTAL_MAX_OUTPUT); }
 
     @Override
     public boolean canExtract() { return true; }

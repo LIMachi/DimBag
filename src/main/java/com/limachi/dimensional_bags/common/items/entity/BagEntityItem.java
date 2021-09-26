@@ -1,6 +1,5 @@
 package com.limachi.dimensional_bags.common.items.entity;
 
-import com.limachi.dimensional_bags.DimBag;
 import com.limachi.dimensional_bags.common.Registries;
 import com.limachi.dimensional_bags.common.data.EyeDataMK2.HolderData;
 import com.limachi.dimensional_bags.common.data.IEyeIdHolder;
@@ -106,32 +105,31 @@ public class BagEntityItem extends ItemEntity implements IEyeIdHolder {
         }
     }
 
-    public void enticingUpgradeBehavior(int id) {
+    //FIXME: should be moved to the upgrade and in the upgrade tick
+    public static void enticingUpgradeBehavior(int id, BagEntityItem self) {
         if (EnticingUpgrade.getInstance(EnticingUpgrade.NAME).isActive(id))
-            for (MobEntity entity : level.getEntitiesOfClass(MobEntity.class, getBoundingBox().inflate(0.5))) { //code to force pickup of bag by unwilling mob entities
+            for (MobEntity entity : self.level.getEntitiesOfClass(MobEntity.class, self.getBoundingBox().inflate(0.5))) { //code to force pickup of bag by unwilling mob entities
                 Iterator<ItemStack> it = entity.getHandSlots().iterator();
                 if (entity instanceof AbstractVillagerEntity && !entity.removed) {
-                    ItemStack t = getItem().copy();
+                    ItemStack t = self.getItem().copy();
                     ItemStack r = ((AbstractVillagerEntity)entity).getInventory().addItem(t);
                     if (r.isEmpty()) {
                         entity.setCanPickUpLoot(true);
                         entity.requiresCustomPersistence(); //the entity will no longer be able to despawn
-                        entity.onItemPickup(this);
-                        HolderData.execute(id, holderData -> holderData.setHolder(entity));
-                        this.remove();
+                        entity.onItemPickup(self);
+                        self.remove();
                         break;
                     }
                 } else if (!entity.removed && it.hasNext() && (it.next().isEmpty() || it.hasNext())) { //found entity with at least one hand for the bag
                     EquipmentSlotType hand = entity.getMainHandItem().isEmpty() ? EquipmentSlotType.MAINHAND : EquipmentSlotType.OFFHAND;
                     if (hand == EquipmentSlotType.OFFHAND && !entity.getOffhandItem().isEmpty())
                         entity.spawnAtLocation(entity.getOffhandItem());
-                    entity.setItemSlot(hand, getItem());
+                    entity.setItemSlot(hand, self.getItem());
                     entity.setDropChance(hand, 2.f);
                     entity.setCanPickUpLoot(true);
                     entity.requiresCustomPersistence(); //the entity will no longer be able to despawn
-                    entity.onItemPickup(this);
-                    HolderData.execute(id, holderData -> holderData.setHolder(entity));
-                    this.remove();
+                    entity.onItemPickup(self);
+                    self.remove();
                     break;
                 }
             }
@@ -139,15 +137,7 @@ public class BagEntityItem extends ItemEntity implements IEyeIdHolder {
 
     @Override
     public void tick() {
-        if (blockPosition().getY() < 1)
-            setPos(blockPosition().getX(), 1, blockPosition().getZ());
-        if (DimBag.isServer(level)) {
-            int id = Bag.getEyeId(getItem());
-            if (id <= 0) return;
-            enticingUpgradeBehavior(id);
-            if (!this.removed)
-                HolderData.execute(id, holderData -> holderData.setHolder(this));
-        }
+        HolderData.tickEntity(this);
         super.tick();
     }
 

@@ -8,6 +8,7 @@ import com.limachi.dimensional_bags.common.data.EyeDataMK2.SubRoomsManager;
 import com.limachi.dimensional_bags.common.entities.BagEntity;
 import com.limachi.dimensional_bags.common.items.Bag;
 import com.limachi.dimensional_bags.common.items.GhostBag;
+import com.limachi.dimensional_bags.common.managers.ModeManager;
 import com.limachi.dimensional_bags.common.managers.UpgradeManager;
 import com.limachi.dimensional_bags.common.tileentities.BagProxyTileEntity;
 import com.mojang.blaze3d.matrix.MatrixStack;
@@ -138,7 +139,7 @@ public abstract class BaseUpgrade<T extends BaseUpgrade<?>> extends Item {
             if (stack.getItem() instanceof BaseUpgrade && stack.getCount() > 0) {
                 int eyeId = SubRoomsManager.getEyeId(worldIn, playerIn.blockPosition(), false);
                 if (eyeId == 0)
-                    eyeId = Bag.getBag(playerIn, 0, true);
+                    eyeId = Bag.getBag(playerIn, 0, true, false);
                 if (eyeId > 0)
                     return ActionResult.success(installUpgrades(playerIn, eyeId, stack));
             }
@@ -160,7 +161,7 @@ public abstract class BaseUpgrade<T extends BaseUpgrade<?>> extends Item {
                 TileEntity te = context.getLevel().getBlockEntity(context.getClickedPos());
                 int eyeId = te instanceof BagProxyTileEntity ? ((BagProxyTileEntity)te).eyeId() : SubRoomsManager.getEyeId(player.level, player.blockPosition(), false);
                 if (eyeId == 0)
-                    eyeId = Bag.getBag(player, 0, true);
+                    eyeId = Bag.getBag(player, 0, true, false);
                 if (eyeId > 0) {
                     player.setItemInHand(context.getHand(), installUpgrades(player, eyeId, stack));
                     return ActionResultType.SUCCESS;
@@ -238,6 +239,11 @@ public abstract class BaseUpgrade<T extends BaseUpgrade<?>> extends Item {
     public static void onRenderGameOverlay(RenderGameOverlayEvent.Pre event) { //might be used at some point to add hud ellements FIXME
         if (event.getType() == RenderGameOverlayEvent.ElementType.ALL) {
             PlayerEntity player = DimBag.getPlayer();
+            int bag = Bag.getBag(player, 0, false, false);
+            if (bag > 0) {
+                ModeManager.execute(bag, mm -> mm.onRenderHud(player, event.getWindow(), event.getMatrixStack(), event.getPartialTicks()));
+            }
+            /*
 //            ClientDataManager[] data = {null};
             CuriosIntegration.searchItem(player, Item.class, s->{
                 if (s.getItem() instanceof Bag || s.getItem() instanceof GhostBag) {
@@ -248,6 +254,7 @@ public abstract class BaseUpgrade<T extends BaseUpgrade<?>> extends Item {
             });
 //            if (data[0] != null)
 //                data[0].onRenderHud((ClientPlayerEntity)player, event.getWindow(), event.getMatrixStack(), event.getPartialTicks());
+             */
         }
     }
 }

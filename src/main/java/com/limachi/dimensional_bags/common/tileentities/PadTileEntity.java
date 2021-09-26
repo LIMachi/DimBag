@@ -11,6 +11,7 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.passive.DolphinEntity;
 import net.minecraft.entity.passive.MooshroomEntity;
+import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.nbt.INBT;
 import net.minecraft.potion.Effect;
 import net.minecraft.potion.EffectInstance;
@@ -21,6 +22,7 @@ import java.util.stream.Stream;
 
 import com.limachi.dimensional_bags.StaticInit;
 import net.minecraft.util.math.AxisAlignedBB;
+import net.minecraft.util.math.BlockPos;
 
 import static net.minecraft.potion.Effects.*;
 
@@ -74,11 +76,15 @@ public class PadTileEntity extends BaseTileEntity implements IisBagTE {
             SLOW_FALLING};
     static final List<EffectInstance> randomEffects = Arrays.stream(randomEffectsPopulator).map(e->new EffectInstance(e, 0, e.isInstantenous() ? 0 : TICK_RATE * 32, true, false, true)).collect(Collectors.toList());
 
+    public BlockPos targetBlock() {
+        return Pad.isDownFacing(getBlockState()) ? worldPosition.below() : worldPosition.above();
+    }
+
     private void hiddenCreatureBuff(SubRoomsManager sm) { //dolphin -> dolphin grace to holder, brown mooshroom -> low chance of random potion effect, cow -> low chance of removing a potion effect, mooshroom -> low chance of saturation
         if (level == null) return;
         Entity e = HolderData.execute(sm.getEyeId(), HolderData::getEntity, null);
         if (e instanceof LivingEntity) {
-            List<LivingEntity> el = level.getEntitiesOfClass(LivingEntity.class, new AxisAlignedBB(worldPosition.above()), t -> t instanceof DolphinEntity || t instanceof MooshroomEntity);
+            List<LivingEntity> el = level.getEntitiesOfClass(LivingEntity.class, new AxisAlignedBB(targetBlock()), t -> t instanceof DolphinEntity || t instanceof MooshroomEntity);
             if (!el.isEmpty()) {
                 LivingEntity entity = el.get(0);
                 if (entity instanceof DolphinEntity && e.isInWaterOrRain())
@@ -95,7 +101,7 @@ public class PadTileEntity extends BaseTileEntity implements IisBagTE {
 
     public <T extends Entity> T getEntity(Class<T> clazz) {
         if (level == null) return null;
-        List<T> l = level.getEntitiesOfClass(clazz, new AxisAlignedBB(worldPosition.above()));
+        List<T> l = level.getEntitiesOfClass(clazz, new AxisAlignedBB(targetBlock()));
         return l.isEmpty() ? null : l.get(0);
     }
 
@@ -117,7 +123,15 @@ public class PadTileEntity extends BaseTileEntity implements IisBagTE {
 
     public boolean isWhitelist() { return getTileData().getBoolean("IsWhitelist"); }
 
-    public void updateList(boolean whitelist, Collection<String> names) {
+    public String getName() {
+        CompoundNBT data = getTileData();
+        if (data.contains("Name"))
+            return data.getString("Name");
+        return "Pad";
+    }
+
+    public void updatePad(String name, boolean whitelist, Collection<String> names) {
+        getTileData().putString("Name", name);
         getTileData().putBoolean("IsWhitelist", whitelist);
         getTileData().put("List", NBTUtils.toNBT(names));
         setChanged();

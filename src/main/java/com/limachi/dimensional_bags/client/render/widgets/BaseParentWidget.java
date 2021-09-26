@@ -27,7 +27,7 @@ public class BaseParentWidget extends TextWidget {
 
     public void init() {
         for (BaseWidget widget : children) {
-            parentScreen.addButton(widget);
+            parentScreen.addButton(widget, relX + widget.relX, relY + widget.relY);
             widget.init();
         }
     }
@@ -35,9 +35,9 @@ public class BaseParentWidget extends TextWidget {
 
     public void addChild(BaseWidget widget) {
         if (widget == null) return;
+        parentScreen.addButton(widget, relX + widget.relX, relY + widget.relY);
         children.add(widget);
         widget.setParent(this);
-        parentScreen.addButton(widget);
     }
 
     public void removeChild(BaseWidget widget) {

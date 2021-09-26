@@ -2,7 +2,7 @@ package com.limachi.dimensional_bags.common.blocks;
 
 import com.limachi.dimensional_bags.DimBag;
 import com.limachi.dimensional_bags.common.Registries;
-import com.limachi.dimensional_bags.common.items.Components;
+import com.limachi.dimensional_bags.common.data.EyeDataMK2.SubRoomsManager;
 import com.limachi.dimensional_bags.common.tileentities.BaseTileEntity;
 import net.minecraft.block.*;
 import net.minecraft.client.gui.screen.Screen;
@@ -12,6 +12,7 @@ import net.minecraft.entity.item.ItemEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.fluid.FluidState;
 import net.minecraft.item.BlockItem;
+import net.minecraft.item.BlockItemUseContext;
 import net.minecraft.item.ItemStack;
 import net.minecraft.loot.LootContext;
 import net.minecraft.loot.LootParameters;
@@ -25,6 +26,7 @@ import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraft.world.IBlockReader;
 import net.minecraft.world.World;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
@@ -38,6 +40,7 @@ public abstract class AbstractTileEntityBlock<T extends BaseTileEntity> extends 
     public final Class<T> tileEntityClass;
     public final String tileEntityRegistryName;
     public final String registryName;
+    protected boolean bagOnlyPlacement = true;
 
     public AbstractTileEntityBlock(String registryName, Properties properties, Class<T> tileEntityClass, String tileEntityRegistryName) {
         super(properties);
@@ -52,7 +55,7 @@ public abstract class AbstractTileEntityBlock<T extends BaseTileEntity> extends 
     public void onValidPlace(World worldIn, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack stack, T tileEntity) {}
     public void onRemove(BlockState state, World worldIn, BlockPos pos, BlockState newState, boolean isMoving, T tileEntity) {}
     @Override
-    public BlockRenderType getRenderShape(BlockState state) { return BlockRenderType.MODEL; }
+    public BlockRenderType getRenderShape(@Nonnull BlockState state) { return BlockRenderType.MODEL; }
 
     @Override
     public ItemStack getPickBlock(BlockState state, RayTraceResult target, IBlockReader world, BlockPos pos, PlayerEntity player) {
@@ -60,8 +63,21 @@ public abstract class AbstractTileEntityBlock<T extends BaseTileEntity> extends 
         return asItem(state, tileEntityClass.isInstance(te) ? (T)te : null);
     }
 
+    protected boolean canPlace(BlockItemUseContext context) { return true; }
+
+    @Nullable
+    @Override //this block can only be placed in a subroom
+    public final BlockState getStateForPlacement(@Nonnull BlockItemUseContext context) {
+        if (bagOnlyPlacement) {
+            int eyeId = SubRoomsManager.getEyeId(context.getLevel(), context.getClickedPos(), false);
+            if (eyeId <= 0) return null;
+        }
+        if (!canPlace(context)) return null;
+        return super.getStateForPlacement(context);
+    }
+
     @Override
-    public void appendHoverText(ItemStack stack, @Nullable IBlockReader worldIn, List<ITextComponent> tooltip, ITooltipFlag flagIn) {
+    public void appendHoverText(@Nonnull ItemStack stack, @Nullable IBlockReader worldIn, @Nonnull List<ITextComponent> tooltip, @Nonnull ITooltipFlag flagIn) {
         if (Screen.hasShiftDown()) {
             tooltip.add(new TranslationTextComponent("tooltip.blocks." + registryName).withStyle(TextFormatting.YELLOW));
         }  else
@@ -78,15 +94,19 @@ public abstract class AbstractTileEntityBlock<T extends BaseTileEntity> extends 
     public ItemStack asItem(BlockState state, @Nullable T tileEntity) {
         if (state.getBlock() != getInstance()) return ItemStack.EMPTY;
         ItemStack out = new ItemStack(getItemInstance());
-        if (out.getTag() == null)
-            out.setTag(new CompoundNBT());
-        if (tileEntity != null)
-            out.getTag().put("BlockEntityTag", tileEntity.populateBlockEntityTag());
+        if (tileEntity != null) {
+            CompoundNBT tags = tileEntity.populateBlockEntityTag();
+            if (!tags.isEmpty()) {
+                if (out.getTag() == null)
+                    out.setTag(new CompoundNBT());
+                out.getTag().put("BlockEntityTag", tags);
+            }
+        }
         return out;
     }
 
     @Override
-    public void setPlacedBy(World worldIn, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack stack) {
+    public void setPlacedBy(World worldIn, @Nonnull BlockPos pos, @Nonnull BlockState state, @Nullable LivingEntity placer, @Nonnull ItemStack stack) {
         TileEntity te = worldIn.getBlockEntity(pos);
         if (tileEntityClass.isInstance(te)) {
             if (worldIn.isClientSide()) {
@@ -113,8 +133,9 @@ public abstract class AbstractTileEntityBlock<T extends BaseTileEntity> extends 
         return super.removedByPlayer(state, world, pos, player, willHarvest, fluid);
     }
 
+    @Nonnull
     @Override //standard drop
-    public List<ItemStack> getDrops(BlockState state, LootContext.Builder builder) {
+    public List<ItemStack> getDrops(@Nonnull BlockState state, LootContext.Builder builder) {
         ArrayList<ItemStack> list = new ArrayList<>();
         TileEntity te = builder.getParameter(LootParameters.BLOCK_ENTITY);
         list.add(asItem(state, tileEntityClass.isInstance(te) ? (T)te : null));
@@ -122,7 +143,7 @@ public abstract class AbstractTileEntityBlock<T extends BaseTileEntity> extends 
     }
 
     @Override
-    public void onRemove(BlockState state, World worldIn, BlockPos pos, BlockState newState, boolean isMoving) {
+    public void onRemove(BlockState state, @Nonnull World worldIn, @Nonnull BlockPos pos, BlockState newState, boolean isMoving) {
         if (state.getBlock() != newState.getBlock() && state.getBlock() == getInstance()) {
             TileEntity te = worldIn.getBlockEntity(pos);
             if (tileEntityClass.isInstance(te))
@@ -133,5 +154,5 @@ public abstract class AbstractTileEntityBlock<T extends BaseTileEntity> extends 
 
     @Nullable
     @Override
-    public TileEntity newBlockEntity(IBlockReader p_196283_1_) { return Registries.getBlockEntityType(tileEntityRegistryName).create(); }
+    public TileEntity newBlockEntity(@Nonnull IBlockReader world) { return Registries.getBlockEntityType(tileEntityRegistryName).create(); }
 }

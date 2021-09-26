@@ -37,7 +37,7 @@ public class Default extends Mode {
         int y = Math.abs(ray.getBlockPos().getY() - player.blockPosition().getY());
         int z = Math.abs(ray.getBlockPos().getZ() - player.blockPosition().getZ());
         if (x > 1 || y > 2 || z > 1) return ActionResultType.PASS; //only validate if the click is close enough to the player
-        Bag.unequippedBags(player, eyeId, ray.getBlockPos().above());
+        Bag.unequipBags(player, eyeId, ray.getBlockPos().above(), null);
         return ActionResultType.SUCCESS;
     }
 

@@ -56,7 +56,7 @@ public class CrystalTileEntity extends BaseTileEntity implements IEnergyStorage,
             for (IEnergyStorage storage : getSurroundingCapabilities(CapabilityEnergy.ENERGY, false)) {
                 if (!storage.canExtract())
                     continue;
-                int amount = storage.extractEnergy(Crystal.INPUT, true);
+                int amount = storage.extractEnergy(ed.getMaxEnergyInput(), true);
                 if (amount > 0)
                     storage.extractEnergy(ed.receiveEnergy(amount, false), false);
             }
@@ -64,7 +64,7 @@ public class CrystalTileEntity extends BaseTileEntity implements IEnergyStorage,
             for (IEnergyStorage storage : getSurroundingCapabilities(CapabilityEnergy.ENERGY, true)) {
                 if (!storage.canReceive())
                     continue;
-                int amount = ed.extractEnergy(Crystal.OUTPUT, true);
+                int amount = ed.extractEnergy(ed.getMaxEnergyOutput(), true);
                 if (amount > 0)
                     ed.extractEnergy(storage.receiveEnergy(amount, false), false);
             }
@@ -85,7 +85,6 @@ public class CrystalTileEntity extends BaseTileEntity implements IEnergyStorage,
 
     @Override
     public int receiveEnergy(int maxReceive, boolean simulate) {
-        maxReceive = Integer.min(maxReceive, Crystal.INPUT);
         EnergyData ed = data.get();
         if (ed == null) return 0;
         return ed.receiveEnergy(maxReceive, simulate);
@@ -93,7 +92,6 @@ public class CrystalTileEntity extends BaseTileEntity implements IEnergyStorage,
 
     @Override
     public int extractEnergy(int maxExtract, boolean simulate) {
-        maxExtract = Integer.min(maxExtract, Crystal.OUTPUT);
         EnergyData ed = data.get();
         if (ed == null) return 0;
         return ed.extractEnergy(maxExtract, simulate);

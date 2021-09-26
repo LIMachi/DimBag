@@ -88,8 +88,6 @@ dependencies {
 //    runtimeOnly fg.deobf("mekanism:Mekanism:1.16.5-10.0.21.448:generators")// Mekanism: Generators
 //    runtimeOnly fg.deobf("mekanism:Mekanism:1.16.5-10.0.21.448:tools")// Mekanism: Tools
 //    runtimeOnly "curse.maven:immersive-engineering-231951:3377691" //immersive engineering (see https://www.cursemaven.com/)
-//    compileOnly fg.deobf("vazkii.patchouli:Patchouli:1.16.4-53.1:api")
-//    runtimeOnly fg.deobf("vazkii.patchouli:Patchouli:1.16.4-53.1")
 //    compileOnly "curse.maven:create-328085:3419412"
 
 //    runtimeOnly fg.deobf("curse.maven:flywheel-486392:3419392")
@@ -110,6 +108,12 @@ dependencies {
 //    compileOnly "industrial-foregoing-266515:3425277"
 //    compileOnly fg.deobf("curse.maven:mouse-tweaks-60089:3202662")
 //    compileOnly fg.deobf("curse.maven:cofh-core-69162:3407019")
+
+//    runtimeOnly fg.deobf("curse.maven:mining-gadgets-351748:3279909")
+//    compileOnly fg.deobf("curse.maven:mining-gadgets-351748:3279909")
+
+    runtimeOnly fg.deobf("curse.maven:waystones-245755:3440017")
+    compileOnly fg.deobf("curse.maven:waystones-245755:3440017")
 }
 
 jar {

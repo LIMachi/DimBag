@@ -1,7 +1,15 @@
 package com.limachi.dimensional_bags.common.container.slot;
 
-import com.limachi.dimensional_bags.common.inventory.ISimpleFluidHandlerSerializable;
+import com.limachi.dimensional_bags.client.render.FluidStackRenderer;
+import com.limachi.dimensional_bags.common.fluids.ISimpleFluidHandlerSerializable;
 import com.limachi.dimensional_bags.common.items.FluidItem;
+import com.mojang.blaze3d.matrix.MatrixStack;
+import com.mojang.blaze3d.systems.RenderSystem;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.AbstractGui;
+import net.minecraft.client.gui.IRenderable;
+import net.minecraft.client.renderer.texture.TextureManager;
+import net.minecraft.client.resources.I18n;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.inventory.container.Slot;
 import net.minecraft.item.ItemStack;
@@ -10,7 +18,9 @@ import net.minecraftforge.fluids.capability.IFluidHandler;
 
 import javax.annotation.Nonnull;
 
-public class FluidSlot extends Slot {
+import static com.limachi.dimensional_bags.common.references.GUIs.ScreenParts.*;
+
+public class FluidSlot extends Slot implements IRenderable {
 
     private final ISimpleFluidHandlerSerializable fluidHandler;
 
@@ -63,7 +73,7 @@ public class FluidSlot extends Slot {
     public boolean mayPlace(@Nonnull ItemStack stack) { return false; }
 
     @Override
-    public boolean mayPickup(PlayerEntity playerIn) { return false; }
+    public boolean mayPickup(@Nonnull PlayerEntity playerIn) { return false; }
 
     @Nonnull
     @Override
@@ -75,4 +85,36 @@ public class FluidSlot extends Slot {
     public int getCapacity() { return fluidHandler.getTankCapacity(getSlotIndex()); }
 
     public ISimpleFluidHandlerSerializable getHandler() { return fluidHandler; }
+
+    @Override
+    public void render(@Nonnull MatrixStack matrixStack, int mouseX, int mouseY, float partialTick) {
+        Minecraft mc = Minecraft.getInstance();
+        TextureManager tm = mc.getTextureManager();
+        RenderSystem.enableAlphaTest();
+        RenderSystem.enableBlend();
+        tm.bind(FLUID_SLOT);
+        AbstractGui.blit(matrixStack, x - 1, y - 1, 100, 0, 0, 18, 18, 18, 18);
+        FluidStack fluid = getFluid();
+        FluidStackRenderer.INSTANCE.render(matrixStack, x, y, fluid);
+        tm.bind(FLUID_SLOT_OVERLAY);
+        AbstractGui.blit(matrixStack, x - 1, y - 1, 250, 0, 0, 18, 18, 18, 18);
+        if (isSelected()) {
+            tm.bind(SELECTED_FLUID_SLOT_OVERLAY);
+            AbstractGui.blit(matrixStack, x - 1, y - 1, 300, 0, 0, 18, 18, 18, 18);
+        }
+        int amountInMB = fluid.getAmount();
+        if (amountInMB > 0) {
+            String amount = amountInMB >= 1000 ? (amountInMB / 1000) + I18n.get("screen.fluid.bucket_acronym") : amountInMB + I18n.get("screen.fluid.milli_bucket_acronym");
+            RenderSystem.pushMatrix();
+            RenderSystem.translatef(x, y, 250);
+            if (amount.length() > 3) {
+                RenderSystem.scalef(0.5f, 0.5f, 1);
+                mc.font.drawShadow(matrixStack, amount, 31 - mc.font.width(amount), 23, 16777215);
+            } else
+                mc.font.drawShadow(matrixStack, amount, 17 - mc.font.width(amount), 9, 16777215);
+            RenderSystem.popMatrix();
+        }
+        RenderSystem.disableBlend();
+        RenderSystem.disableAlphaTest();
+    }
 }

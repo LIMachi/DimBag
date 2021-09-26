@@ -6,8 +6,6 @@ import com.limachi.dimensional_bags.KeyMapController;
 import com.limachi.dimensional_bags.common.Registries;
 import com.limachi.dimensional_bags.common.blocks.IBagWrenchable;
 import com.limachi.dimensional_bags.common.blocks.IHasBagSettings;
-import com.limachi.dimensional_bags.common.data.DimBagData;
-import com.limachi.dimensional_bags.common.data.EyeDataMK2.HolderData;
 import com.limachi.dimensional_bags.common.data.EyeDataMK2.OwnerData;
 import com.limachi.dimensional_bags.common.data.EyeDataMK2.SettingsData;
 import com.limachi.dimensional_bags.common.data.IEyeIdHolder;
@@ -26,7 +24,6 @@ import net.minecraft.client.util.ITooltipFlag;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.item.*;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.util.*;
@@ -49,6 +46,7 @@ import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
 
 import com.limachi.dimensional_bags.StaticInit;
@@ -95,17 +93,15 @@ public class Bag extends Item {
         return ois.isPresent() ? Bag.getEyeId(ois.get().getRight()) : 0;
     }
 
-    public static boolean unequippedBags(LivingEntity entity, int eyeId, @Nullable BlockPos pos) {
-        List<CuriosIntegration.ProxySlotModifier> res = CuriosIntegration.searchItem(entity, Bag.class, o->(!(o.getItem() instanceof GhostBag) && Bag.getEyeId(o) == eyeId), true);
-        boolean did_unequip = false;
-        if (!res.isEmpty()) {
-            for (CuriosIntegration.ProxySlotModifier p : res) {
-                BagEntity.spawn(entity.level, pos == null ? entity.blockPosition() : pos, p.get());
-                p.set(ItemStack.EMPTY);
-                did_unequip = true;
-            }
-        }
-        return did_unequip;
+    public static ArrayList<BagEntity> unequipBags(LivingEntity entity, int eyeId, @Nullable BlockPos posIn, @Nullable World worldIn) {
+        World world = worldIn != null ? worldIn : entity.level;
+        BlockPos pos = posIn != null ? posIn : entity.blockPosition();
+        ArrayList<BagEntity> spawned = new ArrayList<>();
+        CuriosIntegration.searchItem(entity, Bag.class, o->(!(o.getItem() instanceof GhostBag) && Bag.getEyeId(o) == eyeId), true).forEach(p -> {
+            spawned.add(BagEntity.spawn(world, pos, p.get()));
+            p.set(ItemStack.EMPTY);
+        });
+        return spawned;
     }
 
 
@@ -205,30 +201,17 @@ public class Bag extends Item {
             tooltip.add(new TranslationTextComponent("tooltip.shift_for_info"));
     }
 
-    @Override
-    public void inventoryTick(ItemStack stack, World worldIn, Entity entityIn, int itemSlot, boolean isSelected) {
-        int eyeId;
-        if ((eyeId = getEyeId(stack)) == 0 && entityIn instanceof ServerPlayerEntity && DimBag.isServer(worldIn))
-            eyeId = DimBagData.get().newEye((ServerPlayerEntity) entityIn, stack);
-        tickEye(eyeId, worldIn, entityIn, isSelected);
-    }
-
-    static public void tickEye(int eye, World world, Entity entity, boolean isSelected) {
-        if (eye > 0) {
-            ModeManager.execute(eye, modeManager -> modeManager.inventoryTick(world, entity, isSelected));
-            UpgradeManager.execute(eye, upgradeManager -> upgradeManager.inventoryTick(world, entity));
-            if (DimBag.isServer(world) && !(entity instanceof FakePlayer)) //protection to make sure we don't override the last known position of a bag by a proxy
-                HolderData.execute(eye, holderData -> holderData.setHolder(entity)); //FIXME: since this is what is used to determine a player's position when leaving a bag, we should add a system to exit a bag through a proxy (if we entered through a proxy), this fix only needs to be aplied to players, since the proxy can't absorb other entities
-        }
-    }
-
     /**
      * retrieve a bag on an entity, if 'eyeid' is not 0, will only try to find the given eyeid, if 'realBagOnly' is true, ignore ghost bags
      * @return found id or 0 if not found
      */
-    public static int getBag(Entity entity, int eyeId, boolean realBagOnly) {
+    public static int getBag(LivingEntity entity, int eyeId, boolean realBagOnly, boolean equipOnly) {
+        if (equipOnly) {
+            Optional<ImmutableTriple<String, Integer, ItemStack>> s = CuriosApi.getCuriosHelper().findEquippedCurio(t->(!realBagOnly || !(t.getItem() instanceof GhostBag)) && t.getTag() != null && t.getTag().getInt(IEyeIdHolder.EYE_ID_KEY) != 0 && (eyeId == 0 || t.getTag().getInt(IEyeIdHolder.EYE_ID_KEY) == eyeId), entity);
+            return s.isPresent() ? getEyeId(s.get().getRight()) : 0;
+        }
         CuriosIntegration.ProxySlotModifier res = CuriosIntegration.searchItem(entity, Bag.class, t->(!realBagOnly || !(t.getItem() instanceof GhostBag)) && t.getTag() != null && t.getTag().getInt(IEyeIdHolder.EYE_ID_KEY) != 0 && (eyeId == 0 || t.getTag().getInt(IEyeIdHolder.EYE_ID_KEY) == eyeId));
-        return res != null ? res.get().getTag().getInt(IEyeIdHolder.EYE_ID_KEY) : 0;
+        return res != null ? getEyeId(res.get()) : 0;
     }
 
     @Override

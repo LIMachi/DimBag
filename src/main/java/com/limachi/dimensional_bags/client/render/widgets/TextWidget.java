@@ -32,8 +32,8 @@ public class TextWidget extends BaseWidget {
     @Override
     public void renderButton(MatrixStack matrixStack, int mouseX, int mouseY, float partialTicks) {
         if (renderStandardBackground)
-            font.draw(matrixStack, text, x + 3, y + (height - font.lineHeight) / 2.f, color);
+            font.drawWordWrap(text, x + 3, y + (height - font.lineHeight) / 2, width - 7, color);
         else
-            font.draw(matrixStack, text, x, y, color);
+            font.drawWordWrap(text, x, y, width, color);
     }
 }

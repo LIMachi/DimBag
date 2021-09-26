@@ -1,13 +1,12 @@
 package com.limachi.dimensional_bags.common.data.EyeDataMK2;
 
-import com.limachi.dimensional_bags.common.inventory.EmptySimpleFluidHandlerSerializable;
-import com.limachi.dimensional_bags.common.inventory.FountainTank;
-import com.limachi.dimensional_bags.common.inventory.ISimpleFluidHandlerSerializable;
+import com.limachi.dimensional_bags.common.fluids.EmptySimpleFluidHandlerSerializable;
+import com.limachi.dimensional_bags.common.fluids.FountainTank;
+import com.limachi.dimensional_bags.common.fluids.ISimpleFluidHandlerSerializable;
 import com.limachi.dimensional_bags.utils.UUIDUtils;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.nbt.IntArrayNBT;
 import net.minecraft.nbt.ListNBT;
-import net.minecraft.nbt.NBTUtil;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.util.UUIDCodec;
 import net.minecraftforge.fluids.FluidStack;
@@ -16,9 +15,11 @@ import net.minecraftforge.fluids.IFluidTank;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 public class TankData extends WorldSavedDataManager.EyeWorldSavedData implements ISimpleFluidHandlerSerializable {
     protected final ArrayList<UUID> fountainsOrder = new ArrayList<>();
@@ -28,8 +29,10 @@ public class TankData extends WorldSavedDataManager.EyeWorldSavedData implements
     protected boolean tryDrain = true;
     protected boolean autoSelect = true;
 
+    @SuppressWarnings("unused")
     public TankData() { super("tank_data", 0, true, false); }
 
+    @SuppressWarnings("unused")
     public TankData(String suffix, int id, boolean client) { super(suffix, id, client, false); }
 
     public void addFountain(FountainTank tank) {
@@ -38,7 +41,10 @@ public class TankData extends WorldSavedDataManager.EyeWorldSavedData implements
             int p = 0;
             while (true) {
                 if (fountainsOrder.get(o).equals(tank.getId())) {
-                    fountains.add(p, tank);
+                    if (p < fountains.size() && fountains.get(p).getId().equals(tank.getId()))
+                        fountains.get(p).reload(tank);
+                    else
+                        fountains.add(p, tank);
                     break;
                 }
                 if (p < fountains.size() && fountainsOrder.get(o).equals(fountains.get(p).getId()))
@@ -57,6 +63,7 @@ public class TankData extends WorldSavedDataManager.EyeWorldSavedData implements
         FountainTank font = (FountainTank)getFountainTank(id);
         font.notifyDirt = null;
         fountains.remove(font);
+        font.invalidate();
         if (selectedTank >= fountains.size())
             selectedTank = 0;
         setDirty();
@@ -78,8 +85,8 @@ public class TankData extends WorldSavedDataManager.EyeWorldSavedData implements
 
     @Override
     public void readFromBuff(PacketBuffer buff) {
-        fountains.clear();
         fountainsOrder.clear();
+        List<UUID> toInvalidate = fountains.stream().map(FountainTank::getId).collect(Collectors.toList());
         int np = buff.readInt();
         int no = buff.readInt();
         selectedTank = buff.readInt();
@@ -92,8 +99,11 @@ public class TankData extends WorldSavedDataManager.EyeWorldSavedData implements
             FountainTank tank = new FountainTank();
             tank.readFromBuff(buff);
             tank.notifyDirt = this::setDirty;
-            fountains.add(tank);
+            addFountain(tank);
+            toInvalidate.remove(tank.getId());
         }
+        for (UUID invalid : toInvalidate)
+            removeFountain(invalid);
     }
 
     @Override
@@ -112,8 +122,8 @@ public class TankData extends WorldSavedDataManager.EyeWorldSavedData implements
 
     @Override
     public void load(CompoundNBT nbt) {
-        fountains.clear();
         fountainsOrder.clear();
+        List<UUID> toInvalidate = fountains.stream().map(FountainTank::getId).collect(Collectors.toList());
         ListNBT ord = nbt.getList("Order", 11);
         for (int i = 0; i < ord.size(); ++i)
             fountainsOrder.add(UUIDCodec.uuidFromIntArray(ord.getIntArray(i)));
@@ -122,16 +132,20 @@ public class TankData extends WorldSavedDataManager.EyeWorldSavedData implements
             FountainTank tank = new FountainTank();
             tank.deserializeNBT(pil.getCompound(i));
             tank.notifyDirt = this::setDirty;
-            fountains.add(tank);
+            addFountain(tank);
+            toInvalidate.remove(tank.getId());
         }
+        for (UUID invalid : toInvalidate)
+            removeFountain(invalid);
         selectedTank = nbt.getInt("Selected");
         tryFill = nbt.getBoolean("TryFill");
         tryDrain = nbt.getBoolean("TryDrain");
         autoSelect = nbt.getBoolean("AutoSelect");
     }
 
+    @Nonnull
     @Override
-    public CompoundNBT save(CompoundNBT compound) {
+    public CompoundNBT save(@Nonnull CompoundNBT compound) {
         ListNBT ord = new ListNBT();
         for (UUID id : fountainsOrder)
             ord.add(new IntArrayNBT(UUIDCodec.uuidToIntArray(id)));
@@ -159,6 +173,7 @@ public class TankData extends WorldSavedDataManager.EyeWorldSavedData implements
         }
     }
 
+    @SuppressWarnings("unused")
     public void setTryFillState(boolean state) {
         if (state != tryFill) {
             tryFill = state;
@@ -166,6 +181,7 @@ public class TankData extends WorldSavedDataManager.EyeWorldSavedData implements
         }
     }
 
+    @SuppressWarnings("unused")
     public void setTryDrainState(boolean state) {
         if (state != tryDrain) {
             tryDrain = state;
@@ -173,6 +189,7 @@ public class TankData extends WorldSavedDataManager.EyeWorldSavedData implements
         }
     }
 
+    @SuppressWarnings("unused")
     public void setAutoSelectState(boolean state) {
         if (state != autoSelect) {
             autoSelect = state;

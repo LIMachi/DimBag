@@ -1,0 +1,12 @@
+{
+  "name": "Installing Upgrades",
+  "icon": "dim_bag:blank_upgrade",
+  "category": "dim_bag:upgrades",
+  "pages": [
+    {
+      "anchor": "1",
+      "type": "patchouli:text",
+      "text": ""
+    }
+  ]
+}

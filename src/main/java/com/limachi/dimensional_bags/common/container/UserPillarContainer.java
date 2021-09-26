@@ -5,16 +5,22 @@ import com.limachi.dimensional_bags.common.Registries;
 import com.limachi.dimensional_bags.common.data.EyeDataMK2.HolderData;
 import com.limachi.dimensional_bags.common.inventory.EntityInventoryProxy;
 import com.limachi.dimensional_bags.common.inventory.IEntityInventoryProxyIsActiveSlot;
+import com.mojang.datafixers.util.Pair;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.entity.player.ServerPlayerEntity;
+import net.minecraft.inventory.container.PlayerContainer;
 import net.minecraft.inventory.container.Slot;
 import net.minecraft.item.ItemStack;
 import net.minecraft.network.PacketBuffer;
+import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TranslationTextComponent;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 import static com.limachi.dimensional_bags.common.inventory.EntityInventoryProxy.TOTAL_INVENTORY_SIZE;
 import static com.limachi.dimensional_bags.common.references.GUIs.PlayerInterface.*;
@@ -74,22 +80,51 @@ public class UserPillarContainer extends BaseEyeContainer<UserPillarContainer> {
             this.proxy = inventoryIn;
         }
 
+        @OnlyIn(Dist.CLIENT)
+        @Override
         public boolean isActive() { return proxy.isActiveSlot(getSlotIndex()); }
 
         @Override
-        public boolean mayPickup(PlayerEntity playerIn) { return isActive() && super.mayPickup(playerIn); }
+        public boolean mayPickup(@Nonnull PlayerEntity playerIn) { return proxy.isActiveSlot(getSlotIndex()) && super.mayPickup(playerIn); }
 
         @Override
-        public void set(ItemStack stack) { if (isActive()) super.set(stack); }
+        public void set(@Nonnull ItemStack stack) { if (proxy.isActiveSlot(getSlotIndex())) super.set(stack); }
 
         @Override
-        public boolean mayPlace(ItemStack stack) { return isActive() && super.mayPlace(stack); }
+        public boolean mayPlace(@Nonnull ItemStack stack) { return proxy.isActiveSlot(getSlotIndex()) && super.mayPlace(stack) && proxy.canPlaceItem(getSlotIndex(), stack); }
+
+        @Nonnull
+        @Override
+        public ItemStack onTake(@Nonnull PlayerEntity thePlayer, @Nonnull ItemStack stack) { return proxy.isActiveSlot(getSlotIndex()) ? super.onTake(thePlayer, stack) : ItemStack.EMPTY; }
+
+        @Nonnull
+        @Override
+        public ItemStack remove(int amount) { return proxy.isActiveSlot(getSlotIndex()) ? super.remove(amount) : ItemStack.EMPTY; }
+
+        /**
+         * added container equality for player and entity proxy inventory (if the proxy and inventory target the same player)
+         */
+        @Override
+        public boolean isSameInventory(@Nonnull Slot other) {
+            return super.isSameInventory(other) || (other.container instanceof PlayerInventory && ((PlayerInventory)other.container).player.equals(proxy.getEntity()));
+        }
 
         @Override
-        public ItemStack onTake(PlayerEntity thePlayer, ItemStack stack) { return isActive() ? super.onTake(thePlayer, stack) : ItemStack.EMPTY; }
+        public int getMaxStackSize() {
+            return getSlotIndex() >= EntityInventoryProxy.ARMOR_OFFSET && getSlotIndex() < EntityInventoryProxy.ARMOR_OFFSET + EntityInventoryProxy.ARMOR_SIZE ? 1 : super.getMaxStackSize();
+        }
 
+        private static final ResourceLocation[] TEXTURE_EMPTY_SLOTS = new ResourceLocation[]{PlayerContainer.EMPTY_ARMOR_SLOT_BOOTS, PlayerContainer.EMPTY_ARMOR_SLOT_LEGGINGS, PlayerContainer.EMPTY_ARMOR_SLOT_CHESTPLATE, PlayerContainer.EMPTY_ARMOR_SLOT_HELMET};
+
+        @Nullable
         @Override
-        public ItemStack remove(int amount) { return isActive() ? super.remove(amount) : ItemStack.EMPTY; }
+        public Pair<ResourceLocation, ResourceLocation> getNoItemIcon() {
+            if (getSlotIndex() >= EntityInventoryProxy.ARMOR_OFFSET && getSlotIndex() < EntityInventoryProxy.ARMOR_OFFSET + EntityInventoryProxy.ARMOR_SIZE)
+                return Pair.of(PlayerContainer.BLOCK_ATLAS, TEXTURE_EMPTY_SLOTS[getSlotIndex() - EntityInventoryProxy.ARMOR_OFFSET]);
+            if (getSlotIndex() == EntityInventoryProxy.OFF_HAND)
+                return Pair.of(PlayerContainer.BLOCK_ATLAS, PlayerContainer.EMPTY_ARMOR_SLOT_SHIELD);
+            return super.getNoItemIcon();
+        }
     }
 
     protected void init() {

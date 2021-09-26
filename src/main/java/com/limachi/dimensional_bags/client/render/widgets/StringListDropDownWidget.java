@@ -41,9 +41,9 @@ public class StringListDropDownWidget extends ParentToggleWidget {
         this.maxHeight = maxHeight;
         this.isEditor = isEditor;
         if (isEditor) {
-            input = new TextFieldWidget(x, y + height, width - 16, 16, MINECRAFT.font, null, null, this::onValidation);
+            input = new TextFieldWidget(0, height, width - 16, 16, MINECRAFT.font, null, null, this::onValidation);
             addChild(input);
-            addChild(new ImageWidget(x + width - 16, y + height, 16, 16, validate_texture){
+            addChild(new ImageWidget(width - 16, height, 16, 16, validate_texture){
                 @Override
                 public void onClick(double mouseX, double mouseY) {
                     onValidation(input);
@@ -56,29 +56,29 @@ public class StringListDropDownWidget extends ParentToggleWidget {
 
     @Override
     public void addChild(BaseWidget widget) {
-        heightOpened = Integer.min(maxHeight, widget.y + widget.getHeight());
+        heightOpened = Integer.min(maxHeight, widget.relY + widget.getHeight());
         super.addChild(widget);
     }
 
     @Override
     public void removeChild(BaseWidget widget) {
-        if (widget.y + widget.getHeight() >= heightOpened) {
+        if (widget.relY + widget.getHeight() >= heightOpened) {
             //should test if other widgets are still in the bottom of the opened parent
-            heightOpened = Integer.max(heightClosed, widget.y - 1);
+            heightOpened = Integer.max(heightClosed, widget.y - 1 - y);
         }
         super.removeChild(widget);
     }
 
     private void addEntry(String str, boolean reset) {
-        int yw = entries.size() > 0 ? entries.get(entries.size() - 1).getKey().y + 16 : y + heightClosed + 16;
+        int yw = entries.size() > 0 ? entries.get(entries.size() - 1).getKey().relY + 16 : heightClosed + 16;
         int dw = (isEditor ? 16 : 0) + (hasBar ? 16 : 0);
-        Pair<TextWidget, ImageWidget> entry = new Pair<>(new TextWidget(x, yw, width - dw, 16, str){
+        Pair<TextWidget, ImageWidget> entry = new Pair<>(new TextWidget(0, yw, width - dw, 16, str){
             @Override
             public void onClick(double mouseX, double mouseY) {
                 if (isEditor)
                     selectEntry(isSelected ? this : null);
             }
-        }.enableToggleBehavior(true), isEditor ? new ImageWidget(x + width - (hasBar ? 16 : 0) - 16, yw, 16, 16, remove_texture){
+        }.enableToggleBehavior(true), isEditor ? new ImageWidget(width - (hasBar ? 16 : 0) - 16, yw, 16, 16, remove_texture){
             @Override
             public void onClick(double mouseX, double mouseY) {
                 removeEntry(this);
@@ -115,6 +115,8 @@ public class StringListDropDownWidget extends ParentToggleWidget {
         entries.remove(f);
         for (; f < entries.size(); ++f) {
             Pair<TextWidget, ImageWidget> entry = entries.get(f);
+            entry.getKey().relY -= 16;
+            entry.getValue().relY -= 16;
             entry.getKey().y -= 16;
             entry.getValue().y -= 16;
         }

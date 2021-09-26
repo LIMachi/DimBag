@@ -1,0 +1,28 @@
+{
+  "name": "Bag",
+  "icon": "dim_bag:bag",
+  "category": "dim_bag:bases",
+  "priority": true,
+  "pages": [
+    {
+      "anchor": "1",
+      "type": "patchouli:text",
+      "text": "This bag as multiple functions and behavior, usually requiring to hold the action key (currently set to '$(k:action)').$(br)When you don't have the bag in hand (in another slot, equipped in a curio slot or even when you are inside a bag), using the action key will give you a virtual representation of the bag that allows you to do almost anything as though you had the real bag in hand."
+    },
+    {
+      "anchor": "2",
+      "type": "patchouli:text",
+      "text": "For the rest of the book, consider that when I talk about the bag item, you can assume it is also true for a virtual bag."
+    },
+    {
+      "anchor": "3",
+      "type": "patchouli:text",
+      "text": "While in #Default, you can sneak use ($(k:sneak) + $(k:use)) the bag on a block near you to unequip the bag and spawn the entity counterpart of the bag.$(br)While in entity form, the bag can be used ($(k:use)) to access the items of the bag and sneak use to enter the bag."
+    },
+    {
+      "anchor": "4",
+      "type": "patchouli:text",
+      "text": "You can pickup a bag entity by attacking it ($(k:attack)) or equip it on your back (curio slot) by sneak attacking the bag ($(k:sneak) + $(k:attack)).$(p)To change the bag mode, hold the action key ($(k:action)) and scroll up/down, to see what a mode do (beyond the default behavior), please go to the Modes category of this manual."
+    }
+  ]
+}

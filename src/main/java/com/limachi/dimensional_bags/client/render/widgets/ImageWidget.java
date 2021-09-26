@@ -3,7 +3,12 @@ package com.limachi.dimensional_bags.client.render.widgets;
 import com.limachi.dimensional_bags.client.render.Box2d;
 import com.limachi.dimensional_bags.client.render.TextureCutout;
 import com.mojang.blaze3d.matrix.MatrixStack;
+import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.text.StringTextComponent;
+
+import java.util.function.Consumer;
+
+import static com.limachi.dimensional_bags.DimBag.MOD_ID;
 
 /**
  * very simple widget that is only text, but compatible with other widgets. the text, color and font can be changed between frames
@@ -18,6 +23,25 @@ public class ImageWidget extends BaseWidget {
         super(x, y, width, height, StringTextComponent.EMPTY);
         this.image = image;
         renderTitle = false;
+    }
+
+    public static class Toggle extends ImageWidget {
+
+        private static final ResourceLocation texture = new ResourceLocation(MOD_ID, "textures/widgets/buttons.png");
+        private static final TextureCutout validate_texture = new TextureCutout(texture, 32, 40, 16, 16);
+
+        protected final Consumer<Toggle> onStateChange;
+
+        public Toggle(int x, int y, int width, int height, boolean initialState, Consumer<Toggle> onStateChange) {
+            super(x, y, width, height, validate_texture);
+            buttonRender = true;
+            isToggle = true;
+            this.onStateChange = onStateChange;
+            this.isSelected = initialState;
+        }
+
+        @Override
+        public void onClick(double p_230982_1_, double p_230982_3_) { onStateChange.accept(this); }
     }
 
     public ImageWidget enableButtonRenderBehavior(boolean state) {

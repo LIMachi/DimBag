@@ -3,8 +3,8 @@ package com.limachi.dimensional_bags.common.tileentities;
 import com.limachi.dimensional_bags.StaticInit;
 import com.limachi.dimensional_bags.common.Registries;
 import com.limachi.dimensional_bags.common.blocks.BagProxyBlock;
+import com.limachi.dimensional_bags.common.data.EyeDataMK2.HolderData;
 import com.limachi.dimensional_bags.common.inventory.BagProxy;
-import com.limachi.dimensional_bags.common.items.Bag;
 import net.minecraft.util.Direction;
 import net.minecraft.world.server.ServerWorld;
 import net.minecraftforge.common.capabilities.Capability;
@@ -14,7 +14,7 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 @StaticInit
-public class BagProxyTileEntity extends BaseTileEntity {
+public class BagProxyTileEntity extends BaseTileEntity  {
 
     public static final String NAME = "bag_proxy";
 
@@ -54,7 +54,7 @@ public class BagProxyTileEntity extends BaseTileEntity {
     public void tick(int tick) {
         int eye = eyeId();
         if (level instanceof ServerWorld && alreadyProcessedTick != tick) {
-            Bag.tickEye(eye, level, Bag.getFakePlayer(eye, (ServerWorld) level).get(), false);
+            HolderData.tickBagWithFakePlayer(eye, level);
             alreadyProcessedTick = tick; //FIXME: security to avoid infinte loops when a proxy ticks inside the bag it is ticking, TODO: we might blacklist proxy from ticking inside bags, at least the one using the same id as the bag
         }
     }

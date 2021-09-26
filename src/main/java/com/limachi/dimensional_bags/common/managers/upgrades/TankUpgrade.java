@@ -1,10 +1,6 @@
 package com.limachi.dimensional_bags.common.managers.upgrades;
 
 //import com.limachi.dimensional_bags.common.data.EyeDataMK2.TankData;
-import com.limachi.dimensional_bags.common.inventory.Tank;
-import com.limachi.dimensional_bags.common.managers.Upgrade;
-import com.limachi.dimensional_bags.common.managers.UpgradeManager;
-import net.minecraft.item.ItemStack;
 
 //import static com.limachi.dimensional_bags.common.inventory.Wrapper.IORights.CANINPUT;
 //import static com.limachi.dimensional_bags.common.inventory.Wrapper.IORights.CANOUTPUT;

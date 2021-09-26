@@ -3,8 +3,8 @@ package com.limachi.dimensional_bags.common.managers.modes;
 import com.limachi.dimensional_bags.DimBag;
 import com.limachi.dimensional_bags.common.container.FountainContainer;
 import com.limachi.dimensional_bags.common.data.EyeDataMK2.TankData;
-import com.limachi.dimensional_bags.common.inventory.BinaryStateSingleFluidHandler;
-import com.limachi.dimensional_bags.common.inventory.ISimpleFluidHandlerSerializable;
+import com.limachi.dimensional_bags.common.fluids.BinaryStateSingleFluidHandler;
+import com.limachi.dimensional_bags.common.fluids.ISimpleFluidHandlerSerializable;
 import com.limachi.dimensional_bags.common.items.Bag;
 import com.limachi.dimensional_bags.common.managers.Mode;
 import net.minecraft.block.Block;
@@ -124,7 +124,7 @@ public class Tank extends Mode {
             if (cf) {
                 if (output.isEmpty())
                     output = holding;
-                else if (output.isStackable() && output.getCount() < output.getMaxStackSize() && ItemStack.tagMatches(output, holding))
+                else if (output.isStackable() && output.getCount() < output.getMaxStackSize() && ItemStack.isSame(output, holding) && ItemStack.tagMatches(output, holding))
                     output.grow(1);
                 else {
                     int t = playerinventory.getFreeSlot();

@@ -1,9 +1,9 @@
 {
   "type": "minecraft:crafting_shaped",
   "pattern": [
-    "W",
-    "U",
-    "H"
+    " W ",
+    "EUE",
+    " H "
   ],
   "key": {
     "W": {
@@ -14,6 +14,9 @@
     },
     "H": {
       "item": "minecraft:hopper"
+    },
+    "E": {
+      "item": "dim_bag:end_fragment"
     }
   },
   "result": {

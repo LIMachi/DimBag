@@ -52,11 +52,17 @@ public class Capture extends Mode { //should use a better version to handle name
     }
 
     @Override
-    public ActionResultType onEntityTick(int eyeId, World world, Entity entity, boolean isSelected) {
+    public ActionResultType onEntityTick(int eyeId, World world, Entity entity) {
         UpgradeManager manager = UpgradeManager.getInstance(eyeId);
         if (manager != null && world instanceof ServerWorld) {
-            Entity e = getPadEntity(eyeId);
-            manager.getUpgradesNBT().putString("Capture_entity_name", e != null ? e.getDisplayName().getString() : "No entity close to this pad");
+            String[] padName = {"Pad"};
+            Entity e = SubRoomsManager.execute(eyeId, sm->{
+                PadTileEntity pad = sm.getSelectedPad();
+                if (pad == null) return null;
+                padName[0] = pad.getName();
+                return pad.getEntity(Entity.class);
+            }, null);
+            manager.getUpgradesNBT().putString("Capture_entity_name", padName[0] + " : " + (e != null ? e.getDisplayName().getString() : "No entity close to this pad"));
             manager.setDirty();
         }
         return ActionResultType.CONSUME;
@@ -74,7 +80,7 @@ public class Capture extends Mode { //should use a better version to handle name
     public ActionResultType onItemUse(int eyeId, World world, PlayerEntity player, BlockRayTraceResult ray) {
         Entity target = getPadEntity(eyeId);
         if (target != null)
-            SubRoomsManager.execute(eyeId, sm->sm.leaveBag(target, false, ray.getBlockPos().above(), world.dimension()));
+            SubRoomsManager.execute(eyeId, sm->sm.leaveBag(target, false, ray.getBlockPos().above(), world.dimension(), null));
         return ActionResultType.SUCCESS;
     }
 
@@ -82,7 +88,7 @@ public class Capture extends Mode { //should use a better version to handle name
     public ActionResultType onActivateItem(int eyeId, PlayerEntity player) {
         Entity target = getPadEntity(eyeId);
         if (target != null)
-            SubRoomsManager.execute(eyeId, sm->sm.leaveBag(target, false, new BlockPos(player.position().add(0, 1, 0).add(player.getLookAngle().scale(5))), player.level.dimension()));
+            SubRoomsManager.execute(eyeId, sm->sm.leaveBag(target, false, new BlockPos(player.position().add(0, 1, 0).add(player.getLookAngle().scale(5))), player.level.dimension(), null));
         return ActionResultType.SUCCESS;
     }
 
@@ -90,6 +96,6 @@ public class Capture extends Mode { //should use a better version to handle name
     @OnlyIn(Dist.CLIENT)
     public void onRenderHud(int eyeId, boolean isSelected, PlayerEntity player, MainWindow window, MatrixStack matrixStack, float partialTicks) {
         if (isSelected)
-            RenderUtils.drawString(matrixStack, Minecraft.getInstance().font, "Target: " + UpgradeManager.execute(eyeId, upgradeManager -> upgradeManager.getUpgradesNBT().getString("Capture_entity_name"), "No entity close to this pad"), new Box2d(10, 20, 100, 10), 0xFFFFFFFF, true, false);
+            RenderUtils.drawString(matrixStack, Minecraft.getInstance().font, UpgradeManager.execute(eyeId, upgradeManager -> upgradeManager.getUpgradesNBT().getString("Capture_entity_name"), "Missing active pad"), new Box2d(10, 20, 100, 10), 0xFFFFFFFF, true, false);
     }
 }

@@ -8,6 +8,7 @@ import com.limachi.dimensional_bags.common.data.EyeDataMK2.SubRoomsManager;
 import com.limachi.dimensional_bags.common.data.IEyeIdHolder;
 import com.limachi.dimensional_bags.common.managers.modes.Default;
 import com.limachi.dimensional_bags.common.managers.ModeManager;
+import net.minecraft.block.BlockState;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.item.ItemEntity;
@@ -17,16 +18,22 @@ import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.ActionResultType;
 import net.minecraft.util.Hand;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockRayTraceResult;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.StringTextComponent;
 import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraft.world.World;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 import com.limachi.dimensional_bags.StaticInit;
+import net.minecraftforge.common.ToolType;
 import net.minecraftforge.common.capabilities.ICapabilityProvider;
+
+import java.util.Set;
+import java.util.function.Consumer;
 
 @StaticInit
 public class GhostBag extends Bag {
@@ -48,7 +55,7 @@ public class GhostBag extends Bag {
     }
 
     public static ItemStack ghostBagFromStack(ItemStack stack, PlayerEntity holder) {
-        int eyeId = Bag.getBag(holder, 0, true);
+        int eyeId = Bag.getBag(holder, 0, true, false);
         if (eyeId == 0)
             eyeId = SubRoomsManager.getEyeId(holder.level, holder.blockPosition(), false);
         if (eyeId <= 0) return stack;
@@ -147,7 +154,7 @@ public class GhostBag extends Bag {
         }
         int id = Bag.getEyeId(player.getItemInHand(hand));
         if (SubRoomsManager.getEyeId(player.level, player.blockPosition(), false) == id && KeyMapController.KeyBindings.SNEAK_KEY.getState(player) && /*ClientDataManager.getInstance(player.getItemInHand(hand)).getModeManager().getSelectedMode().equals(Default.ID)*/ModeManager.execute(id, mm->mm.getSelectedMode().equals(Default.ID), false)) {
-            SubRoomsManager.execute(id, sm->sm.leaveBag(player, false, null, null));
+            SubRoomsManager.execute(id, sm->sm.leaveBag(player));
             player.setItemInHand(hand, getOriginalStack(player.getItemInHand(hand)));
             return ActionResult.fail(player.getItemInHand(hand));
         }
@@ -157,4 +164,67 @@ public class GhostBag extends Bag {
 
     @Override
     public boolean shouldCauseReequipAnimation(ItemStack oldStack, ItemStack newStack, boolean slotChanged) { return false; }
+
+    /*
+    @Override
+    public boolean shouldCauseBlockBreakReset(ItemStack oldStack, ItemStack newStack) {
+        if (!super.shouldCauseBlockBreakReset(oldStack, newStack)) return false;
+        ItemStack s = getOriginalStack(newStack);
+        return s.getItem().shouldCauseBlockBreakReset(oldStack, s);
+    }
+
+    @Nonnull
+    @Override
+    public Set<ToolType> getToolTypes(@Nonnull ItemStack stack) {
+        ItemStack s = getOriginalStack(stack);
+        return s.getItem().getToolTypes(s);
+    }
+
+    @Override
+    public float getDestroySpeed(@Nonnull ItemStack stack, @Nonnull BlockState state) {
+        ItemStack s = getOriginalStack(stack);
+        return s.getItem().getDestroySpeed(s, state);
+    }
+
+    @Override
+    public int getHarvestLevel(@Nonnull ItemStack stack, @Nonnull ToolType tool, @Nullable PlayerEntity player, @Nullable BlockState blockState) {
+        ItemStack s = getOriginalStack(stack);
+        return s.getItem().getHarvestLevel(s, tool, player, blockState);
+    }
+
+    @Override
+    public boolean isDamageable(ItemStack stack) {
+        ItemStack s = getOriginalStack(stack);
+        return s.getItem().isDamageable(s);
+    }
+
+    @Override
+    public <T extends LivingEntity> int damageItem(ItemStack stack, int amount, T entity, Consumer<T> onBroken) {
+        ItemStack s = getOriginalStack(stack);
+        if (entity.getItemInHand(Hand.MAIN_HAND).equals(stack))
+            entity.setItemInHand(Hand.MAIN_HAND, s);
+        else if (entity.getItemInHand(Hand.OFF_HAND).equals(stack))
+            entity.setItemInHand(Hand.OFF_HAND, s);
+        else
+            return 0;
+        return s.getItem().damageItem(s, amount, entity, onBroken);
+    }
+
+    @Override
+    public boolean mineBlock(ItemStack stack, World world, BlockState state, BlockPos pos, LivingEntity entity) {
+        ItemStack s = getOriginalStack(stack);
+        if (entity.getItemInHand(Hand.MAIN_HAND).equals(stack))
+            entity.setItemInHand(Hand.MAIN_HAND, s);
+        else if (entity.getItemInHand(Hand.OFF_HAND).equals(stack))
+            entity.setItemInHand(Hand.OFF_HAND, s);
+        else
+            return false;
+        return s.getItem().mineBlock(s, world, state, pos, entity);
+    }
+
+    @Override
+    public boolean isCorrectToolForDrops(BlockState state) {
+        ItemStack s = getOriginalStack(stack);
+        return super.isCorrectToolForDrops(state);
+    }*/
 }

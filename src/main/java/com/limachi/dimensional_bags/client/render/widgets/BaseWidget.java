@@ -36,10 +36,23 @@ public class BaseWidget extends Widget {
     protected BaseParentWidget parent = null;
     protected boolean wasHovered = false;
     private SimpleContainerScreen<?> screen = null;
+    public int relX;
+    public int relY;
+    public ITextComponent tooltip = null;
 
-    public BaseWidget(int x, int y, int width, int height, ITextComponent title) { super(x, y, width, height, title); }
+    public BaseWidget(int x, int y, int width, int height, ITextComponent title) {
+        super(0, 0, width, height, title);
+        relX = x;
+        relY = y;
+    }
 
-    public BaseWidget(int x, int y, int width, int height) { super(x, y, width, height, StringTextComponent.EMPTY); }
+    public BaseWidget(int x, int y, int width, int height) { this(x, y, width, height, StringTextComponent.EMPTY); }
+
+    @Override
+    public void renderToolTip(MatrixStack matrixStack, int mouseX, int mouseY) {
+        if (tooltip != null)
+            screen.renderToolTip(matrixStack, screen.getFont().split(tooltip, Math.max(screen.width / 2 - 43, 170)), mouseX, mouseY, screen.getFont());
+    }
 
     public void attachToScreen(SimpleContainerScreen<?> screen) { this.screen = screen; }
     public void detachFromScreen() { screen = null; }

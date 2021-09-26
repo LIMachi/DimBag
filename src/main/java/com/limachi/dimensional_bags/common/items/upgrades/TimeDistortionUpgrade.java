@@ -9,6 +9,7 @@ import com.limachi.dimensional_bags.common.data.EyeDataMK2.SettingsData;
 import com.limachi.dimensional_bags.common.data.EyeDataMK2.SubRoomsManager;
 import com.limachi.dimensional_bags.common.entities.BagEntity;
 import com.limachi.dimensional_bags.common.managers.UpgradeManager;
+import com.limachi.dimensional_bags.common.tileentities.BagProxyTileEntity;
 import com.limachi.dimensional_bags.common.tileentities.IisBagTE;
 import com.limachi.dimensional_bags.utils.WorldUtils;
 import net.minecraft.block.BlockState;
@@ -114,7 +115,7 @@ public class TimeDistortionUpgrade extends BaseUpgrade<TimeDistortionUpgrade> {
     }
 
     public static boolean filterTE(int eye, TileEntity te) {
-        return !(te instanceof IisBagTE || te instanceof BeaconTileEntity || te instanceof ConduitTileEntity) && (te.getBlockPos().getX() - SubRoomsManager.ROOM_OFFSET_X + SubRoomsManager.HALF_ROOM) / SubRoomsManager.ROOM_SPACING + 1 == eye && isValidByList(te.getType().getRegistryName(), BLACK_LIST_TE, false, false);
+        return !(te instanceof IisBagTE || te instanceof BeaconTileEntity || te instanceof ConduitTileEntity || te instanceof BagProxyTileEntity) && (te.getBlockPos().getX() - SubRoomsManager.ROOM_OFFSET_X + SubRoomsManager.HALF_ROOM) / SubRoomsManager.ROOM_SPACING + 1 == eye && isValidByList(te.getType().getRegistryName(), BLACK_LIST_TE, false, false);
     }
 
     public static boolean filterEntity(int eye, Entity e) {

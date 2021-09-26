@@ -1,19 +1,19 @@
 {
   "type": "minecraft:crafting_shaped",
   "pattern": [
-    "BRB",
-    "RER",
-    "BRB"
+    "ERE",
+    "RDR",
+    "ERE"
   ],
   "key": {
-    "B": {
-      "item": "minecraft:end_stone_brick_stairs"
-    },
     "E": {
-      "item": "minecraft:end_crystal"
+      "item": "dim_bag:end_fragment"
+    },
+    "D": {
+      "item": "minecraft:diamond"
     },
     "R": {
-      "item": "minecraft:redstone_block"
+      "item": "minecraft:redstone"
     }
   },
   "result": {

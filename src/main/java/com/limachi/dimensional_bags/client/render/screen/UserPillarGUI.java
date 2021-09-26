@@ -31,8 +31,8 @@ public class UserPillarGUI extends SimpleContainerScreen<UserPillarContainer> {
 
     @Override
     protected void renderLabels(MatrixStack matrixStack, int mouseX, int mouseY) {
-        this.font.drawShadow(matrixStack, new TranslationTextComponent("inventory.player_interface.name", menu.targetName()).getString(), TITLES_X, GUI_TITLE_Y, 4210752);
-        this.font.drawShadow(matrixStack, inventory.getDisplayName().getString(), TITLES_X, INVENTORY_TITLE_Y, 4210752);
+        this.font.draw(matrixStack, new TranslationTextComponent("inventory.user_interface.name", menu.targetName()).getString(), TITLES_X, GUI_TITLE_Y, 4210752);
+        this.font.draw(matrixStack, inventory.getDisplayName().getString(), TITLES_X, INVENTORY_TITLE_Y, 4210752);
     }
 /*
     protected void drawAccessRectangle(MatrixStack matrixStack, TextureManager tm, int x, int y, Wrapper.IORights rights) {

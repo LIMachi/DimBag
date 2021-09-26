@@ -1,9 +1,9 @@
 {
   "type": "minecraft:crafting_shaped",
   "pattern": [
-    " W ",
+    "EWE",
     "CEC",
-    " W "
+    "EWE"
   ],
   "key": {
     "W": {
@@ -13,7 +13,7 @@
       "item": "minecraft:cactus"
     },
     "E": {
-      "item": "minecraft:ender_pearl"
+      "item": "dim_bag:end_fragment"
     }
   },
   "result": {

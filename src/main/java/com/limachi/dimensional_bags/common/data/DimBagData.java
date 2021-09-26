@@ -28,7 +28,10 @@ public class DimBagData extends WorldSavedData { //server side only, client side
         return w instanceof ServerWorld ? ((ServerWorld)w).getDataStorage().computeIfAbsent(DimBagData::new, MOD_ID) : null;
     }
 
-    public int getLastId() { return lastId; }
+    public static int getLastId() {
+        DimBagData d = get();
+        return d == null ? 0 : d.lastId;
+    }
 
     public int newEye(ServerPlayerEntity player, ItemStack bag) {
         int id = ++lastId;

@@ -143,7 +143,7 @@ public class FluidStackRenderer implements IIngredientRenderer<FluidStack> {
                     int maskTop = TEX_HEIGHT - height;
                     int maskRight = TEX_WIDTH - width;
 
-                    drawTextureWithMasking(matrix, x, y, sprite, maskTop, maskRight, 100);
+                    drawTextureWithMasking(matrix, x, y, sprite, maskTop, maskRight, 200);
                 }
             }
         }
@@ -167,20 +167,20 @@ public class FluidStackRenderer implements IIngredientRenderer<FluidStack> {
         RenderSystem.color4f(red, green, blue, alpha);
     }
 
-    private static void drawTextureWithMasking(Matrix4f matrix, float xCoord, float yCoord, TextureAtlasSprite textureSprite, int maskTop, int maskRight, float zLevel) {
+    private static void drawTextureWithMasking(Matrix4f matrix, float xCoord, float yCoord, TextureAtlasSprite textureSprite, float maskTop, float maskRight, float zLevel) {
         float uMin = textureSprite.getU0();
         float uMax = textureSprite.getU1();
         float vMin = textureSprite.getV0();
         float vMax = textureSprite.getV1();
-        uMax = uMax - (maskRight / 16F * (uMax - uMin));
-        vMax = vMax - (maskTop / 16F * (vMax - vMin));
+        uMax = uMax - maskRight / (float)TEX_WIDTH * (uMax - uMin);
+        vMax = vMax - maskTop / (float)TEX_HEIGHT * (vMax - vMin);
 
         Tessellator tessellator = Tessellator.getInstance();
         BufferBuilder bufferBuilder = tessellator.getBuilder();
         bufferBuilder.begin(7, DefaultVertexFormats.POSITION_TEX);
-        bufferBuilder.vertex(matrix, xCoord, yCoord + 16, zLevel).uv(uMin, vMax).endVertex();
-        bufferBuilder.vertex(matrix, xCoord + 16 - maskRight, yCoord + 16, zLevel).uv(uMax, vMax).endVertex();
-        bufferBuilder.vertex(matrix, xCoord + 16 - maskRight, yCoord + maskTop, zLevel).uv(uMax, vMin).endVertex();
+        bufferBuilder.vertex(matrix, xCoord, yCoord + TEX_HEIGHT, zLevel).uv(uMin, vMax).endVertex();
+        bufferBuilder.vertex(matrix, xCoord + TEX_WIDTH - maskRight, yCoord + TEX_HEIGHT, zLevel).uv(uMax, vMax).endVertex();
+        bufferBuilder.vertex(matrix, xCoord + TEX_WIDTH - maskRight, yCoord + maskTop, zLevel).uv(uMax, vMin).endVertex();
         bufferBuilder.vertex(matrix, xCoord, yCoord + maskTop, zLevel).uv(uMin, vMin).endVertex();
         tessellator.end();
     }

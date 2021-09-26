@@ -19,6 +19,7 @@ import net.minecraft.util.math.BlockRayTraceResult;
 import net.minecraft.world.IBlockReader;
 import net.minecraft.world.World;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 import java.util.function.Supplier;
@@ -49,7 +50,7 @@ public class Brain extends AbstractTileEntityBlock<BrainTileEntity> {
 
     @Nullable
     @Override
-    public TileEntity newBlockEntity(IBlockReader worldIn) { return Registries.getBlockEntityType(NAME).create(); }
+    public TileEntity newBlockEntity(@Nonnull IBlockReader worldIn) { return Registries.getBlockEntityType(NAME).create(); }
 
     @Override
     public <B extends AbstractTileEntityBlock<BrainTileEntity>> B getInstance() { return (B)INSTANCE.get(); }
@@ -58,7 +59,7 @@ public class Brain extends AbstractTileEntityBlock<BrainTileEntity> {
     public BlockItem getItemInstance() { return INSTANCE_ITEM.get(); }
 
     @Override
-    public void onRemove(BlockState state, World worldIn, BlockPos pos, BlockState newState, boolean isMoving) {
+    public void onRemove(BlockState state, @Nonnull World worldIn, @Nonnull BlockPos pos, BlockState newState, boolean isMoving) {
         if (state.getBlock() != newState.getBlock()) //only do the default behavior if the new state is of a different block
             super.onRemove(state, worldIn, pos, newState, isMoving);
         worldIn.updateNeighbourForOutputSignal(pos, this);

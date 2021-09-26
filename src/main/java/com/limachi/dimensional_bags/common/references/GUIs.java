@@ -19,12 +19,14 @@ public class GUIs { //common resources and size/position information for screens
         public static final int SLOT_SIZE_X = 18;
         public static final int SLOT_SIZE_Y = 18;
 
-        public static final ResourceLocation SLOT = new ResourceLocation(MOD_ID, "textures/screens/parts/slot.png");
-        public static final ResourceLocation INPUT_SLOT = new ResourceLocation(MOD_ID, "textures/screens/parts/input_slot.png");
-        public static final ResourceLocation OUTPUT_SLOT = new ResourceLocation(MOD_ID, "textures/screens/parts/output_slot.png");
-        public static final ResourceLocation LOCKED_SLOT = new ResourceLocation(MOD_ID, "textures/screens/parts/locked_slot.png");
-        public static final ResourceLocation UNUSED_SLOT = new ResourceLocation(MOD_ID, "textures/screens/parts/no_slot.png");
-        public static final ResourceLocation SELECTED_FLUID_SLOT = new ResourceLocation(MOD_ID, "textures/screens/parts/selected_fluid_slot.png");
+        public static final ResourceLocation SLOT = new ResourceLocation(MOD_ID, "textures/screens/parts/slots/slot.png");
+        public static final ResourceLocation INPUT_SLOT = new ResourceLocation(MOD_ID, "textures/screens/parts/slots/input_slot.png");
+        public static final ResourceLocation OUTPUT_SLOT = new ResourceLocation(MOD_ID, "textures/screens/parts/slots/output_slot.png");
+        public static final ResourceLocation LOCKED_SLOT = new ResourceLocation(MOD_ID, "textures/screens/parts/slots/locked_slot.png");
+        public static final ResourceLocation UNUSED_SLOT = new ResourceLocation(MOD_ID, "textures/screens/parts/slots/no_slot.png");
+        public static final ResourceLocation FLUID_SLOT = new ResourceLocation(MOD_ID, "textures/screens/parts/slots/fluid_slot.png");
+        public static final ResourceLocation FLUID_SLOT_OVERLAY = new ResourceLocation(MOD_ID, "textures/screens/parts/slots/fluid_slot_overlay.png");
+        public static final ResourceLocation SELECTED_FLUID_SLOT_OVERLAY = new ResourceLocation(MOD_ID, "textures/screens/parts/slots/selected_fluid_slot_overlay.png");
 
         public static final int PART_SIZE_X = 6;
         public static final int PART_SIZE_Y = 6;
