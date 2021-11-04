@@ -6,6 +6,8 @@ import com.limachi.dimensional_bags.common.blocks.Fountain;
 import com.limachi.dimensional_bags.common.data.EyeDataMK2.SubRoomsManager;
 import com.limachi.dimensional_bags.common.data.EyeDataMK2.TankData;
 import com.limachi.dimensional_bags.common.fluids.FountainTank;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.item.ItemStack;
 import net.minecraft.util.Direction;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.util.LazyOptional;
@@ -14,7 +16,7 @@ import net.minecraftforge.fluids.capability.CapabilityFluidHandler;
 import java.util.UUID;
 
 @StaticInit
-public class FountainTileEntity extends BaseTileEntity implements IisBagTE {
+public class FountainTileEntity extends BaseTileEntity implements IisBagTE, IInstallUpgradeTE {
 
     public static final String NAME = "fountain";
 
@@ -49,5 +51,10 @@ public class FountainTileEntity extends BaseTileEntity implements IisBagTE {
             return LazyOptional.of(this::getTank).cast();
         }
         return super.getCapability(capability, facing);
+    }
+
+    @Override
+    public ItemStack installUpgrades(PlayerEntity player, ItemStack stack) {
+        return stack;
     }
 }

@@ -2,12 +2,13 @@ package com.limachi.dimensional_bags.common.data.EyeDataMK2;
 
 import com.google.common.collect.ImmutableList;
 import com.limachi.dimensional_bags.DimBag;
+import com.limachi.dimensional_bags.client.render.widgets.*;
 import com.limachi.dimensional_bags.common.managers.ModeManager;
 import com.limachi.dimensional_bags.utils.NBTUtils;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.widget.TextFieldWidget;
-import net.minecraft.client.gui.widget.Widget;
-import net.minecraft.client.gui.widget.button.CheckboxButton;
+//import net.minecraft.client.gui.widget.TextFieldWidget;
+//import net.minecraft.client.gui.widget.Widget;
+//import net.minecraft.client.gui.widget.button.CheckboxButton;
 import net.minecraft.inventory.Inventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundNBT;
@@ -15,7 +16,7 @@ import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.fml.client.gui.widget.Slider;
+//import net.minecraftforge.fml.client.gui.widget.Slider;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -74,51 +75,49 @@ public class SettingsData extends WorldSavedDataManager.EyeWorldSavedData {
             public void set(CompoundNBT nbt, T value) { NBTUtils.put(nbt, label, value); }
             public boolean validate(T value) { return validate.test(value); }
             @OnlyIn(Dist.CLIENT)
-            public Widget getWidget(SettingsData data, CompoundNBT nbt, int x, int y) {
-                ITextComponent title = new TranslationTextComponent("settings." + handler.group + "." + handler.name + "." + label);
+            public BaseWidget getWidget(SettingsData data, CompoundNBT nbt, int x, int y) {
+                String trKey = "settings." + handler.group + "." + handler.name + "." + label;
+                TranslationTextComponent tooltip = label.equals("active") ? new TranslationTextComponent("settings.tooltip.active") : new TranslationTextComponent(trKey + ".tooltip");
+                ITextComponent title = new TranslationTextComponent(trKey);
                 if (inputType.def instanceof Boolean)
-                    return new CheckboxButton(x, y, 16, 16, title, (Boolean)get(nbt)) {
-                        @Override
-                        public void onPress() {
-                            super.onPress();
-//                            set(nbt, (T)(Boolean)isChecked());
-                            set(nbt, (T)(Boolean)selected());
-                            data.setDirty();
-                        }
-                    };
+                    return new ToggleWidget(x, y, 16, 16, (Boolean)get(nbt), t->{set(nbt, (T)(Boolean)t.isSelected()); data.setDirty();}).appendTooltipProcessor(b->tooltip);
                 if (inputType.def instanceof String) {
-                    TextFieldWidget field = new TextFieldWidget(Minecraft.getInstance().font, x, y, 200, 20, title);
-//                    field.writeText((String) get(nbt));
-                    field.insertText((String) get(nbt));
-                    field.setResponder(s -> {set(nbt, (T) s); data.setDirty();});
-                    return field;
+                    return new TextFieldWidget(x, y, 150, 20, Minecraft.getInstance().font, (String)get(nbt), (v, w)->true, w->{set(nbt, (T)w.getText()); data.setDirty();}).appendTooltipProcessor(b->tooltip);
                 }
+                //FIXME: missing slider widget
                 if (inputType.start != null && inputType.end != null) {
-                    return new Slider(x, y, title, ((Number) inputType.start).doubleValue(), ((Number) inputType.end).doubleValue(), ((Number) (T) get(nbt)).doubleValue(), onPress -> {
-                    }, null) {
-                        @Override
-                        public void onRelease(double mouseX, double mouseY) {
-                            super.onRelease(mouseX, mouseY);
-                            if (inputType.def instanceof Integer)
-                                set(nbt, (T) (Integer) getValueInt());
+                    return new SliderWidget(x, y, ((Number) inputType.start).doubleValue(), ((Number) inputType.end).doubleValue(), ((Number) (T) get(nbt)).doubleValue(), 1, tooltip, v -> {
+                        if (inputType.def instanceof Integer)
+                                set(nbt, (T)(Integer)(int)(double)v);
                             else
-                                set(nbt, (T) (Double) getValue());
+                                set(nbt, (T)v);
                             data.setDirty();
-                        }
-                    };
+                    });
+//                    return new Slider(x, y, title, ((Number) inputType.start).doubleValue(), ((Number) inputType.end).doubleValue(), ((Number) (T) get(nbt)).doubleValue(), onPress -> {
+//                    }, null) {
+//                        @Override
+//                        public void onRelease(double mouseX, double mouseY) {
+//                            super.onRelease(mouseX, mouseY);
+//                            if (inputType.def instanceof Integer)
+//                                set(nbt, (T) (Integer) getValueInt());
+//                            else
+//                                set(nbt, (T) (Double) getValue());
+//                            data.setDirty();
+//                        }
+//                    };
                 }
-                if (inputType.def instanceof Integer) {
-                    TextFieldWidget field = new TextFieldWidget(Minecraft.getInstance().font, x, y, 200, 20, title);
-                    field.insertText((String) get(nbt));
-                    field.setResponder(s -> {set(nbt, (T)(Integer)Integer.parseInt(s)); data.setDirty();});
-                    return field;
-                }
-                if (inputType.def instanceof Double) {
-                    TextFieldWidget field = new TextFieldWidget(Minecraft.getInstance().font, x, y, 200, 20, title);
-                    field.insertText((String) get(nbt));
-                    field.setResponder(s -> {set(nbt, (T)(Double)Double.parseDouble(s)); data.setDirty();});
-                    return field;
-                }
+//                if (inputType.def instanceof Integer) {
+//                    TextFieldWidget field = new TextFieldWidget(Minecraft.getInstance().font, x, y, 200, 20, title);
+//                    field.insertText((String) get(nbt));
+//                    field.setResponder(s -> {set(nbt, (T)(Integer)Integer.parseInt(s)); data.setDirty();});
+//                    return field;
+//                }
+//                if (inputType.def instanceof Double) {
+//                    TextFieldWidget field = new TextFieldWidget(Minecraft.getInstance().font, x, y, 200, 20, title);
+//                    field.insertText((String) get(nbt));
+//                    field.setResponder(s -> {set(nbt, (T)(Double)Double.parseDouble(s)); data.setDirty();});
+//                    return field;
+//                }
                 return null;
             }
 
@@ -133,11 +132,11 @@ public class SettingsData extends WorldSavedDataManager.EyeWorldSavedData {
         }
 
         @OnlyIn(Dist.CLIENT)
-        public ArrayList<Widget> getWidgets(SettingsData data, int x, int y) {
+        public ArrayList<BaseWidget> getWidgets(SettingsData data, int x, int y, int page_id) {
             CompoundNBT nbt = data.getSettings(group, name, true);
-            ArrayList<Widget> out = new ArrayList<>();
+            ArrayList<BaseWidget> out = new ArrayList<>();
             for (SettingsEntry<?> entry : settings.values()) {
-                Widget widget = entry.getWidget(data, nbt, x, y);
+                BaseWidget widget = entry.getWidget(data, nbt, x, y).setGroup(page_id);
                 if (widget != null) {
                     y += 2 + widget.getHeight();
                     out.add(widget);

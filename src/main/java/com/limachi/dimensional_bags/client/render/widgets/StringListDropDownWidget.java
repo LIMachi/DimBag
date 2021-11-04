@@ -1,7 +1,6 @@
 package com.limachi.dimensional_bags.client.render.widgets;
 
 import com.limachi.dimensional_bags.client.render.TextureCutout;
-import com.limachi.dimensional_bags.client.render.screen.SimpleContainerScreen;
 import javafx.util.Pair;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.text.ITextComponent;
@@ -36,8 +35,8 @@ public class StringListDropDownWidget extends ParentToggleWidget {
      * we suggest to not use the list while it is given to this widget (only use the list for sync when you close the screen)
      */
 
-    public StringListDropDownWidget(int x, int y, int width, int height, ITextComponent title, int maxHeight, SimpleContainerScreen<?> parentScreen, boolean isEditor, Collection<String> list) {
-        super(x, y, width, height, title, height, parentScreen);
+    public StringListDropDownWidget(int x, int y, int width, int height, ITextComponent title, int maxHeight, boolean isEditor, Collection<String> list) {
+        super(x, y, width, height, title, height + 16);
         this.maxHeight = maxHeight;
         this.isEditor = isEditor;
         if (isEditor) {
@@ -55,22 +54,16 @@ public class StringListDropDownWidget extends ParentToggleWidget {
     }
 
     @Override
-    public void addChild(BaseWidget widget) {
-        heightOpened = Integer.min(maxHeight, widget.relY + widget.getHeight());
-        super.addChild(widget);
-    }
-
-    @Override
     public void removeChild(BaseWidget widget) {
-        if (widget.relY + widget.getHeight() >= heightOpened) {
+        if (widget.y() + widget.getHeight() >= heightOpened + y()) {
             //should test if other widgets are still in the bottom of the opened parent
-            heightOpened = Integer.max(heightClosed, widget.y - 1 - y);
+            setHeightOpened(Integer.max(heightClosed, widget.y() - 1 - y()));
         }
         super.removeChild(widget);
     }
 
     private void addEntry(String str, boolean reset) {
-        int yw = entries.size() > 0 ? entries.get(entries.size() - 1).getKey().relY + 16 : heightClosed + 16;
+        int yw = entries.size() > 0 ? entries.get(entries.size() - 1).getKey().y + 16 : heightClosed + 16;
         int dw = (isEditor ? 16 : 0) + (hasBar ? 16 : 0);
         Pair<TextWidget, ImageWidget> entry = new Pair<>(new TextWidget(0, yw, width - dw, 16, str){
             @Override
@@ -87,6 +80,7 @@ public class StringListDropDownWidget extends ParentToggleWidget {
         addChild(entry.getKey());
         addChild(entry.getValue());
         entries.add(entry);
+        setHeightOpened(entry.getKey().y() - y() + 16);
     }
 
     public Stream<String> finalEntries() { return entries.stream().map(p->p.getKey().text.getString()); }
@@ -115,8 +109,6 @@ public class StringListDropDownWidget extends ParentToggleWidget {
         entries.remove(f);
         for (; f < entries.size(); ++f) {
             Pair<TextWidget, ImageWidget> entry = entries.get(f);
-            entry.getKey().relY -= 16;
-            entry.getValue().relY -= 16;
             entry.getKey().y -= 16;
             entry.getValue().y -= 16;
         }

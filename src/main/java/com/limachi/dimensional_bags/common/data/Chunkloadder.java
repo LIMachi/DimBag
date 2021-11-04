@@ -54,12 +54,12 @@ public class Chunkloadder {
     }
 
     public void loadChunk(ServerWorld world, int x, int z, int by) { //'by' is the bag id that is forcing the chunk to be loadded, since the mod is made with the idea that only one item/entity can exist at a time with the same id, we consider that only one chunk can be loadded by a single item/entity
-        int cx = x >> 4;
-        int cy = z >> 4;
-        CLEntry entry = new CLEntry(world, cx, cy);
+//        int cx = x >> 4;
+//        int cy = z >> 4;
+        CLEntry entry = new CLEntry(world, x, z);
         Integer r = arc.getOrDefault(entry, 0);
         if (r == 0) //this is the first id that tried to load this chunk, and thus the chunk must be loaded
-            world.setChunkForced(cx, cy, true);
+            world.setChunkForced(x, z, true);
         arc.put(entry, r + 1);
         if (by != 0) {
             CLEntry mapEntry = map.get(by); //if possible, get the previous chunk loaded by this id

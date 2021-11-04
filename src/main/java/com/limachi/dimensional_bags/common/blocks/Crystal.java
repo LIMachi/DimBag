@@ -33,19 +33,19 @@ import java.util.function.Supplier;
 public class Crystal extends AbstractTileEntityBlock<CrystalTileEntity> implements IBagWrenchable {
 
     @Config(min = "128", max = "16777216", cmt = "how much a single crystal adds to the global energy capacity of a bag")
-    public static int ENERGY_PER_CRYSTAL = 65536;
+    public static int ENERGY_PER_CRYSTAL = 524288;
     @Config(min = "1048576", max = "2147483647", cmt = "maximum amount of energy that can be stored in a network of crystals (per bag)")
-    public static int TOTAL_MAX_ENERGY = 1073741824;
+    public static int TOTAL_MAX_ENERGY = 67108864;
 
     @Config(min = "8", max = "65536", cmt = "how much a single crystal adds to the global output capacity of crystals (each additional crystal will increase the amount of energy each crystal can output by this amount)")
-    public static int OUTPUT_PER_CRYSTAL = 128;
+    public static int OUTPUT_PER_CRYSTAL = 256;
     @Config(min = "8", max = "2147483647", cmt = "maximum amount of energy that can be extracted by crystals, machines and upgrades, per tick and per face")
-    public static int TOTAL_MAX_OUTPUT = 2097152;
+    public static int TOTAL_MAX_OUTPUT = 32768;
 
     @Config(min = "8", max = "65536", cmt = "how much a single crystal adds to the global input capacity of crystals (each additional crystal will increase the amount of energy each crystal can input by this amount)")
-    public static int INPUT_PER_CRYSTAL = 128;
+    public static int INPUT_PER_CRYSTAL = 256;
     @Config(min = "8", max = "2147483647", cmt = "maximum amount of energy that can be inserted by crystals, machines and upgrades, per tick and per face")
-    public static int TOTAL_MAX_INPUT = 2097152;
+    public static int TOTAL_MAX_INPUT = 32768;
 
     public static final String NAME = "crystal";
 

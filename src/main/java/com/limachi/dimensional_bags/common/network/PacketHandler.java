@@ -95,7 +95,7 @@ public class PacketHandler {
         registerMsg(SyncCompoundNBT.SCNBTD.class);
         registerMsg(SyncCompoundNBT.SCNBTU.class);
 
-        registerMsg(WidgetDataPacket.class);
+//        registerMsg(WidgetDataPacket.class);
 
         registerMsg(UpstreamTileUpdateMsg.class);
     }

@@ -40,17 +40,17 @@ size pearl (stabilized proto pearl in size mode) will change your size when cons
 -----------------------------------------------------------------------
 TODO ADDITION EDITION:
 -----------------------------------------------------------------------
-add setting to quickly equip and quickly unequip bags (enter the bag when unequip/equip bag when leaving, setting should apply to owner only for quick equip)
 shit/double click behavior for fluid containers (double click a fluid slot try to fill the first valid item fluid container and grab it, shift click on a fluid container that is empty or full tries to fill or empty it)
 add white/blacklist support for time distortion upgrade (accepts position/name/registry for te, name/registry for entities) (done in the config, need to also add in settings)
 add documentation (book/tooltips/UI text) (might look into Patchouli) (might NOT look into patchouli and do my own thing as a mode for the bag)
-add back the 'player pillar' features + new features: energy can be inserted/removed (from items in the user inventory), xp can be drained in liquid form, xp, water, milk and lava can be pumped in the player
+add back the 'player pillar' features + new features: energy can be inserted/removed (from items in the user inventory), xp can be drained in liquid form, xp, water, milk and lava can be pumped in the player (for now, only pumping out is ready, missing pumping in, might look into creating a compat with tinker to inject entities with lava/blazing blood to extract fluids)
 finish the WII block (fluids) (fluids: drain/place fluids, no interaction with player)
 almost finished --- add a new block placeable outside the bag to access the bag as a block (proxy) (allowing interactions with the inventory, tanks and batteries of the bag. note: interaction is passive, needs modded conduits/hoppers to work) (low tier: need the bag inside the block, high tier: bound to a bag)
 
 -----------------------------------------------------------------------
 TODO DEBUG EDITION:
 -----------------------------------------------------------------------
+rework shift click (duplication glitch, not working, etc...) for almost all containers
 fix sleeping in the bag not working with other mods adding dimensions (might need to hack something)
 finish those god-damn UI
 finish modeling/texturing
@@ -62,16 +62,4 @@ test/balance upgrades and crafts (early, mid, late game, again the best way is p
 -----------------------------------------------------------------------
 CURRENT FIXES:
 -----------------------------------------------------------------------
-crash item colliding with gateway (CuriosIntegration#searchItem on ItemEntity calling next on hands fail)
-un-equip bag when using another mod to teleport a player inside a bag without paradox upgrade (tested with waystone)
-block not droping fixed (still minor problem: does not work with loot table since override in code)
-solved duplication of item with user interface (again)
-allow shift click with item on some blocks (without triggering item, usefull to use the eye and tunnels in shift click while using a shield)
-removed chat spam by reflection access
-reworked tick system for entities using bags, auto remove duplicate of bags, streamlined for a single behavior common to all
-added back interacting with bags on other players (should add whitelist upgrade)
-capture upgrade now shows name of selected pad
-fixed proxy inventory of horses/lamas, disabled extra slots for now (until I find a better logic to map them)
-reworked model system for bag, now compatible with curio visibility and same model for layer/in world entity
-fixed some tank desync
-WIP manual using patchouli (facultative, missing mod message when you try to use the manual without patchouli installed)
+added setting to quick enter bag and quick equip bag on leaving (compatible with paradox upgrade)

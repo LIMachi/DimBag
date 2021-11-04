@@ -49,6 +49,7 @@ public class TextFieldWidget extends BaseWidget {
         this.validateText = validateText;
         renderStandardBackground = false;
         consumeEscKey = true;
+        canTakeFocus = true;
     }
 
     public void finishInput(boolean withCallback) {
@@ -235,7 +236,7 @@ public class TextFieldWidget extends BaseWidget {
     private void moveCursorToMouse(double mouseX, double mouseY) {
         String s = getVisibleText();
         int i = 1;
-        double lx = /*getTransformedCoords().getX1()*/x;
+        double lx = /*getTransformedCoords().getX1()*/x();
         while (i <= s.length() && lx + /*RenderUtils.getPrintedStringWidth(getLocalMatrix(), font, s.substring(0, i))*/font.width(s.substring(0, i)) < mouseX)
             ++i;
         setCursorPos(i - 1 + leftCorrection, shouldSelect());
@@ -271,11 +272,11 @@ public class TextFieldWidget extends BaseWidget {
 
     @Override
     protected void renderBg(MatrixStack matrixStack, Minecraft minecraft, int mouseX, int mouseY) {
-        (isHovered ? BaseWidget.HOVERED_SELECTED_TEXTURE : BaseWidget.SELECTED_TEXTURE).blit(matrixStack, new Box2d(x, y, width, height), 0, TextureCutout.TextureApplicationPattern.MIDDLE_EXPANSION);
+        (isHovered ? BaseWidget.HOVERED_SELECTED_TEXTURE : BaseWidget.SELECTED_TEXTURE).blit(matrixStack, new Box2d(x(), y(), width, height), 0, TextureCutout.TextureApplicationPattern.MIDDLE_EXPANSION);
     }
 
     @Override
-    public void renderButton(MatrixStack matrixStack, int mouseX, int mouseY, float partialTicks) {
+    public void renderButton(@Nonnull MatrixStack matrixStack, int mouseX, int mouseY, float partialTicks) {
         int dy = (height - font.lineHeight) / 2;
         int cursorPos = leftCorrection < cursor ? font.width((text + " ").substring(leftCorrection, cursor)) : 0;
         if (selection != cursor) {
@@ -284,14 +285,14 @@ public class TextFieldWidget extends BaseWidget {
                 selectionPos = font.width(text.substring(leftCorrection, selection));
             int start = Math.min(selectionPos, cursorPos);
             int end = Math.max(selectionPos, cursorPos);
-            RenderUtils.drawBox(matrixStack, new Box2d(x + 4 + start, y + dy, end - start + 3, height - dy * 2), selectionColor, 0);
+            RenderUtils.drawBox(matrixStack, new Box2d(x() + 4 + start, y() + dy, end - start + 3, height - dy * 2), selectionColor, 0);
         }
-        RenderUtils.drawString(matrixStack, font, getVisibleText(), new Box2d(x + 4, y + 1 + dy, width - 6, height - dy * 2), textColor, true, false);
+        RenderUtils.drawString(matrixStack, font, getVisibleText(), new Box2d(x() + 4, y() + 1 + dy, width - 6, height - dy * 2), textColor, true, false);
         if (isFocused() && (EventManager.getTick() & 0x10) == 0x10 && leftCorrection <= cursor) {
             if (insertMode && cursor != text.length())
-                RenderUtils.drawString(matrixStack, font, "|", new Box2d(x + cursorPos + 3, y + 1 + dy, width - 6, height - dy * 2), cursorColor, true, false);
+                RenderUtils.drawString(matrixStack, font, "|", new Box2d(x() + cursorPos + 3, y() + 1 + dy, width - 6, height - dy * 2), cursorColor, true, false);
             else
-                RenderUtils.drawString(matrixStack, font, "_", new Box2d(x + cursorPos + 4, y + 1 + dy, width - 6, height - dy * 2), cursorColor, true, false);
+                RenderUtils.drawString(matrixStack, font, "_", new Box2d(x() + cursorPos + 4, y() + 1 + dy, width - 6, height - dy * 2), cursorColor, true, false);
         }
     }
 }

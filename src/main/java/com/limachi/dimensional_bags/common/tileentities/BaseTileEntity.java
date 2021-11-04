@@ -112,8 +112,10 @@ public abstract class BaseTileEntity extends TileEntity implements ITickableTile
             level.blockEntityChanged(worldPosition, this);
             if (hasComparatorOutput() && !isClient())
                 level.updateNeighbourForOutputSignal(worldPosition, cachedBlockState.getBlock());
-            if (updateUpstream && hasTileData && isClient() && shouldUpdateData())
+            if (updateUpstream && hasTileData && isClient() && shouldUpdateData()) {
                 PacketHandler.toServer(new UpstreamTileUpdateMsg(worldPosition, getTileData()));
+                cachedData = customTileData.copy();
+            }
             isDirty = false;
         }
     }

@@ -6,7 +6,7 @@ import com.limachi.dimensional_bags.common.container.PillarContainer;
 import com.limachi.dimensional_bags.common.data.EyeDataMK2.SubRoomsManager;
 import com.limachi.dimensional_bags.common.items.Bag;
 import com.limachi.dimensional_bags.common.items.GhostBag;
-import com.limachi.dimensional_bags.common.items.upgrades.ParadoxUpgrade;
+import com.limachi.dimensional_bags.common.items.upgrades.bag.ParadoxUpgrade;
 import com.limachi.dimensional_bags.common.managers.UpgradeManager;
 import com.limachi.dimensional_bags.common.tileentities.BagProxyTileEntity;
 import net.minecraft.block.BlockState;

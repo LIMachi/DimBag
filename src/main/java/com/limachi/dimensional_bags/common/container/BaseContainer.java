@@ -1,15 +1,13 @@
 package com.limachi.dimensional_bags.common.container;
 
-import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.limachi.dimensional_bags.ConfigManager.Config;
 import com.limachi.dimensional_bags.DimBag;
-import com.limachi.dimensional_bags.client.render.screen.SimpleContainerScreen;
 import com.limachi.dimensional_bags.common.container.slot.FluidSlot;
-import com.limachi.dimensional_bags.common.container.widgets.BaseContainerWidget;
 import com.limachi.dimensional_bags.common.inventory.IPacketSerializable;
 import com.limachi.dimensional_bags.common.network.PacketHandler;
 import com.limachi.dimensional_bags.common.network.packets.SetSlotPacket;
+import com.limachi.dimensional_bags.utils.StackUtils;
 import net.minecraft.crash.CrashReport;
 import net.minecraft.crash.CrashReportCategory;
 import net.minecraft.crash.ReportedException;
@@ -17,18 +15,12 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.inventory.IInventory;
-import net.minecraft.inventory.Inventory;
 import net.minecraft.inventory.container.*;
 import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.util.*;
 import net.minecraft.util.registry.Registry;
 import net.minecraft.util.text.ITextComponent;
-import net.minecraft.util.text.StringTextComponent;
-import net.minecraft.world.World;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.fml.network.NetworkHooks;
 import net.minecraftforge.items.SlotItemHandler;
 
@@ -44,83 +36,6 @@ import static com.limachi.dimensional_bags.common.references.GUIs.ScreenParts.*;
  */
 
 public abstract class BaseContainer<I extends BaseContainer<I>> extends Container implements IPacketSerializable {
-    public static final class NullPlayerInventory extends PlayerInventory {
-        public static final NullPlayerInventory NULL_PLAYER_CONTAINER = new NullPlayerInventory();
-
-        public NullPlayerInventory() { super(null); }
-
-        @Override
-        public boolean add(int slotIn, ItemStack stack) { return false; }
-
-        @Override
-        public void placeItemBackInInventory(World worldIn, ItemStack stack) {}
-
-        @Override
-        public void hurtArmor(DamageSource p_234563_1_, float p_234563_2_) {}
-
-        @Override
-        public void dropAll() {}
-
-        @Override
-        public boolean stillValid(PlayerEntity player) { return true; }
-    }
-
-    public static abstract class NullContainer extends BaseContainer<NullContainer> {
-        public static final NullContainer NULL_CONTAINER = new NullContainer(null, -1, NullPlayerInventory.NULL_PLAYER_CONTAINER){};
-
-        protected NullContainer(ContainerType<?> containerType, int windowId, PlayerInventory playerInv) { super(containerType, windowId, playerInv); }
-        protected NullContainer(ContainerType<?> containerType, int windowId, PlayerInventory playerInv, @Nullable PacketBuffer buffer) { super(containerType, windowId, playerInv, buffer); }
-
-        @Override
-        final public ITextComponent getDisplayName() { return StringTextComponent.EMPTY; }
-
-        @Override
-        final public boolean stillValid(PlayerEntity playerIn) { return true; }
-
-        @Override
-        final public void readFromBuff(PacketBuffer buff) {}
-
-        @Override
-        final public void writeToBuff(PacketBuffer buff) {}
-    }
-
-    @OnlyIn(Dist.CLIENT)
-    public SimpleContainerScreen<I> screen;
-
-    protected final NonNullList<ItemStack> lastSlots = NonNullList.create();
-    private BaseContainerWidget<I> focusedWidget = null;
-    protected final List<IntReferenceHolder> dataSlots = Lists.newArrayList();
-
-    @Override
-    public Slot getSlot(int slot) {
-        return slots.get(slot);
-    }
-
-    public static class UUIDIntArray extends IntArray {
-        public UUIDIntArray() { super(8); }
-
-        public void set(UUID id) {
-            for (int i = 0; i < 8; ++i)
-                super.set(i, i < 4 ? (short)(id.getLeastSignificantBits() >> (16 * i)) : (short)(id.getMostSignificantBits() >> (16 * (i - 4))));
-        }
-
-        public UUID get() {
-            long least = 0;
-            long most = 0;
-            for (int i = 0; i < 8; ++i)
-                if (i < 4)
-                    least |= (long)get(i) << (16 * i);
-                else
-                    most |= (long)get(i) << (16 * (i - 4));
-            return new UUID(most, least);
-        }
-    }
-    
-    @Override
-    protected void addDataSlots(IIntArray arrayIn) {
-        for(int i = 0; i < arrayIn.getCount(); ++i)
-            this.addDataSlot(IntReferenceHolder.forContainer(arrayIn, i));
-    }
 
     protected final PlayerInventory playerInv;
     public final boolean isClient;
@@ -172,29 +87,10 @@ public abstract class BaseContainer<I extends BaseContainer<I>> extends Containe
                 addSlot(new Slot(playerInv, x + (y + 1) * PLAYER_INVENTORY_COLUMNS, dx + x * SLOT_SIZE_X, dy + y * SLOT_SIZE_Y));
     }
 
-    protected static final Inventory EMPTY_INVENTORY = new Inventory(0);
-
-    @Override
-    protected Slot addSlot(Slot slotIn) {
-        slotIn.index = this.slots.size();
-        this.slots.add(slotIn);
-        this.lastSlots.add(ItemStack.EMPTY);
-        return slotIn;
-    }
-
     protected void clearSlots() {
         this.slots.clear();
         this.lastSlots.clear();
     }
-
-    @Override
-    protected IntReferenceHolder addDataSlot(IntReferenceHolder intIn) {
-        this.dataSlots.add(intIn);
-        return intIn;
-    }
-
-    @Override
-    public void setData(int id, int data) { this.dataSlots.get(id).set(data); }
 
     @Override
     public void broadcastChanges() {
@@ -227,31 +123,6 @@ public abstract class BaseContainer<I extends BaseContainer<I>> extends Containe
     }
 
     /**
-     * should only be called by the associated screen client side
-     */
-    public void detectAndSendWidgetChanges() {
-//        for (int i = 0; i < widgets.size(); ++i) {
-//            CompoundNBT d = widgets.get(i).getDiffOrData(widgetData.get(i));
-//            if (d.getBoolean("IsDiff"))
-//                NBTUtils.applyDiff(widgetData.get(i), d);
-//            else
-//                widgetData.set(i, d.copy());
-//            if (!d.isEmpty())
-//                PacketHandler.toServer(new WidgetDataPacket(windowId, i, d));
-//        }
-    }
-
-    public void receiveWidgetChange(PlayerEntity player, int widget, CompoundNBT data) {
-//        if (player instanceof ServerPlayerEntity) //mirror changes on other clients if we are server side
-//            for(IContainerListener icontainerlistener1 : this.containerListeners)
-//                if (!icontainerlistener1.equals(player) && icontainerlistener1 instanceof ServerPlayerEntity)
-//                    PacketHandler.toClient((ServerPlayerEntity)icontainerlistener1, new WidgetDataPacket(containerId, widget, data));
-//        BaseContainer<I> container = (BaseContainer<I>)player.openContainer;
-//        container.widgets.get(widget).loadDiffOrData(data);
-//        container.widgetData.set(widget, container.widgets.get(widget).getLocalData().copy());
-    }
-
-    /**
      * test that a shift click between those 2 slots is valid (by default, enforce that the two slots are pointing to different inventories
      * or different sub inventories for player inventories (belt, inv, armor, off hand)
      * @param original
@@ -277,10 +148,6 @@ public abstract class BaseContainer<I extends BaseContainer<I>> extends Containe
         return true;
     }
 
-    public static boolean areStackable(ItemStack s1, ItemStack s2) {
-        return ItemStack.isSame(s1, s2) && ItemStack.tagMatches(s1, s2);
-    }
-
     @Override
     public ItemStack quickMoveStack(PlayerEntity player, int position) //should be rewritten to respect the insert/extract rights of the IItemHandlerModifiable
     {
@@ -294,21 +161,11 @@ public abstract class BaseContainer<I extends BaseContainer<I>> extends Containe
                 ItemStack slotStack = slot.getItem();
                 if (!isTransferValid(position, target.index, false) || !target.mayPlace(slotStack)) continue; //test if we have the rights to transfer to the target slot, this does not check the validity of the merge
                 ItemStack targetStack = target.getItem();
-                if (!targetStack.isEmpty() && !areStackable(targetStack, slotStack)) continue; //invalid merge, the target slot isn't empty and does not match the original stack
+                if (!targetStack.isEmpty() && !StackUtils.areStackable(targetStack, slotStack)) continue; //invalid merge, the target slot isn't empty and does not match the original stack
                 int maxInput = Math.min(slotStack.getCount(), getRealSlotInputLimit(target, slotStack));
                 if (maxInput <= 0) continue; //no more place to input
-                ItemStack newSlotStack = slotStack.copy();
-                newSlotStack.shrink(maxInput);
-                slot.set(newSlotStack);
-                ItemStack newTargetStack;
-                if (targetStack.isEmpty()) {
-                    newTargetStack = slotStack.copy();
-                    newTargetStack.setCount(maxInput);
-                } else {
-                    newTargetStack = targetStack.copy();
-                    newTargetStack.grow(maxInput);
-                }
-                target.set(newTargetStack);
+                target.set(StackUtils.merge(targetStack, StackUtils.setCount(slotStack.copy(), maxInput, false), false));
+                slot.remove(maxInput);
             }
         return ItemStack.EMPTY;
     }
@@ -378,7 +235,7 @@ public abstract class BaseContainer<I extends BaseContainer<I>> extends Containe
     public static final boolean CAN_FILL_AND_EMPTY_ITEM_TANKS = true;
 
     protected ItemStack clickedFluid(PlayerInventory playerinventory, int slotId, ClickType clickTypeIn, PlayerEntity player) {
-        if (clickTypeIn != ClickType.PICKUP) return ItemStack.EMPTY; //only accept simple clicks
+        if (clickTypeIn != ClickType.PICKUP) return ItemStack.EMPTY; //only accept simple clicks, FIXME: integrate shit click behavior
         FluidSlot slot = (FluidSlot)slots.get(slotId);
         slot.selectTank();
         if (CAN_FILL_AND_EMPTY_ITEM_TANKS)
@@ -469,93 +326,89 @@ public abstract class BaseContainer<I extends BaseContainer<I>> extends Containe
      * @return
      */
     protected ItemStack clickedPickUp(PlayerInventory playerinventory, int slotId, int dragType, ClickType clickTypeIn, PlayerEntity player) {
-        ItemStack itemstack = ItemStack.EMPTY;
+        ItemStack out = ItemStack.EMPTY;
         if (slotId == -999) { //click outside the screen
-            if (!playerinventory.getCarried().isEmpty()) {
-                if (dragType == 0) { //probably left click, drop entire stask
-                    player.drop(playerinventory.getCarried(), true);
-                    playerinventory.setCarried(ItemStack.EMPTY);
-                }
-
-                if (dragType == 1) { //probably right click, drop only one item
-                    player.drop(playerinventory.getCarried().split(1), true);
-                }
-            }
-        } else if (clickTypeIn == ClickType.QUICK_MOVE) { //Shift-Click, be careful there
+            if (!playerinventory.getCarried().isEmpty() && (dragType == 0 || dragType == 1)) //player was carrying something
+                player.drop(playerinventory.getCarried().split(dragType == 0 ? playerinventory.getCarried().getCount() : 1), true);
+        } else if (clickTypeIn == ClickType.QUICK_MOVE) { //Shift-Click, be careful there FIXME: redo it all, the vanilla shift clicks are a joke
             if (slotId < 0) return ItemStack.EMPTY;
 
-            Slot slot5 = this.slots.get(slotId);
-            if (slot5 == null || !slot5.mayPickup(player)) return ItemStack.EMPTY;
+            Slot clickedSlot = this.slots.get(slotId);
+            if (clickedSlot == null || !clickedSlot.mayPickup(player)) return ItemStack.EMPTY;
 
-            for(ItemStack itemstack8 = this.quickMoveStack(player, slotId); !itemstack8.isEmpty() && areStackable(slot5.getItem(), itemstack8); itemstack8 = this.quickMoveStack(player, slotId)) {
-                itemstack = itemstack8.copy();
+            for(ItemStack tmpStack = this.quickMoveStack(player, slotId); !tmpStack.isEmpty() && StackUtils.areStackable(clickedSlot.getItem(), tmpStack); tmpStack = this.quickMoveStack(player, slotId)) {
+                out = tmpStack.copy();
             }
-        } else {
-            if (slotId < 0) {
-                return ItemStack.EMPTY;
-            }
+        } else { //clickTypeIn == ClickType.PICKUP, standard click
+            if (slotId < 0) return ItemStack.EMPTY;
 
-            Slot slot6 = this.slots.get(slotId);
-            if (slot6 != null) {
-                ItemStack itemstack9 = slot6.getItem();
-                ItemStack itemstack11 = playerinventory.getCarried();
-                if (!itemstack9.isEmpty()) {
-                    itemstack = itemstack9.copy();
-                }
+            Slot clickedSlot = this.slots.get(slotId);
+            if (clickedSlot != null) {
+                ItemStack slotStack = clickedSlot.getItem();
+                ItemStack carried = playerinventory.getCarried();
+                if (!slotStack.isEmpty()) out = slotStack.copy();
 
-                if (itemstack9.isEmpty()) {
-                    if (!itemstack11.isEmpty() && slot6.mayPlace(itemstack11)) {
-                        int j2 = dragType == 0 ? itemstack11.getCount() : 1;
-                        if (j2 > slot6.getMaxStackSize(itemstack11)) {
-                            j2 = slot6.getMaxStackSize(itemstack11);
+                if (slotStack.isEmpty()) {
+                    if (!carried.isEmpty() && clickedSlot.mayPlace(carried)) {
+                        int j2 = dragType == 0 ? carried.getCount() : 1;
+                        if (j2 > clickedSlot.getMaxStackSize(carried)) {
+                            j2 = clickedSlot.getMaxStackSize(carried);
                         }
 
-                        slot6.set(itemstack11.split(j2));
+//                        clickedSlot.set(carried.split(j2));
+                        StackUtils.setSlot(clickedSlot, carried.split(j2));
+//
                     }
-                } else if (slot6.mayPickup(player)) {
-                    if (itemstack11.isEmpty()) {
-                        if (itemstack9.isEmpty()) {
-                            slot6.set(ItemStack.EMPTY);
+                } else if (clickedSlot.mayPickup(player)) {
+                    if (carried.isEmpty()) {
+                        if (slotStack.isEmpty()) {
+//                            clickedSlot.set(ItemStack.EMPTY);
+                            clickedSlot.remove(clickedSlot.getItem().getCount());
+//
                             playerinventory.setCarried(ItemStack.EMPTY);
                         } else {
-                            int k2 = dragType == 0 ? itemstack9.getCount() : (itemstack9.getCount() + 1) / 2;
-                            if (k2 > itemstack9.getMaxStackSize()) k2 = itemstack9.getMaxStackSize(); //quick fix to prevent grab of more than a stack from a slot
-                            playerinventory.setCarried(slot6.remove(k2));
-                            if (itemstack9.isEmpty()) {
-                                slot6.set(ItemStack.EMPTY);
+                            int k2 = dragType == 0 ? slotStack.getCount() : (slotStack.getCount() + 1) / 2;
+                            if (k2 > slotStack.getMaxStackSize()) k2 = slotStack.getMaxStackSize(); //quick fix to prevent grab of more than a stack from a slot
+                            playerinventory.setCarried(clickedSlot.remove(k2));
+                            if (slotStack.isEmpty()) {
+//                                clickedSlot.set(ItemStack.EMPTY);
+                                clickedSlot.remove(clickedSlot.getItem().getCount());
+                                //
                             }
 
-                            slot6.onTake(player, playerinventory.getCarried());
+                            clickedSlot.onTake(player, playerinventory.getCarried());
                         }
-                    } else if (slot6.mayPlace(itemstack11)) {
-                        if (consideredTheSameItem(itemstack9, itemstack11)) {
+                    } else if (clickedSlot.mayPlace(carried)) {
+                        if (consideredTheSameItem(slotStack, carried)) {
 
-                            int l2 = getRealSlotInputLimit(slot6, itemstack11);
+                            int l2 = getRealSlotInputLimit(clickedSlot, carried);
 
-                            itemstack11.shrink(l2);
-                            itemstack9.grow(l2);
-                        } else if (itemstack11.getCount() <= slot6.getMaxStackSize(itemstack11)) {
-                            slot6.set(itemstack11);
-                            playerinventory.setCarried(itemstack9);
+                            carried.shrink(l2);
+                            slotStack.grow(l2);
+                        } else if (carried.getCount() <= clickedSlot.getMaxStackSize(carried)) {
+//                            clickedSlot.set(carried);
+                            StackUtils.setSlot(clickedSlot, carried);
+                            playerinventory.setCarried(slotStack);
                         }
-                    } else if (itemstack11.getMaxStackSize() > 1 && consideredTheSameItem(itemstack9, itemstack11) && !itemstack9.isEmpty()) {
-                        int i3 = itemstack9.getCount();
-                        if (i3 + itemstack11.getCount() <= itemstack11.getMaxStackSize()) {
-                            itemstack11.grow(i3);
-                            itemstack9 = slot6.remove(i3);
-                            if (itemstack9.isEmpty()) {
-                                slot6.set(ItemStack.EMPTY);
+                    } else if (carried.getMaxStackSize() > 1 && consideredTheSameItem(slotStack, carried) && !slotStack.isEmpty()) {
+                        int i3 = slotStack.getCount();
+                        if (i3 + carried.getCount() <= carried.getMaxStackSize()) {
+                            carried.grow(i3);
+                            slotStack = clickedSlot.remove(i3);
+                            if (slotStack.isEmpty()) {
+//                                clickedSlot.set(ItemStack.EMPTY);
+                                clickedSlot.remove(clickedSlot.getItem().getCount());
                             }
 
-                            slot6.onTake(player, playerinventory.getCarried());
+                            clickedSlot.onTake(player, playerinventory.getCarried());
                         }
                     }
                 }
 
-                slot6.setChanged();
+                clickedSlot.setChanged();
             }
         }
-        return itemstack;
+        return out;
     }
 
     /**

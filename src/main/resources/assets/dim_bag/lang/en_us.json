@@ -134,5 +134,26 @@
   "screen.manual.missing_patchouli": "You are missing the patchouli mod by Vazkii, the manual requires this mod to work. Please install patchouli for your minecraft version, downloads can be found there: https://www.curseforge.com/minecraft/mc-mods/patchouli",
 
   "manual.name": "Dimensional Bags Manual",
-  "manual.front_page": "Welcome $(playername) to the wonderful world of dimensional bags.$(p)In this book, you will find all the information on how to use your bag modes, upgrades and also how to use blocks and items provided by this mod."
+  "manual.front_page": "Welcome $(playername) to the wonderful world of dimensional bags.$(p)In this book, you will find all the information on how to use your bag modes, upgrades and also how to use blocks and items provided by this mod.",
+
+  "settings.Modes.Default.title": "Default mode",
+  "settings.Upgrades.turtle_upgrade.title": "Turtle Upgrade",
+  "settings.Upgrades.time_distortion_upgrade.title": "Time Distortion Upgrade",
+  "settings.Upgrades.sweet_fabric_upgrade.title": "Sweet Fabric Upgrade",
+  "settings.Upgrades.paradox_upgrade.title": "Paradox Upgrade",
+  "settings.Upgrades.kinetic_generator_upgrade.title": "Kinetic Generator Upgrade",
+  "settings.Upgrades.induction_upgrade.title": "Induction Upgrade",
+  "settings.Upgrades.enticing_upgrade.title": "Enticing Upgrade",
+  "settings.Upgrades.death_hopper_upgrade.title": "Death Hopper Upgrade",
+
+  "settings.Upgrades.time_distortion_upgrade.factor.tooltip": "Time distortion exponent: ",
+  "settings.Upgrades.turtle_upgrade.Threshold.tooltip": "Threshold (in 1/2 hearts): ",
+  "settings.Modes.Default.should_show_energy.tooltip": "Display the current bag power in the top left corner of the screen",
+  "settings.Modes.Default.bag_name.tooltip": "Bag name",
+  "settings.Modes.Default.quick_reequip.tooltip": "Quick Reequip (when leaving the bag, auto equip it)",
+  "settings.Modes.Default.quick_enter.tooltip": "Quick enter (when placing the bag in world, auto enter inside. If the paradox upgrade is active, enter the bag while keeping it equipped)",
+
+  "settings.tooltip.active": "Activate this upgrade",
+
+  "extended_tooltip.nbt_tooltip.use_alt": "Hold [Alt] to see NBT"
 }

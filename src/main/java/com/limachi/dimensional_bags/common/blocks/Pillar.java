@@ -5,6 +5,7 @@ import com.limachi.dimensional_bags.StaticInit;
 import com.limachi.dimensional_bags.common.EventManager;
 import com.limachi.dimensional_bags.common.Registries;
 import com.limachi.dimensional_bags.common.container.PillarContainer;
+import com.limachi.dimensional_bags.common.container.PillarSettingsContainer;
 import com.limachi.dimensional_bags.common.data.EyeDataMK2.InventoryData;
 import com.limachi.dimensional_bags.common.data.EyeDataMK2.SubRoomsManager;
 import com.limachi.dimensional_bags.common.inventory.PillarInventory;
@@ -14,6 +15,7 @@ import net.minecraft.block.SoundType;
 import net.minecraft.block.material.Material;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.item.BlockItem;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundNBT;
@@ -86,5 +88,13 @@ public class Pillar extends BlockWithUUID<PillarTileEntity> implements IHasBagSe
     }
 
     @Override
-    public ActionResultType openSettings(PlayerEntity player) { return ActionResultType.SUCCESS; }
+    public ActionResultType openSettings(PlayerEntity player, BlockPos pos) {
+        if (!(player instanceof ServerPlayerEntity)) return ActionResultType.SUCCESS;
+        int eyeId = DimBag.debug(SubRoomsManager.getEyeId(player.level, pos, false), "eye id");
+        if (eyeId <= 0) return ActionResultType.SUCCESS;
+        TileEntity te = DimBag.debug(player.level.getBlockEntity(pos));
+        if (!(te instanceof PillarTileEntity)) return ActionResultType.SUCCESS;
+        PillarSettingsContainer.open(player, eyeId, ((PillarTileEntity) te).getInventory().getId());
+        return ActionResultType.SUCCESS;
+    }
 }

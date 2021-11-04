@@ -6,13 +6,15 @@ import com.mojang.blaze3d.matrix.MatrixStack;
 import net.minecraft.client.renderer.IRenderTypeBuffer;
 import net.minecraft.client.renderer.model.ItemCameraTransforms;
 import net.minecraft.client.renderer.tileentity.ItemStackTileEntityRenderer;
-import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.util.text.IFormattableTextComponent;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraftforge.fluids.FluidStack;
+import net.minecraftforge.fluids.capability.CapabilityFluidHandler;
+import net.minecraftforge.fluids.capability.IFluidHandler;
+import net.minecraftforge.fluids.capability.IFluidHandlerItem;
+import net.minecraftforge.fluids.capability.ItemFluidContainer;
 
 import javax.annotation.Nonnull;
 import java.util.function.Supplier;
@@ -21,22 +23,26 @@ import java.util.function.Supplier;
  * fake item which expect to have a fluid serialized in his tags
  */
 @StaticInit
-public class FluidItem extends Item {
+public class FluidItem extends ItemFluidContainer {
 
     public static final Supplier<FluidItem> INSTANCE_GETTER = Registries.registerItem("fluid_item", FluidItem::new);
 
     public static ItemStack createStack(FluidStack fluidStack) {
         ItemStack out = new ItemStack(INSTANCE_GETTER.get(), 1);
-        out.setTag(fluidStack.writeToNBT(new CompoundNBT()));
+        getHandler(out).fill(fluidStack, IFluidHandler.FluidAction.EXECUTE);
         return out;
     }
 
-    public FluidItem() { super(new Properties().stacksTo(0).setISTER(()->()->FluidItemRenderer.INSTANCE)); }
+    public FluidItem() { super(new Properties().stacksTo(0).setISTER(()->()->FluidItemRenderer.INSTANCE), Integer.MAX_VALUE); }
+
+    public static IFluidHandlerItem getHandler(ItemStack stack) {
+        return stack.getCapability(CapabilityFluidHandler.FLUID_HANDLER_ITEM_CAPABILITY).orElseThrow(()->new IllegalStateException("Missing FLUID_HANDLER_ITEM_CAPABILITY in FluidItem"));
+    }
 
     @Nonnull
     @Override
-    public ITextComponent getName(ItemStack stack) {
-        FluidStack fluid = FluidStack.loadFluidStackFromNBT(stack.getTag());
+    public ITextComponent getName(@Nonnull ItemStack stack) {
+        FluidStack fluid = getHandler(stack).getFluidInTank(0);
         if (fluid.isEmpty())
             return new TranslationTextComponent("item.fluid_item.empty_name");
         return ((IFormattableTextComponent)fluid.getDisplayName()).append(new TranslationTextComponent("item.fluid_item.append_qty_to_name", fluid.getAmount()));

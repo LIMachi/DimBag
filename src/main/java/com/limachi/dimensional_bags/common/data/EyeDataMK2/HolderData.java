@@ -8,7 +8,7 @@ import com.limachi.dimensional_bags.common.inventory.EntityInventoryProxy;
 import com.limachi.dimensional_bags.common.items.Bag;
 import com.limachi.dimensional_bags.common.items.GhostBag;
 import com.limachi.dimensional_bags.common.items.entity.BagEntityItem;
-import com.limachi.dimensional_bags.common.items.upgrades.ParadoxUpgrade;
+import com.limachi.dimensional_bags.common.items.upgrades.bag.ParadoxUpgrade;
 import com.limachi.dimensional_bags.common.managers.ModeManager;
 import com.limachi.dimensional_bags.common.managers.UpgradeManager;
 import com.limachi.dimensional_bags.utils.UUIDUtils;
@@ -81,16 +81,20 @@ public class HolderData extends WorldSavedDataManager.EyeWorldSavedData {
     /**
      * only called once per bag id and per tick, holder is the 'best' valid holder that used the bag this tick (other holders will see their inventory or themselves cleared)
      */
-    private static void tickBag(Entity holder, int id, HolderData data) {
+    private static void tickBag(Entity holder, int id, HolderData data, DimBagData dbd) {
         boolean isBagItself = holder instanceof BagEntityItem || holder instanceof BagEntity;
 
         if (!holder.level.isClientSide) {
             if (!(holder instanceof FakePlayer))
                 data.setHolder(holder);
-            if (holder instanceof BagEntityItem) //FIXME: move to upgrade
-                BagEntityItem.enticingUpgradeBehavior(id, (BagEntityItem) holder);
             if (holder.blockPosition().getY() < 1 && (isBagItself || false/*protect against void*/)) //FIXME: cleaner version
                 holder.setPos(holder.blockPosition().getX(), 1, holder.blockPosition().getZ());
+        }
+
+        if (!(holder instanceof PlayerEntity) && dbd != null && holder.level instanceof ServerWorld) { //FIXME: should use a cleaner way of maintaining chunk loaded
+            dbd.chunkloadder.unloadChunk(id);
+            dbd.chunkloadder.loadChunk((ServerWorld) holder.level, holder.blockPosition(), id);
+            dbd.setDirty();
         }
 
         ModeManager.execute(id, modeManager -> modeManager.inventoryTick(holder.level, holder));
@@ -99,13 +103,14 @@ public class HolderData extends WorldSavedDataManager.EyeWorldSavedData {
 
     @SubscribeEvent(priority = EventPriority.LOWEST)
     public static void tickBagsThenCleanDuplicateBags(TickEvent.ServerTickEvent event) {
+        DimBagData dbd = DimBagData.get();
         for (Map.Entry<Integer, ArrayList<Entity>> e : tickingHolders.entrySet()) {
             int id = e.getKey();
             ArrayList<Entity> el = e.getValue();
             HolderData hd = HolderData.getInstance(id);
             if (el.size() <= 1) {
                 if (el.size() == 1)
-                    tickBag(el.get(0), id, hd);
+                    tickBag(el.get(0), id, hd, dbd);
                 el.clear();
                 continue;
             }
@@ -119,8 +124,8 @@ public class HolderData extends WorldSavedDataManager.EyeWorldSavedData {
                     k = tk;
                 }
             }
-            tickBag(best, id, hd);
-            for (Entity h : el) {
+            tickBag(best, id, hd, dbd);
+            for (Entity h : el) { //FIXME: sometimes trigger a concurrent change, need to investigate
                 if (h instanceof FakePlayer) continue;
                 AtomicBoolean keep = new AtomicBoolean(h.equals(best));
                 if (h instanceof BagEntityItem || h instanceof BagEntity) {
@@ -134,7 +139,6 @@ public class HolderData extends WorldSavedDataManager.EyeWorldSavedData {
                     p.set(ItemStack.EMPTY);
                 });
             }
-            el.clear();
         }
         tickingHolders.clear();
     }
@@ -231,8 +235,8 @@ public class HolderData extends WorldSavedDataManager.EyeWorldSavedData {
 
     public Vector3d getLastKnownPosition() { return lastKnownPosition; }
 
-    public void tpToHolder(Entity entity) {
-        WorldUtils.teleportEntity(entity, lastKnownDimension, lastKnownPosition);
+    public Entity tpToHolder(Entity entity) {
+        return WorldUtils.teleportEntity(entity, lastKnownDimension, lastKnownPosition);
     }
 
     /**

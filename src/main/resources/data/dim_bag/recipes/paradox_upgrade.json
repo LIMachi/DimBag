@@ -1,15 +1,13 @@
 {
-  "type": "minecraft:crafting_shaped",
-  "pattern": [
-    "   ",
-    " U ",
-    "   "
-  ],
-  "key": {
-    "U": {
-      "item": "dim_bag:blank_upgrade"
+  "type": "minecraft:crafting_shapeless",
+  "ingredients": [
+    {
+      "item": "dim_bag:pillar"
+    },
+    {
+      "item": "minecraft:nether_star"
     }
-  },
+  ],
   "result": {
     "item": "dim_bag:paradox_upgrade",
     "count": 1

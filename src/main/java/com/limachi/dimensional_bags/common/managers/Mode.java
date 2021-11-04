@@ -58,6 +58,10 @@ public class Mode {
         settingsReader.build();
     }
 
+    public static <T> T getSetting(String mode, int eye, String label) {
+        return ModeManager.getMode(mode).getSetting(eye, label);
+    }
+
     public <T> T getSetting(int eye, String label) { return settingsReader.get(label, SettingsData.getInstance(eye)); }
 
     public <T> void setSetting(int eye, String label, T value) { settingsReader.set(label, SettingsData.getInstance(eye), value); }

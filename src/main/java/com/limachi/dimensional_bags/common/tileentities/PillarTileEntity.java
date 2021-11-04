@@ -6,13 +6,15 @@ import com.limachi.dimensional_bags.common.blocks.Pillar;
 import com.limachi.dimensional_bags.common.data.EyeDataMK2.InventoryData;
 import com.limachi.dimensional_bags.common.data.EyeDataMK2.SubRoomsManager;
 import com.limachi.dimensional_bags.common.inventory.PillarInventory;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.item.ItemStack;
 import net.minecraft.util.Direction;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.items.CapabilityItemHandler;
 
 @StaticInit
-public class PillarTileEntity extends TEWithUUID implements IisBagTE {
+public class PillarTileEntity extends TEWithUUID implements IisBagTE, IInstallUpgradeTE {
 
     public static final String NAME = "pillar";
 
@@ -40,4 +42,7 @@ public class PillarTileEntity extends TEWithUUID implements IisBagTE {
             return LazyOptional.of(this::getInventory).cast();
         return super.getCapability(capability, facing);
     }
+
+    @Override
+    public ItemStack installUpgrades(PlayerEntity player, ItemStack stack) { return getInventory().getUpgradesInventory().installUpgrades(stack); }
 }

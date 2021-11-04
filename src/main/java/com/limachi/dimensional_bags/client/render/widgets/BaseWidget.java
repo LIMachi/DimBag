@@ -6,16 +6,23 @@ import com.limachi.dimensional_bags.client.render.screen.SimpleContainerScreen;
 import com.mojang.blaze3d.matrix.MatrixStack;
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.IRenderable;
 import net.minecraft.client.gui.widget.Widget;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.text.IFormattableTextComponent;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.StringTextComponent;
+
+import javax.annotation.Nonnull;
+import java.util.ArrayList;
+import java.util.function.Consumer;
+import java.util.function.Function;
 
 import static com.limachi.dimensional_bags.DimBag.MOD_ID;
 import static com.limachi.dimensional_bags.client.render.TextureCutout.HOVERED;
 import static com.limachi.dimensional_bags.client.render.TextureCutout.SELECTED;
-import static org.lwjgl.opengl.GL11.glScissor;
+import static org.lwjgl.opengl.GL11.*;
 
 public class BaseWidget extends Widget {
     public static final ResourceLocation DEFAULT_BACKGROUND = new ResourceLocation(MOD_ID, "textures/widgets/backgrounds.png");
@@ -33,25 +40,77 @@ public class BaseWidget extends Widget {
     protected boolean isToggle = false;
     protected int drag = -1;
     protected boolean enableClickBehavior = true;
-    protected BaseParentWidget parent = null;
+    protected BaseWidget parent = null;
     protected boolean wasHovered = false;
     private SimpleContainerScreen<?> screen = null;
-    public int relX;
-    public int relY;
-    public ITextComponent tooltip = null;
+    protected Function<BaseWidget, IFormattableTextComponent> tooltip = null;
+    protected Function<BaseWidget, IRenderable> deferredRender = null;
+    protected int group_id = 0;
+
+    protected boolean isRenderingChildren = false;
+    protected boolean canTakeFocus = false;
+    protected final ArrayList<BaseWidget> children = new ArrayList<>();
+
+    public static void runOnGroup(SimpleContainerScreen<?> screen, int group, Consumer<BaseWidget> run) {
+        screen.getButtons().forEach(b -> {
+            if (b instanceof BaseWidget && ((BaseWidget)b).group_id == group)
+                run.accept((BaseWidget) b);
+        });
+    }
+
+    public void runOnGroup(int group, Consumer<BaseWidget> run) {
+        if (screen != null)
+            runOnGroup(screen, group, run);
+    }
+
+    public void runOnGroup(Consumer<BaseWidget> run) {
+        if (screen != null)
+            runOnGroup(screen, group_id, run);
+    }
+
+    public int getGroup() { return group_id; }
+
+    public <T extends BaseWidget> T setGroup(int group) { this.group_id = group; return (T)this; }
+
+    public int x() { return x + (parent != null ? parent.x() : 0); }
+
+    public int y() { return y + (parent != null ? parent.y() : 0); }
 
     public BaseWidget(int x, int y, int width, int height, ITextComponent title) {
-        super(0, 0, width, height, title);
-        relX = x;
-        relY = y;
+        super(x, y, width, height, title);
     }
 
     public BaseWidget(int x, int y, int width, int height) { this(x, y, width, height, StringTextComponent.EMPTY); }
 
+    public <T extends BaseWidget> T disable() {
+        active = false;
+        visible = false;
+        changeFocus(false);
+        setSelected(false);
+        return (T)this;
+    }
+
+    public <T extends BaseWidget> T enable() {
+        active = true;
+        visible = true;
+        return (T)this;
+    }
+
     @Override
-    public void renderToolTip(MatrixStack matrixStack, int mouseX, int mouseY) {
+    public void renderToolTip(@Nonnull MatrixStack matrixStack, int mouseX, int mouseY) {
         if (tooltip != null)
-            screen.renderToolTip(matrixStack, screen.getFont().split(tooltip, Math.max(screen.width / 2 - 43, 170)), mouseX, mouseY, screen.getFont());
+            screen.renderToolTip(matrixStack, screen.getFont().split(tooltip.apply(this), Math.max(screen.width / 2 - 43, 170)), mouseX, mouseY, screen.getFont());
+    }
+
+    public <T extends BaseWidget> T setTooltipProcessor(Function<BaseWidget, IFormattableTextComponent> tooltip) { this.tooltip = tooltip; return (T)this; }
+    public <T extends BaseWidget> T appendTooltipProcessor(Function<BaseWidget, IFormattableTextComponent> tooltip) {
+        if (this.tooltip == null)
+            this.tooltip = tooltip;
+        else {
+            final Function<BaseWidget, IFormattableTextComponent> t = this.tooltip;
+            this.tooltip = b -> t.apply(b).copy().append(tooltip.apply(b));
+        }
+        return (T)this;
     }
 
     public void attachToScreen(SimpleContainerScreen<?> screen) { this.screen = screen; }
@@ -61,7 +120,7 @@ public class BaseWidget extends Widget {
     public boolean consumeEscKey() { return consumeEscKey; }
 
     public boolean changeFocus(boolean focus) {
-        if (this.active && this.visible && focus != isFocused()) {
+        if (active && visible && canTakeFocus && focus != isFocused()) {
             setFocused(focus);
             if (screen != null) {
                 if (focus) {
@@ -90,7 +149,7 @@ public class BaseWidget extends Widget {
     }
 
     @Override
-    public void render(MatrixStack matrixStack, int mouseX, int mouseY, float partialTicks) {
+    public void render(@Nonnull MatrixStack matrixStack, int mouseX, int mouseY, float partialTicks) {
         if (visible && (parent == null || parent.isRenderingChildren)) {
             isHovered = isMouseOver(mouseX, mouseY);
             if (wasHovered != isHovered()) {
@@ -113,10 +172,10 @@ public class BaseWidget extends Widget {
                     RenderSystem.enableDepthTest();
                 }
                 if (renderStandardBackground)
-                    renderStandardBackground(matrixStack, partialTicks, x, y, width, height, active, renderState());
+                    renderStandardBackground(matrixStack, partialTicks, x(), y(), width, height, active, renderState());
                 renderBg(matrixStack, MINECRAFT, mouseX, mouseY);
                 if (renderTitle)
-                    drawCenteredString(matrixStack, MINECRAFT.font, getMessage(), x + width / 2, y + (height - 8) / 2, getFGColor() | MathHelper.ceil(alpha * 255.0F) << 24);
+                    drawCenteredString(matrixStack, MINECRAFT.font, getMessage(), x() + width / 2, y() + (height - 8) / 2, getFGColor() | MathHelper.ceil(alpha * 255.0F) << 24);
                 renderButton(matrixStack, mouseX, mouseY, partialTicks);
             }
 
@@ -129,9 +188,47 @@ public class BaseWidget extends Widget {
         (active ? STATE_ARRAY[state] : DISABLED_TEXTURE).blit(matrixStack, new Box2d(x, y, width, height), 0, TextureCutout.TextureApplicationPattern.MIDDLE_EXPANSION);
     }
 
-    public void init() {}
+    public void init() {
+        for (BaseWidget widget : children) {
+            if (screen != null) {
+                widget.attachToScreen(screen);
+                screen.addButton(widget);
+            }
+            widget.init();
+        }
+    }
+
+    public void addChild(BaseWidget widget) {
+        if (widget == null) return;
+        if (screen != null) {
+            widget.attachToScreen(screen);
+            screen.addButton(widget);
+        }
+        children.add(widget);
+        widget.setParent(this);
+    }
+
+    public void removeChild(BaseWidget widget) {
+        if (widget == null) return;
+        children.remove(widget);
+        widget.setParent(null);
+        widget.detachFromScreen();
+        if (screen != null)
+            screen.removeButton(widget);
+    }
+
     @Override
-    public void renderButton(MatrixStack matrixStack, int mouseX, int mouseY, float partialTicks) {}
+    public void renderButton(@Nonnull MatrixStack matrixStack, int mouseX, int mouseY, float partialTicks) {
+        if (!children.isEmpty()) {
+            glEnable(GL_SCISSOR_TEST);
+            scissor(x(), y(), width, height); //make sure the children widgets will not 'bleed' outside the parent
+            isRenderingChildren = true; //trick to signify to children that they are allowed to render (by checking the state of the parent)
+            for (BaseWidget child : children)
+                child.render(matrixStack, mouseX, mouseY, partialTicks);
+            isRenderingChildren = false;
+            glDisable(GL_SCISSOR_TEST);
+        }
+    }
 
     public boolean isSelected() { return isSelected; }
 
@@ -153,9 +250,9 @@ public class BaseWidget extends Widget {
 
     public boolean isClickable() { return enableClickBehavior; }
 
-    public <T extends BaseWidget> T setParent(BaseParentWidget parent) { this.parent = parent; return (T)this; }
+    public <T extends BaseWidget> T setParent(BaseWidget parent) { this.parent = parent; return (T)this; }
 
-    public BaseParentWidget getParent() { return parent; }
+    public BaseWidget getParent() { return parent; }
 
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
         if (active && visible && enableClickBehavior && isValidClickButton(button) && clicked(mouseX, mouseY)) {
@@ -188,9 +285,17 @@ public class BaseWidget extends Widget {
 
     @Override
     public boolean isMouseOver(double mouseX, double mouseY) {
-        return active && visible && mouseX >= (double)x && mouseY >= (double)y && mouseX < (double)(x + width) && mouseY < (double)(y + height);
+        boolean hover = false;
+        for (BaseWidget child : children)
+            hover |= child.isMouseOver(mouseX, mouseY);
+        return !hover && active && visible && mouseX >= (double)x() && mouseY >= (double)y() && mouseX < (double)(x() + width) && mouseY < (double)(y() + height);
     }
 
     @Override
-    public boolean clicked(double mouseX, double mouseY) { return isMouseOver(mouseX, mouseY); }
+    public boolean clicked(double mouseX, double mouseY) {
+        boolean click = false;
+        for (BaseWidget child : children)
+            click |= child.clicked(mouseX, mouseY);
+        return !click && enableClickBehavior && active && isMouseOver(mouseX, mouseY);
+    }
 }

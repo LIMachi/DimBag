@@ -12,7 +12,7 @@ import com.limachi.dimensional_bags.common.data.IEyeIdHolder;
 import com.limachi.dimensional_bags.common.entities.BagEntity;
 import com.limachi.dimensional_bags.common.inventory.BagProxy;
 import com.limachi.dimensional_bags.common.items.entity.BagEntityItem;
-import com.limachi.dimensional_bags.common.items.upgrades.BaseUpgrade;
+import com.limachi.dimensional_bags.common.items.upgrades.BaseUpgradeBag;
 import com.limachi.dimensional_bags.common.managers.ModeManager;
 import com.limachi.dimensional_bags.common.managers.UpgradeManager;
 import com.limachi.dimensional_bags.common.managers.modes.Settings;
@@ -46,7 +46,6 @@ import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
 
 import com.limachi.dimensional_bags.StaticInit;
@@ -82,7 +81,7 @@ public class Bag extends Item {
         return CuriosIntegration.searchItem(entity, Bag.class, stack->Bag.getEyeId(stack) == id) != null;
     }
 
-    public static boolean equipBagOnCuriosSlot(ItemStack bag, PlayerEntity player) {
+    public static boolean equipBagOnCuriosSlot(ItemStack bag, LivingEntity player) {
         return CuriosIntegration.equipOnFirstValidSlot(player, CuriosIntegration.BAG_CURIOS_SLOT, bag);
     }
 
@@ -113,7 +112,7 @@ public class Bag extends Item {
             if (block instanceof IBagWrenchable && KeyMapController.KeyBindings.SNEAK_KEY.getState(context.getPlayer())) //if the player is crouching and using the bag, then use it as a wrench
                 return ((IBagWrenchable) block).wrenchWithBag(context.getLevel(), context.getClickedPos(), state, context.getClickedFace());
             if (block instanceof IHasBagSettings)
-                return ((IHasBagSettings) block).openSettings(context.getPlayer());
+                return ((IHasBagSettings) block).openSettings(context.getPlayer(), context.getClickedPos());
         }
         return super.onItemUseFirst(stack, context);
     }
@@ -193,7 +192,7 @@ public class Bag extends Item {
             UpgradeManager upData = UpgradeManager.getInstance(eye);
             ArrayList<String> installedUpgrades = UpgradeManager.execute(eye, UpgradeManager::getInstalledUpgrades, new ArrayList<>());
             for (String upgrade : installedUpgrades) {
-                BaseUpgrade up = UpgradeManager.getUpgrade(upgrade);
+                BaseUpgradeBag up = UpgradeManager.getUpgrade(upgrade);
                 tooltip.add(new TranslationTextComponent("tooltip.bag.upgrade_count", up.upgradeName(), up.getCount(upData), up.getMaxCount()));
             }
         }

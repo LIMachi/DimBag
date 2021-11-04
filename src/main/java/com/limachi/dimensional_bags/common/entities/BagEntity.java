@@ -34,15 +34,14 @@ import net.minecraftforge.items.CapabilityItemHandler;
 import javax.annotation.Nonnull;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Supplier;
 
 @StaticInit
 public class BagEntity extends MobEntity implements IEyeIdHolder {
 
     public static final String NAME = "bag_entity";
 
-    static {
-        Registries.registerEntityType(NAME, () -> EntityType.Builder.<BagEntity>of(BagEntity::new, EntityClassification.MISC).sized(0.5f, 1f).build(new ResourceLocation(MOD_ID, "bag_entity").toString()));
-    }
+    public static final Supplier<EntityType<BagEntity>> INSTANCE = Registries.registerEntityType(NAME, () -> EntityType.Builder.<BagEntity>of(BagEntity::new, EntityClassification.MISC).sized(0.5f, 1f).build(new ResourceLocation(MOD_ID, "bag_entity").toString()));
 
     private static final List<ItemStack> EMPTY_EQUIPMENT = Collections.emptyList();
 

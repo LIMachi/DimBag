@@ -10,6 +10,7 @@ import com.limachi.dimensional_bags.utils.UUIDUtils;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.entity.player.ServerPlayerEntity;
+import net.minecraft.inventory.container.ContainerType;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.StringTextComponent;
@@ -33,6 +34,12 @@ public class PillarContainer extends BaseEyeContainer<PillarContainer> {
     public static void open(PlayerEntity player, int eye, @Nullable UUID pillarId) {
         if (player instanceof ServerPlayerEntity)
             BaseContainer.open(player, new PillarContainer(((ServerPlayerEntity)player).containerCounter + 1, player.inventory, eye, pillarId));
+    }
+
+    protected PillarContainer(ContainerType<?> containerType, int windowId, PlayerInventory playerInv, PacketBuffer extraData) { super(containerType, windowId, playerInv, extraData); }
+    protected PillarContainer(ContainerType<?> containerType, int windowId, PlayerInventory playerInv, int eye, @Nullable UUID pillarId) {
+        super(containerType, windowId, playerInv, eye);
+        loadPillarFromUUID(pillarId);
     }
 
     public PillarContainer(int windowId, PlayerInventory playerInv, PacketBuffer extraData) {

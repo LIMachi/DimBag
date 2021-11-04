@@ -24,6 +24,7 @@ import net.minecraft.item.ItemModelsProperties;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.ModelRegistryEvent;
+import net.minecraftforge.client.model.ModelLoaderRegistry;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.client.registry.ClientRegistry;
 import net.minecraftforge.fml.client.registry.RenderingRegistry;
@@ -40,10 +41,12 @@ public class ClientEventSubscriber {
     @SubscribeEvent
     public static void clientSetup(FMLClientSetupEvent event) {
         ClientRegistry.bindTileEntityRenderer(Registries.getBlockEntityType(FountainTileEntity.NAME), Fountain::new);
+
         ScreenManager.register(Registries.getContainerType(UserPillarContainer.NAME), UserPillarGUI::new);
         ScreenManager.register(Registries.getContainerType(SettingsContainer.NAME), SettingsScreen::new);
         ScreenManager.register(Registries.getContainerType(PillarContainer.NAME), SimpleContainerScreen<PillarContainer>::new);
         ScreenManager.register(Registries.getContainerType(FountainContainer.NAME), SimpleContainerScreen<FountainContainer>::new);
+        ScreenManager.register(Registries.getContainerType(PillarSettingsContainer.NAME), SimpleContainerScreen<PillarSettingsContainer>::new);
 
         RenderingRegistry.registerEntityRenderingHandler(Registries.getEntityType(BagEntityItem.NAME), EntityItemRenderer::new);
 
@@ -61,6 +64,8 @@ public class ClientEventSubscriber {
             PlayerRenderer renderer = skin.get(key);
             renderer.addLayer(new BagLayer<>(renderer, new BipedModel(0.5F), new BipedModel(1.0F)));
         }
+
+//        ModelLoaderRegistry.registerLoader(, );
     }
 
     @SubscribeEvent

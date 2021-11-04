@@ -3,9 +3,10 @@ package com.limachi.dimensional_bags.common.inventory;
 import com.limachi.dimensional_bags.DimBag;
 import com.limachi.dimensional_bags.ConfigManager.Config;
 import com.limachi.dimensional_bags.common.container.BaseContainer;
+import com.limachi.dimensional_bags.common.items.upgrades.BaseUpgradeInventory;
 import com.limachi.dimensional_bags.common.tileentities.TEWithUUID;
 import com.limachi.dimensional_bags.utils.StackUtils;
-import net.minecraft.entity.player.ServerPlayerEntity;
+import com.sun.javafx.util.Utils;
 import net.minecraft.inventory.container.Slot;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundNBT;
@@ -28,8 +29,46 @@ public class PillarInventory implements ISimpleItemHandlerSerializable {
     protected boolean locked = false; //does this pillar need to keep it's last item
     public Runnable notifyDirt;
 
-    protected ItemStack[] upgrades = {ItemStack.EMPTY, ItemStack.EMPTY, ItemStack.EMPTY}; //addition upgrade (up to 64), multiplication upgrade (up to 64), void upgrade, creative
+    protected UpgradesInventory upgrades = new UpgradesInventory(BaseUpgradeInventory.UpgradeTarget.PILLAR, 4, this::applyUpgrades);
     protected String filter; //regex on name of item (could implement a behavior of: dropping item there would extract the name)
+
+    public boolean addSize(int add, boolean mayFail) {
+        int p = size;
+        size = Utils.clamp(0, size + add, 30000000);
+        if (mayFail && p + add != size) {
+            size = p;
+            return false;
+        }
+        if (p != size && stack.getCount() > getSizeInItems())
+            stack.setCount(getSizeInItems());
+        return true;
+    }
+
+    public boolean mulSize(double f, boolean mayFail) {
+        int p = size;
+        size = Utils.clamp(0, (int)(size * f), 30000000);
+        if (mayFail && (int)(p * f) != size) {
+            size = p;
+            return false;
+        }
+        if (p != size && stack.getCount() > getSizeInItems())
+            stack.setCount(getSizeInItems());
+        return true;
+    }
+
+    protected boolean applyUpgrades() {
+        ItemStack pi = stack.copy();
+        int ps = size;
+        size = DEFAULT_SIZE_IN_STACKS;
+        boolean pl = locked;
+        locked = false;
+        boolean r = upgrades.applyUpgrades(this);
+        if (ps != size || pl != locked || !stack.equals(pi))
+            setChanged();
+        return r;
+    }
+
+    public UpgradesInventory getUpgradesInventory() { return upgrades; }
 
     @Override
     public boolean equals(Object o) {
@@ -49,9 +88,7 @@ public class PillarInventory implements ISimpleItemHandlerSerializable {
 
     private static class PillarSlot extends SlotItemHandler {
 
-        public PillarSlot(IItemHandler itemHandler, int index, int xPosition, int yPosition) {
-            super(itemHandler, index, xPosition, yPosition);
-        }
+        public PillarSlot(IItemHandler itemHandler, int index, int xPosition, int yPosition) { super(itemHandler, index, xPosition, yPosition); }
 
         @Override
         public int getMaxStackSize(@Nonnull ItemStack stack) {
@@ -61,16 +98,7 @@ public class PillarInventory implements ISimpleItemHandlerSerializable {
     }
 
     @Override
-    public Slot createSlot(int index, int x, int y) {
-        return new PillarSlot(this, index, x, y);
-    }
-
-    public void open(ServerPlayerEntity player) { //FIXME
-//        ArrayList<Integer> list = new ArrayList<>();
-//        list.add(0);
-//        SimpleContainer.open(player, new TranslationTextComponent("inventory.pillar.name"), this, null, list, 1, 1, t->true);
-//        new PillarContainer(0, player.inventory, getEyeId(), null).open(player);
-    }
+    public Slot createSlot(int index, int x, int y) { return new PillarSlot(this, index, x, y); }
 
     @Override
     public CompoundNBT serializeNBT() {
@@ -79,6 +107,7 @@ public class PillarInventory implements ISimpleItemHandlerSerializable {
         out.putInt("size", size);
         CompoundNBT ref = new CompoundNBT();
         out.put("stack", StackUtils.writeAsCompound(stack));
+        out.put("upgrades", upgrades.serializeNBT());
         return out;
     }
 
@@ -95,11 +124,10 @@ public class PillarInventory implements ISimpleItemHandlerSerializable {
             id = nbt.getUUID("UUID");
         size = nbt.getInt("size");
         stack = StackUtils.readFromCompound(nbt.getCompound("stack"));
+        upgrades.deserializeNBT(nbt.getCompound("upgrades"));
     }
 
     public void setLockState(boolean lock) {
-        if (lock != locked)
-            setChanged();
         locked = lock;
     }
 
@@ -115,6 +143,8 @@ public class PillarInventory implements ISimpleItemHandlerSerializable {
         setChanged();
     }
 
+    public void setCreativeStack() { stack.setCount(Integer.MAX_VALUE); }
+
     @Override
     public int getSlots() { return 1; }
 
@@ -122,12 +152,20 @@ public class PillarInventory implements ISimpleItemHandlerSerializable {
     @Override
     public ItemStack getStackInSlot(int slot) { return stack; }
 
+    public boolean isVoid() {
+        for (ItemStack i : upgrades.upgrades)
+            if (!i.isEmpty() && ((BaseUpgradeInventory)i.getItem()).isVoid())
+                return true;
+        return false;
+    }
+
     @Nonnull
     @Override
     public ItemStack insertItem(int slot, @Nonnull ItemStack input, boolean simulate) {
         if (!isItemValid(slot, input)) return input;
+        boolean isVoid = isVoid();
         int toInput = Math.min(input.getCount(), getSizeInItems() - stack.getCount());
-        if (toInput == 0) return input;
+        if (toInput <= 0) return isVoid ? ItemStack.EMPTY : input;
         ItemStack out = input.copy();
         out.shrink(toInput);
         if (!simulate) {
@@ -138,7 +176,7 @@ public class PillarInventory implements ISimpleItemHandlerSerializable {
                 stack.grow(toInput);
             setChanged();
         }
-        return out;
+        return isVoid ? ItemStack.EMPTY : out;
     }
 
     @Nonnull
@@ -166,7 +204,7 @@ public class PillarInventory implements ISimpleItemHandlerSerializable {
     public int getSlotLimit(int slot) { return size * stack.getMaxStackSize(); }
 
     @Override
-    public boolean isItemValid(int slot, @Nonnull ItemStack test) { return !test.isEmpty() && (stack.isEmpty() || BaseContainer.areStackable(stack, test)); }
+    public boolean isItemValid(int slot, @Nonnull ItemStack test) { return !test.isEmpty() && (stack.isEmpty() || StackUtils.areStackable(stack, test)); }
 
     @Override
     public void readFromBuff(PacketBuffer buff) {
@@ -174,6 +212,7 @@ public class PillarInventory implements ISimpleItemHandlerSerializable {
         size = buff.readInt();
         stack = buff.readItem();
         locked = buff.readBoolean();
+        upgrades.readFromBuff(buff);
     }
 
     @Override
@@ -182,5 +221,6 @@ public class PillarInventory implements ISimpleItemHandlerSerializable {
         buff.writeInt(size);
         buff.writeItemStack(stack, false);
         buff.writeBoolean(locked);
+        upgrades.writeToBuff(buff);
     }
 }

@@ -32,7 +32,7 @@ public class FluidSlot extends Slot implements IRenderable {
     @Override
     public void set(ItemStack stack) {
         if (stack.getItem() instanceof FluidItem) {
-            FluidStack fluid = FluidStack.loadFluidStackFromNBT(stack.getTag());
+            FluidStack fluid = /*FluidStack.loadFluidStackFromNBT(stack.getTag())*/FluidItem.getHandler(stack).getFluidInTank(0);
             int ps = fluidHandler.getSelectedTank();
             fluidHandler.selectTank(getSlotIndex());
             FluidStack local = fluidHandler.getFluidInTank(getSlotIndex());

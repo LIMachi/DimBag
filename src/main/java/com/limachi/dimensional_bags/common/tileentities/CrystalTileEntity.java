@@ -5,6 +5,8 @@ import com.limachi.dimensional_bags.common.Registries;
 import com.limachi.dimensional_bags.common.blocks.Crystal;
 import com.limachi.dimensional_bags.common.data.EyeDataMK2.EnergyData;
 import com.limachi.dimensional_bags.common.data.EyeDataMK2.SubRoomsManager;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.Direction;
 import net.minecraftforge.common.capabilities.Capability;
@@ -18,7 +20,7 @@ import java.util.Collections;
 import java.util.List;
 
 @StaticInit
-public class CrystalTileEntity extends BaseTileEntity implements IEnergyStorage, IisBagTE {
+public class CrystalTileEntity extends BaseTileEntity implements IEnergyStorage, IisBagTE, IInstallUpgradeTE {
 
     public static final String NAME = "crystal";
 
@@ -123,5 +125,10 @@ public class CrystalTileEntity extends BaseTileEntity implements IEnergyStorage,
         EnergyData ed = data.get();
         if (ed == null) return false;
         return ed.canReceive();
+    }
+
+    @Override
+    public ItemStack installUpgrades(PlayerEntity player, ItemStack stack) {
+        return stack;
     }
 }

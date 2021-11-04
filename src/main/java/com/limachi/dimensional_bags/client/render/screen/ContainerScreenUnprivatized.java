@@ -26,7 +26,7 @@ import javax.annotation.Nullable;
 
 /**
  * reimplement all functions and variables that where declared private in ContainerScreen, so we can manipulate them in screen extending this
- */
+ *//*
 public abstract class ContainerScreenUnprivatized<T extends Container> extends ContainerScreen<T> {
     @Nullable
     protected Slot clickedSlot;
@@ -277,10 +277,13 @@ public abstract class ContainerScreenUnprivatized<T extends Container> extends C
     }
 
     protected boolean defaultMouseReleased(double mouseX, double mouseY, int button) {
+        boolean t = false;
+        if (isDragging() && getFocused() != null)
+            t = getFocused().mouseReleased(mouseX, mouseY, button);
         this.setDragging(false);
         return this.getChildAt(mouseX, mouseY).filter((child) -> {
             return child.mouseReleased(mouseX, mouseY, button);
-        }).isPresent();
+        }).isPresent() || t;
     }
 
     @Override
@@ -516,4 +519,4 @@ public abstract class ContainerScreenUnprivatized<T extends Container> extends C
     protected boolean isHovering(Slot slot, double mouseX, double mouseY) {
         return this.isHovering(slot.x, slot.y, 16, 16, mouseX, mouseY);
     }
-}
+}*/

@@ -6,7 +6,9 @@ import com.limachi.dimensional_bags.ConfigManager.Config;
 import com.limachi.dimensional_bags.common.blocks.BagGateway;
 import com.limachi.dimensional_bags.common.blocks.Wall;
 import com.limachi.dimensional_bags.common.data.DimBagData;
-import com.limachi.dimensional_bags.common.items.upgrades.ParadoxUpgrade;
+import com.limachi.dimensional_bags.common.items.GhostBag;
+import com.limachi.dimensional_bags.common.items.upgrades.bag.ParadoxUpgrade;
+import com.limachi.dimensional_bags.common.managers.modes.Default;
 import com.limachi.dimensional_bags.utils.NBTUtils;
 import com.limachi.dimensional_bags.common.Registries;
 import com.limachi.dimensional_bags.utils.WorldUtils;
@@ -411,19 +413,25 @@ public class SubRoomsManager extends WorldSavedDataManager.EyeWorldSavedData {
                 BlockPos dst = new BlockPos(proxy.getInt("X"), proxy.getInt("Y"), proxy.getInt("Z"));
                 if (proxyData == null)
                     t.remove("proxy");
-                WorldUtils.teleportEntity(entity, wrk, dst);
+                entity = WorldUtils.teleportEntity(entity, wrk, dst);
             }
-            else
-                HolderData.execute(getEyeId(), holderData -> holderData.tpToHolder(entity));
+            else {
+                Entity finalEntity = entity;
+                entity = HolderData.execute(getEyeId(), holderData -> holderData.tpToHolder(finalEntity), finalEntity);
+            }
         }
         else
-            WorldUtils.teleportEntity(entity, world, pos);
+            entity = WorldUtils.teleportEntity(entity, world, pos);
         //TODO: reequip code
+        if (reequipIfAble) {
+            PlayerEntity finalEntity1 = (PlayerEntity) entity;
+            entity.level.getEntities(BagEntity.INSTANCE.get(), new AxisAlignedBB(entity.blockPosition().offset(-2, -2, -2), entity.blockPosition().offset(2, 2, 2)), p->p.getEyeId() == getEyeId()).forEach(b->{if (!Bag.equipBagOnCuriosSlot(b.getBagItem(), finalEntity1)) finalEntity1.addItem(b.getBagItem());});
+        }
         return true;
     }
 
     public boolean leaveBag(Entity entity) {
-        return leaveBag(entity, entity instanceof PlayerEntity && (false/*quick equip setting*/), null, null, null);
+        return leaveBag(entity, entity instanceof PlayerEntity && (Boolean)Default.getSetting(Default.ID, getEyeId(), "quick_reequip") && OwnerData.execute(getEyeId(), o->entity.equals(o.getPlayer()), false), null, null, null);
     }
 
     /**
@@ -450,7 +458,7 @@ public class SubRoomsManager extends WorldSavedDataManager.EyeWorldSavedData {
             proxy.putInt("Z", entity.blockPosition().getZ());
         }
         if (checkForBag && !UpgradeManager.isUpgradeInstalled(getEyeId(), "inception").isPresent()) {
-            List<CuriosIntegration.ProxySlotModifier> res = CuriosIntegration.searchItem(entity, Bag.class, o->Bag.getEyeId(o) == getEyeId(), true);
+            List<CuriosIntegration.ProxySlotModifier> res = CuriosIntegration.searchItem(entity, Bag.class, o->!(o.getItem() instanceof GhostBag) && Bag.getEyeId(o) == getEyeId(), true);
             for (CuriosIntegration.ProxySlotModifier p : res) {
                 BagEntity.spawn(entity.level, entity.blockPosition(), p.get());
                 p.set(ItemStack.EMPTY);

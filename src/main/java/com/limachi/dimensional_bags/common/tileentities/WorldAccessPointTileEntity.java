@@ -10,6 +10,7 @@ import com.limachi.dimensional_bags.common.data.EyeDataMK2.HolderData;
 import com.limachi.dimensional_bags.common.data.EyeDataMK2.SubRoomsManager;
 import com.limachi.dimensional_bags.common.entities.BagEntity;
 import com.limachi.dimensional_bags.common.items.Bag;
+import com.limachi.dimensional_bags.utils.StackUtils;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.ChestBlock;
@@ -243,7 +244,7 @@ public class WorldAccessPointTileEntity extends BaseTileEntity implements IEnerg
     @Override
     public ItemStack insertItem(int slot, @Nonnull ItemStack stack, boolean simulate) {
         ItemStack holdItem = getItemHold();
-        if (slot == 0 && (holdItem.isEmpty() || BaseContainer.areStackable(holdItem, stack))) {
+        if (slot == 0 && (holdItem.isEmpty() || StackUtils.areStackable(holdItem, stack))) {
             int toInput = Math.min(stack.getCount(), 64 - holdItem.getCount());
             if (toInput == 0) return stack;
             ItemStack out = stack.copy();

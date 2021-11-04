@@ -2,13 +2,9 @@ package com.limachi.dimensional_bags.client;
 
 import com.google.common.collect.ArrayListMultimap;
 import com.limachi.dimensional_bags.ConfigManager.Config;
-import com.limachi.dimensional_bags.DimBag;
 import com.limachi.dimensional_bags.common.data.EyeDataMK2.SubRoomsManager;
 import com.limachi.dimensional_bags.common.items.TunnelPlacer;
 import com.limachi.dimensional_bags.utils.TextUtils;
-//import com.limachi.dimensional_bags.common.data.EyeDataMK2.ClientDataManager;
-import com.limachi.dimensional_bags.common.items.Bag;
-import com.limachi.dimensional_bags.common.items.GhostBag;
 import com.mojang.blaze3d.matrix.MatrixStack;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.IVertexBuilder;
@@ -20,17 +16,13 @@ import net.minecraft.client.renderer.IRenderTypeBuffer;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.client.renderer.vertex.VertexFormat;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.inventory.EquipmentSlotType;
-import net.minecraft.item.ItemStack;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.vector.Matrix4f;
 import net.minecraft.util.math.vector.Vector3d;
 import net.minecraft.util.math.vector.Vector3f;
 import net.minecraft.util.text.ITextComponent;
+import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.client.event.DrawHighlightEvent;
-import net.minecraftforge.client.event.RenderGameOverlayEvent;
 import net.minecraftforge.client.event.RenderWorldLastEvent;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.player.ItemTooltipEvent;
@@ -49,59 +41,21 @@ public class EventManager {
 
     @SubscribeEvent /** small helper event to add extra tooltip information on items with nbt (and remove the vanilla text for nbt) */
     public static void addExtendedTooltip(ItemTooltipEvent event) {
-        if (NBT_TOOLTIP && event.getItemStack().getTag() != null && event.getFlags().isAdvanced() && event.getPlayer() instanceof ClientPlayerEntity && Screen.hasControlDown()) {
-            List<ITextComponent> tooltip = event.getToolTip();
-            ITextComponent remove = null;
-            for (ITextComponent t : tooltip)
-                if (t.getString().matches("NBT: [0-9]+ tag\\(s\\)")) {
-                    remove = t;
-                    break;
-                }
-            if (remove != null)
-                tooltip.remove(remove);
-            tooltip.add(TextUtils.prettyNBT(event.getItemStack().getTag()));
+        if (NBT_TOOLTIP && event.getItemStack().getTag() != null && event.getFlags().isAdvanced() && event.getPlayer() instanceof ClientPlayerEntity) {
+            if (Screen.hasAltDown()) {
+                List<ITextComponent> tooltip = event.getToolTip();
+                ITextComponent remove = null;
+                for (ITextComponent t : tooltip)
+                    if (t.getString().matches("NBT: [0-9]+ tag\\(s\\)")) {
+                        remove = t;
+                        break;
+                    }
+                if (remove != null)
+                    tooltip.remove(remove);
+                tooltip.add(TextUtils.prettyNBT(event.getItemStack().getTag()));
+            } else
+                event.getToolTip().add(new TranslationTextComponent("extended_tooltip.nbt_tooltip.use_alt"));
         }
-    }
-
-    /*
-    @SubscribeEvent
-    public static void addBagInformationToOverlay(RenderGameOverlayEvent.Pre event) { //might be used at some point to add hud ellements
-        if (event.getType() == RenderGameOverlayEvent.ElementType.ALL) {
-            PlayerEntity player = DimBag.getPlayer();
-            ItemStack mainHand = player.getMainHandItem();
-            if (!mainHand.isEmpty() && (mainHand.getItem() instanceof Bag || mainHand.getItem() instanceof GhostBag)) {
-                ClientDataManager data = GhostBag.getClientData(mainHand);
-                if (data != null) {
-                    data.onRenderHud((ClientPlayerEntity)player, event.getWindow(), event.getMatrixStack(), event.getPartialTicks());
-                    return;
-                }
-            }
-            ItemStack offHand = player.getOffHandItem();
-            if (!offHand.isEmpty() && (offHand.getItem() instanceof Bag || offHand.getItem() instanceof GhostBag)) {
-                ClientDataManager data = GhostBag.getClientData(offHand);
-                if (data != null) {
-                    data.onRenderHud((ClientPlayerEntity)player, event.getWindow(), event.getMatrixStack(), event.getPartialTicks());
-                    return;
-                }
-            }
-            ItemStack chestPlate = player.getItemBySlot(EquipmentSlotType.CHEST);
-            if (!chestPlate.isEmpty() && (chestPlate.getItem() instanceof Bag || chestPlate.getItem() instanceof GhostBag)) {
-                ClientDataManager data = GhostBag.getClientData(chestPlate);
-                if (data != null) {
-                    data.onRenderHud((ClientPlayerEntity)player, event.getWindow(), event.getMatrixStack(), event.getPartialTicks());
-                    return;
-                }
-            }
-        }
-    }
-    */
-
-    @SubscribeEvent
-    static void removeHighlightOnTunnelPlacer(DrawHighlightEvent event) {
-        ClientPlayerEntity player = Minecraft.getInstance().player;
-        if (player == null) return;
-        if (player.getMainHandItem().getItem() instanceof TunnelPlacer || player.getOffhandItem().getItem() instanceof TunnelPlacer)
-            event.setCanceled(true);
     }
 
     public static class RenderTypes extends RenderType {

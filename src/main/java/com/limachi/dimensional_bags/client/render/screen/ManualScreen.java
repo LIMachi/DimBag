@@ -9,23 +9,12 @@ public class ManualScreen extends ClientSideOnlyScreenHandler.ClientSideOnlyScre
 
     private static final ITextComponent DEFAULT_TEXT = new TranslationTextComponent("screen.manual.missing_patchouli");
 
-    private TextWidget text;
-
     public static void open() { ClientSideOnlyScreenHandler.open(new ManualScreen()); }
 
-    public ManualScreen() {
-    }
+    public ManualScreen() {}
 
     @Override
     public void first() {
-        text = new TextWidget(10, 10, 156, 147, Minecraft.getInstance().font, DEFAULT_TEXT, 4210752).enableClickBehavior(false).enableToggleBehavior(false).enableRenderStandardBackground(false);
+        handler.background.addChild(new TextWidget(5, 5, 156, 147, Minecraft.getInstance().font, DEFAULT_TEXT, 4210752).enableClickBehavior(false).enableToggleBehavior(false).enableRenderStandardBackground(false));
     }
-
-    @Override
-    public void rebuild() {
-        handler.addButton(text, 10, 10);
-    }
-
-    @Override
-    public void end() {}
 }

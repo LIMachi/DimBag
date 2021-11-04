@@ -4,14 +4,11 @@ import com.limachi.dimensional_bags.common.Registries;
 import com.limachi.dimensional_bags.common.data.EyeDataMK2.HolderData;
 import com.limachi.dimensional_bags.common.data.IEyeIdHolder;
 import com.limachi.dimensional_bags.common.items.Bag;
-import com.limachi.dimensional_bags.common.items.upgrades.EnticingUpgrade;
 import net.minecraft.entity.EntityClassification;
 import net.minecraft.entity.EntityType;
-import net.minecraft.entity.MobEntity;
 import net.minecraft.entity.item.ItemEntity;
 import net.minecraft.entity.merchant.villager.AbstractVillagerEntity;
 import net.minecraft.entity.passive.FoxEntity;
-import net.minecraft.inventory.EquipmentSlotType;
 import net.minecraft.inventory.Inventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundNBT;
@@ -28,8 +25,6 @@ import net.minecraftforge.fml.common.Mod;
 
 import com.limachi.dimensional_bags.StaticInit;
 import net.minecraftforge.fml.network.NetworkHooks;
-
-import java.util.Iterator;
 
 @Mod.EventBusSubscriber
 @StaticInit
@@ -103,36 +98,6 @@ public class BagEntityItem extends ItemEntity implements IEyeIdHolder {
             ItemStack mh = ItemStack.of(event.getEntity().getPersistentData().getCompound("FoxEntity#spawnDrops"));
             if (!mh.isEmpty()) event.getDrops().add(event.getEntity().spawnAtLocation(mh));
         }
-    }
-
-    //FIXME: should be moved to the upgrade and in the upgrade tick
-    public static void enticingUpgradeBehavior(int id, BagEntityItem self) {
-        if (EnticingUpgrade.getInstance(EnticingUpgrade.NAME).isActive(id))
-            for (MobEntity entity : self.level.getEntitiesOfClass(MobEntity.class, self.getBoundingBox().inflate(0.5))) { //code to force pickup of bag by unwilling mob entities
-                Iterator<ItemStack> it = entity.getHandSlots().iterator();
-                if (entity instanceof AbstractVillagerEntity && !entity.removed) {
-                    ItemStack t = self.getItem().copy();
-                    ItemStack r = ((AbstractVillagerEntity)entity).getInventory().addItem(t);
-                    if (r.isEmpty()) {
-                        entity.setCanPickUpLoot(true);
-                        entity.requiresCustomPersistence(); //the entity will no longer be able to despawn
-                        entity.onItemPickup(self);
-                        self.remove();
-                        break;
-                    }
-                } else if (!entity.removed && it.hasNext() && (it.next().isEmpty() || it.hasNext())) { //found entity with at least one hand for the bag
-                    EquipmentSlotType hand = entity.getMainHandItem().isEmpty() ? EquipmentSlotType.MAINHAND : EquipmentSlotType.OFFHAND;
-                    if (hand == EquipmentSlotType.OFFHAND && !entity.getOffhandItem().isEmpty())
-                        entity.spawnAtLocation(entity.getOffhandItem());
-                    entity.setItemSlot(hand, self.getItem());
-                    entity.setDropChance(hand, 2.f);
-                    entity.setCanPickUpLoot(true);
-                    entity.requiresCustomPersistence(); //the entity will no longer be able to despawn
-                    entity.onItemPickup(self);
-                    self.remove();
-                    break;
-                }
-            }
     }
 
     @Override

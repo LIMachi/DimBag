@@ -153,6 +153,7 @@ public class EnergyData extends WorldSavedDataManager.EyeWorldSavedData implemen
     @Override
     public int getMaxEnergyStored() { return Integer.min(crystalCount * Crystal.ENERGY_PER_CRYSTAL, Crystal.TOTAL_MAX_ENERGY); }
 
+    public int getCrystalCount() { return crystalCount; }
     public int getMaxEnergyInput() { return Integer.min(crystalCount * Crystal.INPUT_PER_CRYSTAL, Crystal.TOTAL_MAX_INPUT); }
     public int getMaxEnergyOutput() { return Integer.min(crystalCount * Crystal.OUTPUT_PER_CRYSTAL, Crystal.TOTAL_MAX_OUTPUT); }
 

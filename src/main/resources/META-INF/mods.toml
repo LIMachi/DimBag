@@ -1,23 +1,37 @@
 modLoader="javafml" #mandatory
-loaderVersion="[34,)" #mandatory This is typically bumped every Minecraft version by Forge. See our download page for lists of versions.
-license="Mozilla Public License 2.0"
-issueTrackerURL="http://my.issue.tracker/" #optional
-[[mods]] #mandatory
-modId="dim_bag" #mandatory
-version="1.16.5-0.1.0" #mandatory
-displayName="Dimensional Bags" #mandatory
-#logoFile="dim_bag.png" #optional
-authors="LIMachi_" #optional
+loaderVersion="[36,)" #mandatory This is typically bumped every Minecraft version by Forge. See our download page for lists of versions.
+license="Creative Commons Attribution-NonCommercial 3.0 Unported"
+issueTrackerURL="https://github.com/LIMachi/DimBag/issues"
+[[mods]]
+modId="dim_bag"
+version="1.16.5-0.1.0"
+displayName="Dimensional Bags"
+updateJSONURL="https://github.com/LIMachi/DimBag/blob/master/update.json"
+displayURL="https://www.curseforge.com/minecraft/mc-mods/dim-bag"
+logoFile="dim_bag.png"
+authors="LIMachi_"
 description=''''''
-[[dependencies.dim_bag]] #optional
-    modId="forge" #mandatory
-    mandatory=true #mandatory
-    versionRange="[36.0.1,)" #mandatory
+[[dependencies.dim_bag]]
+    modId="forge"
+    mandatory=true
+    versionRange="[36.2.2,)"
     ordering="NONE"
     side="BOTH"
 [[dependencies.dim_bag]]
     modId="minecraft"
     mandatory=true
     versionRange="[1.16.5,)"
+    ordering="NONE"
+    side="BOTH"
+[[dependencies.dim_bag]]
+    modId="curios"
+    mandatory=true
+    versionRange="[1.16.4-4.0.2.1,)"
+    ordering="AFTER"
+    side="BOTH"
+[[dependencies.dim_bag]]
+    modId="patchouli"
+    mandatory=false
+    versionRange="[53.2,)"
     ordering="NONE"
     side="BOTH"

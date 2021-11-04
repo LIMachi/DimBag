@@ -1,10 +1,8 @@
 package com.limachi.dimensional_bags.common.managers;
 
 import com.limachi.dimensional_bags.common.Registries;
-import com.limachi.dimensional_bags.common.data.EyeDataMK2.SettingsData;
 import com.limachi.dimensional_bags.common.data.EyeDataMK2.WorldSavedDataManager;
-import com.limachi.dimensional_bags.common.items.upgrades.BaseUpgrade;
-import com.limachi.dimensional_bags.common.items.upgrades.HiddenUpgrade;
+import com.limachi.dimensional_bags.common.items.upgrades.BaseUpgradeBag;
 import net.minecraft.entity.Entity;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.world.World;
@@ -20,12 +18,12 @@ public class UpgradeManager extends WorldSavedDataManager.EyeWorldSavedData {
 
     protected static final HashSet<String> UPGRADES = new HashSet<>();
 
-    public static void registerUpgrade(String id, Supplier<? extends BaseUpgrade> sup) {
+    public static void registerUpgrade(String id, Supplier<? extends BaseUpgradeBag> sup) {
         UPGRADES.add(id);
         Registries.registerItem(id, sup);
     }
 
-    public static BaseUpgrade getUpgrade(String id) { return Registries.getItem(id); }
+    public static BaseUpgradeBag getUpgrade(String id) { return Registries.getItem(id); }
 
     private CompoundNBT upgradesNBT;
 
@@ -61,7 +59,7 @@ public class UpgradeManager extends WorldSavedDataManager.EyeWorldSavedData {
     }
 
     public int getUpgradeCount(String name) {
-        BaseUpgrade upgrade = getUpgrade(name);
+        BaseUpgradeBag upgrade = getUpgrade(name);
         if (upgrade != null)
             return getMemory(upgrade.getMemoryKey(), false).getInt(COUNT_NBT_KEY);
         return 0;
@@ -69,11 +67,10 @@ public class UpgradeManager extends WorldSavedDataManager.EyeWorldSavedData {
 
     public void inventoryTick(World worldIn, Entity entityIn) {
         for (String upgrade : getInstalledUpgrades()) {
-            BaseUpgrade up = getUpgrade(upgrade);
+            BaseUpgradeBag up = getUpgrade(upgrade);
             if (up.isActive(getEyeId()))
                 up.upgradeEntityTick(getEyeId(), worldIn, entityIn);
         }
-        getUpgrade(HiddenUpgrade.NAME).upgradeEntityTick(getEyeId(), worldIn, entityIn);
     }
 
     @Override

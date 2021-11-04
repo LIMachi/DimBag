@@ -24,11 +24,11 @@ public class ClientSideOnlyScreenHandler extends SimpleContainerScreen<ClientSid
 
         public ITextComponent getTitle() { return StringTextComponent.EMPTY; }
 
-        public abstract void first();
+        public void first() {};
 
-        public abstract void rebuild();
+        public void rebuild() {};
 
-        public abstract void end();
+        public void end() {};
     }
 
     public static final String NAME = "dim_bag_cso";

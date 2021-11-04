@@ -8,6 +8,7 @@ import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.network.PacketBuffer;
 
+/*
 public class WidgetDataPacket extends PacketHandler.Message {
     private int windowId;
     private int widget;
@@ -44,4 +45,4 @@ public class WidgetDataPacket extends PacketHandler.Message {
         if (player != null && player.containerMenu.containerId == windowId && !(windowId > -3 && windowId < 1))
             ((BaseContainer)player.containerMenu).receiveWidgetChange(player, widget, data);
     }
-}
+}*/
