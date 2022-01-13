@@ -1,7 +1,7 @@
 package com.limachi.dimensional_bags.client.render.screen;
 
 import com.limachi.dimensional_bags.client.render.widgets.*;
-import com.limachi.dimensional_bags.common.tileentities.PadTileEntity;
+import com.limachi.dimensional_bags.common.bagDimensionOnly.bagPad.PadTileEntity;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TranslationTextComponent;
 

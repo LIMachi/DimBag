@@ -1,11 +1,12 @@
 package com.limachi.dimensional_bags;
 
 import com.limachi.dimensional_bags.client.EventManager;
-import com.limachi.dimensional_bags.common.items.Bag;
-import com.limachi.dimensional_bags.common.managers.ModeManager;
-import com.limachi.dimensional_bags.common.network.PacketHandler;
-import com.limachi.dimensional_bags.common.network.packets.ChangeModeRequest;
-import com.limachi.dimensional_bags.common.network.packets.KeyStateMsg;
+import com.limachi.dimensional_bags.common.bag.BagItem;
+import com.limachi.dimensional_bags.common.bag.modes.ModeManager;
+import com.limachi.dimensional_bags.lib.ConfigManager;
+import com.limachi.dimensional_bags.lib.common.network.PacketHandler;
+import com.limachi.dimensional_bags.lib.common.network.packets.ChangeModeRequest;
+import com.limachi.dimensional_bags.lib.common.network.packets.KeyStateMsg;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.settings.KeyBinding;
 import net.minecraft.client.util.InputMappings;
@@ -55,10 +56,10 @@ public class KeyMapController {
     public static void addScrollBehaviorToBag(InputEvent.MouseScrollEvent event) {
         PlayerEntity player = DimBag.getPlayer();
         ItemStack stack = player.getItemInHand(Hand.MAIN_HAND);
-        if (!(stack.getItem() instanceof Bag))
+        if (!(stack.getItem() instanceof BagItem))
             stack = player.getItemInHand(Hand.OFF_HAND);
-        if (stack.getItem() instanceof Bag) {
-            int eye = Bag.getEyeId(stack);
+        if (stack.getItem() instanceof BagItem) {
+            int eye = BagItem.getbagId(stack);
             boolean up = event.getScrollDelta() > 0;
             boolean trueRun = EventManager.getTick() - scrollCoolDown >= SCROLL_COOLDOWN; //prevent spam of scroll (only allow a scroll every SCROLL_COOLDOWN ticks)
             if (ModeManager.changeModeRequest(player, eye, up, !trueRun)) {

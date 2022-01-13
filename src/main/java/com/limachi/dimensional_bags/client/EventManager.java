@@ -1,10 +1,10 @@
 package com.limachi.dimensional_bags.client;
 
 import com.google.common.collect.ArrayListMultimap;
-import com.limachi.dimensional_bags.ConfigManager.Config;
-import com.limachi.dimensional_bags.common.data.EyeDataMK2.SubRoomsManager;
-import com.limachi.dimensional_bags.common.items.TunnelPlacer;
-import com.limachi.dimensional_bags.utils.TextUtils;
+import com.limachi.dimensional_bags.lib.ConfigManager.Config;
+import com.limachi.dimensional_bags.lib.common.worldData.EyeDataMK2.SubRoomsManager;
+import com.limachi.dimensional_bags.common.bagDimensionOnly.TunnelPlacerItem;
+import com.limachi.dimensional_bags.lib.utils.TextUtils;
 import com.mojang.blaze3d.matrix.MatrixStack;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.IVertexBuilder;
@@ -123,8 +123,8 @@ public class EventManager {
         final Minecraft mc = Minecraft.getInstance();
         final ClientPlayerEntity player = mc.player;
         if (player == null) return;
-        if (player.getMainHandItem().getItem() instanceof TunnelPlacer || player.getOffhandItem().getItem() instanceof TunnelPlacer) {
-            List<Pair<BlockPos, Boolean>> coords = SubRoomsManager.collectPlacerOverlays(player, player.getMainHandItem().getItem() instanceof TunnelPlacer ? player.getMainHandItem() : player.getOffhandItem());
+        if (player.getMainHandItem().getItem() instanceof TunnelPlacerItem || player.getOffhandItem().getItem() instanceof TunnelPlacerItem) {
+            List<Pair<BlockPos, Boolean>> coords = SubRoomsManager.collectPlacerOverlays(player, player.getMainHandItem().getItem() instanceof TunnelPlacerItem ? player.getMainHandItem() : player.getOffhandItem());
             if (coords.isEmpty()) return;
             IRenderTypeBuffer.Impl rtb = mc.renderBuffers().bufferSource();
             Vector3d b = mc.gameRenderer.getMainCamera().getPosition();

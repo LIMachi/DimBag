@@ -40,6 +40,7 @@ size pearl (stabilized proto pearl in size mode) will change your size when cons
 -----------------------------------------------------------------------
 TODO ADDITION EDITION:
 -----------------------------------------------------------------------
+add item ticking behavior to all the slots in the bag (probably should be an upgrade) (quick and dirty implementation done)
 shit/double click behavior for fluid containers (double click a fluid slot try to fill the first valid item fluid container and grab it, shift click on a fluid container that is empty or full tries to fill or empty it)
 add white/blacklist support for time distortion upgrade (accepts position/name/registry for te, name/registry for entities) (done in the config, need to also add in settings)
 add documentation (book/tooltips/UI text) (might look into Patchouli) (might NOT look into patchouli and do my own thing as a mode for the bag)
@@ -50,6 +51,7 @@ almost finished --- add a new block placeable outside the bag to access the bag 
 -----------------------------------------------------------------------
 TODO DEBUG EDITION:
 -----------------------------------------------------------------------
+fix fluid render (tank)
 rework shift click (duplication glitch, not working, etc...) for almost all containers
 fix sleeping in the bag not working with other mods adding dimensions (might need to hack something)
 finish those god-damn UI
@@ -59,7 +61,40 @@ use 'Flight Recorder' and 'Coverage' to test how much the mod impact the perform
 test against other mods/throw in a modpack - currently tested against enigmatica 6 for 1.16.5, two major bugs fixed with minning gadget and transport
 test/balance upgrades and crafts (early, mid, late game, again the best way is playing on a modpack), currently crafts and default values doesn't feel right
 
+FIXED:
+tick lag due to bag updating holder position too often
+tick lag due to mode change dirtying world data
+concurrent change error in ticking entities holding bags (the list of entities might grow while processed, breaking iterators)
+
 -----------------------------------------------------------------------
-CURRENT FIXES:
+TODO REWORK EDITION:
 -----------------------------------------------------------------------
-added setting to quick enter bag and quick equip bag on leaving (compatible with paradox upgrade)
+less magic, more technic:
+pillar -> slot block (renders in world with slot texture on all faces, rendering the slot content),
+fountain -> tank block (renders in world with the tank texture, rendering the fluid inside, show if it is the one selected, if the block is powered it will be selected)
+crystal -> battery (renders in world with evolving texture to represent fullness)
+brain -> watcher
+ghost hand -> performer (name not final, may use 'actor' instead)
+player pillar -> bag user block
+eye -> remove entirely
+gateway -> remove entirely
+PARTIALLY DONE (made a huge difference in tested modpacks, but now there is a bunch of bugs, particularly when trying to exit the bag but the bag entity is inside the bag) user tracking -> need to be reworked to prevent server save spam on entity moving (instead of storing position in the save, only store the entity uuid holding the bag and query this entity to get the bag position, but doing so might make the paradox upgrade dangerous, since leaving the bag would place the entities back in the bag, we could add information in subroomdata to have a default output if the bag is inside itself)
+PARTIALLY DONE (minor difference in tested modpacks, but now there is a desync when joining world, the server probably does not send the persistent data to the client) mode switch -> same as user tracking, might go back to mode being stored on item itself, or stored on the player?
+add new upgrade/mode to link inventories/tanks/batteries from other mods to the bag (very end game)
+obviously, because of all the changes/renaming above, redo tutorial and book
+we could add the ability for some blocks (slot, tank and battery) to be added to a bag without entering it, by right-clicking the block on the bag, allowing us to put the entering of the bag in the mid-game and keep the bag early game
+
+data stored on players is not sync client side on connection: (quick fix: register an event on player logging that override the persistent data via a packet from the server)
+-modes get desync
+-if connecting inside a bag, might result in an impossibility to exit the bag
+
+possible reasons the tracking of the bag fails:
+-the bag is inside a non ticking inventory (chest, network, etc...)
+-the bag is inside a proxy
+-the bag is inside itself (paradox upgrade, creative TP)
+-the bag is equipped by a non player entity and this entity is not in a loadded chunk
+
+solution:
+entering the bag (via proxy or not) should store the last valid position of the bag inside the entity
+this data should only be used if we can't find a valid bag or forced if entering via proxy
+an if everything else fails, teleport the player to it's bed (if outside of the bag) or at spawn

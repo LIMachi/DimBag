@@ -2,8 +2,8 @@ package com.limachi.dimensional_bags.client.render.screen;
 
 import com.limachi.dimensional_bags.DimBag;
 import com.limachi.dimensional_bags.StaticInit;
-import com.limachi.dimensional_bags.common.Registries;
-import com.limachi.dimensional_bags.common.container.BaseContainer;
+import com.limachi.dimensional_bags.common.references.Registries;
+import com.limachi.dimensional_bags.lib.common.container.BaseContainer;
 import net.minecraft.client.Minecraft;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;

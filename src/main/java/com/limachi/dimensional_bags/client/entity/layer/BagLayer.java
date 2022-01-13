@@ -1,8 +1,8 @@
 package com.limachi.dimensional_bags.client.entity.layer;
 
 import com.limachi.dimensional_bags.client.entity.model.BagEntityModel;
-import com.limachi.dimensional_bags.common.data.IEyeIdHolder;
-import com.limachi.dimensional_bags.common.items.GhostBag;
+import com.limachi.dimensional_bags.lib.common.worldData.IBagIdHolder;
+import com.limachi.dimensional_bags.common.bag.GhostBagItem;
 import com.mojang.blaze3d.matrix.MatrixStack;
 import com.mojang.blaze3d.vertex.IVertexBuilder;
 import net.minecraft.client.renderer.IRenderTypeBuffer;
@@ -41,12 +41,12 @@ public class BagLayer<T extends LivingEntity, M extends BipedModel<T>, A extends
     @Override
     public void render(MatrixStack matrix, IRenderTypeBuffer buffer, int packedLight, T entity, float limbSwing, float limbSwingAmount, float partialTicks, float ageInTicks, float netHeadYaw, float headPitch) {
         if (entity.isInvisible()) return;
-        CuriosApi.getCuriosHelper().findEquippedCurio(t->!(t.getItem() instanceof GhostBag) && t.getTag() != null && t.getTag().getInt(IEyeIdHolder.EYE_ID_KEY) != 0, entity)
+        CuriosApi.getCuriosHelper().findEquippedCurio(t->!(t.getItem() instanceof GhostBagItem) && t.getTag() != null && t.getTag().getInt(IBagIdHolder.EYE_ID_KEY) != 0, entity)
                 .ifPresent(f -> CuriosApi.getCuriosHelper().getCuriosHandler(entity).resolve()
                         .ifPresent(h -> h.getStacksHandler(f.getLeft())
                                 .ifPresent(c -> {
             if (c.getRenders().get(f.getMiddle())) {
-//                int eye = f.getRight().getTag().getInt(IEyeIdHolder.EYE_ID_KEY);
+//                int eye = f.getRight().getTag().getInt(IBagIdHolder.EYE_ID_KEY);
                 matrix.pushPose();
                 model.attackTime = getParentModel().attackTime;
                 model.riding = getParentModel().riding;

@@ -2,7 +2,7 @@
   "type": "minecraft:crafting_shapeless",
   "ingredients": [
     {
-      "item": "dim_bag:pillar"
+      "item": "dim_bag:slot"
     },
     {
       "item": "minecraft:nether_star"

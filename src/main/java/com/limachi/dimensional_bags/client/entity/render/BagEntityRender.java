@@ -1,7 +1,7 @@
 package com.limachi.dimensional_bags.client.entity.render;
 
 import com.limachi.dimensional_bags.client.entity.model.BagEntityModel;
-import com.limachi.dimensional_bags.common.entities.BagEntity;
+import com.limachi.dimensional_bags.common.bag.BagEntity;
 import com.mojang.blaze3d.matrix.MatrixStack;
 import net.minecraft.client.renderer.IRenderTypeBuffer;
 import net.minecraft.client.renderer.entity.EntityRendererManager;

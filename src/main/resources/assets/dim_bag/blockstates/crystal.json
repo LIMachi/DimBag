@@ -1,6 +1,0 @@
-{
-  "variants": {
-    "pull=false": {"model": "dim_bag:block/crystal/push"},
-    "pull=true": {"model": "dim_bag:block/crystal/pull"}
-  }
-}

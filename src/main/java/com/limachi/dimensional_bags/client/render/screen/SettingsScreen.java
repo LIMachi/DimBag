@@ -2,12 +2,12 @@ package com.limachi.dimensional_bags.client.render.screen;
 
 import com.limachi.dimensional_bags.client.render.widgets.BaseWidget;
 import com.limachi.dimensional_bags.client.render.widgets.ToggleWidget;
-import com.limachi.dimensional_bags.common.container.SettingsContainer;
-import com.limachi.dimensional_bags.common.data.EyeDataMK2.SettingsData;
-import com.limachi.dimensional_bags.common.items.upgrades.BaseUpgradeBag;
-import com.limachi.dimensional_bags.common.managers.Mode;
-import com.limachi.dimensional_bags.common.managers.UpgradeManager;
-import com.limachi.dimensional_bags.common.managers.modes.Default;
+import com.limachi.dimensional_bags.lib.common.container.SettingsContainer;
+import com.limachi.dimensional_bags.lib.common.worldData.EyeDataMK2.SettingsData;
+import com.limachi.dimensional_bags.common.upgrades.BaseUpgradeBag;
+import com.limachi.dimensional_bags.common.bag.modes.AbstractMode;
+import com.limachi.dimensional_bags.common.upgrades.BagUpgradeManager;
+import com.limachi.dimensional_bags.common.bag.modes.Default;
 import com.mojang.blaze3d.matrix.MatrixStack;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.util.text.ITextComponent;
@@ -25,14 +25,14 @@ public class SettingsScreen extends SimpleContainerScreen<SettingsContainer> {
         hideContainerTitle = true;
         hideTitle = true;
         int y = 10;
-        SettingsData data = SettingsData.getInstance(menu.eyeId);
-        UpgradeManager upgrades = UpgradeManager.getInstance(menu.eyeId);
+        SettingsData data = SettingsData.getInstance(menu.bagId);
+        BagUpgradeManager upgrades = BagUpgradeManager.getInstance(menu.bagId);
         int i = 2;
         int x = 10;
         if (data != null)
             for (SettingsData.SettingsReader reader : SettingsData.getReaders()) {
                 if (reader.group.equals(BaseUpgradeBag.SETTING_GROUP) && upgrades.getUpgradeCount(reader.name) == 0) continue; //skip uninstalled upgrades
-                boolean default_page = reader.group.equals(Mode.SETTING_GROUP) && reader.name.equals(Default.ID);
+                boolean default_page = reader.group.equals(AbstractMode.SETTING_GROUP) && reader.name.equals(Default.ID);
                 ArrayList<BaseWidget> widgets = reader.getWidgets(data, 10, y + 32, i);
                 if (!widgets.isEmpty()) {
                     int finalI = i;

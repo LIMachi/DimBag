@@ -1,9 +1,9 @@
 package com.limachi.dimensional_bags.client.render.screen;
 
-import com.limachi.dimensional_bags.client.widgets.Button;
-import com.limachi.dimensional_bags.client.widgets.Scrollbar;
-import com.limachi.dimensional_bags.client.widgets.TextField;
-import com.limachi.dimensional_bags.client.widgets.ViewPort;
+//import com.limachi.dimensional_bags.client.widgets.Button;
+//import com.limachi.dimensional_bags.client.widgets.Scrollbar;
+//import com.limachi.dimensional_bags.client.widgets.TextField;
+//import com.limachi.dimensional_bags.client.widgets.ViewPort;
 //import com.limachi.dimensional_bags.common.container.WrappedPlayerInventoryContainer;
 //import com.limachi.dimensional_bags.common.inventory.Wrapper;
 import com.mojang.blaze3d.matrix.MatrixStack;

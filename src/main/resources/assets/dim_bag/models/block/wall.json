@@ -1,6 +1,6 @@
 {
   "parent": "block/cube_all",
   "textures": {
-    "all": "minecraft:block/brown_wool"
+    "all": "dim_bag:block/wall"
   }
 }

@@ -1,7 +1,7 @@
 package com.limachi.dimensional_bags.client.render.screen;
 
-import com.limachi.dimensional_bags.common.container.UserPillarContainer;
-import com.limachi.dimensional_bags.common.container.UserPillarContainer.EntityInventoryProxySlot;
+import com.limachi.dimensional_bags.common.bagDimensionOnly.bagUserBlock.UserBlockContainer;
+import com.limachi.dimensional_bags.common.bagDimensionOnly.bagUserBlock.UserBlockContainer.EntityInventoryProxySlot;
 //import com.limachi.dimensional_bags.common.inventory.Wrapper;
 import com.mojang.blaze3d.matrix.MatrixStack;
 import com.mojang.blaze3d.systems.RenderSystem;
@@ -16,8 +16,8 @@ import net.minecraft.util.text.TranslationTextComponent;
 import static com.limachi.dimensional_bags.common.references.GUIs.PlayerInterface.*;
 import static com.limachi.dimensional_bags.common.references.GUIs.ScreenParts.*;
 
-public class UserPillarGUI extends SimpleContainerScreen<UserPillarContainer> {
-    public UserPillarGUI(UserPillarContainer screenContainer, PlayerInventory inv, ITextComponent titleIn) {
+public class UserPillarGUI extends SimpleContainerScreen<UserBlockContainer> {
+    public UserPillarGUI(UserBlockContainer screenContainer, PlayerInventory inv, ITextComponent titleIn) {
         super(screenContainer, inv, titleIn);
         imageWidth = BACKGROUND_X;
         imageHeight = BACKGROUND_Y;

@@ -1,8 +1,11 @@
 package com.limachi.dimensional_bags;
 
 import com.google.common.reflect.Reflection;
-import com.limachi.dimensional_bags.common.Registries;
-import com.limachi.dimensional_bags.common.items.Bag;
+import com.limachi.dimensional_bags.common.references.Registries;
+import com.limachi.dimensional_bags.common.bag.BagItem;
+import com.limachi.dimensional_bags.common.events.EventManager;
+import com.limachi.dimensional_bags.lib.ConfigManager;
+import com.limachi.dimensional_bags.lib.CuriosIntegration;
 import net.minecraft.client.Minecraft;
 import net.minecraft.command.CommandSource;
 import net.minecraft.entity.player.PlayerEntity;
@@ -47,7 +50,7 @@ public class DimBag {
     public static DimBag INSTANCE;
     public static final ItemGroup ITEM_GROUP = new ItemGroup("tab_" + MOD_ID) {
         @Override
-        public ItemStack makeIcon() { return new ItemStack(Registries.getItem(Bag.NAME)); }
+        public ItemStack makeIcon() { return new ItemStack(Registries.getItem(BagItem.NAME)); }
     };
 
     public static final Item.Properties DEFAULT_PROPERTIES = new Item.Properties().tab(DimBag.ITEM_GROUP);
@@ -131,6 +134,7 @@ public class DimBag {
     public static <T> void delayedTask(int ticksToWait, Runnable run) {
         runLogicalSide(null,
                 ()->()->{com.limachi.dimensional_bags.client.EventManager.delayedTask(ticksToWait, run); return null;},
-                ()->()->{com.limachi.dimensional_bags.common.EventManager.delayedTask(ticksToWait, run); return null;});
+                ()->()->{
+                    EventManager.delayedTask(ticksToWait, run); return null;});
     }
 }

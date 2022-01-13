@@ -1,18 +1,5 @@
 package com.limachi.dimensional_bags.client.render.screen;
 
-import com.limachi.dimensional_bags.client.widgets.Text;
-import com.limachi.dimensional_bags.client.widgets.TextField;
-import com.limachi.dimensional_bags.common.container.BaseContainer;
-import com.limachi.dimensional_bags.common.container.BrainContainer;
-import com.limachi.dimensional_bags.common.readers.EntityReader;
-import com.limachi.dimensional_bags.common.tileentities.BrainTileEntity;
-import com.mojang.blaze3d.matrix.MatrixStack;
-import net.minecraft.client.Minecraft;
-import net.minecraft.entity.player.PlayerInventory;
-import net.minecraft.util.text.ITextComponent;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
-
 /*
 @OnlyIn(Dist.CLIENT)
 public class BrainGUI extends BaseScreen<BrainContainer> {

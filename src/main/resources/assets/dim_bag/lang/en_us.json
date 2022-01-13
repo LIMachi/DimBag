@@ -1,5 +1,5 @@
 {
-  "key.action": "Action Key",
+  "key.action": "Bag Action Key",
 
   "item.dim_bag.bag": "Dimensional Bag",
   "item.dim_bag.ghost_bag": "Virtual Bag",
@@ -25,29 +25,22 @@
   "item.dim_bag.paradox_upgrade": "Paradox Upgrade",
   "item.dim_bag.time_distortion_upgrade": "Time Distortion Upgrade",
 
-  "block.dim_bag.bag_eye": "The All Seeing Eye Of The Dimensional Rift",
-  "block.dim_bag.pillar": "Pillar",
+  "block.dim_bag.slot": "Slot",
   "block.dim_bag.cloud": "Cloud",
-  "block.dim_bag.bag_gateway": "Bag Gateway",
-  "block.dim_bag.brain": "Brain",
-  "block.dim_bag.crystal": "Crystal",
-  "block.dim_bag.fountain": "Fountain",
-  "block.dim_bag.ghost_hand": "Ghost Hand",
+  "block.dim_bag.watcher": "Watcher",
+  "block.dim_bag.battery": "Battery",
+  "block.dim_bag.tank": "Tank",
+  "block.dim_bag.performer": "Performer",
   "block.dim_bag.pad": "Pad",
-  "block.dim_bag.player_pillar": "Player Pillar",
+  "block.dim_bag.user_block": "Bag User Interface",
   "block.dim_bag.tunnel": "Tunnel",
   "block.dim_bag.wall": "Wall",
-  "block.dim_bag.user_pillar": "User Interface",
-  "block.dim_bag.world_access_point": "World Interface",
+  "block.dim_bag.world_access": "World Interface",
   "block.dim_bag.bag_proxy": "Dimensional Bag Proxy",
 
   "itemGroup.tab_dim_bag": "Dimensional Bags",
 
   "curios.identifier.backpack": "Backpack",
-
-  "tooltip.upgrade.slot.craft_result": "Will produce between 9 and 27 slots",
-  "tooltip.upgrade.row": "Add an additional row to the bag inventory, up to a maximum of %d rows",
-  "tooltip.upgrade.column": "Add an additional column to the bag inventory, up to a maximum of %d columns",
 
   "tooltip.bag.missing_id": "Unlinked bag",
   "tooltip.bag.id": "Bag id: %d, Owner: %s",
@@ -74,19 +67,16 @@
   "tooltip.items.end_fragment": "Obtained by cutting an ender pearl in a stone cutter",
 
   "tooltip.blocks.bag_proxy": "This block allows to interact with a bag in a block form by placing a bag inside (right click with a bag/virtual bag), you can also add a nether star to have it work without requiring a bag inside. Right click opens the bag inventory, shift right click to enter the bag, shift left click to get the bag or nether start back. can be used with hopper and modded way of transporting items/fluids/energy",
-  "tooltip.blocks.brain": "This programmable block can emmit redstone based on the status of the bag's user",
-  "tooltip.blocks.crystal": "This acts as an FE/RF battery inside the bag, no need for wires, all crystals in a bag are linked and share all the bag FE/RF. Crystals can be picked by breaking them (no need for tools) and will keep a fraction of the bag's current power.",
-  "tooltip.blocks.fountain": "This allows bags to store and manipulate fluids, once installed you will see a new mode for the bag 'Tank' that allows you to pick and place fluids, you can select the tank that will be used by clicking a slot on the Tank mode. Can interact with pipes. Like Crystalls and Pillars, this block can be picked up and will retain it's inventory",
-  "tooltip.blocks.ghost_hand": "This programmable block can 'force' the user to do some actions using redstone. AFK now has a whole new meaning :p",
+  "tooltip.blocks.watcher": "This programmable block can emmit redstone based on the status of the bag's user",
+  "tooltip.blocks.battery": "This acts as an FE/RF battery inside the bag, no need for wires, all batteries in a bag are linked and share all the bag FE/RF. Batteries can be picked by breaking them (no need for tools) and will keep a fraction of the bag's current power.",
+  "tooltip.blocks.tank": "This allows bags to store and manipulate fluids, once installed you will see a new mode for the bag 'Tank' that allows you to pick and place fluids, you can select the tank that will be used by clicking a slot on the Tank mode. Can interact with pipes. Like Batteries and Slots, this block can be picked up and will retain it's inventory",
+  "tooltip.blocks.performer": "This programmable block can 'force' the user to do some actions using redstone. AFK now has a whole new meaning :p",
   "tooltip.blocks.pad": "The pad allows you to set specific destinations for entities when entering the bag (including players) while redstone powered. Filtering is done via a list of names, if you wanted any pig that is not renamed to arrive on a pad, you would whitelist 'Pig'",
-  "tooltip.blocks.pillar": "Also known as the base of the bag, Pillars each add a slot to the bag. They can be upgraded, and interacted with hoppers/pipes. Will keep it's inventory when broken (no tools needed)",
-  "tooltip.blocks.user_pillar": "Allows you to interact with the User inventory, energy (of items in the inventory) and fluids (like xp for players, if you have a mod compatible)",
-  "tooltip.blocks.world_access_point": "Allows the bag (through it's User) to interact with the world, inserting an item will simulate a right click, inserting fluids will place them, pumping out fluids will remove them (from the feets of the User), and removing items will absorb items on the ground close to the User.",
+  "tooltip.blocks.slot": "Also known as the base of the bag, Slots each add a slot to the bag. They can be upgraded, and interacted with hoppers/pipes. Will keep it's inventory when broken (no tools needed)",
+  "tooltip.blocks.user_block": "Allows you to interact with the User inventory, energy (of items in the inventory) and fluids (like xp for players, if you have a mod compatible)",
+  "tooltip.blocks.world_access": "Allows the bag (through it's User) to interact with the world, inserting an item will simulate a right click, inserting fluids will place them, pumping out fluids will remove them (from the feet of the User), and removing items will absorb items on the ground close to the User.",
 
   "inventory.user_interface.name": "%s's Inventory",
-  "inventory.upgrades.row.description": "add an extra row to your bag inventory, increasing it's storage capacity",
-  "inventory.upgrades.column.description": "add an extra column to your bag inventory, increasing it's storage capacity",
-  "inventory.upgrades.radius.description": "increase the size of the current room (main room if applied to the bag directly) by 1 block in all directions",
 
   "tooltip.bag.upgrade_count": "%s -> %d/%d",
   "tooltip.bag.usable_slots": "Usable slots: %d/%d",
@@ -115,11 +105,11 @@
   "screen.fluid.bucket_acronym": "B",
   "screen.fluid.milli_bucket_acronym": "mB",
 
-  "container.display_name.pillar": "Pillar",
-  "container.display_name.fountain": "Fountain",
+  "container.display_name.slot": "Slot",
+  "container.display_name.tank": "Tank",
   "container.display_name.pad": "Pad",
-  "container.display_name.brain": "Brain",
-  "container.display_name.ghost_hand": "Ghost Hand",
+  "container.display_name.watcher": "Watcher",
+  "container.display_name.performer": "Performer",
 
   "book.name": "All you need to know about Dimensional Bag",
 

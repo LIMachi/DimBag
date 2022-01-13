@@ -1,0 +1,23 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "ERE",
+    "ROR",
+    "ERE"
+  ],
+  "key": {
+    "O": {
+      "item": "minecraft:observer"
+    },
+    "E": {
+      "item": "dim_bag:end_fragment"
+    },
+    "R": {
+      "item": "minecraft:redstone"
+    }
+  },
+  "result": {
+    "item": "dim_bag:watcher",
+    "count": 1
+  }
+}
