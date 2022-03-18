@@ -11,10 +11,12 @@ import com.limachi.dimensional_bags.common.bag.BagEntityItem;
 import com.limachi.dimensional_bags.common.upgrades.bag.ParadoxUpgrade;
 import com.limachi.dimensional_bags.common.bag.modes.ModeManager;
 import com.limachi.dimensional_bags.common.upgrades.BagUpgradeManager;
+import com.limachi.dimensional_bags.lib.utils.NBTUtils;
 import com.limachi.dimensional_bags.lib.utils.StackUtils;
 import com.limachi.dimensional_bags.lib.utils.UUIDUtils;
 import com.limachi.dimensional_bags.lib.utils.WorldUtils;
 import com.limachi.dimensional_bags.lib.common.worldData.IBagIdHolder;
+import javafx.util.Pair;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.item.ItemEntity;
@@ -53,8 +55,6 @@ public class HolderData extends WorldSavedDataManager.EyeWorldSavedData {
     private WeakReference<Entity> holderRef = new WeakReference<>(null);
     private UUID id = UUIDUtils.NULL_UUID;
     private String name = "";
-//    private Vector3d lastKnownPosition = null;
-//    private RegistryKey<World> lastKnownDimension = null;
 
     public HolderData(String suffix, int id, boolean client) { super(suffix, id, client, false); }
 
@@ -141,6 +141,7 @@ public class HolderData extends WorldSavedDataManager.EyeWorldSavedData {
             }
             tickBag(best, id, hd, dbd);
 //            for (Entity h : el) { //FIXME: sometimes trigger a concurrent change, need to investigate, FOUND: entities get added to this list while this list is ticking, SOLUTION: do not use iterator object, use good old increments
+/*
             for (int i = 0; i < el.size(); ++i) {
                 Entity h = el.get(i);
                 if (h instanceof FakePlayer) continue;
@@ -156,7 +157,7 @@ public class HolderData extends WorldSavedDataManager.EyeWorldSavedData {
                         }
                         p.set(ItemStack.EMPTY);
                     });
-            }
+            }*/
         }
         tickingHolders.clear();
     }
@@ -216,7 +217,7 @@ public class HolderData extends WorldSavedDataManager.EyeWorldSavedData {
                     if (entity.getPersistentData().contains("PKBDTP")) {
                         CompoundNBT nbt = entity.getPersistentData().getCompound("PKBDTP");
                         entity.getPersistentData().remove("PKBDTP");
-                        entity = WorldUtils.teleportEntity(entity, WorldUtils.stringToWorldRK(nbt.getString("D")), nbt.getInt("X"), nbt.getInt("Y"), nbt.getInt("Z"));
+                        entity = WorldUtils.teleportEntity(entity, WorldUtils.stringToWorldRK(nbt.getString("D")), new BlockPos(nbt.getInt("X"), nbt.getInt("Y"), nbt.getInt("Z")));
                     }
                 } else {
                     Entity finalEntity = entity;
@@ -227,13 +228,27 @@ public class HolderData extends WorldSavedDataManager.EyeWorldSavedData {
         tickEntity(entity);
     }
 
+//    private static final HashMap<Integer, Pair<RegistryKey<World>, Vector3d>> LKWP = new HashMap<>();
+//    private static Pair<RegistryKey<World>, Vector3d> DLKWP = null;
+
+    private void setLastKnownPosition(Entity e) {
+//        LKWP.put(getbagId(), new Pair<>(e.level.dimension(), e.position()));
+        WorldSavedDataManager.globalAccessServerNBTStorage.put("" + getbagId(), NBTUtils.toCompoundNBT("dim", WorldUtils.worldRKToString(e.level.dimension()), "x", e.position().x, "y", e.position().y, "z", e.position().z));
+    }
+
+    public RegistryKey<World> getLastKnownDimension() {
+        return WorldUtils.stringToWorldRK(WorldSavedDataManager.globalAccessServerNBTStorage.getCompound("" + getbagId()).getString("dim"));
+    }
+    public Vector3d getLastKnownPosition() {
+        CompoundNBT nbt = WorldSavedDataManager.globalAccessServerNBTStorage.getCompound("" + getbagId());
+        return new Vector3d(nbt.getDouble("x"), nbt.getDouble("y"), nbt.getDouble("z"));
+    }
+
     private void setHolder(Entity entity) { //TODO: add check for invalid entering of bag while equipped
         boolean dirty = false;
-//        if (entity != null && getbagId() != SubRoomsManager.getbagId(entity.level, entity.blockPosition(), false) && (!entity.position().equals(lastKnownPosition) || !entity.level.dimension().equals(lastKnownDimension))) {
-//            lastKnownPosition = entity.position();
-//            lastKnownDimension = entity.level.dimension();
-//            dirty = true;
-//        }
+        if (entity != null && !(entity instanceof FakePlayer) && getbagId() != SubRoomsManager.getbagId(entity.level, entity.blockPosition(), false) && (!entity.position().equals(getLastKnownPosition()) || !entity.level.dimension().equals(getLastKnownDimension()))) {
+            setLastKnownPosition(entity);
+        }
         if (holderRef.get() != entity) {
             holderRef = new WeakReference<>(entity);
             invProxy.setEntity(entity);
@@ -250,15 +265,15 @@ public class HolderData extends WorldSavedDataManager.EyeWorldSavedData {
             setDirty();
     }
 
-//    public RegistryKey<World> getLastKnownDimension() { return lastKnownDimension; }
+//    public RegistryKey<World> getLastKnownDimension() { if (DLKWP == null) DLKWP = new Pair<>(World.OVERWORLD, WorldUtils.getWorldSpawnF(World.OVERWORLD)); return LKWP.getOrDefault(getbagId(), DLKWP).getKey(); }
 
-//    public Vector3d getLastKnownPosition() { return lastKnownPosition; }
+//    public Vector3d getLastKnownPosition() { if (DLKWP == null) DLKWP = new Pair<>(World.OVERWORLD, WorldUtils.getWorldSpawnF(World.OVERWORLD));  return LKWP.getOrDefault(getbagId(), DLKWP).getValue(); }
 
     //FIXME: because the holder might not be available/an entity, this function should be reworked (worst case scenario: the entity is in the bag itself, no way out)
     public Entity tpToHolder(Entity entity) {
 //        return WorldUtils.teleportEntity(entity, lastKnownDimension, lastKnownPosition);
         Entity t = holderRef.get();
-        if (t != null && SubRoomsManager.getbagId(t.level, t.blockPosition(), false) != getbagId()) //holder is still valid and not inside the bag itself
+        if (t != null && !t.removed && SubRoomsManager.getbagId(t.level, t.blockPosition(), false) != getbagId()) //holder is still valid and not inside the bag itself
             return WorldUtils.teleportEntity(entity, t.level.dimension(), t.position());
 
         CompoundNBT nbt = entity.getPersistentData().getCompound(DimBag.MOD_ID).getCompound(Integer.toString(getbagId()));
@@ -284,18 +299,9 @@ public class HolderData extends WorldSavedDataManager.EyeWorldSavedData {
             BlockPos dst = player.getRespawnPosition();
             if (dst != null && SubRoomsManager.getbagId(WorldUtils.getWorld(wrk), dst, false) != getbagId()) //we verify that the respawn location for this player is not inside the bag (sweet fabric upgrade + bed/anchor)
                 return WorldUtils.teleportEntity(entity, wrk, dst);
-            IWorldInfo wi = WorldUtils.getWorld(wrk).getLevelData();
-            return WorldUtils.teleportEntity(entity, wrk, new BlockPos(wi.getXSpawn(), wi.getYSpawn(), wi.getZSpawn()));
         }
 
-        World overworld = WorldUtils.getOverWorld();
-        if (overworld != null) { //last resort, we teleport the entity to the overworld spawn location
-            IWorldInfo wi = overworld.getLevelData();
-            BlockPos dst = new BlockPos(wi.getXSpawn(), wi.getYSpawn(), wi.getZSpawn());
-            return WorldUtils.teleportEntity(entity, overworld.dimension(), dst);
-        }
-
-        return entity;
+        return WorldUtils.teleportEntity(entity, getLastKnownDimension(), getLastKnownPosition());
     }
 
     /**

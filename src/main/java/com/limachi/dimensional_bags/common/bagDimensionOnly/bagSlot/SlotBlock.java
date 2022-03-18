@@ -37,7 +37,7 @@ public class SlotBlock extends BlockWithUUID<SlotTileEntity> implements IHasBagS
     public static final Supplier<BlockItem> INSTANCE_ITEM = Registries.registerBlockItem(NAME, NAME, DimBag.DEFAULT_PROPERTIES);
 
     public SlotBlock() {
-        super(NAME, Properties.of(Material.HEAVY_METAL).strength(1.5f, 3600000f).sound(SoundType.STONE).noOcclusion().isSuffocating(Blocks::never).isViewBlocking(Blocks::never), SlotTileEntity.class, SlotTileEntity.NAME);
+        super(NAME, Properties.of(Material.HEAVY_METAL).strength(1.5f, 3600000f).sound(SoundType.STONE).noOcclusion().isSuffocating(Blocks::never).isViewBlocking(Blocks::never).lightLevel(state->5), SlotTileEntity.class, SlotTileEntity.NAME);
     }
 
     @Override

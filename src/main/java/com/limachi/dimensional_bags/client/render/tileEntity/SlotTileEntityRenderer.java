@@ -1,6 +1,7 @@
 package com.limachi.dimensional_bags.client.render.tileEntity;
 
 import com.limachi.dimensional_bags.DimBag;
+import com.limachi.dimensional_bags.common.bagDimensionOnly.bagSlot.SlotInventory;
 import com.limachi.dimensional_bags.common.bagDimensionOnly.bagSlot.SlotTileEntity;
 import com.mojang.blaze3d.matrix.MatrixStack;
 import net.minecraft.client.Minecraft;
@@ -26,7 +27,10 @@ public class SlotTileEntityRenderer extends TileEntityRenderer<SlotTileEntity> {
 
     @Override
     public void render(SlotTileEntity te, float p_225616_2_, MatrixStack matrixStack, IRenderTypeBuffer buffer, int p_225616_5_, int p_225616_6_) {
-        ItemStack itemstack = te.getInventory().getStackInSlot(0);
+        if (te == null) return;
+        SlotInventory inv = te.getInventory();
+        if (inv == null) return;
+        ItemStack itemstack = inv.getStackInSlot(0);
         if (itemstack != ItemStack.EMPTY) {
             PlayerEntity player = DimBag.getPlayer();
             if (player != null) {

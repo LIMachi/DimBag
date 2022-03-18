@@ -26,7 +26,6 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.item.*;
 import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.network.play.server.SSetSlotPacket;
 import net.minecraft.util.*;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockRayTraceResult;
@@ -50,9 +49,14 @@ import java.util.Optional;
 import java.util.function.Supplier;
 
 import com.limachi.dimensional_bags.StaticInit;
+import net.minecraftforge.event.entity.player.PlayerInteractEvent;
+import net.minecraftforge.eventbus.api.Event;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.common.Mod;
 import org.apache.commons.lang3.tuple.ImmutableTriple;
 import top.theillusivec4.curios.api.CuriosApi;
 
+@Mod.EventBusSubscriber
 @StaticInit
 public class BagItem extends Item {
 
@@ -68,7 +72,7 @@ public class BagItem extends Item {
         ItemStack out = new ItemStack(INSTANCE.get());
         if (out.getTag() == null)
             out.setTag(new CompoundNBT());
-        out.getTag().putInt(IBagIdHolder.EYE_ID_KEY, id);
+        out.getTag().putInt(IBagIdHolder.BAG_ID, id);
         return out;
     }
 
@@ -141,7 +145,7 @@ public class BagItem extends Item {
 
     public static int getbagId(ItemStack stack) {
         if (stack.getTag() != null)
-            return stack.getTag().getInt(IBagIdHolder.EYE_ID_KEY);
+            return stack.getTag().getInt(IBagIdHolder.BAG_ID);
         return 0;
     }
 
@@ -153,10 +157,9 @@ public class BagItem extends Item {
         super.inventoryTick(stack, world, entity, slot, selected);
         CompoundNBT nbt = stack.getOrCreateTag();
         String mode = ModeManager.execute(getbagId(stack), mm->mm.getSelectedMode(entity), "Default");
-        if (!nbt.getString("OVERRIDE_MODE_PROPERTY").equals(mode)) {
+        if (!nbt.getString("OVERRIDE_MODE_PROPERTY").equals(mode) && entity instanceof ServerPlayerEntity) {
             nbt.putString("OVERRIDE_MODE_PROPERTY", mode);
-            if (entity instanceof ServerPlayerEntity)
-                SyncUtils.resyncPlayerSlot((ServerPlayerEntity)entity, slot);
+            SyncUtils.resyncPlayerSlot((ServerPlayerEntity)entity, slot);
         }
     }
 
@@ -221,10 +224,10 @@ public class BagItem extends Item {
      */
     public static int getBag(LivingEntity entity, int bagId, boolean realBagOnly, boolean equipOnly) {
         if (equipOnly) {
-            Optional<ImmutableTriple<String, Integer, ItemStack>> s = CuriosApi.getCuriosHelper().findEquippedCurio(t->(!realBagOnly || !(t.getItem() instanceof GhostBagItem)) && t.getTag() != null && t.getTag().getInt(IBagIdHolder.EYE_ID_KEY) != 0 && (bagId == 0 || t.getTag().getInt(IBagIdHolder.EYE_ID_KEY) == bagId), entity);
+            Optional<ImmutableTriple<String, Integer, ItemStack>> s = CuriosApi.getCuriosHelper().findEquippedCurio(t->(!realBagOnly || !(t.getItem() instanceof GhostBagItem)) && t.getTag() != null && t.getTag().getInt(IBagIdHolder.BAG_ID) != 0 && (bagId == 0 || t.getTag().getInt(IBagIdHolder.BAG_ID) == bagId), entity);
             return s.isPresent() ? getbagId(s.get().getRight()) : 0;
         }
-        CuriosIntegration.ProxySlotModifier res = CuriosIntegration.searchItem(entity, BagItem.class, t->(!realBagOnly || !(t.getItem() instanceof GhostBagItem)) && t.getTag() != null && t.getTag().getInt(IBagIdHolder.EYE_ID_KEY) != 0 && (bagId == 0 || t.getTag().getInt(IBagIdHolder.EYE_ID_KEY) == bagId));
+        CuriosIntegration.ProxySlotModifier res = CuriosIntegration.searchItem(entity, BagItem.class, t->(!realBagOnly || !(t.getItem() instanceof GhostBagItem)) && t.getTag() != null && t.getTag().getInt(IBagIdHolder.BAG_ID) != 0 && (bagId == 0 || t.getTag().getInt(IBagIdHolder.BAG_ID) == bagId));
         return res != null ? getbagId(res.get()) : 0;
     }
 
@@ -243,6 +246,11 @@ public class BagItem extends Item {
 
     public static BlockRayTraceResult rayTrace(World worldIn, PlayerEntity player, RayTraceContext.FluidMode fluidMode) {
         return getPlayerPOVHitResult(worldIn, player, fluidMode);
+    }
+
+    @SubscribeEvent
+    public static void leftClickBlockEvent(PlayerInteractEvent.LeftClickBlock event) {
+        if (ModeManager.execute(getbagId(event.getItemStack()), mm->mm.onItemMine(event.getWorld(), event.getPlayer(), event.getPos()), ActionResultType.PASS).consumesAction()) event.setCanceled(true);
     }
 
     @Override
@@ -273,5 +281,10 @@ public class BagItem extends Item {
     @Override
     public boolean onLeftClickEntity(ItemStack stack, PlayerEntity player, Entity entity) {
         return onLeftClickEntity(getbagId(stack), player, entity);
+    }
+
+    @Override
+    public boolean mineBlock(ItemStack p_179218_1_, World p_179218_2_, BlockState p_179218_3_, BlockPos p_179218_4_, LivingEntity p_179218_5_) {
+        return super.mineBlock(p_179218_1_, p_179218_2_, p_179218_3_, p_179218_4_, p_179218_5_);
     }
 }

@@ -61,11 +61,11 @@ public class Default extends AbstractMode {
         int y = Math.abs(ray.getBlockPos().getY() - player.blockPosition().getY());
         int z = Math.abs(ray.getBlockPos().getZ() - player.blockPosition().getZ());
         if (x > 1 || y > 2 || z > 1) return ActionResultType.PASS; //only validate if the click is close enough to the player
-        if (getSetting(bagId, "quick_enter"))
-            SubRoomsManager.execute(bagId, srm->srm.enterBag(player));
-        else
-            BagItem.unequipBags(player, bagId, ray.getBlockPos().above(), null);
-        return ActionResultType.SUCCESS;
+        if ((Boolean)getSetting(bagId, "quick_enter") && BagItem.hasBag(bagId, player) && SubRoomsManager.getbagId(player.level, player.blockPosition(), false) != bagId) { //FIXED: quick enter triggering an enterBag call while inside the bag
+            SubRoomsManager.execute(bagId, srm -> srm.enterBag(player));
+            return ActionResultType.SUCCESS;
+        }
+        return BagItem.unequipBags(player, bagId, ray.getBlockPos().above(), null).isEmpty() ? ActionResultType.PASS : ActionResultType.SUCCESS;
     }
 
     @Override
@@ -74,7 +74,8 @@ public class Default extends AbstractMode {
             if (player instanceof ServerPlayerEntity)
                 SlotContainer.open(player, bagId, null);
             return ActionResultType.SUCCESS;
-        }
+        } else if ((Boolean)getSetting(bagId, "quick_enter") && BagItem.hasBag(bagId, player) && SubRoomsManager.getbagId(player.level, player.blockPosition(), false) != bagId)
+            SubRoomsManager.execute(bagId, srm->srm.enterBag(player));
         return ActionResultType.PASS;
     }
     @Override

@@ -27,6 +27,7 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.util.ActionResultType;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockRayTraceResult;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TranslationTextComponent;
@@ -201,6 +202,18 @@ public class ModeManager extends WorldSavedDataManager.EyeWorldSavedData {
             if (res != ActionResultType.PASS) return;
         }
         getMode("Default").onEntityTick(getbagId(), world, player);
+    }
+
+    public ActionResultType onItemMine(World world, PlayerEntity player, BlockPos pos) {
+        ActionResultType res = getMode(getSelectedMode(player)).onItemMine(getbagId(), world, player, pos);
+        if (res != ActionResultType.PASS) return res;
+        for (int i = getInstalledModes().size() - 1; i >= 0; --i) {
+            String name = getInstalledMode(i);
+            if (name.equals(getSelectedMode(player)) || name.equals("Default") || !getMode(name).CAN_BACKGROUND) continue;
+            res = getMode(name).onItemMine(getbagId(), world, player, pos);
+            if (res != ActionResultType.PASS) return res;
+        }
+        return getMode("Default").onItemMine(getbagId(), world, player, pos);
     }
 
     public ActionResultType onItemUse(World world, PlayerEntity player, BlockRayTraceResult ray) {

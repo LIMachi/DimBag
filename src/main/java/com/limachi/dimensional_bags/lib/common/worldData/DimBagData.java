@@ -54,7 +54,7 @@ public class DimBagData extends WorldSavedData { //server side only, client side
         OwnerData.execute(id, od->od.setPlayer(player));
         if (bag.getTag() == null)
             bag.setTag(new CompoundNBT());
-        bag.getTag().putInt(IBagIdHolder.EYE_ID_KEY, id);
+        bag.getTag().putInt(IBagIdHolder.BAG_ID, id);
         setDirty();
         return id;
     }

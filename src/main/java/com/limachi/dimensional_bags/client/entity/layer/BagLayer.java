@@ -41,7 +41,7 @@ public class BagLayer<T extends LivingEntity, M extends BipedModel<T>, A extends
     @Override
     public void render(MatrixStack matrix, IRenderTypeBuffer buffer, int packedLight, T entity, float limbSwing, float limbSwingAmount, float partialTicks, float ageInTicks, float netHeadYaw, float headPitch) {
         if (entity.isInvisible()) return;
-        CuriosApi.getCuriosHelper().findEquippedCurio(t->!(t.getItem() instanceof GhostBagItem) && t.getTag() != null && t.getTag().getInt(IBagIdHolder.EYE_ID_KEY) != 0, entity)
+        CuriosApi.getCuriosHelper().findEquippedCurio(t->!(t.getItem() instanceof GhostBagItem) && t.getTag() != null && t.getTag().getInt(IBagIdHolder.BAG_ID) != 0, entity)
                 .ifPresent(f -> CuriosApi.getCuriosHelper().getCuriosHandler(entity).resolve()
                         .ifPresent(h -> h.getStacksHandler(f.getLeft())
                                 .ifPresent(c -> {

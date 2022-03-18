@@ -13,15 +13,20 @@ import com.limachi.dimensional_bags.lib.common.network.packets.WorldSavedDataSyn
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.nbt.CompoundNBT;
+import net.minecraft.nbt.CompressedStreamTools;
 import net.minecraft.util.text.IFormattableTextComponent;
 import net.minecraft.util.text.StringTextComponent;
+import net.minecraft.world.IWorld;
+import net.minecraft.world.World;
 import net.minecraft.world.server.ServerWorld;
 import net.minecraft.world.storage.WorldSavedData;
 import net.minecraftforge.event.entity.player.PlayerEvent;
+import net.minecraftforge.event.world.WorldEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
 import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.util.HashMap;
 import java.util.function.Function;
@@ -41,6 +46,34 @@ public class WorldSavedDataManager {
         register("upgrade_manager", BagUpgradeManager.class);
         register("mode_manager", ModeManager.class);
         register("settings_manager", SettingsData.class);
+    }
+
+    public static final CompoundNBT globalAccessServerNBTStorage = new CompoundNBT();
+
+    @SubscribeEvent
+    public static void onWorldSave(WorldEvent.Save event) {
+        IWorld iw = event.getWorld();
+        if (iw instanceof ServerWorld && ((ServerWorld)iw).dimension().equals(World.OVERWORLD)) {
+            ServerWorld world = (ServerWorld)iw;
+            try {
+                CompressedStreamTools.writeCompressed(globalAccessServerNBTStorage, world.getDataStorage().getDataFile("global_dim_bag_server_data"));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    @SubscribeEvent
+    public static void onWorldLoad(WorldEvent.Load event) {
+        IWorld iw = event.getWorld();
+        if (iw instanceof ServerWorld && ((ServerWorld)iw).dimension().equals(World.OVERWORLD)) {
+            ServerWorld world = (ServerWorld)iw;
+            try {
+                NBTUtils.clear(globalAccessServerNBTStorage).merge(CompressedStreamTools.readCompressed(world.getDataStorage().getDataFile("global_dim_bag_server_data")));
+            } catch (IOException e) {
+                //on first load will have no file, no big deal
+            }
+        }
     }
 
     public abstract static class EyeWorldSavedData extends WorldSavedData {

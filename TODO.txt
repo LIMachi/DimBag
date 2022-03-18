@@ -40,6 +40,7 @@ size pearl (stabilized proto pearl in size mode) will change your size when cons
 -----------------------------------------------------------------------
 TODO ADDITION EDITION:
 -----------------------------------------------------------------------
+add ability to add slots, tanks and batteries directly in the bag by rightclicking those blocks on a bag (like upgrades)
 add item ticking behavior to all the slots in the bag (probably should be an upgrade) (quick and dirty implementation done)
 shit/double click behavior for fluid containers (double click a fluid slot try to fill the first valid item fluid container and grab it, shift click on a fluid container that is empty or full tries to fill or empty it)
 add white/blacklist support for time distortion upgrade (accepts position/name/registry for te, name/registry for entities) (done in the config, need to also add in settings)
@@ -51,7 +52,17 @@ almost finished --- add a new block placeable outside the bag to access the bag 
 -----------------------------------------------------------------------
 TODO DEBUG EDITION:
 -----------------------------------------------------------------------
-fix fluid render (tank)
+OK add action to revert walls to initial state (shift left click in settings mode on wall should give back the block)
+OK fix bag disapearing du to double tick on player (for now we could disable the code that remove excess bags)
+OK fix bag phasing through blocks in quick enter if on non full block (we could do that the desequip funtion spawns the bag at the height of the player waist instead of feet, would also be more realistic)
+OK change eye_id to bag_id (easiest fix)
+OK fix desync on mode install (note: modes are resync on leaving and entering the save)
+OK fix entity teleport when aiming at sides with capture upgrade (should take into account the side aimed and only validate the action if there is a air/water/airlike block at the target)
+OK nerf pad and capture upgrade (only one entity per pad, capture upgrade cannot be used inside the bag itself, nerf saturation buff from mooshroom)
+OK remove enderman spawning with end-stone/chorus fruit mechanic (too op and breaks some behaviors)
+fix sleeping in the bag not working like vanilla (clear weather, etc)
+
+OK NOT FINISHED fix fluid render (tank)
 rework shift click (duplication glitch, not working, etc...) for almost all containers
 fix sleeping in the bag not working with other mods adding dimensions (might need to hack something)
 finish those god-damn UI
@@ -98,3 +109,8 @@ solution:
 entering the bag (via proxy or not) should store the last valid position of the bag inside the entity
 this data should only be used if we can't find a valid bag or forced if entering via proxy
 an if everything else fails, teleport the player to it's bed (if outside of the bag) or at spawn
+
+DONE:
+fix render error when data is unavailable for the slots block
+fix quick enter being fired inside the bag itself when you use the bag on a block
+fix resetting the bag walls giving wall to player (oversight, forgot to black list the walls themselves)

@@ -77,15 +77,17 @@ public class EventManager {
         }
     }
 
+    /*
     @ConfigManager.Config
     public static int PERCENT_CHANCE_TO_ADD_ENDSTONE_TO_ENDERMAN = 10;
 
     @ConfigManager.Config
     public static int PERCENT_CHANCE_TO_ADD_CHORUS_FLOWER_TO_ENDERMAN = 2;
+     */
 
-    public static final BlockState ENDSTONE = Blocks.END_STONE.defaultBlockState();
+//    public static final BlockState ENDSTONE = Blocks.END_STONE.defaultBlockState();
 
-    public static final BlockState CHORUS_FLOWER = Blocks.CHORUS_FLOWER.defaultBlockState();
+//    public static final BlockState CHORUS_FLOWER = Blocks.CHORUS_FLOWER.defaultBlockState();
 
     @SubscribeEvent
     public static void fixPlayerPersistentDataDesync(PlayerEvent.PlayerLoggedInEvent event) {
@@ -96,6 +98,7 @@ public class EventManager {
     /**
      * might add chorus flowers or endstone to the hands of newly spawned enderman, chance is config dependent
      */
+    /*
     @SubscribeEvent
     public static void addRandomEndstoneAndChorusFlowerToNewEnderman(EntityEvent.EntityConstructing event) {
         Entity ent = event.getEntity();
@@ -108,7 +111,7 @@ public class EventManager {
                     ((EndermanEntity) ent).setCarriedBlock(CHORUS_FLOWER);
             }
         }
-    }
+    }*/
 
     /**
      * prevent mining animation of wall blocks (no need to check for creative players, they plain remove the block without animation)
@@ -317,11 +320,11 @@ public class EventManager {
      * handles when a players hold the bag action key, giving them a ghost bag for as long as the key stays held
      */
     @SubscribeEvent
-    public static void ghostBagItemGiver(KeyMapController.KeyMapChangedEvent event) {
+    public static void ghostBagItemGiver1(KeyMapController.KeyMapChangedEvent event) {
         if (!event.getPlayer().level.isClientSide()) {
             if (event.getChangedKeys()[KeyMapController.KeyBindings.BAG_KEY.ordinal()]) {
                 if (event.getKeys()[KeyMapController.KeyBindings.BAG_KEY.ordinal()]) {
-                    if (event.getPlayer().containerMenu == event.getPlayer().inventoryMenu && !(event.getPlayer().getItemInHand(Hand.MAIN_HAND).getItem() instanceof BagItem) && !(event.getPlayer().getItemInHand(Hand.MAIN_HAND).getItem() instanceof GhostBagItem) && !(event.getPlayer().getItemInHand(Hand.OFF_HAND).getItem() instanceof BagItem) && !(event.getPlayer().getItemInHand(Hand.OFF_HAND).getItem() instanceof GhostBagItem))
+                    if (event.getPlayer().containerMenu == event.getPlayer().inventoryMenu && !(event.getPlayer().getItemInHand(Hand.MAIN_HAND).getItem() instanceof BagItem) && !(event.getPlayer().getItemInHand(Hand.OFF_HAND).getItem() instanceof BagItem))
                         event.getPlayer().setSlot(IDimBagCommonItem.slotFromHand(event.getPlayer(), Hand.MAIN_HAND), GhostBagItem.ghostBagFromStack(event.getPlayer().getItemInHand(Hand.MAIN_HAND), event.getPlayer()));
                 } else {
                     CuriosIntegration.ProxySlotModifier res = CuriosIntegration.searchItem(event.getPlayer(), GhostBagItem.class, o->true);

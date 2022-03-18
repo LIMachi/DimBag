@@ -404,6 +404,8 @@ public class SubRoomsManager extends WorldSavedDataManager.EyeWorldSavedData {
         nbt.putInt("X", entity.blockPosition().getX());
         nbt.putInt("Y", entity.blockPosition().getY());
         nbt.putInt("Z", entity.blockPosition().getZ());
+        nbt.putInt("RX", (int)entity.xRot);
+        nbt.putInt("RY", (int)entity.yRot);
         if (pos == null || world == null) {
             proxyData = proxyData == null || proxyData.isEmpty() ? null : proxyData;
             CompoundNBT t = proxyData == null ? entity.getPersistentData().getCompound(DimBag.MOD_ID).getCompound(Integer.toString(getbagId())) : null;
@@ -425,7 +427,8 @@ public class SubRoomsManager extends WorldSavedDataManager.EyeWorldSavedData {
         //TODO: reequip code
         if (reequipIfAble) {
             PlayerEntity finalEntity1 = (PlayerEntity) entity;
-            entity.level.getEntities(BagEntity.INSTANCE.get(), new AxisAlignedBB(entity.blockPosition().offset(-2, -2, -2), entity.blockPosition().offset(2, 2, 2)), p->p.getbagId() == getbagId()).forEach(b->{if (!BagItem.equipBagOnCuriosSlot(b.getBagItem(), finalEntity1)) finalEntity1.addItem(b.getBagItem());});
+            if (entity != null)
+                entity.level.getEntities(BagEntity.INSTANCE.get(), new AxisAlignedBB(entity.blockPosition().offset(-2, -2, -2), entity.blockPosition().offset(2, 2, 2)), p->p.getbagId() == getbagId()).forEach(b->{if (!BagItem.equipBagOnCuriosSlot(b.getBagItem(), finalEntity1)) finalEntity1.addItem(b.getBagItem()); b.remove();}); //FIXME: crash if leaving the bag and the bag is not near (or worst, completely missing)
         }
         return true;
     }
@@ -459,7 +462,7 @@ public class SubRoomsManager extends WorldSavedDataManager.EyeWorldSavedData {
         if (checkForBag && !BagUpgradeManager.isUpgradeInstalled(getbagId(), "inception").isPresent()) {
             List<CuriosIntegration.ProxySlotModifier> res = CuriosIntegration.searchItem(entity, BagItem.class, o->!(o.getItem() instanceof GhostBagItem) && BagItem.getbagId(o) == getbagId(), true);
             for (CuriosIntegration.ProxySlotModifier p : res) {
-                BagEntity.spawn(entity.level, entity.blockPosition(), p.get());
+                BagEntity.spawn(entity.level, entity.blockPosition().above(), p.get());
                 p.set(ItemStack.EMPTY);
             }
         }

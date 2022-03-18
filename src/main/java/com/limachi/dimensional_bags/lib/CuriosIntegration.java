@@ -132,7 +132,7 @@ public class CuriosIntegration {
         List<ProxySlotModifier> res = searchItem(entity, clazz, predicate, false);
         if (res.size() > 0)
             return res.get(0);
-        return null;
+        return ProxySlotModifier.NULL_SLOT;
     }
 
     public static <T, R> R onNthEllem(Iterable<T> it, int n, Function<T, R> run, R def) {

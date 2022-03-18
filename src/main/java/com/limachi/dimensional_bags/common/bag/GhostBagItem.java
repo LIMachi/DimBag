@@ -40,8 +40,8 @@ public class GhostBagItem extends BagItem {
     public static final String ORIGINAL_STACK_KEY = "original_stack";
 
     public static int getTargetedBag(ItemStack stack, Entity holder) {
-        if (!(holder instanceof PlayerEntity) || stack.getTag() == null || stack.getTag().getInt(IBagIdHolder.EYE_ID_KEY) == 0) return 0;
-        CuriosIntegration.ProxySlotModifier res = CuriosIntegration.searchItem(holder, BagItem.class, o-> BagItem.getbagId(o) == stack.getTag().getInt(IBagIdHolder.EYE_ID_KEY));
+        if (!(holder instanceof PlayerEntity) || stack.getTag() == null || stack.getTag().getInt(IBagIdHolder.BAG_ID) == 0) return 0;
+        CuriosIntegration.ProxySlotModifier res = CuriosIntegration.searchItem(holder, BagItem.class, o-> BagItem.getbagId(o) == stack.getTag().getInt(IBagIdHolder.BAG_ID));
         if (res != null)
             return BagItem.getbagId(res.get());
         return SubRoomsManager.getbagId(holder.level, holder.blockPosition(), false);
@@ -56,7 +56,7 @@ public class GhostBagItem extends BagItem {
         if (!out.hasTag())
             out.setTag(new CompoundNBT());
         out.getTag().put(ORIGINAL_STACK_KEY, stack.save(new CompoundNBT()));
-        out.getTag().putInt(IBagIdHolder.EYE_ID_KEY, bagId);
+        out.getTag().putInt(IBagIdHolder.BAG_ID, bagId);
         if (!stack.isEmpty()) {
             String name = out.getHoverName().getString() + "(" + (stack.getCount() != 1 ? stack.getCount() + "x " : "") + stack.getHoverName().getString() + ")";
             CompoundNBT display = new CompoundNBT();

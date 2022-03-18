@@ -26,7 +26,7 @@ public class ComponentItem extends Item {
         registerComponents(/*"battery_component",*/ "blank_upgrade", /*"compression_field",*/ "end_fragment");
     }
 
-    public ComponentItem() { super(DimBag.DEFAULT_PROPERTIES); }
+    public ComponentItem() { super(DimBag.DEFAULT_PROPERTIES.stacksTo(64)); }
 
     public static void registerComponents(String ...names) {
         for (String name : names)

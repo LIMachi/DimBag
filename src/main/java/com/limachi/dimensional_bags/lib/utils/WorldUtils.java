@@ -1,6 +1,7 @@
 package com.limachi.dimensional_bags.lib.utils;
 
 import com.limachi.dimensional_bags.DimBag;
+import com.limachi.dimensional_bags.client.render.Vector2d;
 import com.limachi.dimensional_bags.common.events.EventManager;
 import com.limachi.dimensional_bags.common.references.Registries;
 import com.limachi.dimensional_bags.common.bagDimensionOnly.bagSlot.SlotBlock;
@@ -26,12 +27,15 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.*;
 import net.minecraft.util.math.*;
+import net.minecraft.util.math.vector.Vector2f;
 import net.minecraft.util.math.vector.Vector3d;
+import net.minecraft.util.math.vector.Vector3f;
 import net.minecraft.util.registry.Registry;
 import net.minecraft.world.World;
 import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.server.ServerWorld;
 import net.minecraft.world.server.TicketType;
+import net.minecraft.world.storage.IWorldInfo;
 import net.minecraftforge.common.util.Constants;
 import net.minecraftforge.event.entity.EntityTravelToDimensionEvent;
 import net.minecraftforge.eventbus.api.EventPriority;
@@ -51,6 +55,18 @@ public class WorldUtils { //TODO: remove bloat once MCP/Forge mappings are bette
     public static @Nullable World getOverWorld() { return getWorld(World.OVERWORLD); }
 
     public static Iterable<ServerWorld> getAllWorlds() { return DimBag.getServer() != null ? DimBag.getServer().getAllLevels() : null; }
+
+    public static BlockPos getWorldSpawn(RegistryKey<World> reg) {
+        World w = getWorld(reg);
+        if (w == null) return new BlockPos(0, 255, 0);
+        IWorldInfo i = w.getLevelData();
+        return new BlockPos(i.getXSpawn(), i.getYSpawn(), i.getZSpawn());
+    }
+
+    public static Vector3d getWorldSpawnF(RegistryKey<World> reg) {
+        BlockPos pos = getWorldSpawn(reg);
+        return new Vector3d(pos.getX(), pos.getY(), pos.getZ());
+    }
 
     public static World getWorld(RegistryKey<World> reg) {
         if (DimBag.isServer(null))
@@ -241,20 +257,33 @@ public class WorldUtils { //TODO: remove bloat once MCP/Forge mappings are bette
         return entityIn;
     }
 
-    public static Entity teleportEntity(Entity entity, RegistryKey<World> destType, BlockPos destPos) {
+    public static Entity teleportEntity(Entity entity, RegistryKey<World> destType, float x, float y, float z, float xRot, float yRot) {
         if (entity == null || entity.level.isClientSide()) return null;
         ServerWorld world;
         if (destType != null && entity.getServer() != null)
             world = entity.getServer().getLevel(destType);
         else
             world = (ServerWorld)entity.level;
-        return teleport(entity, world, destPos.getX() + 0.5, destPos.getY(), destPos.getZ() + 0.5, entity.yRot, entity.xRot);
+        return teleport(entity, world, x, y, z, yRot, xRot);
+    }
+
+    public static Entity teleportEntity(Entity entity, RegistryKey<World> destType, BlockPos destPos, float xRot, float yRot) {
+        return teleportEntity(entity, destType, destPos.getX() + 0.5f, destPos.getY(), destPos.getZ() + 0.5f, xRot, yRot);
+    }
+
+    public static Entity teleportEntity(Entity entity, RegistryKey<World> destType, BlockPos destPos) {
+        return teleportEntity(entity, destType, destPos.getX() + 0.5f, destPos.getY(), destPos.getZ() + 0.5f, entity.xRot, entity.yRot);
+    }
+
+    public static Entity teleportEntity(Entity entity, RegistryKey<World> destType, Vector3d vec, float xRot, float yRot) {
+        return teleportEntity(entity, destType, (float)vec.x, (float)vec.y, (float)vec.z, xRot, yRot);
     }
 
     public static Entity teleportEntity(Entity entity, RegistryKey<World> destType, Vector3d vec) {
-        return teleportEntity(entity, destType, vec.x, vec.y, vec.z);
+        return teleportEntity(entity, destType, (float)vec.x, (float)vec.y, (float)vec.z, entity.xRot, entity.yRot);
     }
 
+    /*
     public static Entity teleportEntity(Entity entity, RegistryKey<World> destType, double x, double y, double z) {
         if (entity == null || entity.level.isClientSide()) return entity;
         ServerWorld world;
@@ -263,7 +292,7 @@ public class WorldUtils { //TODO: remove bloat once MCP/Forge mappings are bette
         else
             world = (ServerWorld)entity.level;
         return teleport(entity, world, x, y, z, entity.yRot, entity.xRot);
-    }
+    }*/
 
     public static void buildRoom(World world, BlockPos center, int radius) {
         BlockState wall = Registries.getBlock(WallBlock.NAME).defaultBlockState();

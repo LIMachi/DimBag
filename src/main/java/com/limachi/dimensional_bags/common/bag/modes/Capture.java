@@ -43,7 +43,7 @@ public class Capture extends AbstractMode { //should use a better version to han
 
     @Override
     public ActionResultType onAttack(int bagId, PlayerEntity player, Entity entity) {
-        if (entity instanceof PlayerEntity || entity instanceof EnderDragonEntity || entity instanceof WitherEntity) return ActionResultType.SUCCESS;
+        if (entity instanceof PlayerEntity || entity instanceof EnderDragonEntity || entity instanceof WitherEntity || SubRoomsManager.getbagId(entity.level, entity.blockPosition(), false) == bagId) return ActionResultType.SUCCESS;
         Entity r = SubRoomsManager.execute(bagId, subRoomsManager -> subRoomsManager.captureEntity(entity), null);
         if (r == null && player instanceof ServerPlayerEntity)
             player.displayClientMessage(new TranslationTextComponent("mode.error.no_valid_pad", entity.getName().getString()), true);
@@ -77,17 +77,22 @@ public class Capture extends AbstractMode { //should use a better version to han
 
     @Override
     public ActionResultType onItemUse(int bagId, World world, PlayerEntity player, BlockRayTraceResult ray) {
+        if (SubRoomsManager.getbagId(player.level, player.blockPosition(), false) == bagId) return ActionResultType.SUCCESS;
         Entity target = getPadEntity(bagId);
-        if (target != null)
-            SubRoomsManager.execute(bagId, sm->sm.leaveBag(target, false, ray.getBlockPos().above(), world.dimension(), null));
+        if (target != null) {
+            BlockPos pos = ray.getBlockPos().offset(ray.getDirection().getNormal());
+            if (world.getBlockState(pos).getCollisionShape(world, pos).isEmpty())
+                SubRoomsManager.execute(bagId, sm -> sm.leaveBag(target, false, pos, world.dimension(), null));
+        }
         return ActionResultType.SUCCESS;
     }
 
     @Override
     public ActionResultType onActivateItem(int bagId, PlayerEntity player) {
+        if (SubRoomsManager.getbagId(player.level, player.blockPosition(), false) == bagId) return ActionResultType.SUCCESS;
         Entity target = getPadEntity(bagId);
         if (target != null)
-            SubRoomsManager.execute(bagId, sm->sm.leaveBag(target, false, new BlockPos(player.position().add(0, 1, 0).add(player.getLookAngle().scale(5))), player.level.dimension(), null));
+            SubRoomsManager.execute(bagId, sm->sm.leaveBag(target, false, new BlockPos(player.position().add(0, 1, 0).add(player.getLookAngle().scale(3))), player.level.dimension(), null));
         return ActionResultType.SUCCESS;
     }
 

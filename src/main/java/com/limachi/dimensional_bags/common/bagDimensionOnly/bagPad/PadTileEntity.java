@@ -94,7 +94,7 @@ public class PadTileEntity extends BaseTileEntity implements IisBagTE {
                     if (((MooshroomEntity)entity).getMushroomType() == MooshroomEntity.Type.BROWN)
                         ((LivingEntity) e).addEffect(randomEffects.get(EventManager.RANDOM.nextInt(randomEffects.size())));
                     else if (((MooshroomEntity)entity).getMushroomType() == MooshroomEntity.Type.RED)
-                        ((LivingEntity) e).addEffect(new EffectInstance(SATURATION, 400, 1, true, false, true));
+                        ((LivingEntity) e).addEffect(new EffectInstance(SATURATION, 60, 0, true, false, true));
                 }
             }
         }
@@ -139,6 +139,9 @@ public class PadTileEntity extends BaseTileEntity implements IisBagTE {
     }
 
     public boolean isValidEntity(Entity entity) {
+        if (level == null) return false;
+        List<LivingEntity> el = level.getEntitiesOfClass(LivingEntity.class, new AxisAlignedBB(targetBlock()), t -> true);
+        if (!el.isEmpty()) return false; //pad is full
         String name = entity.getName().getContents();
         if (name.isEmpty())
             name = entity.getName().getString();

@@ -2,7 +2,12 @@ package com.limachi.dimensional_bags.common;
 
 import com.limachi.dimensional_bags.DimBag;
 import com.limachi.dimensional_bags.StaticInit;
+import com.limachi.dimensional_bags.common.bag.BagEntity;
+import com.limachi.dimensional_bags.common.bag.BagEntityItem;
+import com.limachi.dimensional_bags.common.bag.BagItem;
+import com.limachi.dimensional_bags.common.bag.GhostBagItem;
 import com.limachi.dimensional_bags.common.references.Registries;
+import com.limachi.dimensional_bags.lib.CuriosIntegration;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
@@ -11,9 +16,11 @@ import net.minecraft.block.material.Material;
 import net.minecraft.block.material.MaterialColor;
 import net.minecraft.block.material.PushReaction;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.LivingEntity;
 import net.minecraft.item.BlockItem;
 import net.minecraft.state.IntegerProperty;
 import net.minecraft.state.StateContainer;
+import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.vector.Vector3d;
@@ -84,7 +91,8 @@ public class CloudBlock extends Block {
     public void tick(BlockState state, ServerWorld worldIn, BlockPos pos, Random rand) {
         int age = state.getValue(AGE);
         if (age != 0) {
-            worldIn.setBlock(pos, age < 6 ? state.setValue(AGE, age + 1) : Blocks.AIR.defaultBlockState(), Constants.BlockFlags.DEFAULT_AND_RERENDER);
+            if (worldIn.getEntitiesOfClass(Entity.class, new AxisAlignedBB(pos.offset(-5, -5, -5), pos.offset(5, 5, 5)), e->e instanceof BagEntityItem || e instanceof BagEntity || (e instanceof LivingEntity && CuriosIntegration.searchItem(e, BagItem.class, s->true).isValid())).isEmpty())
+                worldIn.setBlock(pos, age < 6 ? state.setValue(AGE, age + 1) : Blocks.AIR.defaultBlockState(), Constants.BlockFlags.DEFAULT_AND_RERENDER);
             worldIn.getBlockTicks().scheduleTick(pos, this, MathHelper.nextInt(rand, 10, 40));
         }
         super.tick(state, worldIn, pos, rand);

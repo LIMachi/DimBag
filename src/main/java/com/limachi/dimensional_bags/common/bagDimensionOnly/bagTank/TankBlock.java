@@ -10,7 +10,6 @@ import com.limachi.dimensional_bags.lib.common.worldData.EyeDataMK2.TankData;
 import com.limachi.dimensional_bags.lib.common.worldData.EyeDataMK2.SubRoomsManager;
 import com.limachi.dimensional_bags.common.bag.modes.ModeManager;
 import com.limachi.dimensional_bags.common.bag.modes.Tank;
-import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.SoundType;
@@ -25,9 +24,6 @@ import net.minecraft.util.ActionResultType;
 import net.minecraft.util.Hand;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockRayTraceResult;
-import net.minecraft.util.math.shapes.ISelectionContext;
-import net.minecraft.util.math.shapes.VoxelShape;
-import net.minecraft.world.IBlockReader;
 import net.minecraft.world.World;
 
 import javax.annotation.Nonnull;
@@ -40,15 +36,10 @@ public class TankBlock extends AbstractTileEntityBlock<TankTileEntity> {
     public static final String NAME = "tank";
     public static final Supplier<TankBlock> INSTANCE = Registries.registerBlock(NAME, TankBlock::new);
     public static final Supplier<BlockItem> INSTANCE_ITEM = Registries.registerBlockItem(NAME, NAME, DimBag.DEFAULT_PROPERTIES);
-//    public static final VoxelShape SHAPE = Block.box(0, 0, 0, 16, 8, 16);
 
     public TankBlock() {
-        super(NAME, Properties.of(Material.HEAVY_METAL).strength(1.5f, 3600000f).sound(SoundType.STONE).noOcclusion().isSuffocating(Blocks::never).isViewBlocking(Blocks::never), TankTileEntity.class, TankTileEntity.NAME);
+        super(NAME, Properties.of(Material.HEAVY_METAL).strength(1.5f, 3600000f).sound(SoundType.STONE).noOcclusion().isSuffocating(Blocks::never).isViewBlocking(Blocks::never).lightLevel(state->5), TankTileEntity.class, TankTileEntity.NAME);
     }
-
-//    @Nonnull
-//    @Override
-//    public VoxelShape getShape(@Nonnull BlockState state, @Nonnull IBlockReader worldIn, @Nonnull BlockPos pos, @Nonnull ISelectionContext context) { return SHAPE; }
 
     @Override
     public <B extends AbstractTileEntityBlock<TankTileEntity>> B getInstance() { return (B)INSTANCE.get(); }

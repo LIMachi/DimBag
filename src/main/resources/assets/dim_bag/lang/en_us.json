@@ -95,7 +95,7 @@
   "bag.mode.Manual": "Manual",
   "bag.mode.Tank": "Tank",
 
-  "mode.error.no_valid_pad": "Could not find a valid pad for this entity name: %s",
+  "mode.error.no_valid_pad": "Could not find a valid empty pad for this entity name: '%s'",
 
   "entity_value_reader.printable": "%s->%s = '%s'(%s)",
 

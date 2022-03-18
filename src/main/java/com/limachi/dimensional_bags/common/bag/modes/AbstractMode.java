@@ -20,6 +20,7 @@ import net.minecraft.inventory.EquipmentSlotType;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.util.ActionResultType;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockRayTraceResult;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.world.World;
@@ -99,6 +100,7 @@ public abstract class AbstractMode {
     public void getAttributeModifiers(int bagId, boolean selected, EquipmentSlotType slot, ImmutableMultimap.Builder<Attribute, AttributeModifier> builder) {}
 //    public ActionResultType onPlayerTick(int bagId, ItemStack stack, World world, Entity player, int itemSlot, boolean isSelected) { return ActionResultType.CONSUME; } //called while the bag is ticking inside a player inventory
     public ActionResultType onEntityTick(int bagId, World world, Entity entity) { return ActionResultType.PASS; } //called every X ticks by the bag manager
+    public ActionResultType onItemMine(int bagId, World world, PlayerEntity player, BlockPos pos) { return ActionResultType.CONSUME; } //called when the bag is left clicked on a block
     public ActionResultType onItemUse(int bagId, World world, PlayerEntity player, BlockRayTraceResult ray) { return ActionResultType.CONSUME; } //called when the bag is right clicked on something, before the bag does anything
     public ActionResultType onItemRightClick(int bagId, World world, PlayerEntity player) { //called when the bag is right clicked in the air or shift-right-clicked, before the bag does anything (except set the id if needed and accessing data)
         return onActivateItem(bagId, player);
