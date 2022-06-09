@@ -70,6 +70,7 @@ public class HolderData extends WorldSavedDataManager.EyeWorldSavedData {
      * proxy/other
      */
     private static int keepValue(Entity e, HolderData hd, OwnerData od) {
+        if (e == null) return -1;
         if (e.equals(od.getPlayer())) return 5;
         if (e.equals(hd.getEntity())) return 4;
         if (e instanceof BagEntity) return 3;

@@ -1,0 +1,8 @@
+1.16.5-A-1.0
+    first version
+
+1.16.5-A-1.0.1
+    major crash on merging stacks inside bag and minor random crash due to unavailable holder while ticking fixed
+
+1.16.5-A-1.0.2
+    major random crash when placing slot inside bag due to missing UUID initialisation fixed

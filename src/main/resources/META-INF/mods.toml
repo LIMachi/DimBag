@@ -4,7 +4,7 @@ license="Creative Commons Attribution-NonCommercial 3.0 Unported"
 issueTrackerURL="https://github.com/LIMachi/DimBag/issues"
 [[mods]]
 modId="dim_bag"
-version="1.16.5-A-1.0"
+version="1.16.5-A-1.0.1"
 displayName="Dimensional Bags"
 updateJSONURL="https://github.com/LIMachi/DimBag/blob/master/update.json"
 displayURL="https://www.curseforge.com/minecraft/mc-mods/dim-bag"

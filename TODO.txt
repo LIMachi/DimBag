@@ -52,14 +52,6 @@ almost finished --- add a new block placeable outside the bag to access the bag 
 -----------------------------------------------------------------------
 TODO DEBUG EDITION:
 -----------------------------------------------------------------------
-OK add action to revert walls to initial state (shift left click in settings mode on wall should give back the block)
-OK fix bag disapearing du to double tick on player (for now we could disable the code that remove excess bags)
-OK fix bag phasing through blocks in quick enter if on non full block (we could do that the desequip funtion spawns the bag at the height of the player waist instead of feet, would also be more realistic)
-OK change eye_id to bag_id (easiest fix)
-OK fix desync on mode install (note: modes are resync on leaving and entering the save)
-OK fix entity teleport when aiming at sides with capture upgrade (should take into account the side aimed and only validate the action if there is a air/water/airlike block at the target)
-OK nerf pad and capture upgrade (only one entity per pad, capture upgrade cannot be used inside the bag itself, nerf saturation buff from mooshroom)
-OK remove enderman spawning with end-stone/chorus fruit mechanic (too op and breaks some behaviors)
 fix sleeping in the bag not working like vanilla (clear weather, etc)
 
 OK NOT FINISHED fix fluid render (tank)
@@ -73,9 +65,6 @@ test against other mods/throw in a modpack - currently tested against enigmatica
 test/balance upgrades and crafts (early, mid, late game, again the best way is playing on a modpack), currently crafts and default values doesn't feel right
 
 FIXED:
-tick lag due to bag updating holder position too often
-tick lag due to mode change dirtying world data
-concurrent change error in ticking entities holding bags (the list of entities might grow while processed, breaking iterators)
 
 -----------------------------------------------------------------------
 TODO REWORK EDITION:
@@ -111,6 +100,3 @@ this data should only be used if we can't find a valid bag or forced if entering
 an if everything else fails, teleport the player to it's bed (if outside of the bag) or at spawn
 
 DONE:
-fix render error when data is unavailable for the slots block
-fix quick enter being fired inside the bag itself when you use the bag on a block
-fix resetting the bag walls giving wall to player (oversight, forgot to black list the walls themselves)

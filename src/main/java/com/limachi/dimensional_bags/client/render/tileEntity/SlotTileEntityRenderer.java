@@ -3,6 +3,7 @@ package com.limachi.dimensional_bags.client.render.tileEntity;
 import com.limachi.dimensional_bags.DimBag;
 import com.limachi.dimensional_bags.common.bagDimensionOnly.bagSlot.SlotInventory;
 import com.limachi.dimensional_bags.common.bagDimensionOnly.bagSlot.SlotTileEntity;
+import com.limachi.dimensional_bags.lib.common.tileentities.TEWithUUID;
 import com.mojang.blaze3d.matrix.MatrixStack;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.IRenderTypeBuffer;
@@ -27,7 +28,7 @@ public class SlotTileEntityRenderer extends TileEntityRenderer<SlotTileEntity> {
 
     @Override
     public void render(SlotTileEntity te, float p_225616_2_, MatrixStack matrixStack, IRenderTypeBuffer buffer, int p_225616_5_, int p_225616_6_) {
-        if (te == null) return;
+        if (te == null || te.getUUID() == null || te.getUUID() == TEWithUUID.NULL_UUID) return; //missing tile entity or uninitialized inventory (te.getInventory() would cause invalid cast)
         SlotInventory inv = te.getInventory();
         if (inv == null) return;
         ItemStack itemstack = inv.getStackInSlot(0);
@@ -51,42 +52,6 @@ public class SlotTileEntityRenderer extends TileEntityRenderer<SlotTileEntity> {
 
                 matrixStack.popPose();
             }
-//            ItemRenderer renderer = Minecraft.getInstance().getItemRenderer();
-//            matrixStack.pushPose(); //TOP
-//            matrixStack.translate(CENTER, POSITIVE, CENTER);
-//            matrixStack.mulPose(Vector3f.XP.rotationDegrees(270f));
-//            matrixStack.scale(SCALE, SCALE, SCALE);
-//            renderer.renderStatic(itemstack, ItemCameraTransforms.TransformType.FIXED, p_225616_5_, p_225616_6_, matrixStack, buffer);
-//            matrixStack.popPose();
-//            matrixStack.pushPose(); //BOTTOM
-//            matrixStack.translate(CENTER, NEGATIVE, CENTER);
-//            matrixStack.mulPose(Vector3f.XP.rotationDegrees(90f));
-//            matrixStack.scale(SCALE, SCALE, SCALE);
-//            renderer.renderStatic(itemstack, ItemCameraTransforms.TransformType.FIXED, p_225616_5_, p_225616_6_, matrixStack, buffer);
-//            matrixStack.popPose();
-//            matrixStack.pushPose(); //NORTH
-//            matrixStack.translate(CENTER, CENTER, NEGATIVE);
-//            matrixStack.scale(SCALE, SCALE, SCALE);
-//            renderer.renderStatic(itemstack, ItemCameraTransforms.TransformType.FIXED, p_225616_5_, p_225616_6_, matrixStack, buffer);
-//            matrixStack.popPose();
-//            matrixStack.pushPose(); //SOUTH
-//            matrixStack.translate(CENTER, CENTER, POSITIVE);
-//            matrixStack.mulPose(Vector3f.YP.rotationDegrees(180f));
-//            matrixStack.scale(SCALE, SCALE, SCALE);
-//            renderer.renderStatic(itemstack, ItemCameraTransforms.TransformType.FIXED, p_225616_5_, p_225616_6_, matrixStack, buffer);
-//            matrixStack.popPose();
-//            matrixStack.pushPose(); //EAST
-//            matrixStack.translate(POSITIVE, CENTER, CENTER);
-//            matrixStack.mulPose(Vector3f.YP.rotationDegrees(270f));
-//            matrixStack.scale(SCALE, SCALE, SCALE);
-//            renderer.renderStatic(itemstack, ItemCameraTransforms.TransformType.FIXED, p_225616_5_, p_225616_6_, matrixStack, buffer);
-//            matrixStack.popPose();
-//            matrixStack.pushPose(); //WEST
-//            matrixStack.translate(NEGATIVE, CENTER, CENTER);
-//            matrixStack.mulPose(Vector3f.YP.rotationDegrees(90f));
-//            matrixStack.scale(SCALE, SCALE, SCALE);
-//            renderer.renderStatic(itemstack, ItemCameraTransforms.TransformType.FIXED, p_225616_5_, p_225616_6_, matrixStack, buffer);
-//            matrixStack.popPose();
         }
     }
 }

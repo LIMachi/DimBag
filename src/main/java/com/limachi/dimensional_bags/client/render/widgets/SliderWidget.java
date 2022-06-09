@@ -2,8 +2,9 @@ package com.limachi.dimensional_bags.client.render.widgets;
 
 import com.limachi.dimensional_bags.client.render.TextureCutout;
 import com.limachi.dimensional_bags.client.render.Vector2d;
-import com.sun.javafx.util.Utils;
+
 import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.text.IFormattableTextComponent;
 
 import java.util.function.Consumer;
@@ -45,16 +46,16 @@ public class SliderWidget extends ImageWidget {
             return m < step / 2. ? t - m : t - m + step;
         }
 
-        public StepRange doSteps(double d) { v = Utils.clamp(min, v + d * step, max); return this; }
-        public StepRange addValue(double v) { this.v = Utils.clamp(min, closestStep(this.v + v), max); return this; }
+        public StepRange doSteps(double d) { v = MathHelper.clamp(v + d * step, min, max); return this; }
+        public StepRange addValue(double v) { this.v = MathHelper.clamp(closestStep(this.v + v), min, max); return this; }
 
         public StepRange setMin(double min) { this.min = min; return this; }
         public StepRange setMax(double max) { this.max = max; return this; }
         public StepRange setStep(double step) { this.step = step; return this; }
 
-        public StepRange setValue(double v) { this.v = Utils.clamp(min, closestStep(v), max); return this; }
+        public StepRange setValue(double v) { this.v = MathHelper.clamp(closestStep(v), min, max); return this; }
         public StepRange setFactor(double f) { v = closestStep(min + f * (max - min)); return this; }
-        public StepRange setSteps(double s) { v = Utils.clamp(min, min + s * step, max); return this; }
+        public StepRange setSteps(double s) { v = MathHelper.clamp(min + s * step, min, max); return this; }
 
         public StepRange setNull() {
             min = NULL.min;

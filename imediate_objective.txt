@@ -1,0 +1,18 @@
+fix invalid uuids
+fix battery model
+fix battery deleting energy on break (data not stored)
+fix UI of player interface + block rendering of player interface
+fix wall not rendering when adjacent to transparent block
+fix fluid interaction of bucket mode
+
+fix shift click order of bag
+
+fix watcher/performer
+fix world interface
+fix upgrades
+
+fix crafts
+
+add ability to install block modules by rightclicking them on the bag entity
+
+add ergonomic options (set via bag config what mods can be scrolled/selected and their order, or even enable/diable scroll/selection)

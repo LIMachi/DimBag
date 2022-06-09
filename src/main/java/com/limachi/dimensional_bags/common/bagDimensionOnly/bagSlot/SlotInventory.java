@@ -7,11 +7,12 @@ import com.limachi.dimensional_bags.lib.common.inventory.UpgradesInventory;
 import com.limachi.dimensional_bags.common.upgrades.BaseUpgradeInventory;
 import com.limachi.dimensional_bags.lib.common.tileentities.TEWithUUID;
 import com.limachi.dimensional_bags.lib.utils.StackUtils;
-import com.sun.javafx.util.Utils;
+
 import net.minecraft.inventory.container.Slot;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.network.PacketBuffer;
+import net.minecraft.util.math.MathHelper;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.SlotItemHandler;
 
@@ -35,7 +36,7 @@ public class SlotInventory implements ISimpleItemHandlerSerializable {
 
     public boolean addSize(int add, boolean mayFail) {
         int p = size;
-        size = Utils.clamp(0, size + add, 30000000);
+        size = MathHelper.clamp(size + add, 0, 30000000);
         if (mayFail && p + add != size) {
             size = p;
             return false;
@@ -47,7 +48,7 @@ public class SlotInventory implements ISimpleItemHandlerSerializable {
 
     public boolean mulSize(double f, boolean mayFail) {
         int p = size;
-        size = Utils.clamp(0, (int)(size * f), 30000000);
+        size = MathHelper.clamp((int)(size * f), 0, 30000000);
         if (mayFail && (int)(p * f) != size) {
             size = p;
             return false;

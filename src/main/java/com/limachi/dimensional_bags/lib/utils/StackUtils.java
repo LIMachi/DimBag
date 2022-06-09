@@ -1,6 +1,6 @@
 package com.limachi.dimensional_bags.lib.utils;
 
-import com.sun.javafx.util.Utils;
+
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.inventory.EquipmentSlotType;
 import net.minecraft.inventory.container.Slot;
@@ -8,6 +8,7 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.network.PacketBuffer;
+import net.minecraft.util.math.MathHelper;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.SlotItemHandler;
 
@@ -146,7 +147,7 @@ public class StackUtils {
         int count = stack.getCount();
         if (count != Integer.MAX_VALUE) {
             int m = vanilla ? stack.getMaxStackSize() : Integer.MAX_VALUE - 1;
-            stack.setCount(val > 0 && count > 0 && val + count <= count ? m : Utils.clamp(0, val + count, m));
+            stack.setCount(val > 0 && count > 0 && val + count <= count ? m : MathHelper.clamp(val + count, 0, m));
         }
         return stack;
     }
