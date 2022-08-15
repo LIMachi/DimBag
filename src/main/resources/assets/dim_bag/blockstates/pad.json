@@ -1,0 +1,11 @@
+{
+  "variants": {
+    "down=false": {
+      "model": "dim_bag:block/pad"
+    },
+    "down=true": {
+      "model": "dim_bag:block/pad",
+      "x": 180
+    }
+  }
+}

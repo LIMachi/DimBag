@@ -1,0 +1,18 @@
+{
+  "type": "dim_bag:bag_rift",
+  "generator": {
+    "type": "minecraft:flat",
+    "settings": {
+      "structures": {
+        "structures": {}
+      },
+      "layers": [
+        {
+          "block": "minecraft:air",
+          "height": 1
+        }
+      ],
+      "biome": "dim_bag:bag"
+    }
+  }
+}

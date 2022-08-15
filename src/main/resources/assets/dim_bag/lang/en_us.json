@@ -1,0 +1,149 @@
+{
+  "key.action": "Bag Action Key",
+
+  "item.dim_bag.bag": "Dimensional Bag",
+  "item.dim_bag.ghost_bag": "Virtual Bag",
+  "item.dim_bag.ghost_bag.prefix": "Virtual ",
+
+  "item.dim_bag.tunnel_placer": "Tunnel Placer",
+  "item.dim_bag.wall_pusher": "Wall Pusher",
+
+  "item.dim_bag.battery_component": "Battery Component",
+  "item.dim_bag.blank_upgrade": "Blank Upgrade",
+  "item.dim_bag.compression_field": "Compression Field",
+  "item.dim_bag.end_fragment": "Ender Fragment",
+
+  "item.dim_bag.charger_aura_upgrade": "Charger Aura Upgrade",
+  "item.dim_bag.death_hopper_upgrade": "Death Hopper Upgrade",
+  "item.dim_bag.hidden_upgrade": "This is a secret :)",
+  "item.dim_bag.induction_upgrade": "Induction Upgrade",
+  "item.dim_bag.kinetic_generator_upgrade": "Kinetic Generator Upgrade",
+  "item.dim_bag.sweet_fabric_upgrade": "Sweet Fabric Upgrade",
+  "item.dim_bag.turtle_upgrade": "Turtle Upgrade",
+  "item.dim_bag.enticing_upgrade": "Enticing Upgrade",
+  "item.dim_bag.capture_upgrade": "Capture Upgrade",
+  "item.dim_bag.paradox_upgrade": "Paradox Upgrade",
+  "item.dim_bag.time_distortion_upgrade": "Time Distortion Upgrade",
+
+  "block.dim_bag.slot": "Slot",
+  "block.dim_bag.cloud": "Cloud",
+  "block.dim_bag.watcher": "Watcher",
+  "block.dim_bag.battery": "Battery",
+  "block.dim_bag.tank": "Tank",
+  "block.dim_bag.performer": "Performer",
+  "block.dim_bag.pad": "Pad",
+  "block.dim_bag.user_block": "Bag User Interface",
+  "block.dim_bag.tunnel": "Tunnel",
+  "block.dim_bag.wall": "Wall",
+  "block.dim_bag.world_access": "World Interface",
+  "block.dim_bag.bag_proxy": "Dimensional Bag Proxy",
+
+  "itemGroup.tab_dim_bag": "Dimensional Bags",
+
+  "curios.identifier.backpack": "Backpack",
+
+  "tooltip.bag.missing_id": "Unlinked bag",
+  "tooltip.bag.id": "Bag id: %d, Owner: %s",
+
+  "tooltip.upgrade.disabled": "This upgrade is not available for installation (WARNING: can be crafted, but will do NOTHING)",
+  "tooltip.upgrades.install_info": "Installing an upgrade can be done in various way: right click a bag entity, shift right click a proxy, shift right click inside a bag or shift right click while having a bag in your inventory/equipped",
+  "tooltip.upgrades.charger_aura_upgrade": "Will try to charge any items in the inventory of the Holder",
+  "tooltip.upgrades.death_hopper_upgrade": "Upon death of the Holder, transfer all of it's items in the bag (as entities on the ground)",
+  "tooltip.upgrades.hidden_upgrade": "this tasted like beacon and sea food",
+  "tooltip.upgrades.induction_upgrade": "Blocks inside the bag will receive energy from the bag (FE/RF)",
+  "tooltip.upgrades.kinetic_generator_upgrade": "While moving, the Holder will produce a small amount of energy",
+  "tooltip.upgrades.sweet_fabric_upgrade": "Allows placement of Beds and Respawn Anchors inside the bag, and prevent fall damage inside the bag",
+  "tooltip.upgrades.time_distortion_upgrade": "Bend the flowing of time inside the bag, making machines and entities faster or slower (consuming/generating a large amount of energy)",
+  "tooltip.upgrades.turtle_upgrade": "Upon tacking damage (at a set threshold), will protect the Holder and force it to enter the bag",
+  "tooltip.upgrades.paradox_upgrade": "Allow the Holder to enter a bag... while keeping the bag in its inventory? how does this work?",
+  "tooltip.upgrades.enticing_upgrade": "Make entities around the bag item able to pick it up",
+  "tooltip.upgrades.capture_upgrade": "Install a new Mode for the bag: the Capture mode, which you can use to capture entities inside the bag (require Pads) and remove entities from the bag",
+
+  "tooltip.upgrades.time_distortion_upgrade.warning": "This upgrade can have a HUGE impact on the server (or even crash with some mods, please report any bug found), use with caution and moderation",
+
+  "tooltip.items.blank_upgrade": "Base for all upgrades, the bag will not be consumed by the craft",
+  "tooltip.items.tunnel_placer": "Create new rooms and/or create a portal to travel to and from this room (you can close a portal and get it back by shift left clicking it, based on configs, you might only use a salvaged tunnel placer on the same wall it was salvaged from)",
+  "tooltip.items.wall_pusher": "Expands a room size by clicking a wall, which will... hem... push said wall :)",
+  "tooltip.items.end_fragment": "Obtained by cutting an ender pearl in a stone cutter",
+
+  "tooltip.blocks.bag_proxy": "This block allows to interact with a bag in a block form by placing a bag inside (right click with a bag/virtual bag), you can also add a nether star to have it work without requiring a bag inside. Right click opens the bag inventory, shift right click to enter the bag, shift left click to get the bag or nether start back. can be used with hopper and modded way of transporting items/fluids/energy",
+  "tooltip.blocks.watcher": "This programmable block can emmit redstone based on the status of the bag's user",
+  "tooltip.blocks.battery": "This acts as an FE/RF battery inside the bag, no need for wires, all batteries in a bag are linked and share all the bag FE/RF. Batteries can be picked by breaking them (no need for tools) and will keep a fraction of the bag's current power.",
+  "tooltip.blocks.tank": "This allows bags to store and manipulate fluids, once installed you will see a new mode for the bag 'Tank' that allows you to pick and place fluids, you can select the tank that will be used by clicking a slot on the Tank mode. Can interact with pipes. Like Batteries and Slots, this block can be picked up and will retain it's inventory",
+  "tooltip.blocks.performer": "This programmable block can 'force' the user to do some actions using redstone. AFK now has a whole new meaning :p",
+  "tooltip.blocks.pad": "The pad allows you to set specific destinations for entities when entering the bag (including players) while redstone powered. Filtering is done via a list of names, if you wanted any pig that is not renamed to arrive on a pad, you would whitelist 'Pig'",
+  "tooltip.blocks.slot": "Also known as the base of the bag, Slots each add a slot to the bag. They can be upgraded, and interacted with hoppers/pipes. Will keep it's inventory when broken (no tools needed)",
+  "tooltip.blocks.user_block": "Allows you to interact with the User inventory, energy (of items in the inventory) and fluids (like xp for players, if you have a mod compatible)",
+  "tooltip.blocks.world_access": "Allows the bag (through it's User) to interact with the world, inserting an item will simulate a right click, inserting fluids will place them, pumping out fluids will remove them (from the feet of the User), and removing items will absorb items on the ground close to the User.",
+
+  "inventory.user_interface.name": "%s's Inventory",
+
+  "tooltip.bag.upgrade_count": "%s -> %d/%d",
+  "tooltip.bag.usable_slots": "Usable slots: %d/%d",
+  "tooltip.shift_for_info": "use [SHIFT] for more information",
+  "tooltip.bag.mode": "Selected mode: %s",
+
+  "notification.bag.changed_mode": "Switched mode to: %s",
+  "notification.upgrade.trying_to_install_disabled_upgrade": "This upgrade is disabled, unable to install",
+  "notification.upgrade.installed_X_upgrades": "Installed %d %s",
+  "notification.upgrade.max_upgrades_reached": "Max upgrade count reached for %s",
+
+  "bag.mode.Default": "Default",
+  "bag.mode.Debug": "Debug",
+  "bag.mode.Settings": "Settings",
+  "bag.mode.Capture": "Capture",
+  "bag.mode.Manual": "Manual",
+  "bag.mode.Tank": "Tank",
+
+  "mode.error.no_valid_pad": "Could not find a valid empty pad for this entity name: '%s'",
+
+  "entity_value_reader.printable": "%s->%s = '%s'(%s)",
+
+  "item.fluid_item.empty_name": "Empty",
+  "item.fluid_item.append_qty_to_name": " (%dmb)",
+
+  "screen.fluid.bucket_acronym": "B",
+  "screen.fluid.milli_bucket_acronym": "mB",
+
+  "container.display_name.slot": "Slot",
+  "container.display_name.tank": "Tank",
+  "container.display_name.pad": "Pad",
+  "container.display_name.watcher": "Watcher",
+  "container.display_name.performer": "Performer",
+
+  "book.name": "All you need to know about Dimensional Bag",
+
+  "screen.pad.drop_list.title": "Name list",
+  "screen.pad.checkbox_whitelist": "Whitelist",
+  "screen.pad.title": "Pad",
+
+  "screen.pad.tooltip.title": "Pad name, used for easier identification when selecting a Pad (sneak action scroll on the capture mode)",
+  "screen.pad.tooltip.whitelist": "Does the list should be used to only allow named entities (whitelist) or allow any entity that has not its name listed here (blacklist)",
+  "screen.pad.tooltip.list": "List of names that will be (dis)allowed, for unnamed entities (like pigs), use the default server name for this entity (for most servers: english and capitalized, example: Pig)",
+
+  "screen.manual.missing_patchouli": "You are missing the patchouli mod by Vazkii, the manual requires this mod to work. Please install patchouli for your minecraft version, downloads can be found there: https://www.curseforge.com/minecraft/mc-mods/patchouli",
+
+  "manual.name": "Dimensional Bags Manual",
+  "manual.front_page": "Welcome $(playername) to the wonderful world of dimensional bags.$(p)In this book, you will find all the information on how to use your bag modes, upgrades and also how to use blocks and items provided by this mod.",
+
+  "settings.Modes.Default.title": "Default mode",
+  "settings.Upgrades.turtle_upgrade.title": "Turtle Upgrade",
+  "settings.Upgrades.time_distortion_upgrade.title": "Time Distortion Upgrade",
+  "settings.Upgrades.sweet_fabric_upgrade.title": "Sweet Fabric Upgrade",
+  "settings.Upgrades.paradox_upgrade.title": "Paradox Upgrade",
+  "settings.Upgrades.kinetic_generator_upgrade.title": "Kinetic Generator Upgrade",
+  "settings.Upgrades.induction_upgrade.title": "Induction Upgrade",
+  "settings.Upgrades.enticing_upgrade.title": "Enticing Upgrade",
+  "settings.Upgrades.death_hopper_upgrade.title": "Death Hopper Upgrade",
+
+  "settings.Upgrades.time_distortion_upgrade.factor.tooltip": "Time distortion exponent: ",
+  "settings.Upgrades.turtle_upgrade.Threshold.tooltip": "Threshold (in 1/2 hearts): ",
+  "settings.Modes.Default.should_show_energy.tooltip": "Display the current bag power in the top left corner of the screen",
+  "settings.Modes.Default.bag_name.tooltip": "Bag name",
+  "settings.Modes.Default.quick_reequip.tooltip": "Quick Reequip (when leaving the bag, auto equip it)",
+  "settings.Modes.Default.quick_enter.tooltip": "Quick enter (when placing the bag in world, auto enter inside. If the paradox upgrade is active, enter the bag while keeping it equipped)",
+
+  "settings.tooltip.active": "Activate this upgrade",
+
+  "extended_tooltip.nbt_tooltip.use_alt": "Hold [Alt] to see NBT"
+}

@@ -1,0 +1,16 @@
+{
+  "name": "manual.name",
+  "landing_text": "manual.front_page",
+  "show_progress": false,
+  "creative_tab": "tab_dim_bag",
+  "pause_game": true,
+  "custom_book_item": "dim_bag:bag",
+  "macros": {
+    "#Bag": "$(t:bag item or virtual bag)$(l:bag)Bag$()",
+    "#Entity": "$(t:entity counterpart of the bag which players can interact with)$(l:bag#3)Bag Entity$()",
+    "#User": "$(t:entity currently holding the #Bag, or the #Entity itself)$(l:glossary)User$()",
+    "#Equip": "$(t:attack the #Entity, with or without sneak, to pick it up in item form)$(l:bag#3)Equip$()",
+    "#Unequip": "$(t:place the #Bag in entity form on the ground, removing it from inventory)$(l:bag#3)Unequip$()",
+    "#Pad": "$(t:an active (receiving a redstone signal) Pad inside the #Bag)$(l:pad)Pad$()"
+  }
+}

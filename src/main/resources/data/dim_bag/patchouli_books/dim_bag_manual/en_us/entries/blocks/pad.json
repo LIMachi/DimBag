@@ -1,0 +1,17 @@
+{
+  "name": "Pad",
+  "icon": "dim_bag:pad",
+  "category": "dim_bag:blocks",
+  "pages": [
+    {
+      "anchor": "1",
+      "type": "patchouli:text",
+      "text": "The Pads are blocks to manipulate how entities (including players) enter the bag.$(br)When an entity enters the bag, it's name will be tested against all active (receiving redstone) pads, the first valid pad will then change the coordinates of arrival of the entity."
+    },
+    {
+      "anchor": "2",
+      "type": "patchouli:text",
+      "text": "You can open pads to change the list of entity names, if the list should be used as a whitelist or blacklist (only accept or refuse).$(br)You can also rename pads (helpfull with the #Capture, will show the name of the currently selected pad).$(br)The direction of the pad can be #Wrench to Up/Down (Up is the default)."
+    }
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "name": "Items",
+  "description": "All the items added by the mod (except the upgrades) and how they work",
+  "icon": "dim_bag:wall_pusher",
+  "sortnum": 4
+}

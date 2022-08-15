@@ -1,0 +1,6 @@
+{
+  "parent": "dim_bag:item/ghost_bag",
+  "textures": {
+    "layer1": "dim_bag:item/mode/capture"
+  }
+}
