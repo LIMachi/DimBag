@@ -1,5 +1,6 @@
 {
   "key.action": "Bag Action Key",
+  "category.dim_bag": "Dimensional Bag",
 
   "item.dim_bag.bag": "Dimensional Bag",
   "item.dim_bag.ghost_bag": "Virtual Bag",

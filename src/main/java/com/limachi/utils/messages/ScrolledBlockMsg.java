@@ -10,16 +10,16 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 
 @Network.RegisterMessage(value = 1, modId = ModBase.COMMON_ID)
-public class ScrolledBlock extends Network.Message {
+public class ScrolledBlockMsg extends Network.Message {
     BlockPos pos;
     int delta;
 
-    public ScrolledBlock(BlockPos pos, int delta) {
+    public ScrolledBlockMsg(BlockPos pos, int delta) {
         this.pos = pos;
         this.delta = delta;
     }
 
-    public ScrolledBlock(FriendlyByteBuf buffer) {
+    public ScrolledBlockMsg(FriendlyByteBuf buffer) {
         pos = buffer.readBlockPos();
         delta = buffer.readInt();
     }

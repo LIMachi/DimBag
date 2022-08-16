@@ -35,7 +35,7 @@ import java.util.function.Predicate;
 @SuppressWarnings("unused")
 public class World {
     public static Level getLevel(ResourceKey<Level> reg) {
-        if (Sides.isClient()) {
+        if (Sides.isLogicalClient()) {
             Level t = Sides.getPlayer().level;
             return t.dimension().equals(reg) ? t : null;
         }

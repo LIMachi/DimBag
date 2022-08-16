@@ -23,7 +23,7 @@ public class Network {
         public Message() {}
         public Message(FriendlyByteBuf buffer) {}
         public abstract void toBytes(FriendlyByteBuf buffer);
-        public void clientWork() {}
+        public void clientWork(Player player) {}
         public void serverWork(Player player) {}
     }
 
@@ -75,7 +75,7 @@ public class Network {
                         NetworkEvent.Context ctx = scntx.get();
                         Network.Target t = Network.target(ctx);
                         if (t == Network.Target.CLIENT)
-                            ctx.enqueueWork(((Message)msg)::clientWork);
+                            ctx.enqueueWork(()->(msg).clientWork(Sides.getPlayer()));
                         if (t == Network.Target.SERVER)
                             ctx.enqueueWork(()->(msg).serverWork(ctx.getSender()));
                         ctx.setPacketHandled(true);

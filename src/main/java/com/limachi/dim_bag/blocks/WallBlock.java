@@ -7,9 +7,12 @@ import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.material.Material;
 import net.minecraftforge.registries.RegistryObject;
 
+@SuppressWarnings("unused")
 public class WallBlock extends Block {
+
     @Registries.RegisterBlock
     public static RegistryObject<WallBlock> R_BLOCK;
+
     @Registries.RegisterBlockItem(block = "R_BLOCK")
     public static RegistryObject<BlockItem> R_ITEM;
 

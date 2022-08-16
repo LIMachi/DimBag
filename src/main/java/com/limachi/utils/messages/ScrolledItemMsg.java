@@ -8,16 +8,16 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 
 @Network.RegisterMessage(value = 2, modId = ModBase.COMMON_ID)
-public class ScrolledItem extends Network.Message {
+public class ScrolledItemMsg extends Network.Message {
     int slot;
     int delta;
 
-    public ScrolledItem(int slot, int delta) {
+    public ScrolledItemMsg(int slot, int delta) {
         this.slot = slot;
         this.delta = delta;
     }
 
-    public ScrolledItem(FriendlyByteBuf buffer) {
+    public ScrolledItemMsg(FriendlyByteBuf buffer) {
         slot = buffer.readInt();
         delta = buffer.readInt();
     }

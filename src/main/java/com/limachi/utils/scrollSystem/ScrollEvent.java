@@ -2,8 +2,8 @@ package com.limachi.utils.scrollSystem;
 
 import com.limachi.utils.ModBase;
 import com.limachi.utils.Network;
-import com.limachi.utils.messages.ScrolledBlock;
-import com.limachi.utils.messages.ScrolledItem;
+import com.limachi.utils.messages.ScrolledBlockMsg;
+import com.limachi.utils.messages.ScrolledItemMsg;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.player.Inventory;
@@ -74,9 +74,9 @@ public class ScrollEvent {
         if (COUNTDOWN-- == 0) {
             if (DELTA != 0) {
                 if (POS != null)
-                    Network.toServer(ModBase.COMMON_ID, new ScrolledBlock(POS, DELTA));
+                    Network.toServer(ModBase.COMMON_ID, new ScrolledBlockMsg(POS, DELTA));
                 if (SLOT != -1)
-                    Network.toServer(ModBase.COMMON_ID, new ScrolledItem(SLOT, DELTA));
+                    Network.toServer(ModBase.COMMON_ID, new ScrolledItemMsg(SLOT, DELTA));
             }
             DELTA = 0;
             POS = null;
