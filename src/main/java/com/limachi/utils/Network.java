@@ -35,7 +35,7 @@ public class Network {
     }
 
     private static void discoverMsgRegistry(String modId) {
-        for (Annotations a : Annotations.iterModAnnotations(modId, RegisterMessage.class))
+        for (ModAnnotation a : ModAnnotation.iterModAnnotations(modId, RegisterMessage.class))
             registerMsg(a.getData("modId", modId), (Class<Message>)a.getAnnotatedClass(), a.getData("value", -1));
     }
 

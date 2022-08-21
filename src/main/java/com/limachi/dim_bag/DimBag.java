@@ -17,7 +17,7 @@ public class DimBag extends ModBase
     static {
         ResourceLocation icon = new ResourceLocation(MOD_ID, "item/ghost_bag");
         CuriosIntegration.registerIcon(icon);
-        CuriosIntegration.registerSlot("back", icon, 1);
+        CuriosIntegration.registerSlot(Constants.BAG_CURIO_SLOT, icon, 1);
     }
     public DimBag() {
         super(MOD_ID, "Dimensional Bags");

@@ -1,14 +1,20 @@
 package com.limachi.utils;
 
 import com.google.common.collect.ArrayListMultimap;
+import com.limachi.utils.blocks.IGetUseSneakWithItemEvent;
+import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.level.block.Block;
 import net.minecraftforge.event.TickEvent;
+import net.minecraftforge.event.entity.player.PlayerInteractEvent;
+import net.minecraftforge.eventbus.api.Event;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
 import java.util.List;
 
 @Mod.EventBusSubscriber
-public class Tick {
+public class Events {
     public static int tick = 0;
     private static final ArrayListMultimap<Integer, Runnable> pendingTasks = ArrayListMultimap.create();
     /**
@@ -27,6 +33,16 @@ public class Tick {
         } else if (event.phase == TickEvent.Phase.END) {
             pendingTasks.removeAll(tick);
             ++tick;
+        }
+    }
+
+    @SubscribeEvent
+    public static void acceptSneakUseOfBlockWithItem(PlayerInteractEvent.RightClickBlock event) {
+        Block block = event.getWorld().getBlockState(event.getHitVec().getBlockPos()).getBlock();
+        Item item = event.getPlayer().getItemInHand(event.getHand()).getItem();
+        if (block instanceof IGetUseSneakWithItemEvent && !(item instanceof BlockItem)) {
+            event.setUseBlock(Event.Result.ALLOW);
+            event.setUseItem(Event.Result.DENY);
         }
     }
 }

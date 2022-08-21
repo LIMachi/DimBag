@@ -1,17 +1,11 @@
 package com.limachi.dim_bag.saveData;
 
 import com.limachi.utils.SaveData;
-import com.limachi.utils.StaticInitializer;
 import net.minecraft.nbt.CompoundTag;
 import org.jetbrains.annotations.NotNull;
 
-@StaticInitializer.Static
+@SaveData.RegisterSaveData(sync = SaveData.Sync.BOTH_WAY)
 public class Test extends SaveData.SyncSaveData {
-
-    public static final String NAME = "test";
-    static {
-        SaveData.register(NAME, SaveData.Sync.BOTH_WAY, Test.class);
-    }
 
     protected int counter;
 

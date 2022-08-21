@@ -21,7 +21,7 @@ public class Sides {
     public static final Logger LOGGER = LogManager.getLogger();
     public static boolean isLogicalClient() { return EffectiveSide.get().isClient(); }
     public static boolean isPhysicalClient() { return FMLEnvironment.dist.isClient(); }
-    public static Player getPlayer() { return DistExecutor.safeRunForDist(()->()->Minecraft.getInstance().player, ()->()-> {Log.warn("trying to retrieve a client player server side!", 1); return null;}); }
+    public static Player getPlayer() { return DistExecutor.unsafeRunForDist(()->()->Minecraft.getInstance().player, ()->()-> {Log.warn("trying to retrieve a client player server side!", 1); return null;}); }
     public static List<? extends Player> getPlayers() { return DistExecutor.safeRunForDist(()->()-> isLogicalClient() ? Collections.singletonList(Minecraft.getInstance().player) : getServer().getPlayerList().getPlayers(), ()->()->getServer().getPlayerList().getPlayers()); }
     public static MinecraftServer getServer() { return ServerLifecycleHooks.getCurrentServer(); }
     public static <T> T logicalSideRun(Supplier<Callable<T>> client, Supplier<Callable<T>> server) {

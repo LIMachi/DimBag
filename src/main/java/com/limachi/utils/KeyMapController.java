@@ -29,17 +29,23 @@ import java.util.function.Supplier;
 @SuppressWarnings("unused")
 @Mod.EventBusSubscriber(value = Dist.CLIENT)
 public class KeyMapController {
+
     public static final ArrayList<GlobalKeyBinding> KEY_BINDINGS = new ArrayList<>();
-    static {
-        KEY_BINDINGS.add(new GlobalKeyBinding("key.categories.movement:key.sneak", false, ()->()->Minecraft.getInstance().options.keyShift));
-        KEY_BINDINGS.add(new GlobalKeyBinding("key.categories.movement:key.sprint", false, ()->()->Minecraft.getInstance().options.keySprint));
-        KEY_BINDINGS.add(new GlobalKeyBinding("key.categories.movement:key.jump", false, ()->()->Minecraft.getInstance().options.keyJump));
-        KEY_BINDINGS.add(new GlobalKeyBinding("key.categories.movement:key.forward", false, ()->()->Minecraft.getInstance().options.keyUp));
-        KEY_BINDINGS.add(new GlobalKeyBinding("key.categories.movement:key.back", false, ()->()->Minecraft.getInstance().options.keyDown));
-        KEY_BINDINGS.add(new GlobalKeyBinding("key.categories.movement:key.right", false, ()->()->Minecraft.getInstance().options.keyRight));
-        KEY_BINDINGS.add(new GlobalKeyBinding("key.categories.movement:key.left", false, ()->()->Minecraft.getInstance().options.keyLeft));
-        KEY_BINDINGS.add(new GlobalKeyBinding("key.categories.gameplay:key.use", false, ()->()->Minecraft.getInstance().options.keyUse));
-        KEY_BINDINGS.add(new GlobalKeyBinding("key.categories.gameplay:key.attack", false, ()->()->Minecraft.getInstance().options.keyAttack));
+
+    public static GlobalKeyBinding SNEAK = registerVanilla("key.categories.movement:key.sneak", ()->()->Minecraft.getInstance().options.keyShift);
+    public static GlobalKeyBinding SPRINT = registerVanilla("key.categories.movement:key.sprint", ()->()->Minecraft.getInstance().options.keySprint);
+    public static GlobalKeyBinding JUMP = registerVanilla("key.categories.movement:key.jump", ()->()->Minecraft.getInstance().options.keyJump);
+    public static GlobalKeyBinding FORWARD = registerVanilla("key.categories.movement:key.forward", ()->()->Minecraft.getInstance().options.keyUp);
+    public static GlobalKeyBinding BACK = registerVanilla("key.categories.movement:key.back", ()->()->Minecraft.getInstance().options.keyDown);
+    public static GlobalKeyBinding RIGHT = registerVanilla("key.categories.movement:key.right", ()->()->Minecraft.getInstance().options.keyRight);
+    public static GlobalKeyBinding LEFT = registerVanilla("key.categories.movement:key.left", ()->()->Minecraft.getInstance().options.keyLeft);
+    public static GlobalKeyBinding USE = registerVanilla("key.categories.gameplay:key.use", ()->()->Minecraft.getInstance().options.keyUse);
+    public static GlobalKeyBinding ATTACK = registerVanilla("key.categories.gameplay:key.attack", ()->()->Minecraft.getInstance().options.keyAttack);
+
+    protected static GlobalKeyBinding registerVanilla(String key, Supplier<Callable<KeyMapping>> ref) {
+        GlobalKeyBinding out = new GlobalKeyBinding(key, false, ref);
+        KEY_BINDINGS.add(out);
+        return out;
     }
 
     private static final HashMap<UUID, boolean[]> playerKeyStateMap = new HashMap<>(); //only used server side

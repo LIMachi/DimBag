@@ -3,8 +3,8 @@ package com.limachi.utils;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 
@@ -21,16 +21,15 @@ public class ModBase {
     protected CreativeModeTab tab = CreativeModeTab.TAB_MISC;
 
     public ModBase(@Nonnull String modId, @Nonnull String name) {
+        Registries.annotations(modId);
         StaticInitializer.initialize();
-        IEventBus bus = FMLJavaModLoadingContext.get().getModEventBus();
         Registries.register(modId);
-        DistExecutor.unsafeRunForDist(()->()->{
-            bus.addListener(ClientRegistries::clientSetup);
-            return 0;}, ()->()->0);
+        DistExecutor.unsafeCallWhenOn(Dist.CLIENT, ()->()->{ ClientRegistries.register(modId); return true; });
         MinecraftForge.EVENT_BUS.register(this);
         Configs.register(modId, name);
         Network.register(modId);
-        bus.addListener(CuriosIntegration::enqueueIMC);
+        SaveData.annotations(modId);
+        FMLJavaModLoadingContext.get().getModEventBus().addListener(CuriosIntegration::enqueueIMC);
         INSTANCES.put(modId, this);
     }
 

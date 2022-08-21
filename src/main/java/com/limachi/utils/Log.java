@@ -7,7 +7,7 @@ import java.util.function.Consumer;
 
 @SuppressWarnings({"UnusedReturnValue", "unused"})
 public class Log {
-    public static final Logger LOGGER = LogManager.getLogger();
+    public static final Logger LOGGER = LogManager.getLogger(LIMachiSMods.class);
 
     /**
      * will debug methods actually log something

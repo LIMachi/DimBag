@@ -33,6 +33,20 @@ public class SaveData {
         SAVE_DATAS.put(name, new Pair<>(dataClass, sync));
     }
 
+    public @interface RegisterSaveData {
+        String name() default "";
+        Sync sync() default Sync.SERVER_ONLY;
+    }
+
+    public static void annotations(String modId) {
+        for (ModAnnotation a : ModAnnotation.iterModAnnotations(modId, RegisterSaveData.class)) {
+            String name = a.getData("name", "");
+            if (name.equals(""))
+                name = Strings.camel_to_snake(Strings.get_file('.', a.getAnnotatedClass().getCanonicalName())).replace("_save_data", "").replace("_data", "");
+            register(name, a.getData("sync", Sync.SERVER_ONLY), (Class<? extends SyncSaveData>)a.getAnnotatedClass());
+        }
+    }
+
     public static class SyncSaveData extends SavedData {
         public final String name;
         public final Sync sync;
@@ -48,12 +62,12 @@ public class SaveData {
         @Override
         public void setDirty() {
             super.setDirty();
-            if (lastMarkDirty < Tick.tick) {
-                lastMarkDirty = Tick.tick;
+            if (lastMarkDirty < Events.tick) {
+                lastMarkDirty = Events.tick;
                 if (isClient && sync == Sync.BOTH_WAY)
-                    Tick.delayedTask(1, ()->Network.toServer(ModBase.COMMON_ID, pack(prevState == null)));
+                    Events.delayedTask(1, ()->Network.toServer(ModBase.COMMON_ID, pack(prevState == null)));
                 else if (!isClient && sync == Sync.SERVER_TO_CLIENT)
-                    Tick.delayedTask(1, ()->Network.toClients(ModBase.COMMON_ID, pack(prevState == null)));
+                    Events.delayedTask(1, ()->Network.toClients(ModBase.COMMON_ID, pack(prevState == null)));
             }
         }
 
