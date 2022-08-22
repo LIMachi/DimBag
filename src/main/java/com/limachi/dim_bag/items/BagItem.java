@@ -2,27 +2,37 @@ package com.limachi.dim_bag.items;
 
 import com.limachi.dim_bag.Constants;
 import com.limachi.dim_bag.DimBag;
+import com.limachi.dim_bag.blocks.IBagWrenchable;
+import com.limachi.dim_bag.blocks.IHasBagSettings;
 import com.limachi.dim_bag.entities.BagEntity;
 import com.limachi.dim_bag.saveData.Test;
-import com.limachi.utils.CuriosIntegration;
-import com.limachi.utils.Log;
-import com.limachi.utils.Registries;
-import com.limachi.utils.SaveData;
-import com.limachi.utils.scrollSystem.IScrollItem;
+import com.limachi.lim_lib.*;
+import com.limachi.lim_lib.scrollSystem.IScrollItem;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.TranslatableComponent;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.item.context.UseOnContext;
+import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraftforge.common.capabilities.ICapabilityProvider;
 import net.minecraftforge.registries.RegistryObject;
 import org.apache.commons.lang3.tuple.ImmutableTriple;
 import top.theillusivec4.curios.api.CuriosApi;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 public class BagItem extends Item implements IScrollItem {
@@ -79,8 +89,77 @@ public class BagItem extends Item implements IScrollItem {
     }
 
     @Override
+    public InteractionResult onItemUseFirst(ItemStack stack, UseOnContext context) {
+        BlockState state = context.getLevel().getBlockState(context.getClickedPos());
+        Block block = state.getBlock();
+        if ((block instanceof IBagWrenchable || block instanceof IHasBagSettings) && true /*FIXME ModeManager.execute(getbagId(stack), mm -> mm.getSelectedMode(context.getPlayer()).equals(Settings.ID), false)*/) {
+            if (block instanceof IBagWrenchable b && KeyMapController.SNEAK.getState(context.getPlayer()))
+                return b.wrenchWithBag(context.getLevel(), context.getClickedPos(), state, context.getClickedFace());
+            if (block instanceof IHasBagSettings b)
+                return b.openSettings(context.getPlayer(), context.getClickedPos());
+        }
+        return super.onItemUseFirst(stack, context);
+    }
+
+    @Override
+    public boolean hasContainerItem(ItemStack stack) { return true; }
+
+    @Override
+    public ItemStack getContainerItem(ItemStack itemStack) { return itemStack.copy(); }
+
+    @Override
+    public int getItemEnchantability(ItemStack stack) { return 0; }
+
+    @Override
+    public ICapabilityProvider initCapabilities(ItemStack stack, CompoundTag nbt) {
+//        return new BagProxyInventory().setbagId(BagItem.getbagId(stack)); FIXME
+        return null;
+    }
+
+    @Override
+    public void inventoryTick(ItemStack stack, Level level, Entity entity, int slot, boolean selected) {
+        super.inventoryTick(stack, level, entity, slot, selected);
+        CompoundTag nbt = stack.getOrCreateTag();
+        //FIXME 1.16.5 BagItem:159
+    }
+
+    @Override
+    public void appendHoverText(ItemStack stack, Level level, List<Component> tooltip, TooltipFlag flags) {
+        int id = getbagId(stack);
+        if (id <= 0)
+            tooltip.add(new TranslatableComponent("tooltip.bag.missing_id"));
+        else {
+            String owner = /*FIXME OwnerData.execute(eye, OwnerData::getPlayerName, "Missing Server Data")*/ "Missing Server Data";
+            tooltip.add(new TranslatableComponent("tooltip.bag.id", id, owner));
+        }
+        super.appendHoverText(stack, level, tooltip, flags);
+    }
+
+    public static int getBag(LivingEntity entity, int bagId, boolean realBagOnly, boolean equippedOnly) {
+        if (equippedOnly) {
+            Optional<ImmutableTriple<String, Integer, ItemStack>> s = CuriosApi.getCuriosHelper().findEquippedCurio(t->(!realBagOnly || !(t.getItem() instanceof GhostBagItem)) && t.getTag() != null && t.getTag().getInt(Constants.BAG_ID_TAG_KEY) != 0 && (bagId == 0 || t.getTag().getInt(Constants.BAG_ID_TAG_KEY) == bagId), entity);
+            return s.isPresent() ? getbagId(s.get().getRight()) : 0;
+        }
+        CuriosIntegration.ProxySlotModifier res = CuriosIntegration.searchItem(entity, BagItem.class, t->(!realBagOnly || !(t.getItem() instanceof GhostBagItem)) && t.getTag() != null && t.getTag().getInt(Constants.BAG_ID_TAG_KEY) != 0 && (bagId == 0 || t.getTag().getInt(Constants.BAG_ID_TAG_KEY) == bagId));
+        return res != null ? getbagId(res.get()) : 0;
+    }
+
+    @Override
+    public boolean isDamageable(ItemStack stack) { return false; }
+
+    @Override
+    public boolean shouldCauseReequipAnimation(ItemStack oldStack, ItemStack newStack, boolean slotChanged) { return slotChanged || oldStack.getItem() != newStack.getItem(); }
+
+    /**
+     * expose an otherwise protected method
+     */
+    public static BlockHitResult rayTrace(Level level, Player player, ClipContext.Fluid fluidMode) {
+        return getPlayerPOVHitResult(level, player, fluidMode);
+    }
+
+    @Override
     public void scroll(Player player, int slot, int delta) {
-        Test test = SaveData.getInstance("test");
+        Test test = SaveData.getInstance("test:1");
         delta += test.getCounter();
         Log.warn("validated scroll: " + delta + " for slot " + slot);
         test.setCounter(delta);
@@ -92,5 +171,5 @@ public class BagItem extends Item implements IScrollItem {
     }
 
     @Override
-    public boolean canScroll(Player player, int slot) { return DimBag.ACTION_KEY.getState(player); }
+    public boolean canScroll(Player player, int slot) { return Constants.ACTION_KEY.getState(player); }
 }

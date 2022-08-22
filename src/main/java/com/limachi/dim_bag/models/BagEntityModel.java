@@ -1,9 +1,10 @@
 package com.limachi.dim_bag.models;
 
+import com.limachi.dim_bag.Constants;
 import com.limachi.dim_bag.DimBag;
 import com.limachi.dim_bag.entities.BagEntity;
-import com.limachi.utils.ClientRegistries;
-import com.limachi.utils.StaticInitializer;
+import com.limachi.lim_lib.ClientRegistries;
+import com.limachi.lim_lib.StaticInitializer;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.model.EntityModel;
@@ -15,7 +16,7 @@ import net.minecraft.resources.ResourceLocation;
 
 @StaticInitializer.StaticClient
 public class BagEntityModel extends EntityModel<BagEntity> {
-    public static final ResourceLocation MODEL = new ResourceLocation(DimBag.MOD_ID, "bag_entity");
+    public static final ResourceLocation MODEL = new ResourceLocation(Constants.MOD_ID, "bag_entity");
     public static final ModelLayerLocation LAYER = new ModelLayerLocation(MODEL, "ground");
     private final ModelPart bag;
     private final ModelPart lid;

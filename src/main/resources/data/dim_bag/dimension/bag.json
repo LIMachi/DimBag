@@ -1,5 +1,5 @@
 {
-  "type": "dim_bag:bag_rift",
+  "type": "dim_bag:bag",
   "generator": {
     "type": "minecraft:flat",
     "settings": {

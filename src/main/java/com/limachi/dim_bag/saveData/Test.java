@@ -1,6 +1,6 @@
 package com.limachi.dim_bag.saveData;
 
-import com.limachi.utils.SaveData;
+import com.limachi.lim_lib.SaveData;
 import net.minecraft.nbt.CompoundTag;
 import org.jetbrains.annotations.NotNull;
 

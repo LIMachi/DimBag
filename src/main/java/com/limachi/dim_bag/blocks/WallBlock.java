@@ -1,6 +1,6 @@
 package com.limachi.dim_bag.blocks;
 
-import com.limachi.utils.Registries;
+import com.limachi.lim_lib.Registries;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.SoundType;

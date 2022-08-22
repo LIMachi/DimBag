@@ -1,8 +1,8 @@
 package com.limachi.dim_bag.entities;
 
 import com.limachi.dim_bag.items.BagItem;
-import com.limachi.utils.Log;
-import com.limachi.utils.Registries;
+import com.limachi.lim_lib.Log;
+import com.limachi.lim_lib.Registries;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;

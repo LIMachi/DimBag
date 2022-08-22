@@ -1,3 +1,5 @@
+import java.nio.file.Files
+
 buildscript {
     repositories {
         // These repositories are only for Gradle plugins, put any other repositories in the repository block further below
@@ -155,6 +157,14 @@ repositories {
     maven {
         url = "https://maven.theillusivec4.top/"
     }
+    maven {
+        name "bytesafe"
+        url "https://limachi.bytesafe.dev/maven/limlib/"
+        credentials {
+            username "bytesafe"
+            password = Files.readAllLines(file("../bytesafe").toPath())[0]
+        }
+    }
 }
 
 dependencies {
@@ -178,6 +188,8 @@ dependencies {
     dependencies {
         runtimeOnly fg.deobf("top.theillusivec4.curios:curios-forge:1.18.2-5.0.7.1")
         compileOnly fg.deobf("top.theillusivec4.curios:curios-forge:1.18.2-5.0.7.1:api")
+        runtimeOnly fg.deobf("com.limachi.lim_lib:lim_lib:A1.0.1")
+        compileOnly fg.deobf("com.limachi.lim_lib:lim_lib:A1.0.1")
     }
 }
 
@@ -210,7 +222,12 @@ publishing {
     }
     repositories {
         maven {
-            url "file://${project.projectDir}/mcmodsrepo"
+            credentials {
+                username "bytesafe"
+                password = Files.readAllLines(file("../bytesafe").toPath())[0]
+            }
+            name "bytesafe"
+            url "https://limachi.bytesafe.dev/maven/dimbag/"
         }
     }
 }
