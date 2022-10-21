@@ -1,15 +1,17 @@
 package com.limachi.dim_bag.saveData;
 
-import com.limachi.lim_lib.SaveData;
+import com.limachi.lim_lib.saveData.AbstractSyncSaveData;
+import com.limachi.lim_lib.saveData.RegisterSaveData;
+import com.limachi.lim_lib.saveData.SaveSync;
 import net.minecraft.nbt.CompoundTag;
 import org.jetbrains.annotations.NotNull;
 
-@SaveData.RegisterSaveData(sync = SaveData.Sync.BOTH_WAY)
-public class Test extends SaveData.SyncSaveData {
+@RegisterSaveData
+public class Test extends AbstractSyncSaveData {
 
     protected int counter;
 
-    public Test(String name, SaveData.Sync sync) { super(name, sync); }
+    public Test(String name) { super(name, SaveSync.BOTH_WAY); }
 
     public int getCounter() { return counter; }
 

@@ -1,6 +1,9 @@
 package com.limachi.dim_bag.rooms;
 
-import com.limachi.lim_lib.SaveData;
+import com.limachi.lim_lib.saveData.AbstractSyncSaveData;
+import com.limachi.lim_lib.saveData.RegisterSaveData;
+import com.limachi.lim_lib.saveData.SaveDataManager;
+import com.limachi.lim_lib.saveData.SaveSync;
 import net.minecraft.core.Vec3i;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
@@ -10,8 +13,8 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-@SaveData.RegisterSaveData(sync = SaveData.Sync.SERVER_TO_CLIENT)
-public class RoomsData extends SaveData.SyncSaveData {
+@RegisterSaveData
+public class RoomsData extends AbstractSyncSaveData {
 
     private HashMap<Vec3i, Integer> posToSubRoomId = new HashMap<>();
     private int selectedPad = -1;
@@ -19,7 +22,7 @@ public class RoomsData extends SaveData.SyncSaveData {
     private ArrayList<Vec3i> activePads = new ArrayList<>();
     private ArrayList<SubRoom> subRooms = new ArrayList<>();
 
-    public RoomsData(String name, SaveData.Sync sync) { super(name, sync); }
+    public RoomsData(String name) { super(name, SaveSync.SERVER_TO_CLIENT); }
 
     public ArrayList<SubRoom> getSubRooms() { return subRooms; }
 
@@ -60,5 +63,5 @@ public class RoomsData extends SaveData.SyncSaveData {
             activePads.add(new Vec3i(((CompoundTag)t).getInt("X"), ((CompoundTag)t).getInt("Y"), ((CompoundTag)t).getInt("Z")));
     }
 
-    public static RoomsData getInstance(int id) { return SaveData.getInstance("rooms:" + id); }
+    public static RoomsData getInstance(int id) { return SaveDataManager.getInstance("rooms:" + id); }
 }

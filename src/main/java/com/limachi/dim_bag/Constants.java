@@ -1,7 +1,7 @@
 package com.limachi.dim_bag;
 
 import com.limachi.lim_lib.KeyMapController;
-import com.limachi.lim_lib.StaticInitializer;
+import com.limachi.lim_lib.registries.StaticInit;
 import com.mojang.authlib.GameProfile;
 import net.minecraft.core.Registry;
 import net.minecraft.resources.ResourceKey;
@@ -14,7 +14,7 @@ import net.minecraftforge.common.util.FakePlayerFactory;
 import java.lang.ref.WeakReference;
 import java.util.HashMap;
 
-@StaticInitializer.Static
+@StaticInit
 public class Constants {
     public static final String MOD_ID = "dim_bag";
     public static final String BAG_ID_TAG_KEY = "bag_id";

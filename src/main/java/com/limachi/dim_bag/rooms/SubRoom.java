@@ -21,6 +21,28 @@ public class SubRoom {
     int east;
     int west;
 
+    public SubRoom(int id, int radius, int subRoom, Vec3i pos) {
+        center = Rooms.getRoomCenter(id, subRoom);
+        this.pos = pos;
+        up = radius;
+        down = radius;
+        north = radius;
+        south = radius;
+        east = radius;
+        west = radius;
+    }
+
+    public SubRoom(Vec3i pos, BlockPos center, int up, int down, int north, int south, int east, int west) {
+        this.center = center;
+        this.pos = pos;
+        this.up = up;
+        this.down = down;
+        this.north = north;
+        this.south = south;
+        this.east = east;
+        this.west = west;
+    }
+
     public Set<ChunkPos> getComposingChunks() {
         HashSet<ChunkPos> out = new HashSet<>();
         for (int x = (center.getX() - west) >> 4; x <= (int)Math.ceil((center.getX() + east) / 16.); ++x)
@@ -142,16 +164,9 @@ public class SubRoom {
     }
 
     public static SubRoom fromNBT(CompoundTag nbt) {
-        SubRoom out = new SubRoom();
-        out.up = nbt.getInt("Up");
-        out.down = nbt.getInt("Down");
-        out.north = nbt.getInt("North");
-        out.south = nbt.getInt("South");
-        out.east = nbt.getInt("East");
-        out.west = nbt.getInt("West");
-        out.pos = new Vec3i(nbt.getInt("X"), nbt.getInt("Y"), nbt.getInt("Z"));
-        out.center = new BlockPos(nbt.getInt("CenterX"), nbt.getInt("CenterY"), nbt.getInt("CenterZ"));
-        return out;
+        Vec3i pos = new Vec3i(nbt.getInt("X"), nbt.getInt("Y"), nbt.getInt("Z"));
+        BlockPos center = new BlockPos(nbt.getInt("CenterX"), nbt.getInt("CenterY"), nbt.getInt("CenterZ"));
+        return new SubRoom(pos, center, nbt.getInt("Up"), nbt.getInt("Down"), nbt.getInt("North"), nbt.getInt("South"), nbt.getInt("East"), nbt.getInt("West"));
     }
 
     public CompoundTag toNBT() {

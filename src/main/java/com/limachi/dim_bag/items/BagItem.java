@@ -7,11 +7,13 @@ import com.limachi.dim_bag.blocks.IHasBagSettings;
 import com.limachi.dim_bag.entities.BagEntity;
 import com.limachi.dim_bag.saveData.Test;
 import com.limachi.lim_lib.*;
+import com.limachi.lim_lib.integration.CuriosIntegration;
+import com.limachi.lim_lib.registries.annotations.RegisterItem;
+import com.limachi.lim_lib.saveData.SaveDataManager;
 import com.limachi.lim_lib.scrollSystem.IScrollItem;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
@@ -37,7 +39,7 @@ import java.util.Optional;
 
 public class BagItem extends Item implements IScrollItem {
 
-    @Registries.RegisterItem
+    @RegisterItem
     public static RegistryObject<BagItem> R_ITEM;
 
     public BagItem() { super(DimBag.INSTANCE.defaultProps().stacksTo(1)); }
@@ -102,13 +104,15 @@ public class BagItem extends Item implements IScrollItem {
     }
 
     @Override
-    public boolean hasContainerItem(ItemStack stack) { return true; }
+    public boolean hasCraftingRemainingItem(ItemStack stack) { return true; }
 
     @Override
-    public ItemStack getContainerItem(ItemStack itemStack) { return itemStack.copy(); }
+    public ItemStack getCraftingRemainingItem(ItemStack itemStack) {
+        return itemStack.copy();
+    }
 
     @Override
-    public int getItemEnchantability(ItemStack stack) { return 0; }
+    public int getEnchantmentValue(ItemStack stack) { return 0; }
 
     @Override
     public ICapabilityProvider initCapabilities(ItemStack stack, CompoundTag nbt) {
@@ -127,10 +131,10 @@ public class BagItem extends Item implements IScrollItem {
     public void appendHoverText(ItemStack stack, Level level, List<Component> tooltip, TooltipFlag flags) {
         int id = getbagId(stack);
         if (id <= 0)
-            tooltip.add(new TranslatableComponent("tooltip.bag.missing_id"));
+            tooltip.add(Component.translatable("tooltip.bag.missing_id"));
         else {
             String owner = /*FIXME OwnerData.execute(eye, OwnerData::getPlayerName, "Missing Server Data")*/ "Missing Server Data";
-            tooltip.add(new TranslatableComponent("tooltip.bag.id", id, owner));
+            tooltip.add(Component.translatable("tooltip.bag.id", id, owner));
         }
         super.appendHoverText(stack, level, tooltip, flags);
     }
@@ -159,7 +163,7 @@ public class BagItem extends Item implements IScrollItem {
 
     @Override
     public void scroll(Player player, int slot, int delta) {
-        Test test = SaveData.getInstance("test:1");
+        Test test = SaveDataManager.getInstance("test:1");
         delta += test.getCounter();
         Log.warn("validated scroll: " + delta + " for slot " + slot);
         test.setCounter(delta);

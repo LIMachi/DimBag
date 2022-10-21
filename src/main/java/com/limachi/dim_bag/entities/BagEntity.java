@@ -1,14 +1,18 @@
 package com.limachi.dim_bag.entities;
 
+import com.limachi.dim_bag.moduleSystem.IBagModuleItem;
 import com.limachi.dim_bag.items.BagItem;
+import com.limachi.lim_lib.KeyMapController;
 import com.limachi.lim_lib.Log;
-import com.limachi.lim_lib.Registries;
+import com.limachi.lim_lib.registries.annotations.EntityAttributeBuilder;
+import com.limachi.lim_lib.registries.annotations.RegisterEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.damagesource.EntityDamageSource;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
@@ -17,8 +21,8 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraftforge.common.capabilities.Capability;
+import net.minecraftforge.common.capabilities.ForgeCapabilities;
 import net.minecraftforge.common.util.LazyOptional;
-import net.minecraftforge.items.CapabilityItemHandler;
 import net.minecraftforge.registries.RegistryObject;
 
 import javax.annotation.Nonnull;
@@ -27,10 +31,10 @@ import java.util.List;
 
 public class BagEntity extends Mob {
 
-    @Registries.RegisterEntity(width = 0.5f)
+    @RegisterEntity(width = 0.5f)
     public static RegistryObject<EntityType<BagEntity>> R_TYPE;
 
-    @Registries.EntityAttributeBuilder
+    @EntityAttributeBuilder
     public static AttributeSupplier.Builder attributes() {
         return LivingEntity.createLivingAttributes().add(Attributes.FOLLOW_RANGE, 16.);
     }
@@ -61,7 +65,9 @@ public class BagEntity extends Mob {
     }
 
     @Override
-    protected void outOfWorld() {}
+    protected void outOfWorld() {
+        setPos(getX(), getY() + 66, getZ());
+    }
 
     public static BagEntity spawn(Level level, BlockPos position, ItemStack bag) {
         BagEntity out = new BagEntity(R_TYPE.get(), level);
@@ -79,7 +85,22 @@ public class BagEntity extends Mob {
     public boolean removeWhenFarAway(double distanceToClosestPlayer) { return false; }
 
     @Override
-    public boolean hurt(DamageSource source, float amount) { return false; }
+    public boolean hurt(DamageSource source, float amount) {
+        if (DamageSource.OUT_OF_WORLD.equals(source)) {
+            if (amount > 1000) //special case, accept that a bag entity can be killed by commands
+                return super.hurt(source, amount);
+            else
+                setPos(getX(), getY() + 66, getZ());
+        }
+        if (DamageSource.FALL.equals(source) || DamageSource.CRAMMING.equals(source) || DamageSource.STALAGMITE.equals(source)) {
+            //FIXME: auto equip to surrounding entity
+        }
+        if (source instanceof EntityDamageSource eds) {
+            //FIXME: auto equip to damaging entity
+            eds.getEntity();
+        }
+        return true;
+    }
 
     @Override
     public boolean ignoreExplosion() { return true; }
@@ -88,13 +109,13 @@ public class BagEntity extends Mob {
     public ItemStack getPickResult() { return getBagItem(); }
 
     @Override
-    public boolean shouldRiderSit() { return false; }
+    public boolean shouldRiderSit() { return true; }
 
     @Override
     public boolean canRiderInteract() { return true; }
 
     @Override
-    public boolean canBeRiddenInWater(Entity rider) { return true; }
+    public boolean rideableUnderWater() { return true; }
 
     @Override
     protected void pickUpItem(ItemEntity itemEntity) { return; }
@@ -110,7 +131,7 @@ public class BagEntity extends Mob {
     @Nonnull
     @Override
     public <T> LazyOptional<T> getCapability(@Nonnull Capability<T> cap) {
-        if (CapabilityItemHandler.ITEM_HANDLER_CAPABILITY.equals(cap))
+        if (ForgeCapabilities.ITEM_HANDLER.equals(cap))
             return LazyOptional.empty(); //FIXME: remap capability to the bag content (bag proxy cap)
         return super.getCapability(cap);
     }
@@ -135,7 +156,10 @@ public class BagEntity extends Mob {
         if (player.level.isClientSide()) return InteractionResult.PASS;
         int id = getbagId();
         if (id == 0) return InteractionResult.PASS;
-//        if (KeyMapController.SNEAK.getState(player)) {
+        if (KeyMapController.SNEAK.getState(player))
+            if (player.getItemInHand(hand).getItem() instanceof IBagModuleItem mod)
+                mod.installIn(player, hand, getbagId());
+//            else
 //            SubRoomsManager.execute(id, sm->sm.enterBag(player));
 //        } else
 //            SlotContainer.open(player, getbagId(), null);

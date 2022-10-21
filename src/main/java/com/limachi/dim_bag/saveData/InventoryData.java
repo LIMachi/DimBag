@@ -1,6 +1,5 @@
 package com.limachi.dim_bag.saveData;
 
-import com.limachi.lim_lib.SaveData;
 import com.limachi.lim_lib.itemHandlers.ISimpleItemHandlerSerializable;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
