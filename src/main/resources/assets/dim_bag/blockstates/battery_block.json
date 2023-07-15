@@ -1,0 +1,6 @@
+{
+  "variants": {
+    "pull=false": {"model": "dim_bag:block/battery/push"},
+    "pull=true": {"model": "dim_bag:block/battery/pull"}
+  }
+}

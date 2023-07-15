@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "": {
+      "model": "dim_bag:block/chunkloader"
+    }
+  }
+}

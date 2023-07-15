@@ -1,0 +1,11 @@
+{
+  "parent": "block/cube_all",
+  "textures": {
+    "up": "dim_bag:block/pad/top",
+    "down": "dim_bag:block/pad/bottom",
+    "north": "dim_bag:block/pad/side",
+    "south": "dim_bag:block/pad/side",
+    "east": "dim_bag:block/pad/side",
+    "west": "dim_bag:block/pad/side"
+  }
+}

@@ -1,0 +1,46 @@
+{
+  "creative_tab.dim_bag": "Dimensional Bag",
+
+  "key.categories.dim_bag": "Dimensional Bag",
+  "key.bag_action": "Bag Action Key",
+
+  "notification.bag.changed_mode": "Switched mode to: %s",
+  "notification.upgrade.trying_to_install_disabled_upgrade": "This upgrade is disabled, unable to install",
+  "notification.upgrade.installed_X_upgrades": "Installed %d %s",
+  "notification.upgrade.max_upgrades_reached": "Max upgrade count reached for %s",
+
+  "bag.mode.Default": "Default",
+  "bag.mode.Debug": "Debug",
+  "bag.mode.Settings": "Settings",
+  "bag.mode.Capture": "Capture",
+  "bag.mode.Manual": "Manual",
+  "bag.mode.Tank": "Tank",
+
+  "item.dim_bag.bag_item": "Dimensional Bag",
+  "item.dim_bag.virtual_bag_item": "Virtual Bag",
+
+  "block.dim_bag.wall_block": "Wall",
+  "block.dim_bag.teleport_module": "Access Pad",
+  "block.dim_bag.slot_module": "Slot",
+  "block.dim_bag.observer_module": "Observer Module",
+  "block.dim_bag.paradox_module": "Paradox Module",
+
+  "teleporter.data.label.default": "Access Module",
+
+  "screen.teleporter.button.whitelist": "Whitelist",
+  "screen.teleporter.button.blacklist": "Blacklist",
+  "screen.teleporter.button.players": "Affect Players",
+  "screen.teleporter.button.no_players": "Do Not Affect Players",
+
+  "screen.observer.title": "Observer Module",
+  "screen.observer.button.kind": "Kind: %s",
+  "screen.observer.button.kind.obs": "Observation",
+  "screen.observer.button.kind.op": "Operation",
+  "screen.observer.button.kind.lit": "Literal",
+  "screen.observer.button.kind.rs": "Redstone",
+  "screen.observer.button.line": "Line",
+  "screen.observer.button.value": "Value",
+
+  "modules.capture.selected_entity": "Selected access pad: %s -> entity: %s",
+  "modules.capture.no_entity": "None"
+}

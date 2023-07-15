@@ -1,0 +1,11 @@
+{
+  "parent": "block/cube_all",
+  "textures": {
+    "up": "dim_bag:block/chunkloader/top",
+    "down": "dim_bag:block/chunkloader/bottom",
+    "north": "dim_bag:block/chunkloader/side",
+    "south": "dim_bag:block/chunkloader/side",
+    "east": "dim_bag:block/chunkloader/side",
+    "west": "dim_bag:block/chunkloader/side"
+  }
+}
