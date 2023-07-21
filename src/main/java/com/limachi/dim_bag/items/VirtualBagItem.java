@@ -119,6 +119,8 @@ public class VirtualBagItem extends BagItem {
             ItemStack s = sa.get();
             if (!(s.getItem() instanceof VirtualBagItem) && !s.equals(o, false))
                 stack.getOrCreateTag().put(ORIGINAL_STACK_KEY, s.save(new CompoundTag()));
+            BagsData.runOnBag(BagItem.getBagId(stack), b->stack.getOrCreateTag().putLong("modes", b.installedModesMask()));
+            getModeBehavior(entity, stack).inventoryTick(stack, level, entity, slot, selected);
             sa.set(stack);
         }
     }

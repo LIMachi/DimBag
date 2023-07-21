@@ -1,0 +1,15 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "ingredients": [
+    {
+      "item": "dim_bag:module_frame"
+    },
+    {
+      "tag": "forge:heads"
+    }
+  ],
+  "result": {
+    "item": "dim_bag:tomb_module",
+    "count": 1
+  }
+}

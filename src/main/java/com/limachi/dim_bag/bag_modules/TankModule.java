@@ -1,9 +1,8 @@
 package com.limachi.dim_bag.bag_modules;
 
 import com.limachi.dim_bag.bag_data.BagInstance;
-import com.limachi.dim_bag.bag_modules.block_entity.ObserverModuleBlockEntity;
-import com.limachi.dim_bag.bag_modules.block_entity.SlotModuleBlockEntity;
-import com.limachi.dim_bag.menus.SlotMenu;
+import com.limachi.dim_bag.bag_modules.block_entity.TankModuleBlockEntity;
+import com.limachi.dim_bag.menus.TankMenu;
 import com.limachi.dim_bag.save_datas.BagsData;
 import com.limachi.lim_lib.registries.annotations.RegisterBlock;
 import com.limachi.lim_lib.registries.annotations.RegisterBlockItem;
@@ -22,17 +21,19 @@ import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
+import net.minecraftforge.common.capabilities.ForgeCapabilities;
+import net.minecraftforge.fluids.FluidUtil;
 import net.minecraftforge.registries.RegistryObject;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 @SuppressWarnings("unused")
-public class SlotModule extends BaseModule implements EntityBlock {
-    public static final String SLOT_KEY = "slots";
+public class TankModule extends BaseModule implements EntityBlock {
+    public static final String TANK_KEY = "tanks";
 
     @RegisterBlock
-    public static RegistryObject<SlotModule> R_BLOCK;
+    public static RegistryObject<TankModule> R_BLOCK;
     @RegisterBlockItem
     public static RegistryObject<BlockItem> R_ITEM;
 
@@ -43,31 +44,35 @@ public class SlotModule extends BaseModule implements EntityBlock {
             data.putString("label", data.getCompound("display").getString("Name"));
             data.remove("display");
         }
-        bag.slotsHandle().ifPresent(s->s.installSlot(pos, data));
+        bag.tanksHandle().ifPresent(s->s.installTank(pos, data));
     }
 
     @Override
     public void uninstall(BagInstance bag, Player player, Level level, BlockPos pos, ItemStack stack) {
-        bag.slotsHandle().ifPresent(s->stack.getOrCreateTag().merge(s.uninstallSlot(pos)));
+        bag.tanksHandle().ifPresent(s->stack.getOrCreateTag().merge(s.uninstallTank(pos)));
     }
 
     @Override
     public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
-        BagsData.runOnBag(level, pos, b->SlotMenu.open(player, b.bagId(), pos));
+        ItemStack stack = player.getItemInHand(hand);
+        if (stack.getCapability(ForgeCapabilities.FLUID_HANDLER_ITEM).isPresent())
+            FluidUtil.interactWithFluidHandler(player, hand, level, pos, null);
+        else
+            BagsData.runOnBag(level, pos, b-> TankMenu.open(player, b.bagId(), pos));
         return InteractionResult.SUCCESS;
     }
 
     @Nullable
     @Override
     public BlockEntity newBlockEntity(@Nonnull BlockPos pos, @Nonnull BlockState state) {
-        return SlotModuleBlockEntity.R_TYPE.get().create(pos, state);
+        return TankModuleBlockEntity.R_TYPE.get().create(pos, state);
     }
 
     @Nullable
     @Override
     public <T extends BlockEntity> BlockEntityTicker<T> getTicker(@Nonnull Level unusedLevel, @Nonnull BlockState unusedState, @Nonnull BlockEntityType<T> unusedType) {
         return (level, pos, state, be) -> {
-            if (be instanceof SlotModuleBlockEntity o)
+            if (be instanceof TankModuleBlockEntity o)
                 o.tick();
         };
     }

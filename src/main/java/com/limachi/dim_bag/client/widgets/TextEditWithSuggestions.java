@@ -54,7 +54,7 @@ public class TextEditWithSuggestions extends TextEdit {
 
     public TextEditWithSuggestions(Font font, int x, int y, int w, int h, String value, Consumer<TextEdit> onFinish, String ... dictionary) {
         super(font, x, y, w, h, value, onFinish);
-        this.dictionary = new LevenshteinDictionarySorter.Builder().addEntries(dictionary).setCosts(3, 1, 2).build();
+        this.dictionary = new LevenshteinDictionarySorter.Builder().addEntries(dictionary).setCosts(2, 1, 3).build();
         this.dictionary.sortAgainst(value);
         dictionaryHeight = this.dictionary.size() * (mc.font.lineHeight + 2);
         setResponder(this.dictionary::sortAgainst);
@@ -63,7 +63,7 @@ public class TextEditWithSuggestions extends TextEdit {
 
     public TextEditWithSuggestions(Font font, int x, int y, int w, int h, String value, Consumer<TextEdit> onFinish, Collection<String> dictionaryEntries) {
         super(font, x, y, w, h, value, onFinish);
-        dictionary = new LevenshteinDictionarySorter.Builder().addEntries(dictionaryEntries).setCosts(3, 1, 2).build();
+        dictionary = new LevenshteinDictionarySorter.Builder().addEntries(dictionaryEntries).setCosts(2, 1, 3).build();
         dictionary.sortAgainst(value);
         dictionaryHeight = dictionary.size() * (mc.font.lineHeight + 2);
         setResponder(this.dictionary::sortAgainst);

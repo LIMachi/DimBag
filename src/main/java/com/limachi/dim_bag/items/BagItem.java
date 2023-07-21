@@ -16,6 +16,7 @@ import com.limachi.lim_lib.scrollSystem.IScrollItem;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -132,10 +133,10 @@ public class BagItem extends Item implements IScrollItem {
     @OnlyIn(Dist.CLIENT)
     public static float getMode(ItemStack bag, @Nullable ClientLevel level, @Nullable LivingEntity player, int index) {
         CompoundTag data = bag.getTag(); //FIXME
-//        if (data != null && data.contains(BAG_MODE_OVERRIDE))
-//            return (float) ModesData.getModeIndex(data.getString(BAG_MODE_OVERRIDE));
-//        if (player instanceof Player)
-//            return (float) ModesData.getModeIndex(Cap.run(player, BagMode.TOKEN, c->c.getMode(getBagId(bag)), "Default"));
+        if (data != null && data.contains(BAG_MODE_OVERRIDE))
+            return (float) ModesRegistry.getModeIndex(data.getString(BAG_MODE_OVERRIDE));
+        if (player instanceof Player)
+            return (float) ModesRegistry.getModeIndex(Cap.run(player, BagMode.TOKEN, c->c.getMode(getBagId(bag)), "Default"));
         return 0;
     }
 
@@ -175,22 +176,16 @@ public class BagItem extends Item implements IScrollItem {
     @Override
     public void inventoryTick(ItemStack stack, Level level, Entity entity, int slot, boolean selected) {
         if (!level.isClientSide) {
-            if (stack.getOrCreateTag().getInt(BAG_ID_KEY) < 1)
-                stack.getTag().putInt(BAG_ID_KEY, BagsData.newBagId());
+            CompoundTag data = stack.getOrCreateTag();
             int id = getBagId(stack);
+            if (id < 1)
+                data.putInt(BAG_ID_KEY, id = BagsData.newBagId());
+            BagsData.runOnBag(id, b->{
+                b.setHolder(entity);
+                b.temporaryChunkLoad();
+                data.putLong("modes", b.installedModesMask());
+            });
             getModeBehavior(entity, stack).inventoryTick(stack, level, entity, slot, selected);
-            if (level.dimension().equals(DimBag.BAG_DIM)) {
-//                RoomData room = RoomData.getRoom(entity.blockPosition()); //FIXME: should be handed by setHolder instead
-//                if (room != null && room.getId() == id && !ParadoxModule.isParadoxCompatible(id)) {
-//                    for (Entity bag : unequipBags(entity, id, entity.level(), entity.blockPosition()))
-//                        room.leave(bag);
-//                }
-//                if (room != null && Events.tick % 100 == 0) //FIXME: wrong if branch
-//                    room.temporaryChunkLoad();
-            }
-//            new HolderData(id).setHolder(entity);
-            BagsData.runOnBag(id, b->b.setHolder(entity));
-//            IBagsData.bag(id).ifPresent(b->b.setHolder(entity));
         }
     }
 
@@ -241,9 +236,13 @@ public class BagItem extends Item implements IScrollItem {
         if (behavior.canScroll(player, slot))
             behavior.scroll(player, slot, amount);
         else {
-//            int id = getBagId(bag); //FIXME
-//            if (id > 0)
-//                Cap.run(player, BagMode.TOKEN, c -> c.setMode(player, id, new ModesData(id).cycleMode(c.getMode(id), amount)));
+            int id = getBagId(bag); //FIXME
+            if (id > 0)
+                Cap.run(player, BagMode.TOKEN, c -> {
+                    int mode = ModesRegistry.getModeIndex(c.getMode(id));
+                    mode = ModesRegistry.cycleMode(mode, bag.getOrCreateTag().getInt("modes"), amount);
+                    c.setMode(player, id, ModesRegistry.getMode(mode).name);
+                });
         }
     }
 
@@ -256,9 +255,11 @@ public class BagItem extends Item implements IScrollItem {
         else {
             int id = getBagId(bag);
             if (id > 0) {
-//                ModesManager m = ModesManager.getInstance(id); //FIXME
-//                if (m != null)
-//                    player.displayClientMessage(Component.translatable("notification.bag.changed_mode", Component.translatable("bag.mode." + Cap.run(player, BagMode.TOKEN, c -> new ModesData(id).cycleMode(c.getMode(id), amount), "Default"))), true);
+                Cap.run(player, BagMode.TOKEN, c -> {
+                    int mode = ModesRegistry.getModeIndex(c.getMode(id));
+                    mode = ModesRegistry.cycleMode(mode, bag.getOrCreateTag().getInt("modes"), amount);
+                    player.displayClientMessage(Component.translatable("notification.bag.changed_mode", Component.translatable("bag.mode." + ModesRegistry.getMode(mode).name)), true);
+                });
             }
         }
     }

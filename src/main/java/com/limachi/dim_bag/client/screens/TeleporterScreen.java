@@ -9,12 +9,16 @@ import com.limachi.lim_lib.registries.clientAnnotations.RegisterMenuScreen;
 import com.limachi.lim_lib.render.GuiUtils;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.StringTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
 import javax.annotation.Nonnull;
+import java.util.ArrayList;
 
 @OnlyIn(Dist.CLIENT)
 @RegisterMenuScreen
@@ -31,10 +35,19 @@ public class TeleporterScreen extends AbstractContainerScreen<TeleporterMenu> {
     @Override
     protected void init() {
         super.init();
-        addRenderableWidget(new TextEdit(font, 10 + getGuiLeft(), 10 + getGuiTop(), 156, 16, menu.data.getLabel().getString(), s->menu.data.setLabel(Component.literal(s.getValue()))));
-        addRenderableWidget(new BooleanTextButton(10 + getGuiLeft(), 30 + getGuiTop(), 156, 16, WHITELIST, BLACKLIST, menu.data.isWhitelist(), b->menu.data.setWhitelistState(b.getState())));
-        addRenderableWidget(new BooleanTextButton(10 + getGuiLeft(), 50 + getGuiTop(), 156, 16, AFFECT_PLAYER, DONT_AFFECT_PLAYER, menu.data.doesAffectPlayers(), b->menu.data.setAffectPlayersState(b.getState())));
-        Builders.editableTextList(this, 10 + getGuiLeft(), 70 + getGuiTop(), 156, 86, menu.data.getFilters(), l->menu.data.setFilters(l.getEntries()));
+        addRenderableWidget(new TextEdit(font, 10 + getGuiLeft(), 10 + getGuiTop(), 156, 16, Component.Serializer.fromJson(menu.data.getString("label")).getString(), s->menu.data.putString("label", Component.Serializer.toJson(Component.literal(s.getValue())))));
+        addRenderableWidget(new BooleanTextButton(10 + getGuiLeft(), 30 + getGuiTop(), 156, 16, WHITELIST, BLACKLIST, menu.data.getBoolean("white_list"), b->menu.data.putBoolean("white_list", b.getState())));
+        addRenderableWidget(new BooleanTextButton(10 + getGuiLeft(), 50 + getGuiTop(), 156, 16, AFFECT_PLAYER, DONT_AFFECT_PLAYER, menu.data.getBoolean("affect_players"), b->menu.data.putBoolean("affect_players", b.getState())));
+        ArrayList<String> filters = new ArrayList<>();
+        for (Tag t : menu.data.getList("filters", Tag.TAG_STRING))
+            if (t instanceof StringTag s)
+                filters.add(s.getAsString());
+        Builders.editableTextList(this, 10 + getGuiLeft(), 70 + getGuiTop(), 156, 86, filters, l->{
+            ListTag list = new ListTag();
+            for (String entry : l.getEntries())
+                list.add(StringTag.valueOf(entry));
+            menu.data.put("filters", list);
+        });
     }
 
     @Override

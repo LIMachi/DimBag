@@ -1,0 +1,204 @@
+package com.limachi.dim_bag.bag_data;
+
+import com.limachi.dim_bag.utils.SimpleTank;
+import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.network.chat.Component;
+import net.minecraftforge.common.util.LazyOptional;
+import net.minecraftforge.fluids.FluidStack;
+import net.minecraftforge.fluids.capability.IFluidHandler;
+import javax.annotation.Nonnull;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+
+public class TankData implements IFluidHandler {
+    public static final Component DEFAULT_TANK_LABEL = Component.translatable("block.dim_bag.tank_module");
+    public static final int DEFAULT_CAPACITY = 8000;
+    private LazyOptional<TankData> handle = LazyOptional.of(()->this);
+
+    public static class TankEntry extends SimpleTank {
+        private final BlockPos pos;
+        private Component label;
+
+        public TankEntry(CompoundTag data) {
+            super(data.contains("capacity") ? data.getInt("capacity") : DEFAULT_CAPACITY, FluidStack.loadFluidStackFromNBT(data));
+            pos = BlockPos.of(data.getLong("position"));
+            label = Component.Serializer.fromJson(data.getString("label"));
+            if (label == null)
+                label = DEFAULT_TANK_LABEL;
+        }
+
+        public CompoundTag serialize() {
+            CompoundTag out = content.writeToNBT(new CompoundTag());
+            out.putInt("capacity", capacity);
+            out.putLong("position", pos.asLong());
+            out.putString("label", Component.Serializer.toJson(label));
+            return out;
+        }
+    }
+
+    private final int bag;
+    private final ArrayList<TankEntry> tanks = new ArrayList<>();
+    private final HashMap<BlockPos, LazyOptional<TankEntry>> handles = new HashMap<>();
+
+    public int getTank(BlockPos slot) {
+        for (int i = 0; i < tanks.size(); ++i)
+            if (tanks.get(i).pos.equals(slot))
+                return i;
+        return -1;
+    }
+
+    public BlockPos getTank(int slot) {
+        if (slot < 0 || slot >= tanks.size()) return null;
+        return tanks.get(slot).pos;
+    }
+
+    public LazyOptional<SimpleTank> getTankHandle(BlockPos pos) {
+        if (pos == null)
+            return null;
+        return handles.computeIfAbsent(pos, k->{
+            final int tank = getTank(pos);
+            return tank != -1 ? LazyOptional.of(()->tanks.get(tank)) : LazyOptional.empty();
+        }).cast();
+    }
+
+    public Component getTankLabel(BlockPos pos) {
+        int slot = getTank(pos);
+        if (slot != -1)
+            return tanks.get(slot).label;
+        return DEFAULT_TANK_LABEL;
+    }
+
+    public void setTankLabel(BlockPos pos, Component label) {
+        int slot = getTank(pos);
+        if (slot != -1) {
+            tanks.get(slot).label = label;
+            handles.remove(pos).invalidate();
+        }
+    }
+
+    public CompoundTag uninstallTank(BlockPos pos) {
+        int i = getTank(pos);
+        if (i != -1) {
+            handles.remove(pos).invalidate();
+            CompoundTag out = tanks.remove(i).serialize();
+            out.remove("position");
+            invalidate();
+            return out;
+        }
+        return new CompoundTag();
+    }
+
+    public void installTank(BlockPos pos, CompoundTag data) {
+        if (handles.containsKey(pos)) { //should never happen
+            LazyOptional<TankEntry> prev = handles.remove(pos);
+            tanks.remove(getTank(pos));
+            prev.invalidate();
+        }
+        data.putLong("position", pos.asLong());
+        tanks.add(new TankEntry(data));
+        handle.invalidate(); //we invalidate the global handle to force all global inventories to reload
+        handle = null;
+    }
+
+    public void invalidate() {
+        for (LazyOptional<TankEntry> handle : handles.values())
+            handle.invalidate();
+        handles.clear();
+        handle.invalidate();
+        handle = null;
+    }
+
+    public LazyOptional<TankData> getHandle() {
+        if (handle == null)
+            handle = LazyOptional.of(()->this);
+        return handle;
+    }
+
+    protected TankData(int bag, ListTag tanks) {
+        this.bag = bag;
+        for (int i = 0; i < tanks.size(); ++i)
+            this.tanks.add(new TankEntry(tanks.getCompound(i)));
+    }
+
+    protected ListTag serialize() {
+        ListTag out = new ListTag();
+        for (TankEntry entry : tanks)
+            out.add(entry.serialize());
+        return out;
+    }
+
+    @Override
+    public int getTanks() { return tanks.size(); }
+
+    @Override
+    @Nonnull
+    public FluidStack getFluidInTank(int tank) {
+        return tank >= 0 && tank < tanks.size() ? tanks.get(tank).getFluid() : FluidStack.EMPTY;
+    }
+
+    @Override
+    public int getTankCapacity(int tank) {
+        return tank >= 0 && tank < tanks.size() ? tanks.get(tank).getCapacity() : 0;
+    }
+
+    @Override
+    public boolean isFluidValid(int tank, @Nonnull FluidStack stack) {
+        return tank >= 0 && tank < tanks.size() && tanks.get(tank).isFluidValid(stack);
+    }
+
+    @Override
+    public int fill(FluidStack resource, FluidAction action) {
+        int filled = 0;
+        if (!resource.isEmpty()) {
+            FluidStack stack = resource.copy();
+            for (TankEntry entry : tanks) {
+                int t = entry.fill(stack, action);
+                if (t > 0) {
+                    stack.shrink(t);
+                    filled += t;
+                    if (stack.isEmpty())
+                        break;
+                }
+            }
+        }
+        return filled;
+    }
+
+    @Override
+    @Nonnull
+    public FluidStack drain(FluidStack resource, FluidAction action) {
+        FluidStack drained = FluidStack.EMPTY;
+        if (!resource.isEmpty()) {
+            FluidStack stack = resource.copy();
+            for (TankEntry entry : tanks) {
+                FluidStack t = entry.drain(stack, action);
+                if (!t.isEmpty()) {
+                    stack.shrink(t.getAmount());
+                    if (drained.isEmpty())
+                        drained = t.copy();
+                    else
+                        drained.grow(t.getAmount());
+                    if (stack.isEmpty())
+                        break;
+                }
+            }
+        }
+        return drained;
+    }
+
+    @Override
+    @Nonnull
+    public FluidStack drain(int maxDrain, FluidAction action) {
+        if (maxDrain <= 0) return FluidStack.EMPTY;
+        for (TankEntry entry : tanks)
+            if (!entry.getFluid().isEmpty()) {
+                FluidStack target = entry.getFluid().copy();
+                target.setAmount(maxDrain);
+                return drain(target, action);
+            }
+        return FluidStack.EMPTY;
+    }
+}

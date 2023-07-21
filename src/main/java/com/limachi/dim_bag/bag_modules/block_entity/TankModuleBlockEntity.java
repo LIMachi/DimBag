@@ -10,74 +10,73 @@ import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.ForgeCapabilities;
 import net.minecraftforge.common.util.LazyOptional;
-import net.minecraftforge.items.IItemHandler;
+import net.minecraftforge.fluids.FluidStack;
+import net.minecraftforge.fluids.capability.IFluidHandler;
 import net.minecraftforge.registries.RegistryObject;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-public class SlotModuleBlockEntity extends BlockEntity {
+//FIXME: redo rendering
+public class TankModuleBlockEntity extends BlockEntity {
 
-    @RegisterBlockEntity(blocks = "slot_module")
-    public static RegistryObject<BlockEntityType<SlotModuleBlockEntity>> R_TYPE;
+    @RegisterBlockEntity(blocks = "tank_module")
+    public static RegistryObject<BlockEntityType<TankModuleBlockEntity>> R_TYPE;
 
-    public SlotModuleBlockEntity(BlockPos pos, BlockState state) { super(R_TYPE.get(), pos, state); }
+    public TankModuleBlockEntity(BlockPos pos, BlockState state) { super(R_TYPE.get(), pos, state); }
 
-    private LazyOptional<IItemHandler> slotHandle = null;
-    public ItemStack renderStack = ItemStack.EMPTY;
+    private LazyOptional<IFluidHandler> tankHandle = null;
+    public FluidStack renderStack = FluidStack.EMPTY;
 
     @Override
     public @Nonnull <T> LazyOptional<T> getCapability(@Nonnull Capability<T> cap, @Nullable Direction side) {
-        if (cap == ForgeCapabilities.ITEM_HANDLER) {
-            if (slotHandle == null) {
-                BagInstance bag = BagsData.getBagHandle(level, getBlockPos(), ()->slotHandle = null);
+        if (cap == ForgeCapabilities.FLUID_HANDLER) {
+            if (tankHandle == null) {
+                BagInstance bag = BagsData.getBagHandle(level, getBlockPos(), ()->tankHandle = null);
                 if (bag != null) {
-                    slotHandle = bag.slotHandle(getBlockPos());
-                    slotHandle.addListener(t -> slotHandle = null);
+                    tankHandle = bag.tankHandle(getBlockPos()).cast();
+                    tankHandle.addListener(t -> tankHandle = null);
                 }
             }
-            if (slotHandle != null)
-                return slotHandle.cast();
+            if (tankHandle != null)
+                return tankHandle.cast();
         }
         return super.getCapability(cap, side);
     }
 
     @Override
-    public ClientboundBlockEntityDataPacket getUpdatePacket() {
-        return ClientboundBlockEntityDataPacket.create(this);
-    }
+    public ClientboundBlockEntityDataPacket getUpdatePacket() { return ClientboundBlockEntityDataPacket.create(this); }
 
     @Override
     public CompoundTag getUpdateTag() {
         CompoundTag out = super.getUpdateTag();
-        out.put("render_stack", renderStack.serializeNBT());
+        out.put("render_stack", renderStack.writeToNBT(new CompoundTag()));
         return out;
     }
 
     @Override
     protected void saveAdditional(CompoundTag tag) {
         super.saveAdditional(tag);
-        tag.put("render_stack", renderStack.serializeNBT());
+        tag.put("render_stack", renderStack.writeToNBT(new CompoundTag()));
     }
 
     @Override
     public void load(CompoundTag tag) {
         super.load(tag);
-        renderStack = ItemStack.of(tag.getCompound("render_stack"));
+        renderStack = FluidStack.loadFluidStackFromNBT(tag.getCompound("render_stack"));
     }
 
     public void tick() {
         if (World.getLevel(DimBag.BAG_DIM) instanceof ServerLevel level)
-            getCapability(ForgeCapabilities.ITEM_HANDLER).ifPresent(h->{
-                if (!renderStack.equals(h.getStackInSlot(0), false)) {
-                    renderStack = h.getStackInSlot(0).copy();
+            getCapability(ForgeCapabilities.FLUID_HANDLER).ifPresent(h->{
+                if (!renderStack.isFluidStackIdentical(h.getFluidInTank(0))) {
+                    renderStack = h.getFluidInTank(0).copy();
                     setChanged();
                     level.players().forEach(p->p.connection.send(getUpdatePacket()));
                 }

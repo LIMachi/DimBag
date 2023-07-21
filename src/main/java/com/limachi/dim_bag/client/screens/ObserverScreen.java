@@ -27,18 +27,6 @@ import java.util.ArrayList;
 @RegisterMenuScreen
 public class ObserverScreen extends AbstractContainerScreen<ObserverMenu> {
 
-    //list of buttons
-    //first part of button (kind): observation, operation, literal, special
-    //observation: method name + scalar (double, default to 1 for int, float and double and 15 for bool)
-    //operation: line + operand + line (lines are clamped to lines before, creating an operation on lines < 2 should be prevented)
-    //redstone: side * scalar
-    //literal: scalar
-    //all lines are interpreted, top to bottom
-    //maximum of 9 lines?
-    //stored in NBT:
-    //[{kind:obs,mtd:onGround,mul:2}, {kind:obs,mtd:inWater,mul:1}, {kind:op,op:+,a:1,b:2}, {kind:lit,val:12}, {kind:op,op:+,a:3,b:4}]
-    //result to 12 if nothing, 13 if in water, 14 if on ground and 15 if on ground and in water
-
     public ObserverScreen(ObserverMenu menu, Inventory playerInventory, Component title) {
         super(menu, playerInventory, title);
     }
@@ -48,8 +36,8 @@ public class ObserverScreen extends AbstractContainerScreen<ObserverMenu> {
         String kind = entry.getString("kind");
         switch (kind) {
             case "obs" -> { return Component.literal(entry.getString("mtd") + " * " + entry.getDouble("mul")); }
-            case "op" -> { return Component.literal(Component.translatable("screen.observer.button.line").getString() + ": " + entry.getInt("a") + " " + entry.getString("op") + " " + Component.translatable("screen.observer.button.line").getString() + ": " + entry.getInt("b")); }
-            case "lit" -> { return Component.literal(Component.translatable("screen.observer.button.value").getString() + ": " + entry.getDouble("val")); }
+            case "op" -> { return Component.translatable("screen.observer.button.line").append(": " + entry.getInt("a")).append(" " + entry.getString("op") + " ").append(Component.translatable("screen.observer.button.line")).append(": " + entry.getInt("b")); }
+            case "lit" -> { return Component.translatable("screen.observer.button.value").append(": " + entry.getDouble("val")); }
             default -> { return Component.empty(); }
         }
     }
@@ -89,7 +77,7 @@ public class ObserverScreen extends AbstractContainerScreen<ObserverMenu> {
             if (!entry.contains("kind"))
                 entry.putString("kind", "obs");
             String kind = entry.getString("kind");
-            addRenderableWidget(Button.builder(Component.translatable("screen.observer.button.kind", Component.translatable("screen.observer.button.kind." + kind).getString()), b->{
+            addRenderableWidget(Button.builder(Component.translatable("screen.observer.button.kind", Component.translatable("screen.observer.button.kind." + kind)), b->{
                 entry.putString("kind", cycleKind(entry.getString("kind")));
                 rebuildWidgets();
             }).bounds(background.left() + 5, background.top() + 5, background.width() - 26, 12).build());
@@ -208,8 +196,8 @@ public class ObserverScreen extends AbstractContainerScreen<ObserverMenu> {
         public void render(GuiGraphics gui, int mouseX, int mouseY, float partialTick) {
             gui.blitNineSliced(GuiUtils.BACKGROUND_TEXTURE, background.left(), background.top(), background.width(), background.height() + deltaH, 8, 256, 256, 0, 0);
             if ("op".equals(entry.getString("kind"))) {
-                gui.drawString(Minecraft.getInstance().font, Component.translatable("screen.observer.button.line").getString() + ":", background.left() + 5, background.top() + 35, -1);
-                gui.drawString(Minecraft.getInstance().font, Component.translatable("screen.observer.button.line").getString() + ":", background.left() + 6 + (background.width() - 10) / 2, background.top() + 35, -1);
+                gui.drawString(Minecraft.getInstance().font, Component.translatable("screen.observer.button.line").append(":"), background.left() + 5, background.top() + 35, -1);
+                gui.drawString(Minecraft.getInstance().font, Component.translatable("screen.observer.button.line").append(":"), background.left() + 6 + (background.width() - 10) / 2, background.top() + 35, -1);
             }
             super.render(gui, mouseX, mouseY, partialTick);
         }

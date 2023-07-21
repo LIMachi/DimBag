@@ -22,15 +22,24 @@ public class BagSlot extends SlotItemHandler {
     LazyOptional<IItemHandler> slotAccess = null;
 
     public BagSlot(int bag, BlockPos slot, int xPosition, int yPosition, Function<BagSlot, Boolean> isActive) {
-        super(new InvWrapper(new SimpleContainer(1)), 0, xPosition, yPosition);
+        super(EmptyHandler.INSTANCE, 0, xPosition, yPosition);
         this.bag = bag;
         this.slot = slot;
         this.isActive = isActive;
         BagsData.runOnBag(bag, b->slotAccess = b.slotHandle(slot));
     }
 
+    public BagSlot(int xPosition, int yPosition, Function<BagSlot, Boolean> isActive) {
+        super(new InvWrapper(new SimpleContainer(1)), 0, xPosition, yPosition);
+        this.bag = 0;
+        this.slot = null;
+        this.isActive = isActive;
+    }
+
     @Override
     public IItemHandler getItemHandler() {
+        if (bag > 0 && (slotAccess == null || !slotAccess.isPresent()))
+            BagsData.runOnBag(bag, b->slotAccess = b.slotHandle(slot));
         if (slotAccess != null)
             return slotAccess.orElse(EmptyHandler.INSTANCE);
         return bag == 0 ? super.getItemHandler() : EmptyHandler.INSTANCE;
@@ -39,7 +48,10 @@ public class BagSlot extends SlotItemHandler {
     @Override
     public boolean isActive() { return isActive.apply(this); }
 
-    public void changeSlotServerSide(BlockPos slot) { this.slot = slot; }
+    public void changeSlotServerSide(BlockPos slot) {
+        this.slot = slot;
+        slotAccess = null;
+    }
 
     @Override
     public boolean isHighlightable() { return isActive(); }
@@ -56,7 +68,7 @@ public class BagSlot extends SlotItemHandler {
     }
 
     @Override
-    public boolean mayPickup(Player playerIn) {
+    public boolean mayPickup(@Nonnull Player playerIn) {
         return isActive() && validStack(super.getItem()) && super.mayPickup(playerIn);
     }
 

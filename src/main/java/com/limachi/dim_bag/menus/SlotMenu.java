@@ -1,7 +1,8 @@
 package com.limachi.dim_bag.menus;
 
+import com.limachi.dim_bag.bag_data.SlotData;
 import com.limachi.dim_bag.menus.slots.BagSlot;
-import com.limachi.dim_bag.save_datas.BagSlots;
+import com.limachi.dim_bag.save_datas.BagsData;
 import com.limachi.lim_lib.menus.IAcceptUpStreamNBT;
 import com.limachi.lim_lib.registries.annotations.RegisterMenu;
 import net.minecraft.core.BlockPos;
@@ -9,8 +10,6 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.Container;
-import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.SimpleMenuProvider;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
@@ -29,11 +28,9 @@ public class SlotMenu extends AbstractContainerMenu implements IAcceptUpStreamNB
     @RegisterMenu
     public static RegistryObject<MenuType<SlotMenu>> R_TYPE;
 
-    public static final Component TITLE = Component.translatable("block.dim_bag.slot_module");
-
     public static void open(Player player, int bag, BlockPos slot) {
         if (!player.level().isClientSide)
-            NetworkHooks.openScreen((ServerPlayer) player, new SimpleMenuProvider((id, inv, p)->new SlotMenu(id, inv, bag, slot), BagSlots.getSlots(bag).getSlotName(slot)));
+            NetworkHooks.openScreen((ServerPlayer) player, new SimpleMenuProvider((id, inv, p)->new SlotMenu(id, inv, bag, slot), BagsData.runOnBag(bag, b->b.getSlotLabel(slot), SlotData.DEFAULT_SLOT_LABEL)));
     }
 
     public static class SlotsSectionManager {
@@ -101,7 +98,7 @@ public class SlotMenu extends AbstractContainerMenu implements IAcceptUpStreamNB
     public SlotMenu(int id, Inventory playerInventory, int bag, BlockPos slot) {
         super(R_TYPE.get(), id);
 
-        addSlot(bag > 0 && slot != null ? new BagSlot(bag, slot, 79, 36, s->true) : new BagSlot(0, slot, 79, 36, s->true));
+        addSlot(bag > 0 && slot != null ? new BagSlot(bag, slot, 79, 36, s->true) : new BagSlot(79, 36, s->true));
 
         sections.newSection(slots.size(), false, false);
 
@@ -123,13 +120,6 @@ public class SlotMenu extends AbstractContainerMenu implements IAcceptUpStreamNB
         this(id, playerInventory, 0, null);
     }
 
-    private static Container containerFromBagSlot(int bag, BlockPos slot) {
-        BagSlots slots = BagSlots.getSlots(bag);
-        if (slots != null)
-            return slots.getSingleSlot(slot);
-        return new SimpleContainer(1);
-    }
-
     @Override
     @Nonnull
     public ItemStack quickMoveStack(@Nonnull Player player, int index) {
@@ -143,7 +133,7 @@ public class SlotMenu extends AbstractContainerMenu implements IAcceptUpStreamNB
 
     @Override
     public void upstreamNBTMessage(int i, CompoundTag compoundTag) {
-        if (slots.get(0) instanceof BagSlot s)
-            BagSlots.getSlots(s.bag).renameSlot(s.slot, Component.Serializer.fromJson(compoundTag.getString("label")));
+        if (slots.get(0) instanceof BagSlot s && s.slot != null)
+            BagsData.runOnBag(s.bag, b->b.setSlotLabel(s.slot, Component.Serializer.fromJson(compoundTag.getString("label"))));
     }
 }

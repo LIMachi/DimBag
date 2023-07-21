@@ -22,6 +22,7 @@
   "block.dim_bag.wall_block": "Wall",
   "block.dim_bag.teleport_module": "Access Pad",
   "block.dim_bag.slot_module": "Slot",
+  "block.dim_bag.tank_module": "Tank",
   "block.dim_bag.observer_module": "Observer Module",
   "block.dim_bag.paradox_module": "Paradox Module",
 
@@ -40,6 +41,12 @@
   "screen.observer.button.kind.rs": "Redstone",
   "screen.observer.button.line": "Line",
   "screen.observer.button.value": "Value",
+
+  "screen.fluid.bucket_acronym": "B",
+  "screen.fluid.milli_bucket_acronym": "mB",
+
+  "item.fluid_item.empty_name": "Empty",
+  "item.fluid_item.append_qty_to_name": " (%dmb)",
 
   "modules.capture.selected_entity": "Selected access pad: %s -> entity: %s",
   "modules.capture.no_entity": "None"

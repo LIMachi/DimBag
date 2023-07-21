@@ -2,11 +2,14 @@ package com.limachi.dim_bag.bag_data;
 
 import com.limachi.dim_bag.DimBag;
 import com.limachi.dim_bag.bag_modes.ModesRegistry;
+import com.limachi.dim_bag.bag_modules.TeleportModule;
 import com.limachi.dim_bag.blocks.WallBlock;
 import com.limachi.dim_bag.capabilities.entities.BagTP;
 import com.limachi.dim_bag.entities.BagEntity;
 import com.limachi.dim_bag.entities.BagItemEntity;
+import com.limachi.dim_bag.items.BagItem;
 import com.limachi.dim_bag.save_datas.BagsData;
+import com.limachi.dim_bag.utils.SimpleTank;
 import com.limachi.dim_bag.utils.Tags;
 import com.limachi.lim_lib.World;
 import com.limachi.lim_lib.capabilities.Cap;
@@ -17,12 +20,14 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.LongTag;
 import net.minecraft.nbt.Tag;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.common.capabilities.CapabilityManager;
 import net.minecraftforge.common.util.LazyOptional;
+import net.minecraftforge.fluids.capability.IFluidHandler;
 import net.minecraftforge.items.IItemHandler;
 
 import java.util.Optional;
@@ -30,17 +35,17 @@ import java.util.Optional;
 public class BagInstance {
 
     private final int bag;
-    private final ServerLevel bagLevel;
+    private ServerLevel bagLevel;
     private final HolderData holder;
     private final CompoundTag rawData;
     private BlockPos minWalls;
     private BlockPos maxWalls;
     private final SlotData slots;
+    private final TankData tanks;
 
     public BagInstance(int id, CompoundTag data) {
         bag = id;
         rawData = data;
-        bagLevel = (ServerLevel)World.getLevel(DimBag.BAG_DIM);
         holder = new HolderData(data.getCompound("holder"));
         if (!rawData.contains("modules"))
             rawData.put("modules", new CompoundTag());
@@ -61,18 +66,49 @@ public class BagInstance {
                 buildRoom();
         }
         slots = new SlotData(id, Tags.getOrCreateList(rawData, "slots", ListTag::new));
+        tanks = new TankData(id, Tags.getOrCreateList(rawData, "tanks", ListTag::new));
     }
 
-    public LazyOptional<SlotData> slotsHandle() {
-        return slots.getHandle();
+    private void prepareBagLevel() {
+        if (bagLevel == null)
+            bagLevel = (ServerLevel)World.getLevel(DimBag.BAG_DIM);
     }
 
-    public LazyOptional<IItemHandler> slotHandle(BlockPos pos) {
-        return slots.getSlotHandle(pos);
+    public long installedModesMask() {
+        long mask = 0;
+        for (Tag t : rawData.getList("modes", Tag.TAG_COMPOUND))
+            if (t instanceof CompoundTag c && !c.getBoolean("disabled"))
+                mask |= 1L << ModesRegistry.getModeIndex(c.getString("name"));
+        return mask;
     }
+
+    public CompoundTag unsafeRawAccess() { return rawData; }
+    public Optional<CompoundTag> getModeData(String mode) {
+        for (Tag t : rawData.getList("modes", Tag.TAG_COMPOUND))
+            if (t instanceof CompoundTag c && c.getString("name").equals(mode))
+                return Optional.of(c);
+        return Optional.empty();
+    }
+
+    public LazyOptional<SlotData> slotsHandle() { return slots.getHandle(); }
+
+    public LazyOptional<IItemHandler> slotHandle(BlockPos pos) { return slots.getSlotHandle(pos); }
+
+    public Component getSlotLabel(BlockPos pos) { return slots.getSlotLabel(pos); }
+
+    public void setSlotLabel(BlockPos pos, Component label) { slots.setSlotLabel(pos, label); }
+
+    public LazyOptional<TankData> tanksHandle() { return tanks.getHandle(); }
+
+    public LazyOptional<SimpleTank> tankHandle(BlockPos pos) { return tanks.getTankHandle(pos); }
+
+    public Component getTankLabel(BlockPos pos) { return tanks.getTankLabel(pos); }
+
+    public void setTankLabel(BlockPos pos, Component label) { tanks.setTankLabel(pos, label); }
 
     public void invalidate() {
         slots.invalidate();
+        tanks.invalidate();
     }
 
     protected void buildRoom() {
@@ -81,6 +117,7 @@ public class BagInstance {
         minWalls = center.offset(-BagsData.DEFAULT_ROOM_RADIUS, -BagsData.DEFAULT_ROOM_RADIUS, -BagsData.DEFAULT_ROOM_RADIUS);
         maxWalls = center.offset(BagsData.DEFAULT_ROOM_RADIUS, BagsData.DEFAULT_ROOM_RADIUS, BagsData.DEFAULT_ROOM_RADIUS);
         BlockState wall = WallBlock.R_BLOCK.get().defaultBlockState();
+        prepareBagLevel();
         for (int x = minWalls.getX(); x <= maxWalls.getX(); ++x) {
             for (int z = minWalls.getZ(); z <= maxWalls.getZ(); ++z) {
                 BlockPos topPos = new BlockPos(x, maxWalls.getY(), z);
@@ -114,6 +151,7 @@ public class BagInstance {
     public void storeOn(CompoundTag instance) {
         instance.put("holder", holder.serialize());
         instance.put("slots", slots.serialize());
+        instance.put("tanks", tanks.serialize());
     }
 
     public void setHolder(Entity entity) {
@@ -123,8 +161,13 @@ public class BagInstance {
                 leave(entity);
                 return;
             }
-            if (!isPresent("paradox"))
+            if (!isPresent("paradox")) {
+                if (holder.level != null && holder.position != null)
+                    BagItem.unequipBags(entity, bagId(), holder.level, holder.position);
+                else
+                    ; //FIXME: player spawn if entity is player? world spawn?
                 return;
+            }
             holder.paradox = true;
         } else {
             holder.paradox = false;
@@ -135,13 +178,13 @@ public class BagInstance {
     }
 
     public Optional<Entity> getHolder(boolean nonParadoxOnly) {
-        if (!nonParadoxOnly && holder.paradox) return Optional.empty();
-        return Optional.of(holder.entity);
+        if (nonParadoxOnly && holder.paradox) return Optional.empty();
+        return Optional.ofNullable(holder.entity);
     }
 
     public Optional<Pair<Level, BlockPos>> getHolderPosition(boolean nonParadoxOnly) {
         if (holder.paradox && !nonParadoxOnly && holder.entity != null)
-            return Optional.of(new Pair<>(World.getLevel(DimBag.BAG_DIM), holder.entity.blockPosition()));
+                return Optional.of(new Pair<>(World.getLevel(DimBag.BAG_DIM), holder.entity.blockPosition()));
         if (holder.position != null && holder.level != null)
             return Optional.of(new Pair<>(holder.level, holder.position));
         return Optional.empty();
@@ -236,6 +279,7 @@ public class BagInstance {
     }
 
     public void temporaryChunkLoad() {
+        prepareBagLevel();
         for (int x = minWalls.getX(); x < maxWalls.getX(); x += 16)
             for (int z = minWalls.getZ(); z < maxWalls.getZ(); z += 16)
                 World.temporaryChunkLoad(bagLevel, new BlockPos(x, 128, z));
@@ -243,7 +287,7 @@ public class BagInstance {
 
     public Entity enter(Entity entity, boolean proxy) {
         BlockPos destination = BagsData.roomCenter(bag);
-        final BlockPos[] test = { /*Teleporters.getDestination(getId(), e)*/null};
+        final BlockPos[] test = {TeleportModule.getDestination(this, entity)};
         if (test[0] != null)
             destination = test[0];
         else {

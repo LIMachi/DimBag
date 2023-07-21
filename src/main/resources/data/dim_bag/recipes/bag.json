@@ -1,0 +1,29 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "LEL",
+    "SCS",
+    "LIL"
+  ],
+  "key": {
+    "I": {
+      "tag": "forge:ingots/iron"
+    },
+    "E": {
+      "tag": "forge:ender_pearls"
+    },
+    "S": {
+      "tag": "forge:string"
+    },
+    "C": {
+      "tag": "forge:chests/wooden"
+    },
+    "L": {
+      "tag": "forge:leather"
+    }
+  },
+  "result": {
+    "item": "dim_bag:bag_item",
+    "count": 1
+  }
+}

@@ -4,6 +4,7 @@ import com.limachi.dim_bag.DimBag;
 import com.limachi.lim_lib.World;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
@@ -19,13 +20,12 @@ class HolderData {
 
     protected HolderData(CompoundTag data) {
         if (data.contains("dimension") && data.contains("position")) {
-            position = BlockPos.of(data.getLong("positon"));
+            position = BlockPos.of(data.getLong("position"));
             level = World.getLevel(data.getString("dimension"));
         }
         if (data.contains("entity")) {
             UUID searchEntity = data.getUUID("entity");
-            if (data.contains("paradox_position")) {
-                Level searchLevel = World.getLevel(DimBag.BAG_DIM);
+            if (data.contains("paradox_position") && World.getLevel(DimBag.BAG_DIM) instanceof ServerLevel searchLevel) {
                 BlockPos searchPos = BlockPos.of(data.getLong("paradox_position"));
                 List<Entity> found = searchLevel.getEntities((Entity) null, new AABB(searchPos.offset(-1, -1, -1), searchPos.offset(1, 1, 1)), e -> e.getUUID().equals(searchEntity));
                 if (found.size() > 0) {

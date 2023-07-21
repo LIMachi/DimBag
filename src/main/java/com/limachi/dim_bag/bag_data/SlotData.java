@@ -20,18 +20,16 @@ import java.util.HashMap;
 
 public class SlotData implements IItemHandlerModifiable {
 
-    public static final SlotData EMPTY = new SlotData(0, new ListTag());
+    public static final Component DEFAULT_SLOT_LABEL = Component.translatable("block.dim_bag.slot_module");
     private LazyOptional<SlotData> handle = LazyOptional.of(()->this);
 
-    private static class SlotEntry implements ISlotAccessContainer {
-        private BlockPos pos;
+    public static class SlotEntry implements ISlotAccessContainer {
+        private final BlockPos pos;
         private Component label;
         private ItemStack content;
         private final SlotAccess sa = new SlotAccess() {
             @Override
-            public ItemStack get() {
-                return content;
-            }
+            public ItemStack get() { return content; }
 
             @Override
             public boolean set(ItemStack stack) {
@@ -40,15 +38,15 @@ public class SlotData implements IItemHandlerModifiable {
             }
         };
 
-        SlotEntry(CompoundTag data) {
+        public SlotEntry(CompoundTag data) {
             content = ItemStack.of(data);
             pos = BlockPos.of(data.getLong("position"));
             label = Component.Serializer.fromJson(data.getString("label"));
             if (label == null)
-                label = Component.translatable("block.dim_bag.slot_module");
+                label = DEFAULT_SLOT_LABEL;
         }
 
-        CompoundTag serialize() {
+        public CompoundTag serialize() {
             CompoundTag out = content.serializeNBT();
             out.putLong("position", pos.asLong());
             out.putString("label", Component.Serializer.toJson(label));
@@ -56,20 +54,18 @@ public class SlotData implements IItemHandlerModifiable {
         }
 
         @Override
-        public SlotAccess getSlotAccess(int i) {
-            return sa;
-        }
+        public SlotAccess getSlotAccess(int i) { return sa; }
 
         @Override
-        public int getSlots() {
-            return 1;
-        }
+        public int getSlots() { return 1; }
 
         @Override
-        public boolean isItemValid(int slot, @Nonnull ItemStack stack) {
-            return true;
-        }
+        public boolean isItemValid(int slot, @Nonnull ItemStack stack) { return true; }
     }
+
+    private final int bag;
+    private final ArrayList<SlotEntry> stacks = new ArrayList<>();
+    private final HashMap<BlockPos, LazyOptional<SlotEntry>> handles = new HashMap<>();
 
     public int getSlot(BlockPos slot) {
         for (int i = 0; i < stacks.size(); ++i)
@@ -83,18 +79,28 @@ public class SlotData implements IItemHandlerModifiable {
         return stacks.get(slot).pos;
     }
 
-    private final int bag;
-    private final ArrayList<SlotEntry> stacks = new ArrayList<>();
-    private final HashMap<BlockPos, LazyOptional<SlotEntry>> handles = new HashMap<>();
-
     public LazyOptional<IItemHandler> getSlotHandle(BlockPos pos) {
         if (pos == null)
             return null;
         return handles.computeIfAbsent(pos, k->{
             final int slot = getSlot(pos);
-            LazyOptional<SlotEntry> opt = slot != -1 ? LazyOptional.of(()->stacks.get(slot)) : LazyOptional.empty();
-            return opt;
+            return slot != -1 ? LazyOptional.of(()->stacks.get(slot)) : LazyOptional.empty();
         }).cast();
+    }
+
+    public Component getSlotLabel(BlockPos pos) {
+        int slot = getSlot(pos);
+        if (slot != -1)
+            return stacks.get(slot).label;
+        return DEFAULT_SLOT_LABEL;
+    }
+
+    public void setSlotLabel(BlockPos pos, Component label) {
+        int slot = getSlot(pos);
+        if (slot != -1) {
+            stacks.get(slot).label = label;
+            handles.remove(pos).invalidate();
+        }
     }
 
     public CompoundTag uninstallSlot(BlockPos pos) {

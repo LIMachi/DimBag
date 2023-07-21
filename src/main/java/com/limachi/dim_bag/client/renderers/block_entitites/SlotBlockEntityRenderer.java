@@ -1,7 +1,6 @@
 package com.limachi.dim_bag.client.renderers.block_entitites;
 
 import com.limachi.dim_bag.bag_modules.block_entity.SlotModuleBlockEntity;
-import com.limachi.dim_bag.save_datas.BagSlots;
 import com.limachi.lim_lib.KeyMapController;
 import com.limachi.lim_lib.Sides;
 import com.limachi.lim_lib.registries.ClientRegistries;
@@ -41,8 +40,7 @@ public class SlotBlockEntityRenderer implements BlockEntityRenderer<SlotModuleBl
     @Override
     public void render(@Nonnull SlotModuleBlockEntity be, float f, @Nonnull PoseStack pose, @Nonnull MultiBufferSource buffer, int i1, int i2) {
         BlockPos pos = be.getBlockPos();
-//        ItemStack stack = BagSlots.getSlots(RoomData.getRoomId(pos)).getSingleSlot(pos).getStackInSlot(0); //FIXME
-        ItemStack stack = ItemStack.EMPTY;
+        ItemStack stack = be.renderStack;
         if (!stack.isEmpty() && Sides.getPlayer() instanceof LocalPlayer player) {
             pose.pushPose();
             pose.translate(CENTER, CENTER, CENTER);

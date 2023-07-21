@@ -31,6 +31,16 @@ public class BagMode implements INBTSerializable<CompoundTag>, ICopyCapOnDeath<B
         public void clientWork(Player player) { Cap.run(player, TOKEN, c->c.setMode(player, bag, mode)); }
     }
 
+    @RegisterMsg
+    public record SyncBagModeOnLogin(CompoundTag modes) implements IRecordMsg {
+        public void clientWork(Player player) { Cap.run(player, TOKEN, c->c.deserializeNBT(modes)); }
+    }
+
+    @SubscribeEvent
+    public static void onPlayerLoginEvent(PlayerEvent.PlayerLoggedInEvent event) {
+        Cap.run(event.getEntity(), TOKEN, c->NetworkManager.toClient(DimBag.MOD_ID, (ServerPlayer)event.getEntity(), new SyncBagModeOnLogin(c.serializeNBT())));
+    }
+
     @SubscribeEvent
     public static void onChangeDim(PlayerEvent.PlayerChangedDimensionEvent event) {
         if (event.getEntity() instanceof ServerPlayer player)

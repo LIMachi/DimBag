@@ -25,7 +25,7 @@ public class ObserverModuleBlockEntity extends BlockEntity {
     protected EntityObserver command = new EntityObserver(null);
     protected int bagId;
     private BagInstance bag = null; //only present server side!!
-    protected int tickRate = 4;
+    protected int tickRate = 1; //FIXME: should add a way to tweak this value
     protected int tick = -1;
 
     public ObserverModuleBlockEntity(BlockPos pos, BlockState state) { super(R_TYPE.get(), pos, state); }
@@ -53,7 +53,7 @@ public class ObserverModuleBlockEntity extends BlockEntity {
         tag.put("commands", command.getCommands());
         tag.putInt("tickRate", tickRate);
         if (level != null && !level.isClientSide)
-            tag.putInt("bag", bag.bagId());
+            tag.putInt("bag", bagId);
     }
 
     public BagInstance getBag() {
@@ -69,8 +69,7 @@ public class ObserverModuleBlockEntity extends BlockEntity {
         ListTag cmd = tag.getList("commands", Tag.TAG_COMPOUND);
         if (!command.getCommands().equals(cmd))
             command = new EntityObserver(cmd);
-        if (level != null && !level.isClientSide)
-            bagId = tag.getInt("bag");
+        bagId = tag.getInt("bag");
         if (tag.contains("tickRate"))
             tickRate = tag.getInt("tickRate");
     }

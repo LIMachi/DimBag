@@ -1,13 +1,18 @@
 package com.limachi.dim_bag.bag_modules;
 
+import com.ibm.icu.util.BasicTimeZone;
 import com.limachi.dim_bag.DimBag;
 import com.limachi.dim_bag.bag_data.BagInstance;
 import com.limachi.dim_bag.save_datas.BagsData;
 import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.Level;
@@ -16,15 +21,29 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.phys.BlockHitResult;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.event.entity.player.ItemTooltipEvent;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.common.Mod;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-
+@Mod.EventBusSubscriber(value = Dist.CLIENT)
 public class BaseModule extends Block {
     public BaseModule() {
-        super(Properties.copy(Blocks.BEDROCK).isValidSpawn((s, b, p, e)->false).isSuffocating((s, b, p)->false).noOcclusion().noLootTable());
+        super(Properties.copy(Blocks.BEDROCK).isValidSpawn((s, b, p, e)->false).isSuffocating((s, b, p)->false).noOcclusion().noLootTable().isViewBlocking((s, l, p)->false));
         init();
+    }
+
+    @SubscribeEvent
+    public static void addLabelTooltip(ItemTooltipEvent event) {
+        ItemStack stack = event.getItemStack();
+        if (stack.getItem() instanceof BlockItem item && item.getBlock() instanceof BaseModule) {
+            CompoundTag tag = stack.getTag();
+            if (tag != null && tag.contains("label", Tag.TAG_STRING))
+                event.getToolTip().add(1, Component.Serializer.fromJson(tag.getString("label")));
+        }
     }
 
     protected void init() {}

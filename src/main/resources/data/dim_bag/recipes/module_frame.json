@@ -1,0 +1,23 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "IGI",
+    "GBG",
+    "IGI"
+  ],
+  "key": {
+    "I": {
+      "tag": "forge:ingots/iron"
+    },
+    "G": {
+      "tag": "forge:glass_panes"
+    },
+    "B": {
+      "item": "dim_bag:bag_item"
+    }
+  },
+  "result": {
+    "item": "dim_bag:module_frame",
+    "count": 1
+  }
+}

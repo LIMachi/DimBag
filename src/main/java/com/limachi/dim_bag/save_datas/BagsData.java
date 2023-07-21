@@ -180,7 +180,7 @@ public class BagsData extends SavedData {
 
     @SubscribeEvent
     public static void onWorldLoad(LevelEvent.Load event) {
-        if (event.getLevel() instanceof ServerLevel level && level.dimension().equals(DimBag.BAG_DIM)) {
+        if (event.getLevel() instanceof ServerLevel level && level.dimension().equals(Level.OVERWORLD)) {
             invalidate();
             INSTANCE = level.getDataStorage().computeIfAbsent(BagsData::new, BagsData::new, "bags");
         }
@@ -188,7 +188,7 @@ public class BagsData extends SavedData {
 
     @SubscribeEvent
     public static void onWorldUnload(LevelEvent.Unload event) {
-        if (event.getLevel() instanceof ServerLevel level && level.dimension().equals(DimBag.BAG_DIM))
+        if (event.getLevel() instanceof ServerLevel level && level.dimension().equals(Level.OVERWORLD))
             invalidate();
     }
 
