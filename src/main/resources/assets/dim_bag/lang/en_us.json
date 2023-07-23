@@ -11,7 +11,7 @@
 
   "bag.mode.Default": "Default",
   "bag.mode.Debug": "Debug",
-  "bag.mode.Settings": "Settings",
+  "bag.mode.Settings": "Settings / Wrench",
   "bag.mode.Capture": "Capture",
   "bag.mode.Manual": "Manual",
   "bag.mode.Tank": "Tank",

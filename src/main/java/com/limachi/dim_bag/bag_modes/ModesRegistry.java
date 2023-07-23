@@ -18,7 +18,7 @@ public class ModesRegistry {
     public static final ModeEntry DEFAULT = registerMode(new BaseMode("Default", true){});
 
     static  {
-        registerMode(new BaseMode("Tank", false){});
+        registerMode(new Tank());
         registerMode(new Settings());
         registerMode(new Capture());
     }

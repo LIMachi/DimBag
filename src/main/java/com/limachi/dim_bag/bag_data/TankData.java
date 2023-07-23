@@ -1,19 +1,26 @@
 package com.limachi.dim_bag.bag_data;
 
+import com.limachi.dim_bag.items.BagItem;
+import com.limachi.dim_bag.items.VirtualBagItem;
 import com.limachi.dim_bag.utils.SimpleTank;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.fluids.FluidStack;
-import net.minecraftforge.fluids.capability.IFluidHandler;
+import net.minecraftforge.fluids.capability.IFluidHandlerItem;
+
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Optional;
+import java.util.function.Supplier;
 
-public class TankData implements IFluidHandler {
+public class TankData implements IFluidHandlerItem {
     public static final Component DEFAULT_TANK_LABEL = Component.translatable("block.dim_bag.tank_module");
     public static final int DEFAULT_CAPACITY = 8000;
     private LazyOptional<TankData> handle = LazyOptional.of(()->this);
@@ -42,6 +49,39 @@ public class TankData implements IFluidHandler {
     private final int bag;
     private final ArrayList<TankEntry> tanks = new ArrayList<>();
     private final HashMap<BlockPos, LazyOptional<TankEntry>> handles = new HashMap<>();
+
+    private ItemStack container = null;
+    private final Supplier<Optional<CompoundTag>> mode;
+
+    protected TankData(int bag, ListTag tanks, Supplier<Optional<CompoundTag>> mode) {
+        this.bag = bag;
+        for (int i = 0; i < tanks.size(); ++i)
+            this.tanks.add(new TankEntry(tanks.getCompound(i)));
+        this.mode = mode;
+    }
+
+    public int getSelected() {
+        return mode.get().map(m->getTank(BlockPos.of(m.getLong("selected")))).orElse(-1);
+    }
+
+    public void select(int index) {
+        if (index >= 0 && index < tanks.size())
+            mode.get().ifPresent(m->m.putLong("selected", tanks.get(index).pos.asLong()));
+    }
+
+    public TankData setContainer(@Nullable ItemStack container) {
+        this.container = container;
+        return this;
+    }
+
+    @Override
+    public @Nonnull ItemStack getContainer() {
+        if (container != null)
+            return container;
+        ItemStack out = new ItemStack(VirtualBagItem.R_ITEM.get());
+        out.getOrCreateTag().putInt(BagItem.BAG_ID_KEY, bag);
+        return out;
+    }
 
     public int getTank(BlockPos slot) {
         for (int i = 0; i < tanks.size(); ++i)
@@ -99,7 +139,8 @@ public class TankData implements IFluidHandler {
         }
         data.putLong("position", pos.asLong());
         tanks.add(new TankEntry(data));
-        handle.invalidate(); //we invalidate the global handle to force all global inventories to reload
+        if (handle != null)
+            handle.invalidate(); //we invalidate the global handle to force all global inventories to reload
         handle = null;
     }
 
@@ -107,7 +148,8 @@ public class TankData implements IFluidHandler {
         for (LazyOptional<TankEntry> handle : handles.values())
             handle.invalidate();
         handles.clear();
-        handle.invalidate();
+        if (handle != null)
+            handle.invalidate();
         handle = null;
     }
 
@@ -115,12 +157,6 @@ public class TankData implements IFluidHandler {
         if (handle == null)
             handle = LazyOptional.of(()->this);
         return handle;
-    }
-
-    protected TankData(int bag, ListTag tanks) {
-        this.bag = bag;
-        for (int i = 0; i < tanks.size(); ++i)
-            this.tanks.add(new TankEntry(tanks.getCompound(i)));
     }
 
     protected ListTag serialize() {
@@ -151,6 +187,9 @@ public class TankData implements IFluidHandler {
 
     @Override
     public int fill(FluidStack resource, FluidAction action) {
+        int selected = getSelected();
+        if (selected != -1)
+            return tanks.get(selected).fill(resource, action);
         int filled = 0;
         if (!resource.isEmpty()) {
             FluidStack stack = resource.copy();
@@ -170,6 +209,9 @@ public class TankData implements IFluidHandler {
     @Override
     @Nonnull
     public FluidStack drain(FluidStack resource, FluidAction action) {
+        int selected = getSelected();
+        if (selected != -1)
+            return tanks.get(selected).drain(resource, action);
         FluidStack drained = FluidStack.EMPTY;
         if (!resource.isEmpty()) {
             FluidStack stack = resource.copy();
@@ -192,6 +234,9 @@ public class TankData implements IFluidHandler {
     @Override
     @Nonnull
     public FluidStack drain(int maxDrain, FluidAction action) {
+        int selected = getSelected();
+        if (selected != -1)
+            return tanks.get(selected).drain(maxDrain, action);
         if (maxDrain <= 0) return FluidStack.EMPTY;
         for (TankEntry entry : tanks)
             if (!entry.getFluid().isEmpty()) {

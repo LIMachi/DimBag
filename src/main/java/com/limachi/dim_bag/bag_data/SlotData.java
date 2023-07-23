@@ -123,7 +123,8 @@ public class SlotData implements IItemHandlerModifiable {
         }
         data.putLong("position", pos.asLong());
         stacks.add(new SlotEntry(data));
-        handle.invalidate(); //we invalidate the global handle to force all global inventories to reload
+        if (handle != null)
+            handle.invalidate(); //we invalidate the global handle to force all global inventories to reload
         handle = null;
     }
 
@@ -131,7 +132,8 @@ public class SlotData implements IItemHandlerModifiable {
         for (LazyOptional<SlotEntry> handle : handles.values())
             handle.invalidate();
         handles.clear();
-        handle.invalidate();
+        if (handle != null)
+            handle.invalidate();
         handle = null;
     }
 

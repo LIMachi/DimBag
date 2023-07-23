@@ -3,7 +3,11 @@ package com.limachi.dim_bag.bag_modules;
 import com.ibm.icu.util.BasicTimeZone;
 import com.limachi.dim_bag.DimBag;
 import com.limachi.dim_bag.bag_data.BagInstance;
+import com.limachi.dim_bag.bag_modes.ModesRegistry;
+import com.limachi.dim_bag.bag_modes.Settings;
+import com.limachi.dim_bag.capabilities.entities.BagMode;
 import com.limachi.dim_bag.save_datas.BagsData;
+import com.limachi.lim_lib.capabilities.Cap;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
@@ -49,7 +53,11 @@ public class BaseModule extends Block {
     protected void init() {}
 
     @Override
-    public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
+    final public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
+        if (BagsData.runOnBag(player.getItemInHand(hand), b->"Settings".equals(Cap.run(player, BagMode.TOKEN, c->c.getMode(b.bagId()), "")) && wrench(b, player, level, pos, player.getItemInHand(hand)), false))
+            return InteractionResult.SUCCESS;
+        if (BagsData.runOnBag(level, pos, b->use(b, player, level, pos, hand), false))
+            return InteractionResult.SUCCESS;
         return super.use(state, level, pos, player, hand, hit);
     }
 
@@ -72,6 +80,16 @@ public class BaseModule extends Block {
      * called when a module was installed (place inside the bag), use this to add placement logic
      */
     public void install(BagInstance bag, Player player, Level level, BlockPos pos, ItemStack stack) {}
+
+    /**
+     * called when a module is right-clicked by a bag in settings/wrench mode
+     * return true to cancel the right click (consume)
+     */
+    public boolean wrench(BagInstance bag, Player player, Level level, BlockPos pos, ItemStack stack) { return false; }
+
+    public boolean use(BagInstance bag, Player player, Level level, BlockPos pos, InteractionHand hand) {
+        return false;
+    }
 
     /**
      * catch manual placement of module inside bag

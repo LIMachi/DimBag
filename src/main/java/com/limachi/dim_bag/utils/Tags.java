@@ -37,4 +37,27 @@ public class Tags {
             self.add(build.apply(i));
         return (T)self.get(index);
     }
+
+    public static CompoundTag singleton(String entry, Object content) {
+        CompoundTag out = new CompoundTag();
+        if (content instanceof Tag t)
+            out.put(entry, t);
+        else if (content instanceof String s)
+            out.putString(entry, s);
+        else if (content instanceof Integer || int.class.isInstance(content))
+            out.putInt(entry, (int)content);
+        else if (content instanceof Long || long.class.isInstance(content))
+            out.putLong(entry, (long)content);
+        else if (content instanceof Short || short.class.isInstance(content))
+            out.putShort(entry, (short)content);
+        else if (content instanceof Byte || byte.class.isInstance(content))
+            out.putByte(entry, (byte)content);
+        else if (content instanceof Boolean || boolean.class.isInstance(content))
+            out.putByte(entry, (boolean)content ? (byte)1 : (byte)0);
+        else if (content instanceof Double || double.class.isInstance(content))
+            out.putDouble(entry, (double)content);
+        else if (content instanceof Float || float.class.isInstance(content))
+            out.putFloat(entry, (float)content);
+        return out;
+    }
 }

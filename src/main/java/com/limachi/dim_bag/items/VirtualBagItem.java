@@ -25,7 +25,6 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.common.capabilities.ICapabilityProvider;
 import net.minecraftforge.common.util.FakePlayer;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -69,10 +68,6 @@ public class VirtualBagItem extends BagItem {
         tag.put(ORIGINAL_STACK_KEY, original.save(new CompoundTag()));
         return out;
     }
-
-    @Nullable
-    @Override
-    public ICapabilityProvider initCapabilities(ItemStack stack, @Nullable CompoundTag nbt) { return null; } //FIXME
 
     public static ItemStack original(ItemStack virtualBag) {
         if (!(virtualBag.getItem() instanceof VirtualBagItem))
@@ -119,7 +114,7 @@ public class VirtualBagItem extends BagItem {
             ItemStack s = sa.get();
             if (!(s.getItem() instanceof VirtualBagItem) && !s.equals(o, false))
                 stack.getOrCreateTag().put(ORIGINAL_STACK_KEY, s.save(new CompoundTag()));
-            BagsData.runOnBag(BagItem.getBagId(stack), b->stack.getOrCreateTag().putLong("modes", b.installedModesMask()));
+            BagsData.runOnBag(stack, b->stack.getOrCreateTag().putLong("modes", b.installedModesMask()));
             getModeBehavior(entity, stack).inventoryTick(stack, level, entity, slot, selected);
             sa.set(stack);
         }

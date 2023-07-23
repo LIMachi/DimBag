@@ -35,7 +35,7 @@ public class TankMenu extends AbstractContainerMenu implements IAcceptUpStreamNB
     public TankMenu(int id, Inventory playerInventory, int bag, BlockPos slot) {
         super(R_TYPE.get(), id);
 
-        addSlot(bag > 0 && slot != null ? new BagTankSlot(bag, slot, 79, 36, s->true) : new BagTankSlot(79, 36, s->true));
+        addSlot(bag > 0 && slot != null ? new BagTankSlot(bag, slot, 79, 36, s->true, ()->true) : new BagTankSlot(79, 36, s->true, ()->true));
 
         for (int l = 0; l < 3; ++l)
             for (int j1 = 0; j1 < 9; ++j1)

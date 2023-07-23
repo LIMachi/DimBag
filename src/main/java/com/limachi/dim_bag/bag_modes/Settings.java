@@ -20,6 +20,7 @@ import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.FallingBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
@@ -33,13 +34,16 @@ public class Settings extends BaseMode {
 
     @Override //open settings screen (bag screen index 1)
     public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
-        BagMenu.open(player, BagItem.getBagId(player.getItemInHand(hand)), 1);
+        BagMenu.open(player, BagItem.getBagId(player.getItemInHand(hand)), 2);
         return InteractionResultHolder.success(player.getItemInHand(hand));
     }
 
     @Override //if offhand is valid block, swap wall state
     public InteractionResult useOn(UseOnContext ctx) {
         BlockPos target = ctx.getClickedPos();
+        if (ctx.getLevel().getBlockState(ctx.getClickedPos()).getBlock() instanceof BaseModule module)
+            if (BagsData.runOnBag(ctx.getLevel(), ctx.getClickedPos(), b->module.wrench(b, ctx.getPlayer(), ctx.getLevel(), ctx.getClickedPos(), ctx.getItemInHand()), false))
+                return InteractionResult.SUCCESS;
         if (ctx.getPlayer() != null && BagsData.runOnBag(ctx.getLevel(), target, b->b.isWall(target), false)) {
             ItemStack offStack = ctx.getPlayer().getOffhandItem();
             if (offStack.getItem() instanceof BlockItem bi) {
@@ -49,7 +53,7 @@ public class Settings extends BaseMode {
                 boolean successful = false;
                 if (bs != null) {
                     String bn = ForgeRegistries.BLOCKS.getKey(bs.getBlock()).toString();
-                    if (!original.getBlock().equals(bs.getBlock()) && !bs.hasBlockEntity() && Arrays.stream(WallBlock.blacklisted_wall_block).noneMatch(bn::matches)) { //prevent any block that is a tile entity or in the blacklist
+                    if (!original.getBlock().equals(bs.getBlock()) && !bs.hasBlockEntity() && !(bs.getBlock() instanceof FallingBlock) && Arrays.stream(WallBlock.BLACKLISTED_WALL_BLOCKS).noneMatch(bn::matches)) { //prevent any block that is a tile entity or in the blacklist
                         AABB box = bs.getCollisionShape(ctx.getLevel(), target).bounds();
                         if (box.maxX >= 1 && box.maxY >= 1 && box.maxZ >= 1 && box.minX <= 0 && box.minY <= 0 && box.minZ <= 0) { //test that the block has a full collision box
                             ItemStack stack = ItemStack.EMPTY;

@@ -52,9 +52,9 @@ public class SlotModule extends BaseModule implements EntityBlock {
     }
 
     @Override
-    public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
+    public boolean use(BagInstance bag, Player player, Level level, BlockPos pos, InteractionHand hand) {
         BagsData.runOnBag(level, pos, b->SlotMenu.open(player, b.bagId(), pos));
-        return InteractionResult.SUCCESS;
+        return true;
     }
 
     @Nullable

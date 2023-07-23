@@ -18,7 +18,7 @@ import net.minecraftforge.common.util.INBTSerializable;
 import java.util.ArrayList;
 import java.util.List;
 
-//FIXME
+/*
 public class TeleporterData implements INBTSerializable<CompoundTag> {
 
     protected boolean active = true;
@@ -159,3 +159,4 @@ public class TeleporterData implements INBTSerializable<CompoundTag> {
                 filters.add(f.getAsString());
     }
 }
+*/

@@ -1,6 +1,7 @@
 package com.limachi.dim_bag.bag_modules;
 
 import com.limachi.dim_bag.bag_data.BagInstance;
+import com.limachi.dim_bag.bag_data.TankData;
 import com.limachi.dim_bag.bag_modules.block_entity.TankModuleBlockEntity;
 import com.limachi.dim_bag.menus.TankMenu;
 import com.limachi.dim_bag.save_datas.BagsData;
@@ -44,22 +45,42 @@ public class TankModule extends BaseModule implements EntityBlock {
             data.putString("label", data.getCompound("display").getString("Name"));
             data.remove("display");
         }
+        if (bag.getModeData("Tank").isEmpty())
+            bag.installMode("Tank");
+        bag.getModeData("Tank").ifPresent(c->{
+            if (c.getBoolean("disabled")) {
+                c.putBoolean("disabled", false);
+                c.putLong("selected", pos.asLong());
+            } else if (!c.contains("selected"))
+                c.putLong("selected", pos.asLong());
+        });
         bag.tanksHandle().ifPresent(s->s.installTank(pos, data));
     }
 
     @Override
     public void uninstall(BagInstance bag, Player player, Level level, BlockPos pos, ItemStack stack) {
+        bag.getModeData("Tank").ifPresent(c->{
+            if (bag.tanksHandle().map(TankData::getTanks).orElse(0) <= 1)
+                c.putBoolean("disabled", true);
+            else if (c.getLong("selected") == pos.asLong()) {
+                long p = bag.tanksHandle().map(d->d.getTank(0).asLong()).orElse(0L);
+                if (p != 0)
+                    c.putLong("selected", p);
+                else
+                    c.remove("selected");
+            }
+        });
         bag.tanksHandle().ifPresent(s->stack.getOrCreateTag().merge(s.uninstallTank(pos)));
     }
 
     @Override
-    public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
+    public boolean use(BagInstance bag, Player player, Level level, BlockPos pos, InteractionHand hand) {
         ItemStack stack = player.getItemInHand(hand);
         if (stack.getCapability(ForgeCapabilities.FLUID_HANDLER_ITEM).isPresent())
             FluidUtil.interactWithFluidHandler(player, hand, level, pos, null);
         else
             BagsData.runOnBag(level, pos, b-> TankMenu.open(player, b.bagId(), pos));
-        return InteractionResult.SUCCESS;
+        return true;
     }
 
     @Nullable

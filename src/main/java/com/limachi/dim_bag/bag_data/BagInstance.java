@@ -23,6 +23,7 @@ import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.common.capabilities.CapabilityManager;
@@ -66,7 +67,7 @@ public class BagInstance {
                 buildRoom();
         }
         slots = new SlotData(id, Tags.getOrCreateList(rawData, "slots", ListTag::new));
-        tanks = new TankData(id, Tags.getOrCreateList(rawData, "tanks", ListTag::new));
+        tanks = new TankData(id, Tags.getOrCreateList(rawData, "tanks", ListTag::new), ()->getModeData("Tank"));
     }
 
     private void prepareBagLevel() {
@@ -287,13 +288,14 @@ public class BagInstance {
 
     public Entity enter(Entity entity, boolean proxy) {
         BlockPos destination = BagsData.roomCenter(bag);
-        final BlockPos[] test = {TeleportModule.getDestination(this, entity)};
-        if (test[0] != null)
-            destination = test[0];
+        BlockPos test = TeleportModule.getDestination(this, entity).orElse(null);
+        if (test == null && !(entity instanceof Player)) return null;
+        if (test != null)
+            destination = test;
         else {
-            Cap.run(entity, BagTP.TOKEN, c -> test[0] = c.getEnterPos(bag));
-            if (test[0] != null && isInRoom(test[0]) && !isWall(test[0]))
-                destination = test[0];
+            test = ((Optional<BlockPos>)Cap.run(entity, BagTP.TOKEN, c -> Optional.of(c.getEnterPos(bag)), Optional.empty())).orElse(null);
+            if (test != null && isInRoom(test) && !isWall(test))
+                destination = test;
         }
         if (proxy)
             Cap.run(entity, BagTP.TOKEN, c -> c.setLeavePos(bag, entity.level().dimension(), entity.blockPosition()));

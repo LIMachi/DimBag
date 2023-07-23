@@ -1,0 +1,11 @@
+{
+  "parent": "block/cube_all",
+  "textures": {
+    "up": "dim_bag:block/teleporter/top",
+    "down": "dim_bag:block/teleporter/bottom",
+    "north": "dim_bag:block/teleporter/side",
+    "south": "dim_bag:block/teleporter/side",
+    "east": "dim_bag:block/teleporter/side",
+    "west": "dim_bag:block/teleporter/side"
+  }
+}

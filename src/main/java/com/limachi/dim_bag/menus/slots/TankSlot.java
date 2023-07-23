@@ -23,13 +23,14 @@ import net.minecraftforge.client.extensions.common.IClientFluidTypeExtensions;
 import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.fluids.IFluidTank;
 import net.minecraftforge.fluids.capability.IFluidHandler;
+import org.jetbrains.annotations.NotNull;
 import org.joml.Vector4f;
 
 import javax.annotation.Nonnull;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-public class TankSlot extends Slot {
+public class TankSlot extends Slot implements IFluidHandler {
     protected Function<TankSlot, Boolean> isActive;
     Supplier<IFluidTank> tank;
 
@@ -46,9 +47,7 @@ public class TankSlot extends Slot {
         this.isActive = isActive;
     }
 
-    public IFluidTank getTankHandler() {
-        return tank.get();
-    }
+    public IFluidTank getTankHandler() { return tank.get(); }
 
     @Nonnull
     @Override
@@ -80,13 +79,13 @@ public class TankSlot extends Slot {
     }
 
     @Override
-    public boolean hasItem() { return isActive.apply(this) && getTankHandler().getFluidAmount() > 0; }
+    public boolean hasItem() { return isActive() && getTankHandler().getFluidAmount() > 0; }
 
     @Override
     public boolean isActive() { return isActive.apply(this); }
 
     @Override
-    public boolean isHighlightable() { return isActive.apply(this); }
+    public boolean isHighlightable() { return isActive(); }
 
     @Override
     public boolean mayPlace(@Nonnull ItemStack stack) { return false; }
@@ -104,6 +103,27 @@ public class TankSlot extends Slot {
 
     @OnlyIn(Dist.CLIENT)
     public void renderSlot(GuiGraphics gui) { FluidRenderer.renderSlot(gui, this); }
+
+    @Override
+    public int getTanks() { return isActive() ? 1 : 0; }
+
+    @Override
+    public @NotNull FluidStack getFluidInTank(int tank) { return getTankHandler().getFluid(); }
+
+    @Override
+    public int getTankCapacity(int tank) { return getTankHandler().getCapacity(); }
+
+    @Override
+    public boolean isFluidValid(int tank, @NotNull FluidStack stack) { return getTankHandler().isFluidValid(stack); }
+
+    @Override
+    public int fill(FluidStack resource, FluidAction action) { return getTankHandler().fill(resource, action); }
+
+    @Override
+    public @NotNull FluidStack drain(FluidStack resource, FluidAction action) { return getTankHandler().drain(resource, action); }
+
+    @Override
+    public @NotNull FluidStack drain(int maxDrain, FluidAction action) { return getTankHandler().drain(maxDrain, action); }
 
     @OnlyIn(Dist.CLIENT)
     public static class FluidRenderer {

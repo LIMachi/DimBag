@@ -2,12 +2,17 @@ package com.limachi.dim_bag.save_datas;
 
 import com.limachi.dim_bag.DimBag;
 import com.limachi.dim_bag.bag_data.BagInstance;
+import com.limachi.dim_bag.entities.BagEntity;
+import com.limachi.dim_bag.entities.BagItemEntity;
+import com.limachi.dim_bag.items.BagItem;
 import com.limachi.lim_lib.Configs;
+import com.limachi.lim_lib.Sides;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.saveddata.SavedData;
 import net.minecraftforge.event.level.LevelEvent;
@@ -37,6 +42,12 @@ public class BagsData extends SavedData {
     public static int MAXIMUM_ROOM_RADIUS = 64;
 
     private static BagsData INSTANCE = null;
+
+    private static BagsData getInstance() {
+        if (!Sides.isLogicalClient())
+            return INSTANCE;
+        return null;
+    }
     private static LinkedList<Runnable> INVALIDATORS = new LinkedList<>();
 
     ListTag raw;
@@ -45,7 +56,7 @@ public class BagsData extends SavedData {
     private static BagInstance roomAt(Level level, BlockPos pos) {
         if (level instanceof ServerLevel && level.dimension().equals(DimBag.BAG_DIM)) {
             int id = (pos.getX() / ROOM_SPACING) + 1;
-            if (id > 0 && INSTANCE != null && id <= INSTANCE.instances.size()) {
+            if (id > 0 && getInstance() != null && id <= INSTANCE.instances.size()) {
                 BagInstance bag = INSTANCE.instances.get(id - 1);
                 if (bag.isInRoom(pos))
                     return bag;
@@ -57,7 +68,7 @@ public class BagsData extends SavedData {
     public static boolean isWall(Level level, BlockPos pos) {
         if (level instanceof ServerLevel && level.dimension().equals(DimBag.BAG_DIM)) {
             int id = (pos.getX() / ROOM_SPACING) + 1;
-            if (id > 0 && INSTANCE != null && id <= INSTANCE.instances.size())
+            if (id > 0 && getInstance() != null && id <= INSTANCE.instances.size())
                 return INSTANCE.instances.get(id - 1).isWall(pos);
         }
         return false;
@@ -87,7 +98,7 @@ public class BagsData extends SavedData {
      * </pre>
      */
     public static BagInstance getBagHandle(int id, Runnable invalidator) {
-        if (id > 0 && INSTANCE != null && id <= INSTANCE.instances.size()) {
+        if (id > 0 && getInstance() != null && id <= INSTANCE.instances.size()) {
             if (invalidator != null)
                 INVALIDATORS.add(invalidator);
             return INSTANCE.instances.get(id - 1);
@@ -109,17 +120,29 @@ public class BagsData extends SavedData {
         return null;
     }
 
+    public static BagInstance getBagHandle(ItemStack bag, Runnable invalidator) {
+        return getBagHandle(BagItem.getBagId(bag), invalidator);
+    }
+
+    public static BagInstance getBagHandle(BagEntity bag, Runnable invalidator) {
+        return getBagHandle(bag.getBagId(), invalidator);
+    }
+
+    public static BagInstance getBagHandle(BagItemEntity bag, Runnable invalidator) {
+        return getBagHandle(bag.getBagId(), invalidator);
+    }
+
     /**
      * Alternative to {@link BagsData#getBagHandle} to run something on a bag immediately without keeping a handle
      */
     public static <T> T runOnBag(int id, Function<BagInstance, T> run, T onFail) {
-        if (id > 0 && INSTANCE != null && id <= INSTANCE.instances.size())
+        if (id > 0 && getInstance() != null && id <= INSTANCE.instances.size())
             return run.apply(INSTANCE.instances.get(id - 1));
         return onFail;
     }
 
     public static boolean runOnBag(int id, Consumer<BagInstance> run) {
-        if (id > 0 && INSTANCE != null && id <= INSTANCE.instances.size()) {
+        if (id > 0 && getInstance() != null && id <= INSTANCE.instances.size()) {
             run.accept(INSTANCE.instances.get(id - 1));
             return true;
         }
@@ -142,8 +165,56 @@ public class BagsData extends SavedData {
         return false;
     }
 
+    public static <T> T runOnBag(ItemStack bag, Function<BagInstance, T> run, T onFail) {
+        int id = BagItem.getBagId(bag);
+        if (id > 0 && getInstance() != null && id <= INSTANCE.instances.size())
+            return run.apply(INSTANCE.instances.get(id - 1));
+        return onFail;
+    }
+
+    public static boolean runOnBag(ItemStack bag, Consumer<BagInstance> run) {
+        int id = BagItem.getBagId(bag);
+        if (id > 0 && getInstance() != null && id <= INSTANCE.instances.size()) {
+            run.accept(INSTANCE.instances.get(id - 1));
+            return true;
+        }
+        return false;
+    }
+
+    public static <T> T runOnBag(BagEntity bag, Function<BagInstance, T> run, T onFail) {
+        int id = bag.getBagId();
+        if (id > 0 && getInstance() != null && id <= INSTANCE.instances.size())
+            return run.apply(INSTANCE.instances.get(id - 1));
+        return onFail;
+    }
+
+    public static boolean runOnBag(BagEntity bag, Consumer<BagInstance> run) {
+        int id = bag.getBagId();
+        if (id > 0 && getInstance() != null && id <= INSTANCE.instances.size()) {
+            run.accept(INSTANCE.instances.get(id - 1));
+            return true;
+        }
+        return false;
+    }
+
+    public static <T> T runOnBag(BagItemEntity bag, Function<BagInstance, T> run, T onFail) {
+        int id = bag.getBagId();
+        if (id > 0 && getInstance() != null && id <= INSTANCE.instances.size())
+            return run.apply(INSTANCE.instances.get(id - 1));
+        return onFail;
+    }
+
+    public static boolean runOnBag(BagItemEntity bag, Consumer<BagInstance> run) {
+        int id = bag.getBagId();
+        if (id > 0 && getInstance() != null && id <= INSTANCE.instances.size()) {
+            run.accept(INSTANCE.instances.get(id - 1));
+            return true;
+        }
+        return false;
+    }
+
     public static int newBagId() {
-        if (INSTANCE != null) {
+        if (getInstance() != null) {
             CompoundTag rawBag = new CompoundTag();
             INSTANCE.raw.add(rawBag);
             int id = INSTANCE.raw.size();
@@ -154,7 +225,7 @@ public class BagsData extends SavedData {
     }
 
     public static int maxBagId() {
-        if (INSTANCE != null)
+        if (getInstance() != null)
             return INSTANCE.instances.size();
         return 0;
     }
@@ -169,7 +240,7 @@ public class BagsData extends SavedData {
     }
 
     private static void invalidate() {
-        if (INSTANCE != null)
+        if (getInstance() != null)
             for (BagInstance instance : INSTANCE.instances)
                 instance.invalidate();
         INSTANCE = null;

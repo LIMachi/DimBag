@@ -1,7 +1,30 @@
 {
   "variants": {
-    "": {
-      "model": "dim_bag:block/pad"
+    "facing=up": {
+      "model": "dim_bag:block/teleporter"
+    },
+    "facing=down": {
+      "model": "dim_bag:block/teleporter",
+      "x": 180
+    },
+    "facing=north": {
+      "model": "dim_bag:block/teleporter",
+      "x": 90
+    },
+    "facing=east": {
+      "model": "dim_bag:block/teleporter",
+      "x": 90,
+      "y": 90
+    },
+    "facing=south": {
+      "model": "dim_bag:block/teleporter",
+      "x": 90,
+      "y": 180
+    },
+    "facing=west": {
+      "model": "dim_bag:block/teleporter",
+      "x": 90,
+      "y": 270
     }
   }
 }

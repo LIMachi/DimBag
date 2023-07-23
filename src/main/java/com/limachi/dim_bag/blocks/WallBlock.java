@@ -13,8 +13,8 @@ import net.minecraftforge.registries.RegistryObject;
 @SuppressWarnings("unused")
 public class WallBlock extends Block {
 
-    @Configs.Config(cmt = "List of blocks (ressource style, regex compatible) that should not be valid as walls. Example: 'minecraft:tnt' because when lit they let a hole in the walls. 'nice_mod:.*' would match any block added by the mod named 'nice_mod'")
-    public static String[] blacklisted_wall_block = new String[] {"minecraft:tnt"};
+    @Configs.Config(cmt = "List of blocks (ressource style, regex compatible) that should not be valid as walls. Example: 'minecraft:tnt' because when lit they let a hole in the walls. 'nice_mod:.*' would match any block added by the mod named 'nice_mod', falling block (like sand) are always disabled")
+    public static String[] BLACKLISTED_WALL_BLOCKS = new String[] {"minecraft:tnt"};
 
     @RegisterBlock
     public static RegistryObject<Block> R_BLOCK;
