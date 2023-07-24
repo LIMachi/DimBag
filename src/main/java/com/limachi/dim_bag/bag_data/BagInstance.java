@@ -16,6 +16,7 @@ import com.limachi.lim_lib.capabilities.Cap;
 import com.limachi.lim_lib.nbt.NBT;
 import com.mojang.datafixers.util.Pair;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.LongTag;
@@ -25,13 +26,14 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.common.capabilities.CapabilityManager;
 import net.minecraftforge.common.util.LazyOptional;
-import net.minecraftforge.fluids.capability.IFluidHandler;
 import net.minecraftforge.items.IItemHandler;
 
 import java.util.Optional;
+import java.util.function.Consumer;
 
 public class BagInstance {
 
@@ -70,9 +72,10 @@ public class BagInstance {
         tanks = new TankData(id, Tags.getOrCreateList(rawData, "tanks", ListTag::new), ()->getModeData("Tank"));
     }
 
-    private void prepareBagLevel() {
+    private ServerLevel prepareBagLevel() {
         if (bagLevel == null)
             bagLevel = (ServerLevel)World.getLevel(DimBag.BAG_DIM);
+        return bagLevel;
     }
 
     public long installedModesMask() {
@@ -277,6 +280,66 @@ public class BagInstance {
 
     public boolean isInRoom(BlockPos pos) {
         return inRange(pos.getX(), minWalls.getX(), maxWalls.getX()) && inRange(pos.getY(), minWalls.getY(), maxWalls.getY()) && inRange(pos.getZ(), minWalls.getZ(), maxWalls.getZ());
+    }
+
+    private Direction wallDirection(BlockPos wallPos) {
+        if (wallPos.getX() == minWalls.getX()) return Direction.WEST;
+        if (wallPos.getX() == maxWalls.getX()) return Direction.EAST;
+        if (wallPos.getY() == minWalls.getY()) return Direction.DOWN;
+        if (wallPos.getY() == maxWalls.getY()) return Direction.UP;
+        if (wallPos.getZ() == minWalls.getZ()) return Direction.NORTH;
+        if (wallPos.getZ() == maxWalls.getZ()) return Direction.SOUTH;
+        return null;
+    }
+
+    private void iterateWall(Direction wall, int offset, Consumer<BlockPos> run) {
+        BlockPos start = switch (wall) {
+            case UP -> new BlockPos(minWalls.getX() - offset, maxWalls.getY(), minWalls.getZ() - offset);
+            case DOWN -> new BlockPos(minWalls.getX() - offset, minWalls.getY(), minWalls.getZ() - offset);
+            case NORTH -> new BlockPos(minWalls.getX() - offset, minWalls.getY() - offset, minWalls.getZ());
+            case SOUTH -> new BlockPos(minWalls.getX() - offset, minWalls.getY() - offset, maxWalls.getZ());
+            case EAST -> new BlockPos(maxWalls.getX(), minWalls.getY() - offset, minWalls.getZ() - offset);
+            case WEST -> new BlockPos(minWalls.getX(), minWalls.getY() - offset, minWalls.getZ() - offset);
+        };
+        BlockPos end = switch (wall) {
+            case UP -> new BlockPos(maxWalls.getX() + offset, maxWalls.getY(), maxWalls.getZ() + offset);
+            case DOWN -> new BlockPos(maxWalls.getX() + offset, minWalls.getY(), maxWalls.getZ() + offset);
+            case NORTH -> new BlockPos(maxWalls.getX() + offset, maxWalls.getY() + offset, minWalls.getZ());
+            case SOUTH -> new BlockPos(maxWalls.getX() + offset, maxWalls.getY() + offset, maxWalls.getZ());
+            case EAST -> new BlockPos(maxWalls.getX(), maxWalls.getY() + offset, maxWalls.getZ() + offset);
+            case WEST -> new BlockPos(minWalls.getX(), maxWalls.getY() + offset, maxWalls.getZ() + offset);
+        };
+        for (int x = start.getX(); x <= end.getX(); ++x)
+            for (int y = start.getY(); y <= end.getY(); ++y)
+                for (int z = start.getZ(); z <= end.getZ(); ++z)
+                    run.accept(new BlockPos(x, y, z));
+    }
+
+    public boolean pushWall(BlockPos wallPos) {
+        if (!isWall(wallPos)) return false;
+        Direction pushDirection = wallDirection(wallPos);
+        if (pushDirection == null) return false;
+        BlockPos center = BagsData.roomCenter(bag);
+        BlockPos delta;
+        if (pushDirection.getAxisDirection() == Direction.AxisDirection.POSITIVE)
+            delta = maxWalls.relative(pushDirection).subtract(center);
+        else
+            delta = center.subtract(minWalls.relative(pushDirection));
+        if (delta.getX() > BagsData.MAXIMUM_ROOM_RADIUS || delta.getY() > BagsData.MAXIMUM_ROOM_RADIUS || delta.getZ() > BagsData.MAXIMUM_ROOM_RADIUS) //should probably use a check for maximum world size (Y) to uncap the hard 126 block limit
+            return false;
+        if (prepareBagLevel() == null)
+            return false;
+        BlockState air = Blocks.AIR.defaultBlockState();
+        iterateWall(pushDirection, 0, p->bagLevel.setBlockAndUpdate(p.relative(pushDirection), bagLevel.getBlockState(p)));
+        iterateWall(pushDirection, -1, p->bagLevel.setBlockAndUpdate(p, air));
+        if (pushDirection.getAxisDirection() == Direction.AxisDirection.POSITIVE)
+            maxWalls = maxWalls.relative(pushDirection);
+        else
+            minWalls = minWalls.relative(pushDirection);
+        CompoundTag room = Tags.getOrCreateCompound(rawData, "room", CompoundTag::new);
+        room.putLong("min_walls", minWalls.asLong());
+        room.putLong("max_walls", maxWalls.asLong());
+        return true;
     }
 
     public void temporaryChunkLoad() {

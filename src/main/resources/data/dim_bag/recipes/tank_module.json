@@ -2,7 +2,7 @@
   "type": "minecraft:crafting_shapeless",
   "ingredients": [
     {
-      "item": "dim_bag:module_frame"
+      "item": "dim_bag:module_frame_item"
     },
     {
       "item": "minecraft:bucket"

@@ -8,7 +8,7 @@ import com.limachi.dim_bag.capabilities.entities.BagMode;
 import com.limachi.dim_bag.entities.BagEntity;
 import com.limachi.dim_bag.entities.BagItemEntity;
 import com.limachi.dim_bag.save_datas.BagsData;
-import com.limachi.lim_lib.StackUtils;
+import com.limachi.lim_lib.Sides;
 import com.limachi.lim_lib.capabilities.Cap;
 import com.limachi.lim_lib.integration.Curios.CuriosIntegration;
 import com.limachi.lim_lib.registries.ClientRegistries;
@@ -32,7 +32,6 @@ import net.minecraft.world.entity.SlotAccess;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.ClickAction;
 import net.minecraft.world.inventory.Slot;
-import net.minecraft.world.inventory.tooltip.TooltipComponent;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.UseOnContext;
@@ -57,12 +56,12 @@ import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Optional;
 
 @Mod.EventBusSubscriber(modid = DimBag.MOD_ID)
 public class BagItem extends Item implements IScrollItem {
     public static final String BAG_ID_KEY = "bag_id";
     public static final String BAG_MODE_OVERRIDE = "bag_mode";
+    public static final String BAG_NAME_OVERRIDE = "bag_name";
     public static final String[] CURIO_SLOTS = {"back", "body"};
 
     @RegisterItem
@@ -284,6 +283,9 @@ public class BagItem extends Item implements IScrollItem {
                 data.putLong("modes", b.installedModesMask());
             });
             getModeBehavior(entity, stack).inventoryTick(stack, level, entity, slot, selected);
+            String name = Component.Serializer.toJson(getName(stack));
+            if (!stack.getTag().getString(BAG_NAME_OVERRIDE).equals(name))
+                stack.getTag().putString(BAG_NAME_OVERRIDE, name);
         }
     }
 
@@ -329,6 +331,8 @@ public class BagItem extends Item implements IScrollItem {
 
     @Override
     public Component getName(ItemStack bag) {
+        if (Sides.isLogicalClient() && bag.getOrCreateTag().contains(BAG_NAME_OVERRIDE))
+            return Component.Serializer.fromJson(bag.getTag().getString(BAG_NAME_OVERRIDE));
         Component def = super.getName(bag);
         return BagsData.runOnBag(bag, b->b.getModeData("Settings").map(d->d.contains("label") ? (Component)Component.Serializer.fromJson(d.getString("label")) : def).orElse(def), def);
     }

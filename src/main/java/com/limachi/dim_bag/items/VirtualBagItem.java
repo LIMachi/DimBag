@@ -8,6 +8,7 @@ import com.limachi.lim_lib.registries.ClientRegistries;
 import com.limachi.lim_lib.registries.StaticInitClient;
 import com.limachi.lim_lib.registries.annotations.RegisterItem;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
@@ -115,6 +116,9 @@ public class VirtualBagItem extends BagItem {
             if (!(s.getItem() instanceof VirtualBagItem) && !s.equals(o, false))
                 stack.getOrCreateTag().put(ORIGINAL_STACK_KEY, s.save(new CompoundTag()));
             BagsData.runOnBag(stack, b->stack.getOrCreateTag().putLong("modes", b.installedModesMask()));
+            String name = Component.Serializer.toJson(getName(stack));
+            if (!stack.getTag().getString(BAG_NAME_OVERRIDE).equals(name))
+                stack.getTag().putString(BAG_NAME_OVERRIDE, name);
             getModeBehavior(entity, stack).inventoryTick(stack, level, entity, slot, selected);
             sa.set(stack);
         }
