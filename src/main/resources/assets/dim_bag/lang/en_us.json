@@ -28,6 +28,11 @@
 
   "teleporter.data.label.default": "Access Module",
 
+  "screen.bag.button.quick_equip": "Quick equip bag on leaving",
+  "screen.bag.button.normal_equip": "Do nothing",
+  "screen.bag.button.quick_enter": "Enter bag when unequipped",
+  "screen.bag.button.normal_unequip": "Do nothing",
+
   "screen.teleporter.button.whitelist": "Whitelist",
   "screen.teleporter.button.blacklist": "Blacklist",
   "screen.teleporter.button.players": "Affect Players",

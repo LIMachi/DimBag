@@ -67,6 +67,7 @@ public class VirtualBagItem extends BagItem {
         CompoundTag tag = out.getOrCreateTag();
         tag.putInt(BAG_ID_KEY, id);
         tag.put(ORIGINAL_STACK_KEY, original.save(new CompoundTag()));
+        tag.putString(BAG_NAME_OVERRIDE, Component.Serializer.toJson(out.getItem().getName(out)));
         return out;
     }
 

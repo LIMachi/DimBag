@@ -28,6 +28,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.AABB;
 import net.minecraftforge.common.capabilities.CapabilityManager;
 import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.items.IItemHandler;
@@ -366,16 +367,20 @@ public class BagInstance {
     }
 
     public Entity leave(Entity entity) {
+        Entity finalEntity = entity;
         Optional<Pair<Level, BlockPos>> out = entity.getCapability(CapabilityManager.get(BagTP.TOKEN)).resolve().map(c -> {
             Pair<Level, BlockPos> t = c.getLeavePos(bag);
-            c.setEnterPos(bag, entity.blockPosition());
+            c.setEnterPos(bag, finalEntity.blockPosition());
             c.clearLeavePos(bag);
             return t;
         });
         if (out.isEmpty())
             out = getHolderPosition(true);
-        if (out.isPresent())
-            return World.teleportEntity(entity, out.get().getFirst().dimension(), out.get().getSecond());
+        if (out.isPresent()) {
+            entity = World.teleportEntity(entity, out.get().getFirst().dimension(), out.get().getSecond());
+            if (entity instanceof Player player && getModeData("Settings").map(t->t.getBoolean("quick_equip")).orElse(false))
+                entity.level().getEntities(BagEntity.R_TYPE.get(), new AABB(entity.blockPosition().offset(-2, -2, -2), entity.blockPosition().offset(2, 2, 2)), e->e.getBagId() == bag).forEach(e->BagItem.equipBag(player, e));
+        }
         return entity;
     }
 }

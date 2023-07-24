@@ -1,6 +1,8 @@
 package com.limachi.dim_bag.client.screens;
 
 import com.limachi.dim_bag.DimBag;
+import com.limachi.dim_bag.client.widgets.BooleanTextButton;
+import com.limachi.dim_bag.client.widgets.ViewPortWidget;
 import com.limachi.dim_bag.client.widgets.TextEdit;
 import com.limachi.dim_bag.items.BagItem;
 import com.limachi.dim_bag.menus.BagMenu;
@@ -40,6 +42,10 @@ public class BagScreen extends AbstractContainerScreen<BagMenu> {
     protected VerticalSlider slider;
     protected Component name;
 
+    protected static final int settingsScrollFactor = 16;
+    protected ViewPortWidget settingsWidgets = null;
+    protected double localScroll = 0.;
+
     public BagScreen(BagMenu menu, Inventory playerInventory, Component title) {
         super(menu, playerInventory, title);
         imageWidth = BACKGROUND_WIDTH;
@@ -58,13 +64,24 @@ public class BagScreen extends AbstractContainerScreen<BagMenu> {
     @Override
     protected void init() {
         super.init();
-        slider = new VerticalSlider(195 + getGuiLeft(), 15 + getGuiTop(), 16, 105, 0., this::sliderUpdate);
+        slider = new VerticalSlider(195 + getGuiLeft(), 15 + getGuiTop(), 16, 105, localScroll, this::sliderUpdate);
         addRenderableWidget(slider);
         if (menu.page.get() >= 2) {
             addRenderableWidget(new TextEdit(font, titleLabelX + getGuiLeft(), titleLabelY + getGuiTop(), imageWidth - titleLabelX * 2, 12, name.getString(), t->{
                 name = Component.literal(t.getValue());
                 ScreenNBTMsg.send(1, Tags.singleton("label", Component.Serializer.toJson(name)));
             }));
+            settingsWidgets = new ViewPortWidget(getGuiLeft() + 30, getGuiTop() + 20, imageWidth - 60, imageHeight - 50);
+            settingsWidgets.addWidget(new BooleanTextButton(getGuiLeft() + 30, getGuiTop() + 20, imageWidth - 60, 14, Component.translatable("screen.bag.button.quick_equip"), Component.translatable("screen.bag.button.normal_equip"), menu.settingsData.getBoolean("quick_equip"), b->{
+                menu.settingsData.putBoolean("quick_equip", b.getState());
+                ScreenNBTMsg.send(1, Tags.singleton("quick_equip", b.getState()));
+            }));
+            settingsWidgets.addWidget(new BooleanTextButton(getGuiLeft() + 30, getGuiTop() + 36, imageWidth - 60, 14, Component.translatable("screen.bag.button.quick_enter"), Component.translatable("screen.bag.button.normal_unequip"), menu.settingsData.getBoolean("quick_enter"), b->{
+                menu.settingsData.putBoolean("quick_enter", b.getState());
+                ScreenNBTMsg.send(1, Tags.singleton("quick_enter", b.getState()));
+            }));
+            settingsWidgets.applyDelta(0, (int)Math.round(settingsScrollFactor * localScroll));
+            addRenderableWidget(settingsWidgets);
         }
     }
 
@@ -90,9 +107,15 @@ public class BagScreen extends AbstractContainerScreen<BagMenu> {
     }
 
     protected void sliderUpdate(VerticalSlider slider) {
-        CompoundTag out = new CompoundTag();
-        out.putDouble("scroll", slider.getValue());
-        ScreenNBTMsg.send(0, out);
+        if (menu.page.get() < 2) {
+            CompoundTag out = new CompoundTag();
+            out.putDouble("scroll", slider.getValue());
+            ScreenNBTMsg.send(0, out);
+        } else {
+            localScroll = slider.getValue();
+            if (settingsWidgets != null)
+                settingsWidgets.applyDelta(0, (int)Math.round(settingsScrollFactor * localScroll));
+        }
     }
 
     @Override
@@ -156,6 +179,7 @@ public class BagScreen extends AbstractContainerScreen<BagMenu> {
                 CompoundTag out = new CompoundTag();
                 out.putInt("page", menu.page.get());
                 slider.setValue(0.);
+                localScroll = 0.;
                 ScreenNBTMsg.send(0, out);
                 rebuildWidgets();
                 return true;
@@ -167,6 +191,7 @@ public class BagScreen extends AbstractContainerScreen<BagMenu> {
                 CompoundTag out = new CompoundTag();
                 out.putInt("page", menu.page.get());
                 slider.setValue(0.);
+                localScroll = 0.;
                 ScreenNBTMsg.send(0, out);
                 rebuildWidgets();
                 return true;

@@ -1,7 +1,9 @@
 package com.limachi.dim_bag.bag_modes;
 
+import com.limachi.dim_bag.bag_modules.ParadoxModule;
 import com.limachi.dim_bag.items.BagItem;
 import com.limachi.dim_bag.menus.BagMenu;
+import com.limachi.dim_bag.save_datas.BagsData;
 import com.limachi.lim_lib.KeyMapController;
 import com.limachi.lim_lib.scrollSystem.IScrollItem;
 import net.minecraft.core.BlockPos;
@@ -47,9 +49,22 @@ public abstract class BaseMode implements IScrollItem {
             int id = BagItem.getBagId(bag);
             if (id > 0) {
                 BlockPos at = ctx.getClickedPos().relative(ctx.getClickedFace());
-                if (at.distSqr(player.blockPosition()) <= 9 && KeyMapController.SNEAK.getState(player)) {
-                    BagItem.unequipBags(player, id, player.level(), at);
-                    return InteractionResult.SUCCESS;
+                if (KeyMapController.SNEAK.getState(player)) {
+                    if (BagsData.runOnBag(bag, b->{
+                        if (b.getModeData("Settings").map(t->t.getBoolean("quick_enter")).orElse(false))
+                        {
+                            if (!b.isPresent(ParadoxModule.PARADOX_KEY))
+                                BagItem.unequipBags(player, id, player.level(), at);
+                            b.enter(player, false);
+                            return true;
+                        }
+                        return false;
+                    }, false))
+                        return InteractionResult.SUCCESS;
+                    if (at.distSqr(player.blockPosition()) <= 9) {
+                        BagItem.unequipBags(player, id, player.level(), at);
+                        return InteractionResult.SUCCESS;
+                    }
                 }
                 BagMenu.open(player, BagItem.getBagId(player.getItemInHand(ctx.getHand())), 0);
                 return InteractionResult.SUCCESS;

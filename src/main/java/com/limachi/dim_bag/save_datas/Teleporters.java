@@ -2,7 +2,7 @@ package com.limachi.dim_bag.save_datas;
 
 import com.limachi.dim_bag.DimBag;
 //import com.limachi.dim_bag.bag_data.RoomData;
-import com.limachi.dim_bag.bag_modules.data.TeleporterData;
+//import com.limachi.dim_bag.bag_modules.data.TeleporterData;
 import com.limachi.lim_lib.saveData.AbstractSyncSaveData;
 import com.limachi.lim_lib.saveData.RegisterSaveData;
 import com.limachi.lim_lib.saveData.SaveDataManager;
