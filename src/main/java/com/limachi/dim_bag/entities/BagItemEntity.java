@@ -1,6 +1,7 @@
 package com.limachi.dim_bag.entities;
 
 import com.limachi.dim_bag.DimBag;
+import com.limachi.dim_bag.bag_data.BagInstance;
 import com.limachi.dim_bag.items.BagItem;
 import com.limachi.dim_bag.save_datas.BagsData;
 import com.limachi.lim_lib.World;
@@ -20,12 +21,17 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+import net.minecraftforge.common.capabilities.Capability;
+import net.minecraftforge.common.capabilities.ForgeCapabilities;
+import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.event.entity.living.LivingDropsEvent;
 import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.network.NetworkHooks;
 import net.minecraftforge.registries.RegistryObject;
+
+import javax.annotation.Nonnull;
 
 @Mod.EventBusSubscriber(modid = DimBag.MOD_ID)
 public class BagItemEntity extends ItemEntity {
@@ -51,6 +57,19 @@ public class BagItemEntity extends ItemEntity {
         lifespan = (stack.getItem() == null ? 6000 : stack.getEntityLifespan(level));
         setPickUpDelay(40);
         setUnlimitedLifetime();
+    }
+
+    @Nonnull
+    @Override
+    public <T> LazyOptional<T> getCapability(@Nonnull Capability<T> cap) {
+        if (ForgeCapabilities.FLUID_HANDLER.equals(cap))
+            return BagsData.runOnBag(this, BagInstance::tanksHandle, LazyOptional.empty()).cast();
+        else if (ForgeCapabilities.ITEM_HANDLER.equals(cap))
+            return BagsData.runOnBag(this, BagInstance::slotsHandle, LazyOptional.empty()).cast();
+        else if (ForgeCapabilities.ENERGY.equals(cap))
+            return BagsData.runOnBag(this, BagInstance::energyHandle, LazyOptional.empty()).cast();
+        else
+            return LazyOptional.empty();
     }
 
     @Override

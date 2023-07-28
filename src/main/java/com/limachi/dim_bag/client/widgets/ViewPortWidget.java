@@ -14,12 +14,34 @@ public class ViewPortWidget extends AbstractWidget {
     protected int dx = 0;
     protected int dy = 0;
     protected ArrayList<AbstractWidget> children = new ArrayList<>();
+    protected int minX = Integer.MAX_VALUE;
+    protected int maxX = Integer.MIN_VALUE;
+    protected int minY = Integer.MAX_VALUE;
+    protected int maxY = Integer.MIN_VALUE;
 
     public ViewPortWidget(int x, int y, int w, int h) {
         super(x, y, w, h, Component.empty());
     }
 
+    public int getInnerWidth() {
+        if (minX == Integer.MAX_VALUE || maxX == Integer.MIN_VALUE)
+            return 0;
+        return Math.max(0, maxX - minX);
+    }
+
+    public int getInnerHeight() {
+        if (minY == Integer.MAX_VALUE || maxY == Integer.MIN_VALUE)
+            return 0;
+        return Math.max(0, maxY - minY);
+    }
+
     public void addWidget(AbstractWidget widget) {
+        widget.setX(widget.getX() + getX());
+        widget.setY(widget.getY() + getY());
+        minX = Math.min(minX, widget.getX());
+        minY = Math.min(minY, widget.getY());
+        maxX = Math.max(maxX, widget.getX() + widget.getWidth());
+        maxY = Math.max(maxY, widget.getY() + widget.getHeight());
         children.add(widget);
     }
 

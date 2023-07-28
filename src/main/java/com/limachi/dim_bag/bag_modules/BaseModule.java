@@ -1,10 +1,8 @@
 package com.limachi.dim_bag.bag_modules;
 
-import com.ibm.icu.util.BasicTimeZone;
 import com.limachi.dim_bag.DimBag;
 import com.limachi.dim_bag.bag_data.BagInstance;
-import com.limachi.dim_bag.bag_modes.ModesRegistry;
-import com.limachi.dim_bag.bag_modes.Settings;
+import com.limachi.dim_bag.bag_modes.SettingsMode;
 import com.limachi.dim_bag.capabilities.entities.BagMode;
 import com.limachi.dim_bag.save_datas.BagsData;
 import com.limachi.lim_lib.capabilities.Cap;
@@ -40,6 +38,8 @@ public class BaseModule extends Block {
         init();
     }
 
+    public boolean canInstall(BagInstance bag) { return true; }
+
     @SubscribeEvent
     public static void addLabelTooltip(ItemTooltipEvent event) {
         ItemStack stack = event.getItemStack();
@@ -54,21 +54,12 @@ public class BaseModule extends Block {
 
     @Override
     final public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
-        if (BagsData.runOnBag(player.getItemInHand(hand), b->"Settings".equals(Cap.run(player, BagMode.TOKEN, c->c.getMode(b.bagId()), "")) && wrench(b, player, level, pos, player.getItemInHand(hand)), false))
+        if (level.isClientSide) return InteractionResult.SUCCESS;
+        if (BagsData.runOnBag(player.getItemInHand(hand), b-> SettingsMode.NAME.equals(Cap.run(player, BagMode.TOKEN, c->c.getMode(b.bagId()), "")) && wrench(b, player, level, pos, player.getItemInHand(hand), hit), false))
             return InteractionResult.SUCCESS;
         if (BagsData.runOnBag(level, pos, b->use(b, player, level, pos, hand), false))
             return InteractionResult.SUCCESS;
         return super.use(state, level, pos, player, hand, hit);
-    }
-
-    /**
-     * generate a blockpos inside the bag that would replace air blocks, return null if no valid placement could be found
-     */
-    @Nullable
-    public static BlockPos getAnyInstallPosition(int bag) {
-        //FIXME: should search air block in bag
-//        return IBagsData.roomCenter(bag);
-        return new BlockPos(0, 0, 0);
     }
 
     /**
@@ -85,7 +76,7 @@ public class BaseModule extends Block {
      * called when a module is right-clicked by a bag in settings/wrench mode
      * return true to cancel the right click (consume)
      */
-    public boolean wrench(BagInstance bag, Player player, Level level, BlockPos pos, ItemStack stack) { return false; }
+    public boolean wrench(BagInstance bag, Player player, Level level, BlockPos pos, ItemStack stack, BlockHitResult hit) { return false; }
 
     public boolean use(BagInstance bag, Player player, Level level, BlockPos pos, InteractionHand hand) {
         return false;
@@ -106,7 +97,7 @@ public class BaseModule extends Block {
     @Nullable
     @Override
     public BlockState getStateForPlacement(BlockPlaceContext ctx) {
-        if (!BagsData.runOnBag(ctx.getLevel(), ctx.getClickedPos(), b->true, false)) return null;
+        if (!BagsData.runOnBag(ctx.getLevel(), ctx.getClickedPos(), this::canInstall, false)) return null;
         return super.getStateForPlacement(ctx);
     }
 

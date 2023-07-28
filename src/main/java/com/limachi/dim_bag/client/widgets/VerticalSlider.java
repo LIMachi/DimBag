@@ -25,7 +25,7 @@ public class VerticalSlider extends AbstractWidget {
         super(x, y, w, h, Component.empty());
         area = new ScreenRectangle(x, y, w, h);
         cursor = new ScreenRectangle(x + 2, y + 2, w - 4, Math.min(15, h - 4));
-        cursorPos = Mth.clamp(0., 1., value);
+        cursorPos = Mth.clamp(value, 0., 1.);
         this.onValueChange = onValueChange;
     }
 

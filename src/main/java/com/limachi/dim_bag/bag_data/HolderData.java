@@ -18,16 +18,16 @@ class HolderData {
     protected Level level = null;
     protected boolean paradox = false;
 
-    protected HolderData(CompoundTag data) {
+    protected HolderData(CompoundTag data, BlockPos minWalls, BlockPos maxWalls, ServerLevel bagLevel) {
         if (data.contains("dimension") && data.contains("position")) {
             position = BlockPos.of(data.getLong("position"));
             level = World.getLevel(data.getString("dimension"));
         }
         if (data.contains("entity")) {
             UUID searchEntity = data.getUUID("entity");
-            if (data.contains("paradox_position") && World.getLevel(DimBag.BAG_DIM) instanceof ServerLevel searchLevel) {
+            if (data.contains("paradox_position")) {
                 BlockPos searchPos = BlockPos.of(data.getLong("paradox_position"));
-                List<Entity> found = searchLevel.getEntities((Entity) null, new AABB(searchPos.offset(-1, -1, -1), searchPos.offset(1, 1, 1)), e -> e.getUUID().equals(searchEntity));
+                List<Entity> found = bagLevel.getEntities((Entity) null, new AABB(searchPos.offset(-1, -1, -1), searchPos.offset(1, 1, 1)), e -> e.getUUID().equals(searchEntity));
                 if (found.size() > 0) {
                     entity = found.get(0);
                     paradox = true;
@@ -37,6 +37,8 @@ class HolderData {
                 if (found.size() > 0)
                     entity = found.get(0);
             }
+            if (entity == null && paradox)
+                bagLevel.getEntities((Entity)null, new AABB(minWalls, maxWalls), e -> e.getUUID().equals(searchEntity));
         }
     }
 

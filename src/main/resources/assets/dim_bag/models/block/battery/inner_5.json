@@ -1,0 +1,41 @@
+{
+	"ambientocclusion": false,
+	"textures": {
+		"inner": "dim_bag:block/battery/inner",
+		"particle": "dim_bag:block/battery/inner"
+	},
+	"elements": [
+		{
+			"from": [1, 1, 1],
+			"to": [15, 6, 15],
+			"faces": {
+				"north": {"uv": [0, 9, 14, 14], "texture": "#inner", "tintindex": 0},
+				"east": {"uv": [0, 9, 14, 14], "texture": "#inner", "tintindex": 0},
+				"south": {"uv": [0, 9, 14, 14], "texture": "#inner", "tintindex": 0},
+				"west": {"uv": [0, 9, 14, 14], "texture": "#inner", "tintindex": 0},
+				"down": {"uv": [0, 0, 14, 14], "texture": "#inner", "tintindex": 0}
+			}
+		},
+		{
+			"from": [1, 6, 1],
+			"to": [15, 7, 15],
+			"faces": {
+				"north": {"uv": [0, 8, 14, 9], "texture": "#inner", "tintindex": 1},
+				"east": {"uv": [0, 8, 14, 9], "texture": "#inner", "tintindex": 1},
+				"south": {"uv": [0, 8, 14, 9], "texture": "#inner", "tintindex": 1},
+				"west": {"uv": [0, 8, 14, 9], "texture": "#inner", "tintindex": 1}
+			}
+		},
+		{
+			"from": [1, 7, 1],
+			"to": [15, 15, 15],
+			"faces": {
+				"north": {"uv": [0, 0, 14, 8], "texture": "#inner", "tintindex": 2},
+				"east": {"uv": [0, 0, 14, 8], "texture": "#inner", "tintindex": 2},
+				"south": {"uv": [0, 0, 14, 8], "texture": "#inner", "tintindex": 2},
+				"west": {"uv": [0, 0, 14, 8], "texture": "#inner", "tintindex": 2},
+				"up": {"uv": [0, 0, 14, 14], "texture": "#inner", "tintindex": 2}
+			}
+		}
+	]
+}

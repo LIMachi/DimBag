@@ -4,6 +4,7 @@ import com.limachi.dim_bag.DimBag;
 import com.limachi.dim_bag.bag_data.BagInstance;
 import com.limachi.dim_bag.bag_modes.BaseMode;
 import com.limachi.dim_bag.bag_modes.ModesRegistry;
+import com.limachi.dim_bag.bag_modes.SettingsMode;
 import com.limachi.dim_bag.capabilities.entities.BagMode;
 import com.limachi.dim_bag.entities.BagEntity;
 import com.limachi.dim_bag.entities.BagItemEntity;
@@ -11,6 +12,9 @@ import com.limachi.dim_bag.save_datas.BagsData;
 import com.limachi.lim_lib.Sides;
 import com.limachi.lim_lib.capabilities.Cap;
 import com.limachi.lim_lib.integration.Curios.CuriosIntegration;
+import com.limachi.lim_lib.network.IRecordMsg;
+import com.limachi.lim_lib.network.NetworkManager;
+import com.limachi.lim_lib.network.RegisterMsg;
 import com.limachi.lim_lib.registries.ClientRegistries;
 import com.limachi.lim_lib.registries.StaticInitClient;
 import com.limachi.lim_lib.registries.annotations.RegisterItem;
@@ -19,8 +23,10 @@ import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -37,6 +43,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
@@ -56,6 +63,7 @@ import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.UUID;
 
 @Mod.EventBusSubscriber(modid = DimBag.MOD_ID)
 public class BagItem extends Item implements IScrollItem {
@@ -140,6 +148,8 @@ public class BagItem extends Item implements IScrollItem {
                 return BagsData.runOnBag(bag, b->b.tanksHandle().lazyMap(d->d.setContainer(bag)), LazyOptional.empty()).cast();
             else if (ForgeCapabilities.ITEM_HANDLER.equals(cap))
                 return BagsData.runOnBag(bag, BagInstance::slotsHandle, LazyOptional.empty()).cast();
+            else if (ForgeCapabilities.ENERGY.equals(cap))
+                return BagsData.runOnBag(bag, BagInstance::energyHandle, LazyOptional.empty()).cast();
             else
                 return LazyOptional.empty();
         }
@@ -147,7 +157,22 @@ public class BagItem extends Item implements IScrollItem {
 
     @Override
     public @Nullable ICapabilityProvider initCapabilities(ItemStack stack, @Nullable CompoundTag nbt) {
-        return new CapabilityProvider(stack);
+        if (stack.getItem() instanceof BagItem bag && !(bag instanceof VirtualBagItem))
+            return new CapabilityProvider(stack);
+        return null;
+    }
+
+    @RegisterMsg
+    public record BagRidingPlayer(UUID entityId, boolean state) implements IRecordMsg {
+        public void clientWork(Player player) {
+            if (state)
+                player.level().getEntities(player, new AABB(player.blockPosition().offset(-8, -8, -8), player.blockPosition().offset(8, 8, 8)), e->e instanceof BagEntity && e.getUUID().equals(entityId)).forEach(e->e.startRiding(player));
+            else
+                player.getPassengers().forEach(e->{
+                    if (e instanceof BagEntity && e.getUUID().equals(entityId))
+                        e.stopRiding();
+                });
+        }
     }
 
     /**
@@ -158,12 +183,22 @@ public class BagItem extends Item implements IScrollItem {
      * @param pos to spawn the bags at in level
      * @return list of spawned bags
      */
-    public static Collection<Entity> unequipBags(Entity entity, int id, Level level, BlockPos pos) {
-        List<SlotAccess> bags = CuriosIntegration.searchItem(entity, BagItem.class, s->!(s.getItem() instanceof VirtualBagItem) && getBagId(s) == id, true);
-        ArrayList<Entity> out = new ArrayList<>(bags.size());
-        for (SlotAccess bag : bags)
-            if (bag.set(ItemStack.EMPTY))
-                out.add(BagEntity.create(level, pos, id));
+    public static Collection<Entity> unequipBags(Entity entity, int id, Level level, BlockPos pos, boolean oneOnly) {
+        ArrayList<Entity> out = new ArrayList<>();
+        for (Entity passenger : entity.getPassengers()) {
+            if (passenger instanceof BagEntity bag && bag.getBagId() == id) {
+                if (entity instanceof ServerPlayer player)
+                    NetworkManager.toClient(DimBag.MOD_ID, player, new BagRidingPlayer(bag.getUUID(), false));
+                bag.stopRiding();
+                out.add(bag);
+            }
+        }
+        if (entity instanceof Player) {
+            List<SlotAccess> bags = CuriosIntegration.searchItem(entity, BagItem.class, s -> !(s.getItem() instanceof VirtualBagItem) && getBagId(s) == id, true);
+            for (SlotAccess bag : bags)
+                if (bag.set(ItemStack.EMPTY))
+                    out.add(BagEntity.create(level, pos, id));
+        }
         return out;
     }
 
@@ -173,14 +208,27 @@ public class BagItem extends Item implements IScrollItem {
      * @param bag stack to equip
      * @return true if successful (entity will be modified, but not the stack)
      */
-    public static boolean equipBag(LivingEntity entity, ItemStack bag) {
-        for (String test : CURIO_SLOTS) {
-            if (CuriosIntegration.equipOnFirstValidSlot(entity, test, bag))
-                return true;
+    public static boolean equipBag(Entity entity, ItemStack bag) {
+        if (entity instanceof Player player) {
+            for (String test : CURIO_SLOTS) {
+                if (CuriosIntegration.equipOnFirstValidSlot(player, test, bag))
+                    return true;
+            }
+            if (player.getItemBySlot(EquipmentSlot.CHEST).isEmpty()) {
+                player.setItemSlot(EquipmentSlot.CHEST, bag);
+                return player.getItemBySlot(EquipmentSlot.CHEST).getItem() instanceof BagItem;
+            }
         }
-        if (entity.getItemBySlot(EquipmentSlot.CHEST).isEmpty()) {
-            entity.setItemSlot(EquipmentSlot.CHEST, bag);
-            return entity.getItemBySlot(EquipmentSlot.CHEST).getItem() instanceof BagItem;
+        int id = getBagId(bag);
+        if (!entity.isVehicle() && id > 0 && /**unstable for now!*/!(entity instanceof Player)) {
+            BagEntity newBag = BagEntity.create(entity.level(), entity.blockPosition(), id);
+            if (!newBag.startRiding(entity))
+                newBag.remove(Entity.RemovalReason.KILLED);
+            else {
+//                if (entity instanceof ServerPlayer player)
+//                    NetworkManager.toClient(DimBag.MOD_ID, player, new BagRidingPlayer(newBag.getUUID(), true));
+                return true;
+            }
         }
         return false;
     }
@@ -191,7 +239,7 @@ public class BagItem extends Item implements IScrollItem {
      * @param bag BagEntity that will be converted to item to equip
      * @return true if successful (entity will be modified, bag will be despawned)
      */
-    public static boolean equipBag(LivingEntity entity, BagEntity bag) {
+    public static boolean equipBag(Entity entity, BagEntity bag) {
         boolean ok = equipBag(entity, create(bag.getPersistentData().getInt(BAG_ID_KEY)));
         if (ok)
             bag.remove(Entity.RemovalReason.KILLED);
@@ -270,6 +318,22 @@ public class BagItem extends Item implements IScrollItem {
         return ModesRegistry.DEFAULT.mode();
     }
 
+    protected void commonBagTick(BagInstance bag, CompoundTag data, ItemStack stack, Level level, Entity entity, int slot, boolean selected) {
+        if (entity instanceof Player player)
+            player.getCapability(BagMode.CAPABILITY).ifPresent(bagMode->{
+                long enabled = bag.enabledModesMask();
+                if (data.getLong(BagInstance.MODES_STORAGE) != enabled) {
+                    data.putLong(BagInstance.MODES_STORAGE, enabled);
+                    if ((enabled & 1L << ModesRegistry.getModeIndex(bagMode.getMode(bag.bagId()))) == 0L)
+                        bagMode.setMode(player, bag.bagId(), SettingsMode.NAME);
+                }
+                ModesRegistry.getMode(bagMode.getMode(bag.bagId())).inventoryTick(stack, level, entity, slot, selected);
+            });
+        String name = Component.Serializer.toJson(getName(stack));
+        if (!stack.getTag().getString(BAG_NAME_OVERRIDE).equals(name))
+            stack.getTag().putString(BAG_NAME_OVERRIDE, name);
+    }
+
     @Override
     public void inventoryTick(ItemStack stack, Level level, Entity entity, int slot, boolean selected) {
         if (!level.isClientSide) {
@@ -280,18 +344,20 @@ public class BagItem extends Item implements IScrollItem {
             BagsData.runOnBag(id, b->{
                 b.setHolder(entity);
                 b.temporaryChunkLoad();
-                data.putLong("modes", b.installedModesMask());
+                commonBagTick(b, data, stack, level, entity, slot, selected);
             });
-            getModeBehavior(entity, stack).inventoryTick(stack, level, entity, slot, selected);
-            String name = Component.Serializer.toJson(getName(stack));
-            if (!stack.getTag().getString(BAG_NAME_OVERRIDE).equals(name))
-                stack.getTag().putString(BAG_NAME_OVERRIDE, name);
         }
     }
 
     @Override
     public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
+        if (level.isClientSide) return InteractionResultHolder.pass(player.getItemInHand(hand));
         return getModeBehavior(player, player.getItemInHand(hand)).use(level, player, hand);
+    }
+
+    @Override
+    public InteractionResult interactLivingEntity(ItemStack stack, Player player, LivingEntity target, InteractionHand hand) {
+        return getModeBehavior(player, player.getItemInHand(hand)).interactLivingEntity(stack, player, target, hand);
     }
 
     @SubscribeEvent
@@ -321,6 +387,7 @@ public class BagItem extends Item implements IScrollItem {
 
     @Override
     public InteractionResult useOn(UseOnContext ctx) {
+        if (ctx.getLevel().isClientSide) return InteractionResult.PASS;
         return getModeBehavior(ctx.getPlayer(), ctx.getItemInHand()).useOn(ctx);
     }
 
@@ -334,7 +401,12 @@ public class BagItem extends Item implements IScrollItem {
         if (Sides.isLogicalClient() && bag.getOrCreateTag().contains(BAG_NAME_OVERRIDE))
             return Component.Serializer.fromJson(bag.getTag().getString(BAG_NAME_OVERRIDE));
         Component def = super.getName(bag);
-        return BagsData.runOnBag(bag, b->b.getModeData("Settings").map(d->d.contains("label") ? (Component)Component.Serializer.fromJson(d.getString("label")) : def).orElse(def), def);
+        return BagsData.runOnBag(bag, b->{
+            CompoundTag settings = b.getModeData(SettingsMode.NAME);
+            if (settings.contains("label", Tag.TAG_STRING))
+                return Component.Serializer.fromJson(settings.getString("label"));
+            return def;
+        }, def);
     }
 
     @Override
@@ -348,7 +420,7 @@ public class BagItem extends Item implements IScrollItem {
             if (id > 0)
                 Cap.run(player, BagMode.TOKEN, c -> {
                     int mode = ModesRegistry.getModeIndex(c.getMode(id));
-                    mode = ModesRegistry.cycleMode(mode, bag.getOrCreateTag().getInt("modes"), amount);
+                    mode = ModesRegistry.cycleMode(mode, bag.getOrCreateTag().getInt(BagInstance.MODES_STORAGE), amount);
                     c.setMode(player, id, ModesRegistry.getMode(mode).name);
                 });
         }
@@ -365,7 +437,7 @@ public class BagItem extends Item implements IScrollItem {
             if (id > 0) {
                 Cap.run(player, BagMode.TOKEN, c -> {
                     int mode = ModesRegistry.getModeIndex(c.getMode(id));
-                    mode = ModesRegistry.cycleMode(mode, bag.getOrCreateTag().getInt("modes"), amount);
+                    mode = ModesRegistry.cycleMode(mode, bag.getOrCreateTag().getInt(BagInstance.MODES_STORAGE), amount);
                     player.displayClientMessage(Component.translatable("notification.bag.changed_mode", Component.translatable("bag.mode." + ModesRegistry.getMode(mode).name)), true);
                 });
             }

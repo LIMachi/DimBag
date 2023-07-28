@@ -17,7 +17,7 @@ public class TextEditWithSuggestions extends TextEdit {
     protected final Screen screen = mc.screen;
     protected final LevenshteinDictionarySorter dictionary;
     protected final int dictionaryHeight;
-    protected final ScreenRectangle suggestionArea;
+    protected ScreenRectangle suggestionArea;
     protected int suggestionScroll = 0;
     protected int maxScroll = 0;
     protected boolean enforceSuggestion = false;
@@ -37,6 +37,10 @@ public class TextEditWithSuggestions extends TextEdit {
             maxScroll = dictionary.size() - size / (mc.font.lineHeight + 2);
             return new ScreenRectangle(getX() + (left ? getWidth() : -getWidth()), getY() - size, getWidth(), size);
         }
+    }
+
+    public void moveSuggestionArea(int x, int y) {
+        suggestionArea = new ScreenRectangle(x, y, suggestionArea.width(), suggestionArea.height());
     }
 
     public TextEditWithSuggestions forceSuggestion(boolean state) {
@@ -78,7 +82,10 @@ public class TextEditWithSuggestions extends TextEdit {
 
     @Override
     protected boolean clicked(double mouseX, double mouseY) {
-        return super.clicked(mouseX, mouseY) || inSuggestionArea(mouseX, mouseY) != -1;
+        boolean out = super.clicked(mouseX, mouseY) || inSuggestionArea(mouseX, mouseY) != -1;
+        if (!out && isFocused())
+            finishInput();
+        return out;
     }
 
     @Override
@@ -105,7 +112,7 @@ public class TextEditWithSuggestions extends TextEdit {
     }
 
     @Override
-    public boolean isFocused() { return super.isFocused() || this.equals(screen.getFocused()); }
+    public boolean isFocused() { return super.isFocused() /*|| this.equals(screen.getFocused())*/; }
 
     @Override
     public void renderWidget(@Nonnull GuiGraphics gui, int mouseX, int mouseY, float partialTick) {

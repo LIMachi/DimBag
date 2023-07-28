@@ -1,6 +1,7 @@
 package com.limachi.dim_bag.menus;
 
 import com.limachi.dim_bag.DimBag;
+import com.limachi.dim_bag.bag_data.BagInstance;
 import com.limachi.dim_bag.save_datas.BagsData;
 import com.limachi.lim_lib.World;
 import com.limachi.lim_lib.menus.IAcceptUpStreamNBT;
@@ -27,7 +28,7 @@ public class TeleporterMenu extends AbstractContainerMenu implements IAcceptUpSt
     public static void open(Player player, BlockPos pos) {
         if (!player.level().isClientSide) {
             BagsData.runOnBag(player.level(), pos, b->{
-                CompoundTag data = b.getInstalledCompound("teleport", pos);
+                CompoundTag data = b.getModule("teleport", pos);
                 NetworkHooks.openScreen((ServerPlayer) player, new SimpleMenuProvider((id, inv, p) -> new TeleporterMenu(id, inv, data), Component.Serializer.fromJson(data.getString("label"))), buff -> buff.writeNbt(data));
             });
         }
@@ -54,7 +55,7 @@ public class TeleporterMenu extends AbstractContainerMenu implements IAcceptUpSt
 
     @Override
     public void upstreamNBTMessage(int i, CompoundTag compoundTag) {
-        BlockPos pos = BlockPos.of(compoundTag.getLong("position"));
-        BagsData.runOnBag(World.getLevel(DimBag.BAG_DIM), pos, b->b.getInstalledCompound("teleport", pos).merge(compoundTag));
+        BlockPos pos = BlockPos.of(compoundTag.getLong(BagInstance.POSITION));
+        BagsData.runOnBag(World.getLevel(DimBag.BAG_DIM), pos, b->b.getModule("teleport", pos).merge(compoundTag));
     }
 }

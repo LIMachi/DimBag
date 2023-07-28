@@ -17,7 +17,6 @@ import javax.annotation.Nullable;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Optional;
 import java.util.function.Supplier;
 
 public class TankData implements IFluidHandlerItem {
@@ -31,7 +30,7 @@ public class TankData implements IFluidHandlerItem {
 
         public TankEntry(CompoundTag data) {
             super(data.contains("capacity") ? data.getInt("capacity") : DEFAULT_CAPACITY, FluidStack.loadFluidStackFromNBT(data));
-            pos = BlockPos.of(data.getLong("position"));
+            pos = BlockPos.of(data.getLong(BagInstance.POSITION));
             label = Component.Serializer.fromJson(data.getString("label"));
             if (label == null)
                 label = DEFAULT_TANK_LABEL;
@@ -40,7 +39,7 @@ public class TankData implements IFluidHandlerItem {
         public CompoundTag serialize() {
             CompoundTag out = content.writeToNBT(new CompoundTag());
             out.putInt("capacity", capacity);
-            out.putLong("position", pos.asLong());
+            out.putLong(BagInstance.POSITION, pos.asLong());
             out.putString("label", Component.Serializer.toJson(label));
             return out;
         }
@@ -51,9 +50,9 @@ public class TankData implements IFluidHandlerItem {
     private final HashMap<BlockPos, LazyOptional<TankEntry>> handles = new HashMap<>();
 
     private ItemStack container = null;
-    private final Supplier<Optional<CompoundTag>> mode;
+    private final Supplier<CompoundTag> mode;
 
-    protected TankData(int bag, ListTag tanks, Supplier<Optional<CompoundTag>> mode) {
+    protected TankData(int bag, ListTag tanks, Supplier<CompoundTag> mode) {
         this.bag = bag;
         for (int i = 0; i < tanks.size(); ++i)
             this.tanks.add(new TankEntry(tanks.getCompound(i)));
@@ -61,12 +60,15 @@ public class TankData implements IFluidHandlerItem {
     }
 
     public int getSelected() {
-        return mode.get().map(m->getTank(BlockPos.of(m.getLong("selected")))).orElse(-1);
+        long selected = mode.get().getLong("selected");
+        if (selected != 0L)
+            return getTank(BlockPos.of(selected));
+        return -1;
     }
 
     public void select(int index) {
         if (index >= 0 && index < tanks.size())
-            mode.get().ifPresent(m->m.putLong("selected", tanks.get(index).pos.asLong()));
+            mode.get().putLong("selected", tanks.get(index).pos.asLong());
     }
 
     public TankData setContainer(@Nullable ItemStack container) {
@@ -124,7 +126,7 @@ public class TankData implements IFluidHandlerItem {
         if (i != -1) {
             handles.remove(pos).invalidate();
             CompoundTag out = tanks.remove(i).serialize();
-            out.remove("position");
+            out.remove(BagInstance.POSITION);
             invalidate();
             return out;
         }
@@ -137,7 +139,7 @@ public class TankData implements IFluidHandlerItem {
             tanks.remove(getTank(pos));
             prev.invalidate();
         }
-        data.putLong("position", pos.asLong());
+        data.putLong(BagInstance.POSITION, pos.asLong());
         tanks.add(new TankEntry(data));
         if (handle != null)
             handle.invalidate(); //we invalidate the global handle to force all global inventories to reload

@@ -2,6 +2,9 @@ package com.limachi.dim_bag.bag_data;
 
 import com.limachi.dim_bag.DimBag;
 import com.limachi.dim_bag.bag_modes.ModesRegistry;
+import com.limachi.dim_bag.bag_modes.SettingsMode;
+import com.limachi.dim_bag.bag_modes.TankMode;
+import com.limachi.dim_bag.bag_modules.ParadoxModule;
 import com.limachi.dim_bag.bag_modules.TeleportModule;
 import com.limachi.dim_bag.blocks.WallBlock;
 import com.limachi.dim_bag.capabilities.entities.BagTP;
@@ -19,11 +22,11 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
-import net.minecraft.nbt.LongTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
@@ -38,6 +41,11 @@ import java.util.function.Consumer;
 
 public class BagInstance {
 
+    public static final String DISABLED_MARKER = "disabled";
+    public static final String POSITION = "position";
+    public static final String MODULE_STORAGE = "modules";
+    public static final String MODES_STORAGE = "modes";
+
     private final int bag;
     private ServerLevel bagLevel;
     private final HolderData holder;
@@ -46,18 +54,19 @@ public class BagInstance {
     private BlockPos maxWalls;
     private final SlotData slots;
     private final TankData tanks;
+    private final EnergyData energy;
 
-    public BagInstance(int id, CompoundTag data) {
+    public BagInstance(ServerLevel level, int id, CompoundTag data) {
+        bagLevel = level;
         bag = id;
         rawData = data;
-        holder = new HolderData(data.getCompound("holder"));
-        if (!rawData.contains("modules"))
-            rawData.put("modules", new CompoundTag());
-        if (!rawData.contains("modes")) {
-            rawData.put("modes", new ListTag());
+        if (!rawData.contains(MODULE_STORAGE))
+            rawData.put(MODULE_STORAGE, new CompoundTag());
+        if (!rawData.contains(MODES_STORAGE)) {
+            rawData.put(MODES_STORAGE, new CompoundTag());
+            CompoundTag modes = rawData.getCompound(MODES_STORAGE);
             for (ModesRegistry.ModeEntry me : ModesRegistry.modesList)
-                if (me.mode().autoInstall)
-                    installMode(me.name());
+                modes.put(me.name(), me.mode().initialData(this));
         }
         if (!rawData.contains("room"))
             buildRoom();
@@ -69,30 +78,34 @@ public class BagInstance {
             } else
                 buildRoom();
         }
+        holder = new HolderData(data.getCompound("holder"), minWalls, maxWalls, bagLevel);
         slots = new SlotData(id, Tags.getOrCreateList(rawData, "slots", ListTag::new));
-        tanks = new TankData(id, Tags.getOrCreateList(rawData, "tanks", ListTag::new), ()->getModeData("Tank"));
+        tanks = new TankData(id, Tags.getOrCreateList(rawData, "tanks", ListTag::new), ()->getModeData(TankMode.NAME));
+        energy = new EnergyData(this);
     }
 
-    private ServerLevel prepareBagLevel() {
+    public BlockPos getAnyInstallPosition() {
+        return BagsData.roomCenter(bag); //FIXME!!!!
+    }
+
+    public ServerLevel bagLevel() {
         if (bagLevel == null)
             bagLevel = (ServerLevel)World.getLevel(DimBag.BAG_DIM);
         return bagLevel;
     }
 
-    public long installedModesMask() {
+    public long enabledModesMask() {
         long mask = 0;
-        for (Tag t : rawData.getList("modes", Tag.TAG_COMPOUND))
-            if (t instanceof CompoundTag c && !c.getBoolean("disabled"))
-                mask |= 1L << ModesRegistry.getModeIndex(c.getString("name"));
+        CompoundTag modes = rawData.getCompound(MODES_STORAGE);
+        for (String mode : modes.getAllKeys())
+            if (isModeEnabled(mode))
+                mask |= 1L << ModesRegistry.getModeIndex(mode);
         return mask;
     }
 
     public CompoundTag unsafeRawAccess() { return rawData; }
-    public Optional<CompoundTag> getModeData(String mode) {
-        for (Tag t : rawData.getList("modes", Tag.TAG_COMPOUND))
-            if (t instanceof CompoundTag c && c.getString("name").equals(mode))
-                return Optional.of(c);
-        return Optional.empty();
+    public CompoundTag getModeData(String mode) {
+        return Tags.getOrCreateCompound(rawData.getCompound(MODES_STORAGE), mode, ()->ModesRegistry.getMode(mode).initialData(this));
     }
 
     public LazyOptional<SlotData> slotsHandle() { return slots.getHandle(); }
@@ -111,9 +124,12 @@ public class BagInstance {
 
     public void setTankLabel(BlockPos pos, Component label) { tanks.setTankLabel(pos, label); }
 
+    public LazyOptional<EnergyData> energyHandle() { return energy.getHandle(); }
+
     public void invalidate() {
         slots.invalidate();
         tanks.invalidate();
+        energy.invalidate();
     }
 
     protected void buildRoom() {
@@ -122,7 +138,7 @@ public class BagInstance {
         minWalls = center.offset(-BagsData.DEFAULT_ROOM_RADIUS, -BagsData.DEFAULT_ROOM_RADIUS, -BagsData.DEFAULT_ROOM_RADIUS);
         maxWalls = center.offset(BagsData.DEFAULT_ROOM_RADIUS, BagsData.DEFAULT_ROOM_RADIUS, BagsData.DEFAULT_ROOM_RADIUS);
         BlockState wall = WallBlock.R_BLOCK.get().defaultBlockState();
-        prepareBagLevel();
+        bagLevel();
         for (int x = minWalls.getX(); x <= maxWalls.getX(); ++x) {
             for (int z = minWalls.getZ(); z <= maxWalls.getZ(); ++z) {
                 BlockPos topPos = new BlockPos(x, maxWalls.getY(), z);
@@ -157,23 +173,32 @@ public class BagInstance {
         instance.put("holder", holder.serialize());
         instance.put("slots", slots.serialize());
         instance.put("tanks", tanks.serialize());
+        energy.store();
     }
 
     public void setHolder(Entity entity) {
+        if (entity.level().dimension().equals(DimBag.BAG_DIM) && BagsData.runOnBag(entity.level(), entity.blockPosition(), b->b.bag, 0) == 0) {
+            if (entity instanceof BagItemEntity || entity instanceof BagEntity)
+                leave(entity);
+            holder.paradox = true;
+            return;
+        }
         boolean paradox = (entity.level().dimension().equals(DimBag.BAG_DIM) && isInRoom(entity.blockPosition()));
         if (paradox) {
             if (entity instanceof BagItemEntity || entity instanceof BagEntity) { //bags as item/entities should never be allowed to live inside a bag if not inside an inventory (as this would probably result in loss of bag access)
-                leave(entity);
+                if (entity.equals(holder.entity))
+                    leave(entity);
+                holder.paradox = true; //if the ticking entity is a bag but the holder is not a bag, instead we can monitor entities that are leaving the bag, and if the holder is leaving the bag, scan the room to teleport the bags with the holder to fix paradox stranding (could also scan the bag room every X tick for players, and if none are found try to extract bags)
                 return;
             }
-            if (!isPresent("paradox")) {
+            holder.paradox = true;
+            if (!isModulePresent(ParadoxModule.PARADOX_KEY)) {
                 if (holder.level != null && holder.position != null)
-                    BagItem.unequipBags(entity, bagId(), holder.level, holder.position);
+                    BagItem.unequipBags(entity, bagId(), holder.level, holder.position, false);
                 else
                     ; //FIXME: player spawn if entity is player? world spawn?
                 return;
             }
-            holder.paradox = true;
         } else {
             holder.paradox = false;
             holder.position = entity.blockPosition();
@@ -195,81 +220,81 @@ public class BagInstance {
         return Optional.empty();
     }
 
-    public boolean installMode(String name) {
-        ListTag modes = rawData.getList("modes", Tag.TAG_COMPOUND);
-        for (Tag tag : modes)
-            if (tag instanceof CompoundTag entry && name.equals(entry.getString("name")))
-                return false;
-        CompoundTag entry = ModesRegistry.getMode(name).initialData();
-        entry.putString("name", name);
-        modes.add(entry);
+    /**
+     * used in settings screen
+     */
+    public static boolean isModeEnabled(CompoundTag settings, String name) {
+        if (!ModesRegistry.getMode(name).canDisable())
+            return true;
+        return !settings.getBoolean(name + "_disabled");
+    }
+
+    /**
+     * used in settings screen
+     */
+    public static boolean setEnabledMode(CompoundTag settings, String name, boolean state) {
+        if (!state && !ModesRegistry.getMode(name).canDisable())
+            return false;
+        settings.putBoolean(name + "_disabled", !state);
         return true;
     }
 
-    public void simpleInstall(String name, BlockPos pos) {
-        ListTag modules = Tags.getOrCreateList(rawData.getCompound("modules"), name, ListTag::new);
-        LongTag p = LongTag.valueOf(pos.asLong());
-        if (!modules.contains(p))
-            modules.add(p);
+    public boolean isModeEnabled(String name) {
+        String module = ModesRegistry.getMode(name).requiredModule;
+        if (module != null && !rawData.getCompound(MODULE_STORAGE).contains(module))
+            return false;
+        return isModeEnabled(rawData.getCompound(MODES_STORAGE).getCompound(SettingsMode.NAME), name);
     }
 
-    public void simpleUninstall(String name, BlockPos pos) {
-        CompoundTag data = rawData.getCompound("modules");
-        ListTag modules = data.getList(name, Tag.TAG_LONG);
-        modules.remove(LongTag.valueOf(pos.asLong()));
-        if (modules.isEmpty())
-            data.remove(name);
+    public boolean setEnabledMode(String name, boolean state) {
+        String module = ModesRegistry.getMode(name).requiredModule;
+        if (state && module != null && !rawData.getCompound(MODULE_STORAGE).contains(module))
+            return false;
+        return setEnabledMode(rawData.getCompound(MODES_STORAGE).getCompound(SettingsMode.NAME), name, state);
     }
 
-    public void compoundInstall(String name, BlockPos pos, CompoundTag data) {
-        ListTag modules = Tags.getOrCreateList(rawData.getCompound("modules"), name, ListTag::new);
+    public void installModule(String name, BlockPos pos, CompoundTag data) {
+        CompoundTag modules = Tags.getOrCreateCompound(rawData.getCompound(MODULE_STORAGE), name, CompoundTag::new);
         long p = pos.asLong();
-        boolean replace = false;
-        for (Tag t : modules)
-            if (t instanceof CompoundTag c && c.getLong("position") == p) {
-                replace = true;
-                NBT.clear(c);
-                c.merge(data);
-                c.putLong("position", p);
-            }
-        if (!replace) {
+        String ps = "" + p;
+        if (modules.contains(ps, Tag.TAG_COMPOUND)) {
+            CompoundTag entry = modules.getCompound(ps);
+            NBT.clear(entry);
+            entry.merge(data);
+            entry.putLong(POSITION, p);
+        } else {
             CompoundTag insert = data.copy();
-            insert.putLong("position", p);
-            modules.add(insert);
+            insert.putLong(POSITION, p);
+            modules.put(ps, insert);
         }
     }
 
-    public CompoundTag compoundUninstall(String name, BlockPos pos) {
-        CompoundTag out = new CompoundTag();
-        CompoundTag data = rawData.getCompound("modules");
-        ListTag modules = data.getList(name, Tag.TAG_COMPOUND);
-        long p = pos.asLong();
-        for (int i = 0; i < modules.size(); ++i) {
-            CompoundTag entry = modules.getCompound(i);
-            if (entry.getLong("position") == p) {
-                entry.remove("position");
-                out = entry;
-                modules.remove(i);
-                break;
-            }
-        }
+    public CompoundTag uninstallModule(String name, BlockPos pos) {
+        CompoundTag modules = rawData.getCompound(MODULE_STORAGE).getCompound(name);
+        String ps = "" + pos.asLong();
+        CompoundTag entry = modules.getCompound(ps);
+        entry.remove(POSITION);
+        CompoundTag out = entry.copy();
+        modules.remove(ps);
         if (modules.isEmpty())
-            data.remove(name);
+            rawData.getCompound(MODULE_STORAGE).remove(name);
         return out;
     }
 
-    public CompoundTag getInstalledCompound(String name, BlockPos pos) {
-        ListTag modules = rawData.getCompound("modules").getList(name, Tag.TAG_COMPOUND);
+    public CompoundTag getModule(String name, BlockPos pos) {
+        ListTag modules = rawData.getCompound(MODULE_STORAGE).getList(name, Tag.TAG_COMPOUND);
         long p = pos.asLong();
         for (int i = 0; i < modules.size(); ++i) {
             CompoundTag entry = modules.getCompound(i);
-            if (entry.getLong("position") == p)
+            if (entry.getLong(POSITION) == p)
                 return entry;
         }
         return new CompoundTag();
     }
 
-    public boolean isPresent(String name) { return rawData.getCompound("modules").contains(name); }
+    public boolean isModulePresent(String name) { return rawData.getCompound(MODULE_STORAGE).contains(name); }
+
+    public CompoundTag getAllModules(String name) { return rawData.getCompound(MODULE_STORAGE).getCompound(name); }
 
     protected boolean inRange(int v, int min, int max) { return v >= min && v <= max; }
 
@@ -328,7 +353,7 @@ public class BagInstance {
             delta = center.subtract(minWalls.relative(pushDirection));
         if (delta.getX() > BagsData.MAXIMUM_ROOM_RADIUS || delta.getY() > BagsData.MAXIMUM_ROOM_RADIUS || delta.getZ() > BagsData.MAXIMUM_ROOM_RADIUS) //should probably use a check for maximum world size (Y) to uncap the hard 126 block limit
             return false;
-        if (prepareBagLevel() == null)
+        if (bagLevel() == null)
             return false;
         BlockState air = Blocks.AIR.defaultBlockState();
         iterateWall(pushDirection, 0, p->bagLevel.setBlockAndUpdate(p.relative(pushDirection), bagLevel.getBlockState(p)));
@@ -344,7 +369,7 @@ public class BagInstance {
     }
 
     public void temporaryChunkLoad() {
-        prepareBagLevel();
+        bagLevel();
         for (int x = minWalls.getX(); x < maxWalls.getX(); x += 16)
             for (int z = minWalls.getZ(); z < maxWalls.getZ(); z += 16)
                 World.temporaryChunkLoad(bagLevel, new BlockPos(x, 128, z));
@@ -353,7 +378,7 @@ public class BagInstance {
     public Entity enter(Entity entity, boolean proxy) {
         BlockPos destination = BagsData.roomCenter(bag);
         BlockPos test = TeleportModule.getDestination(this, entity).orElse(null);
-        if (test == null && !(entity instanceof Player)) return null;
+        if (test == null && !(entity instanceof Player || entity instanceof ItemEntity)) return null;
         if (test != null)
             destination = test;
         else {
@@ -367,6 +392,8 @@ public class BagInstance {
     }
 
     public Entity leave(Entity entity) {
+        if (!(entity instanceof BagEntity) && !(entity instanceof BagItemEntity) && entity.equals(holder.entity) && holder.paradox && bagLevel() != null) //paradox stranding prevention, another check could be done globally every X tick by scanning the room for players and bags and forcefully expulsing bags (with same id as the room) if no players are found in the room
+            bagLevel.getEntities(entity,new AABB(minWalls, maxWalls), e->(e instanceof BagEntity bag1 && bag1.getBagId() == bag) || (e instanceof BagItemEntity bag2 && bag2.getBagId() == bag)).forEach(this::leave);
         Entity finalEntity = entity;
         Optional<Pair<Level, BlockPos>> out = entity.getCapability(CapabilityManager.get(BagTP.TOKEN)).resolve().map(c -> {
             Pair<Level, BlockPos> t = c.getLeavePos(bag);
@@ -378,7 +405,7 @@ public class BagInstance {
             out = getHolderPosition(true);
         if (out.isPresent()) {
             entity = World.teleportEntity(entity, out.get().getFirst().dimension(), out.get().getSecond());
-            if (entity instanceof Player player && getModeData("Settings").map(t->t.getBoolean("quick_equip")).orElse(false))
+            if (entity instanceof Player player && getModeData(SettingsMode.NAME).getBoolean("quick_equip"))
                 entity.level().getEntities(BagEntity.R_TYPE.get(), new AABB(entity.blockPosition().offset(-2, -2, -2), entity.blockPosition().offset(2, 2, 2)), e->e.getBagId() == bag).forEach(e->BagItem.equipBag(player, e));
         }
         return entity;

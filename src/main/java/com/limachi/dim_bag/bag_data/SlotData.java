@@ -40,7 +40,7 @@ public class SlotData implements IItemHandlerModifiable {
 
         public SlotEntry(CompoundTag data) {
             content = ItemStack.of(data);
-            pos = BlockPos.of(data.getLong("position"));
+            pos = BlockPos.of(data.getLong(BagInstance.POSITION));
             label = Component.Serializer.fromJson(data.getString("label"));
             if (label == null)
                 label = DEFAULT_SLOT_LABEL;
@@ -48,7 +48,7 @@ public class SlotData implements IItemHandlerModifiable {
 
         public CompoundTag serialize() {
             CompoundTag out = content.serializeNBT();
-            out.putLong("position", pos.asLong());
+            out.putLong(BagInstance.POSITION, pos.asLong());
             out.putString("label", Component.Serializer.toJson(label));
             return out;
         }
@@ -108,7 +108,7 @@ public class SlotData implements IItemHandlerModifiable {
         if (i != -1) {
             handles.remove(pos).invalidate();
             CompoundTag out = stacks.remove(i).serialize();
-            out.remove("position");
+            out.remove(BagInstance.POSITION);
             invalidate();
             return out;
         }
@@ -121,7 +121,7 @@ public class SlotData implements IItemHandlerModifiable {
             stacks.remove(getSlot(pos));
             prev.invalidate();
         }
-        data.putLong("position", pos.asLong());
+        data.putLong(BagInstance.POSITION, pos.asLong());
         stacks.add(new SlotEntry(data));
         if (handle != null)
             handle.invalidate(); //we invalidate the global handle to force all global inventories to reload

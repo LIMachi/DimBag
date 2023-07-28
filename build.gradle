@@ -6,8 +6,8 @@ buildscript {
         mavenCentral()
         maven { url 'https://modmaven.dev/' }
         maven {
-            name "Sponge"
-            url "https://repo.spongepowered.org/repository/maven-public/"
+            url = 'https://repo.spongepowered.org/repository/maven-public/'
+            content { includeGroup "org.spongepowered" }
         }
 
         mavenLocal()
@@ -15,7 +15,8 @@ buildscript {
     }
     dependencies {
         classpath group: 'net.minecraftforge.gradle', name: 'ForgeGradle', version: '5.1.+', changing: true
-        classpath group: 'org.spongepowered', name: 'mixingradle', version: '0.7.+'
+//        classpath group: 'org.spongepowered', name: 'mixingradle', version: '0.7.+'
+        classpath 'org.spongepowered:mixingradle:0.7-SNAPSHOT'
     }
 }
 
@@ -24,9 +25,14 @@ plugins {
     id 'idea'
     id 'maven-publish'
     id 'net.minecraftforge.gradle' version '[6.0,6.2)'
+    id "org.spongepowered.mixin" version "0.7.+"
 }
 
 apply plugin: 'org.spongepowered.mixin'
+
+mixin {
+    add sourceSets.main, "${mod_id}.refmap.json"
+}
 
 version = "${minecraft_version}-${mod_version}"
 group = "com.limachi.${mod_id}"
@@ -50,6 +56,7 @@ minecraft {
             property 'mixin.env.refMapRemappingFile', "${projectDir}/build/createSrgToMcp/output.srg"
             property 'forge.logging.markers', 'REGISTRIES'
             property 'forge.logging.console.level', 'debug'
+            arg "-mixin.config=${mod_id}.mixin.json"
 
             mods {
                 "${mod_id}" {
@@ -108,7 +115,7 @@ repositories {
 dependencies {
     minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
 
-//    annotationProcessor "org.spongepowered:mixin:0.8.5:processor"
+    annotationProcessor "org.spongepowered:mixin:0.8.5:processor"
 
     implementation fg.deobf("com.limachi.lim_lib:lim_lib-${minecraft_version}:${minecraft_version}-${lim}") { changing = true }
 
@@ -121,6 +128,8 @@ dependencies {
     runtimeOnly fg.deobf("mezz.jei:jei-${minecraft_version}-forge:${jei}")
 
     implementation fg.deobf("curse.maven:the-one-probe-245211:${top}")
+
+    runtimeOnly fg.deobf("curse.maven:ender-rift-233780:4582543") //test energy
 }
 
 // This block of code expands all declared replace properties in the specified resource targets.
@@ -159,7 +168,10 @@ tasks.named('jar', Jar).configure {
                 'Implementation-Title'    : project.name,
                 'Implementation-Version'  : project.jar.archiveVersion,
                 'Implementation-Vendor'   : mod_authors,
-                'Implementation-Timestamp': new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")
+                'Implementation-Timestamp': new Date().format("yyyy-MM-dd'T'HH:mm:ssZ"),
+                'TweakClass'              : "org.spongepowered.asm.launch.MixinTweaker",
+                'TweakOrder'              : 0,
+                'MixinConfigs'            : "${mod_id}.mixin.json"
         ])
     }
 

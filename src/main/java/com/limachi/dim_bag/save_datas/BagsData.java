@@ -7,6 +7,7 @@ import com.limachi.dim_bag.entities.BagItemEntity;
 import com.limachi.dim_bag.items.BagItem;
 import com.limachi.lim_lib.Configs;
 import com.limachi.lim_lib.Sides;
+import com.limachi.lim_lib.World;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
@@ -52,6 +53,7 @@ public class BagsData extends SavedData {
 
     ListTag raw;
     private final ArrayList<BagInstance> instances = new ArrayList<>();
+    public final ServerLevel level;
 
     private static BagInstance roomAt(Level level, BlockPos pos) {
         if (level instanceof ServerLevel && level.dimension().equals(DimBag.BAG_DIM)) {
@@ -218,7 +220,7 @@ public class BagsData extends SavedData {
             CompoundTag rawBag = new CompoundTag();
             INSTANCE.raw.add(rawBag);
             int id = INSTANCE.raw.size();
-            INSTANCE.instances.add(new BagInstance(id, rawBag));
+            INSTANCE.instances.add(new BagInstance(INSTANCE.level, id, rawBag));
             return id;
         }
         return 0;
@@ -230,13 +232,14 @@ public class BagsData extends SavedData {
         return 0;
     }
 
-    private BagsData() {
-        this(new CompoundTag());
+    private BagsData(ServerLevel level) {
+        this(level, new CompoundTag());
     }
-    private BagsData(CompoundTag data) {
+    private BagsData(ServerLevel level, CompoundTag data) {
+        this.level = level;
         raw = data.getList("bags", Tag.TAG_COMPOUND);
         for (int i = 0; i < raw.size(); ++i)
-            instances.add(new BagInstance(i + 1, raw.getCompound(i)));
+            instances.add(new BagInstance(level, i + 1, raw.getCompound(i)));
     }
 
     private static void invalidate() {
@@ -249,18 +252,34 @@ public class BagsData extends SavedData {
         INVALIDATORS.clear();
     }
 
+    private static boolean ready = false;
+
     @SubscribeEvent
     public static void onWorldLoad(LevelEvent.Load event) {
-        if (event.getLevel() instanceof ServerLevel level && level.dimension().equals(Level.OVERWORLD)) {
-            invalidate();
-            INSTANCE = level.getDataStorage().computeIfAbsent(BagsData::new, BagsData::new, "bags");
+        if (event.getLevel() instanceof ServerLevel level && (level.dimension().equals(Level.OVERWORLD) || level.dimension().equals(DimBag.BAG_DIM))) {
+            if (ready) {
+                invalidate();
+                if (level.dimension().equals(Level.OVERWORLD) && World.getLevel(DimBag.BAG_DIM) instanceof ServerLevel bagLevel)
+                    INSTANCE = level.getDataStorage().computeIfAbsent(t -> new BagsData(bagLevel, t), () -> new BagsData(bagLevel), "bags");
+                if (level.dimension().equals(DimBag.BAG_DIM) && World.getLevel(Level.OVERWORLD) instanceof ServerLevel overwrold)
+                    INSTANCE = overwrold.getDataStorage().computeIfAbsent(t -> new BagsData(level, t), ()->new BagsData(level), "bags");
+            }
+            ready = true;
         }
     }
 
+    private static boolean readyUnload = false;
+
     @SubscribeEvent
     public static void onWorldUnload(LevelEvent.Unload event) {
-        if (event.getLevel() instanceof ServerLevel level && level.dimension().equals(Level.OVERWORLD))
-            invalidate();
+        if (event.getLevel() instanceof ServerLevel level && (level.dimension().equals(Level.OVERWORLD) || level.dimension().equals(DimBag.BAG_DIM))) {
+            if (readyUnload) {
+                invalidate();
+                ready = false;
+                readyUnload = false;
+            } else
+                readyUnload = true;
+        }
     }
 
     @Override

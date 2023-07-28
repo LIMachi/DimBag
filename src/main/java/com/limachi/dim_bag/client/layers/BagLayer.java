@@ -46,7 +46,7 @@ public class BagLayer<T extends LivingEntity, M extends EntityModel<T>> extends 
 
     @Override
     public void render(PoseStack pose, MultiBufferSource buffer, int packedLight, T entity, float limbSwing, float limbSwingAmount, float partialTicks, float ageInTicks, float netHeadYaw, float headPitch) {
-        if (!entity.isInvisible() && DimBag.getBagAccess(entity, 0, true, false, false) > 0) {
+        if (!entity.isInvisible() && DimBag.getBagAccess(entity, 0, true, false, false, false) > 0) {
             pose.pushPose();
             getParentModel().copyPropertiesTo(model);
             if (getParentModel() instanceof HumanoidModel<?> humanoid)

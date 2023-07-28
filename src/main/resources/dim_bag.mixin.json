@@ -1,0 +1,15 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "compatibilityLevel": "JAVA_17",
+  "package": "com.limachi.dim_bag.mixin",
+  "mixins": [
+    "Boat",
+    "Camel",
+    "Entity"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  },
+  "refmap": "dim_bag.refmap.json"
+}

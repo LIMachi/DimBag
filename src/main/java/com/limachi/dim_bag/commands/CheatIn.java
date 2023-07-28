@@ -44,4 +44,18 @@ public class CheatIn {
             return players.size();
         }
     }
+
+    public static int fillEnergy(CommandSourceStack source, int id, long amount) {
+        if (BagsData.runOnBag(id, bag->bag.energyHandle().ifPresent(d->d.addBatteryModule(amount))))
+            return 1;
+        source.sendFailure(Component.translatable("command.error.bag_not_exist"));
+        return 0;
+    }
+
+    public static int extractEnergy(CommandSourceStack source, int id, long amount) {
+        if (BagsData.runOnBag(id, bag->bag.energyHandle().ifPresent(d->d.addBatteryModule(-amount))))
+            return 1;
+        source.sendFailure(Component.translatable("command.error.bag_not_exist"));
+        return 0;
+    }
 }

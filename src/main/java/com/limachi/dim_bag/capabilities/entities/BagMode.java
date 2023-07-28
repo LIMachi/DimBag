@@ -12,6 +12,8 @@ import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
+import net.minecraftforge.common.capabilities.Capability;
+import net.minecraftforge.common.capabilities.CapabilityManager;
 import net.minecraftforge.common.capabilities.CapabilityToken;
 import net.minecraftforge.common.util.INBTSerializable;
 import net.minecraftforge.event.entity.player.PlayerEvent;
@@ -25,6 +27,7 @@ import java.util.Map;
 public class BagMode implements INBTSerializable<CompoundTag>, ICopyCapOnDeath<BagMode> {
     @RegisterCapability(targets = {Player.class})
     public static final CapabilityToken<BagMode> TOKEN = new CapabilityToken<>(){};
+    public static final Capability<BagMode> CAPABILITY = CapabilityManager.get(TOKEN);
 
     @RegisterMsg
     public record SyncBagMode(int bag, String mode) implements IRecordMsg {

@@ -1,19 +1,23 @@
 package com.limachi.dim_bag.menus;
 
 import com.limachi.dim_bag.DimBag;
+import com.limachi.dim_bag.bag_data.EnergyData;
 import com.limachi.dim_bag.bag_data.SlotData;
 import com.limachi.dim_bag.bag_data.TankData;
+import com.limachi.dim_bag.bag_modes.SettingsMode;
 import com.limachi.dim_bag.items.BagItem;
 import com.limachi.dim_bag.menus.slots.*;
 import com.limachi.dim_bag.save_datas.BagsData;
 import com.limachi.dim_bag.utils.Menus;
 import com.limachi.lim_lib.menus.IAcceptUpStreamNBT;
 import com.limachi.lim_lib.registries.annotations.RegisterMenu;
+import com.limachi.lim_lib.widgetsOld.containerData.DataSlots;
 import net.minecraft.core.NonNullList;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.Mth;
 import net.minecraft.world.SimpleMenuProvider;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
@@ -37,12 +41,13 @@ public class BagMenu extends AbstractContainerMenu implements IAcceptUpStreamNBT
     public final int bagId;
     private LazyOptional<SlotData> slotsHandle;
     private LazyOptional<TankData> tanksHandle;
+    private LazyOptional<EnergyData> energyHandle;
 
     public static final Component TITLE = Component.literal("test");
 
     public static void open(Player player, int bagId, int page) {
         if (!player.level().isClientSide && bagId > 0)
-            NetworkHooks.openScreen((ServerPlayer)player, new SimpleMenuProvider((id, inv, p)->new BagMenu(id, inv, bagId, page), TITLE), buff->{buff.writeInt(page); buff.writeNbt(BagsData.runOnBag(bagId, b->b.getModeData("Settings").orElse(new CompoundTag()), new CompoundTag()));});
+            NetworkHooks.openScreen((ServerPlayer)player, new SimpleMenuProvider((id, inv, p)->new BagMenu(id, inv, bagId, page), TITLE), buff->{buff.writeInt(page); buff.writeNbt(BagsData.runOnBag(bagId, b->b.getModeData(SettingsMode.NAME), new CompoundTag()));});
     }
 
     private double ds = 0.;
@@ -99,6 +104,14 @@ public class BagMenu extends AbstractContainerMenu implements IAcceptUpStreamNBT
         if (!tanksHandle.isPresent())
             BagsData.runOnBag(bagId, b-> tanksHandle = b.tanksHandle());
         return tanksHandle;
+    }
+
+    private LazyOptional<EnergyData> energyDataHandle() {
+        if (energyHandle == null)
+            energyHandle = LazyOptional.empty();
+        if (!energyHandle.isPresent())
+            BagsData.runOnBag(bagId, b-> energyHandle = b.energyHandle());
+        return energyHandle;
     }
 
     void updateScroll() {
@@ -184,6 +197,33 @@ public class BagMenu extends AbstractContainerMenu implements IAcceptUpStreamNBT
     private final SlotStates slotStates = new SlotStates();
     public final Page page = new Page(this);
     public final DataSlot selectedTank = DataSlot.standalone();
+    public final DataSlots energy = new DataSlots(0L){
+        @Override
+        public long getLong() {
+            return energyDataHandle().map(EnergyData::trueEnergyStored).orElse(super.getLong());
+        }
+
+        @Override
+        public int get(int index) {
+            if (index == 0)
+                energyDataHandle().ifPresent(ed->setLong(ed.trueEnergyStored()));
+            return super.get(index);
+        }
+    };
+
+    public final DataSlots maxEnergy = new DataSlots(0L){
+        @Override
+        public long getLong() {
+            return energyDataHandle().map(EnergyData::trueMaxEnergyStored).orElse(super.getLong());
+        }
+
+        @Override
+        public int get(int index) {
+            if (index == 0)
+                energyDataHandle().ifPresent(ed->setLong(ed.trueMaxEnergyStored()));
+            return super.get(index);
+        }
+    };
 
     public BagMenu(int id, Inventory playerInventory, FriendlyByteBuf buff) {
         this(id, playerInventory, 0, buff.readInt());
@@ -196,7 +236,7 @@ public class BagMenu extends AbstractContainerMenu implements IAcceptUpStreamNBT
         super(R_TYPE.get(), id);
         this.bagId = bagId;
         page.set(index);
-        settingsData = BagsData.runOnBag(bagId, b->b.getModeData("Settings").orElse(new CompoundTag()), new CompoundTag());
+        settingsData = BagsData.runOnBag(bagId, b->b.getModeData(SettingsMode.NAME), new CompoundTag());
 
         LazyOptional<SlotData> bagSlots = slotDataHandle();
         if (bagSlots.isPresent())
@@ -262,6 +302,8 @@ public class BagMenu extends AbstractContainerMenu implements IAcceptUpStreamNBT
 
         addDataSlot(page);
         addDataSlot(selectedTank);
+        addDataSlots(energy);
+        addDataSlots(maxEnergy);
     }
 
     boolean fluidsAreStackable(FluidStack f1, FluidStack f2) {
@@ -301,6 +343,6 @@ public class BagMenu extends AbstractContainerMenu implements IAcceptUpStreamNBT
 
     @Override
     public boolean stillValid(@Nonnull Player player) {
-        return player.containerMenu.containerId == containerId && bagId != 0 && (DimBag.getBagAccess(player, bagId, false, true, true) == bagId || (getCarried().getItem() instanceof BagItem && BagItem.getBagId(getCarried()) == bagId));
+        return player.containerMenu.containerId == containerId && bagId != 0 && (DimBag.getBagAccess(player, bagId, false, true, true, true) == bagId || (getCarried().getItem() instanceof BagItem && BagItem.getBagId(getCarried()) == bagId));
     }
 }

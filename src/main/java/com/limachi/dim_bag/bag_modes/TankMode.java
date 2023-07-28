@@ -1,5 +1,6 @@
 package com.limachi.dim_bag.bag_modes;
 
+import com.limachi.dim_bag.bag_modules.TankModule;
 import com.limachi.dim_bag.items.BagItem;
 import com.limachi.dim_bag.menus.BagMenu;
 import com.limachi.dim_bag.save_datas.BagsData;
@@ -18,8 +19,11 @@ import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.fluids.FluidUtil;
 import net.minecraftforge.fluids.capability.IFluidHandler;
 
-public class Tank extends BaseMode {
-    public Tank() { super("Tank", false); }
+public class TankMode extends BaseMode {
+
+    public static final String NAME = "Tank";
+
+    public TankMode() { super(NAME, null); }
 
     @Override
     public InteractionResult useOn(UseOnContext ctx) {

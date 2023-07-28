@@ -1,0 +1,17 @@
+{
+	"parent": "block/cube_all",
+	"ambientocclusion": false,
+	"render_type": "minecraft:translucent",
+	"textures": {
+		"0": "dim_bag:block/battery/push"
+	},
+	"elements": [
+		{
+			"from": [-0.0001, -0.0001, -0.0001],
+			"to": [16.0002, 16.0002, 16.0002],
+			"faces": {
+				"up": {"uv": [0, 0, 16, 16], "texture": "#0"}
+			}
+		}
+	]
+}

@@ -43,7 +43,7 @@ public class VirtualBagItem extends BagItem {
     public static void onKeyPress(KeyMapController.KeyMapChangedEvent event) {
         if (event.getChangedKeys()[DimBag.BAG_KEY.getId()]) {
             if (DimBag.BAG_KEY.getState(event.getPlayer()) && !(event.getPlayer().getMainHandItem().getItem() instanceof BagItem)) {
-                int id = DimBag.getBagAccess(event.getPlayer(), 0, true, false, true);
+                int id = DimBag.getBagAccess(event.getPlayer(), 0, true, false, true, true);
                 if (id > 0)
                     event.getPlayer().setItemInHand(InteractionHand.MAIN_HAND, create(id, event.getPlayer().getMainHandItem()));
             }
@@ -83,7 +83,7 @@ public class VirtualBagItem extends BagItem {
     protected static boolean stillValid(Player player) {
         ItemStack stack = player.getMainHandItem();
         int id = BagItem.getBagId(stack);
-        return id > 0 && DimBag.BAG_KEY.getState(player) && id == DimBag.getBagAccess(player, id, true, false, true);
+        return id > 0 && DimBag.BAG_KEY.getState(player) && id == DimBag.getBagAccess(player, id, true, false, true, true);
     }
 
     @Override
@@ -116,11 +116,8 @@ public class VirtualBagItem extends BagItem {
             ItemStack s = sa.get();
             if (!(s.getItem() instanceof VirtualBagItem) && !s.equals(o, false))
                 stack.getOrCreateTag().put(ORIGINAL_STACK_KEY, s.save(new CompoundTag()));
-            BagsData.runOnBag(stack, b->stack.getOrCreateTag().putLong("modes", b.installedModesMask()));
-            String name = Component.Serializer.toJson(getName(stack));
-            if (!stack.getTag().getString(BAG_NAME_OVERRIDE).equals(name))
-                stack.getTag().putString(BAG_NAME_OVERRIDE, name);
-            getModeBehavior(entity, stack).inventoryTick(stack, level, entity, slot, selected);
+            final boolean finalSelected = selected;
+            BagsData.runOnBag(stack, b-> commonBagTick(b, stack.getOrCreateTag(), stack, level, entity, slot, finalSelected));
             sa.set(stack);
         }
     }
@@ -134,7 +131,7 @@ public class VirtualBagItem extends BagItem {
 
     @Override
     public InteractionResult onItemUseFirst(ItemStack stack, UseOnContext context) {
-        if (context.getLevel().isClientSide) return InteractionResult.SUCCESS;
+        if (context.getLevel().isClientSide) return InteractionResult.PASS;
         Player player = context.getPlayer();
         if (player == null) return InteractionResult.FAIL;
         if (context.getHand() == InteractionHand.MAIN_HAND && stillValid(player))
@@ -145,7 +142,7 @@ public class VirtualBagItem extends BagItem {
 
     @Override
     public InteractionResult useOn(UseOnContext ctx) {
-        if (ctx.getLevel().isClientSide) return InteractionResult.SUCCESS;
+        if (ctx.getLevel().isClientSide) return InteractionResult.PASS;
         Player player = ctx.getPlayer();
         if (player == null) return InteractionResult.FAIL;
         if (ctx.getHand() == InteractionHand.MAIN_HAND && stillValid(player)) {
@@ -161,7 +158,7 @@ public class VirtualBagItem extends BagItem {
 
     @Override
     public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
-        if (level.isClientSide) return InteractionResultHolder.success(player.getItemInHand(hand));
+        if (level.isClientSide) return InteractionResultHolder.pass(player.getItemInHand(hand));
         if (hand == InteractionHand.MAIN_HAND && stillValid(player)) {
             if (KeyMapController.SNEAK.getState(player) && player.level().dimension().equals(DimBag.BAG_DIM)) {
                 BagsData.runOnBag(player.level(), player.blockPosition(), b->b.leave(player));

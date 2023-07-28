@@ -1,27 +1,27 @@
 package com.limachi.dim_bag.client.screens;
 
 import com.limachi.dim_bag.client.widgets.*;
-import com.limachi.dim_bag.entities.utils.EntityObserver;
+import com.limachi.dim_bag.entities.utils.TagOperation;
 import com.limachi.dim_bag.menus.ObserverMenu;
 import com.limachi.lim_lib.network.messages.ScreenNBTMsg;
 import com.limachi.lim_lib.registries.clientAnnotations.RegisterMenuScreen;
 import com.limachi.lim_lib.render.GuiUtils;
-import com.mojang.blaze3d.platform.InputConstants;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
-import net.minecraft.client.gui.components.TextAndImageButton;
-import net.minecraft.client.gui.navigation.ScreenRectangle;
-import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.function.Supplier;
 
 @OnlyIn(Dist.CLIENT)
 @RegisterMenuScreen
@@ -31,6 +31,7 @@ public class ObserverScreen extends AbstractContainerScreen<ObserverMenu> {
         super(menu, playerInventory, title);
     }
 
+    /*
     protected Component getLineComponent(int line) {
         CompoundTag entry = menu.commands.getCompound(line);
         String kind = entry.getString("kind");
@@ -144,6 +145,7 @@ public class ObserverScreen extends AbstractContainerScreen<ObserverMenu> {
             }
         }
 
+
         @Override
         public void onClose() {
             String kind = entry.getString("kind");
@@ -202,19 +204,83 @@ public class ObserverScreen extends AbstractContainerScreen<ObserverMenu> {
             super.render(gui, mouseX, mouseY, partialTick);
         }
     }
+     */
 
     @Override
     protected void renderLabels(GuiGraphics gui, int mouseX, int mouseY) {
         gui.drawString(font, title, titleLabelX, titleLabelY, 4210752, false);
     }
 
+    private VerticalSlider slider = null;
+
     @Override
     protected void init() {
         super.init();
-        for (int i = 0; i < 8; ++i) {
-            int finalI = i;
-            addRenderableWidget(new PopUpScreenButton(15 + getGuiLeft(), 18 + i * 18 + getGuiTop(), imageWidth - 25, 16, getLineComponent(i), w->new LinePopUp(this, w, finalI)));
+        final int innerWidth = imageWidth - 16;
+        final int innerHeight = imageHeight - 56;
+        final TextEdit path = new TextEdit(font, 8 + getGuiLeft(), 18 + getGuiTop(), innerWidth, 16, menu.command.getString("path"), t->{
+            menu.command.putString("path", t.getValue());
+            if (slider != null)
+                slider.setValue(0);
+            rebuildWidgets();
+        });
+        addRenderableWidget(path);
+        final TextEditWithSuggestions operator = new TextEditWithSuggestions(font, 8 + getGuiLeft(), 34 + getGuiTop(), innerWidth / 5, 16, menu.command.getString("operator"), t->menu.command.putString("operator", t.getValue()), "regex", "==", "!=", "+", "-", "*", "/", "%", "<", ">", "<=", ">=");
+        operator.moveSuggestionArea(operator.getX() - operator.getWidth(), operator.getY());
+        addRenderableWidget(operator);
+        final TextEdit operand = new TextEdit(font, 8 + getGuiLeft() + innerWidth / 5 + 2, 34 + getGuiTop(), innerWidth / 5 * 4 - 2, 16, menu.command.getString("operand"), t->menu.command.putString("operand", t.getValue()));
+        addRenderableWidget(operand);
+        final ViewPortWidget suggestions = new ViewPortWidget(8 + getGuiLeft(), 52 + getGuiTop(), innerWidth - 16, innerHeight);
+        int offset = 0;
+        int longest = 0;
+        List<String> tl = new ArrayList<>(TagOperation.pathSuggestions(menu.targetData, menu.command.getString("path"), 1));
+        if (!menu.command.getString("path").isBlank())
+            tl.addAll(TagOperation.pathSuggestions(menu.targetData, "", 1));
+        for (String suggestion : tl) {
+            longest = Math.max(longest, font.width(suggestion));
+            suggestions.addWidget(Button.builder(Component.literal(suggestion), b->{
+                String[] split = b.getMessage().getString().split(": ");
+                if (split.length > 1) {
+                    if (split[0].contains("{...}") || split[0].contains("[...]")) {
+                        operand.setValue("");
+                        operand.finishInput();
+                    } else {
+                        operator.setValue("==");
+                        operator.finishInput();
+                        String val = split[1];
+                        if (!val.startsWith("\""))
+                            val = val.replaceAll("[dfsblL]", "");
+                        else
+                            val = val.substring(1, val.length() - 1);
+                        operand.setValue(val);
+                        operand.finishInput();
+                    }
+                }
+                if (split.length > 0) {
+                    path.setValue(split[0].replaceAll("\\{\\.\\.\\.}", "").replaceAll("\\[\\.\\.\\.]", ""));
+                    path.finishInput();
+                }
+            }).bounds(0, offset, innerWidth - 16, 14).build());
+            offset += 16;
         }
+        final int suggestionsExtra = Math.max(0, offset - suggestions.getHeight());
+        slider = new VerticalSlider(getGuiLeft() + innerWidth - 8, 52 + getGuiTop(), 16, innerHeight, slider != null ? slider.getValue() : 0., s->suggestions.applyDelta(0, (int)Math.round(suggestionsExtra * s.getValue())));
+        addRenderableWidget(slider);
+        addRenderableWidget(suggestions);
+    }
+
+    @Override
+    public boolean mouseScrolled(double mouseX, double mouseY, double scroll) {
+        if (slider != null && mouseX >= 8 + getGuiLeft() && mouseX < getGuiLeft() + imageWidth - 8 && mouseY >= 52 + getGuiTop() && mouseY < getGuiTop() + imageHeight - 4) {
+            slider.setValue(Mth.clamp(slider.getValue() - scroll / slider.getHeight(), 0., 1.));
+            return true;
+        }
+        return super.mouseScrolled(mouseX, mouseY, scroll);
+    }
+
+    @Override
+    public boolean mouseDragged(double mouseX, double mouseY, int button, double fromX, double fromY) {
+        return ((getFocused() != null && isDragging() && button == 0) && getFocused().mouseDragged(mouseX, mouseY, button, fromX, fromY)) || super.mouseDragged(mouseX, mouseY, button, fromX, fromY);
     }
 
     @Override
@@ -227,15 +293,14 @@ public class ObserverScreen extends AbstractContainerScreen<ObserverMenu> {
     @Override
     protected void renderBg(@Nonnull GuiGraphics gui, float partialTick, int mouseX, int mouseY) {
         gui.blitNineSliced(GuiUtils.BACKGROUND_TEXTURE, getGuiLeft(), getGuiTop(), imageWidth, imageHeight, 8, 256, 256, 0, 0);
-        for (int i = 0; i < 8; ++i)
-            gui.drawCenteredString(font, "" + i, 9 + getGuiLeft(), 22 + i * 18 + getGuiTop(), -1);
+//        for (int i = 0; i < 8; ++i)
+//            gui.drawCenteredString(font, "" + i, 9 + getGuiLeft(), 22 + i * 18 + getGuiTop(), -1);
     }
 
     @Override
     public void onClose() {
-        CompoundTag out = new CompoundTag();
-        out.put("commands", menu.commands);
-        ScreenNBTMsg.send(0, out);
+        menu.command.putString("type", TagOperation.getTypeForPath(menu.targetData, menu.command.getString("path")));
+        ScreenNBTMsg.send(0, menu.command);
         super.onClose();
     }
 }

@@ -1,0 +1,31 @@
+{
+  "multipart": [
+    { "apply": { "model": "dim_bag:block/frame" } },
+    { "when": { "fullness": 0 }, "apply": { "model": "dim_bag:block/battery/inner_0" } },
+    { "when": { "fullness": 1 }, "apply": { "model": "dim_bag:block/battery/inner_1" } },
+    { "when": { "fullness": 2 }, "apply": { "model": "dim_bag:block/battery/inner_2" } },
+    { "when": { "fullness": 3 }, "apply": { "model": "dim_bag:block/battery/inner_3" } },
+    { "when": { "fullness": 4 }, "apply": { "model": "dim_bag:block/battery/inner_4" } },
+    { "when": { "fullness": 5 }, "apply": { "model": "dim_bag:block/battery/inner_5" } },
+    { "when": { "fullness": 6 }, "apply": { "model": "dim_bag:block/battery/inner_6" } },
+    { "when": { "fullness": 7 }, "apply": { "model": "dim_bag:block/battery/inner_7" } },
+    { "when": { "fullness": 8 }, "apply": { "model": "dim_bag:block/battery/inner_8" } },
+    { "when": { "fullness": 9 }, "apply": { "model": "dim_bag:block/battery/inner_9" } },
+    { "when": { "fullness": 10 }, "apply": { "model": "dim_bag:block/battery/inner_10" } },
+    { "when": { "fullness": 11 }, "apply": { "model": "dim_bag:block/battery/inner_11" } },
+    { "when": { "fullness": 12 }, "apply": { "model": "dim_bag:block/battery/inner_12" } },
+    { "when": { "fullness": 13 }, "apply": { "model": "dim_bag:block/battery/inner_13" } },
+    { "when": { "up": "push" }, "apply": { "model": "dim_bag:block/battery/top_push" } },
+    { "when": { "up": "pull" }, "apply": { "model": "dim_bag:block/battery/top_pull" } },
+    { "when": { "down": "push" }, "apply": { "model": "dim_bag:block/battery/top_push", "x": 180 } },
+    { "when": { "down": "pull" }, "apply": { "model": "dim_bag:block/battery/top_pull", "x": 180 } },
+    { "when": { "north": "push" }, "apply": { "model": "dim_bag:block/battery/top_push", "x": 90 } },
+    { "when": { "north": "pull" }, "apply": { "model": "dim_bag:block/battery/top_pull", "x": 90 } },
+    { "when": { "east": "push" }, "apply": { "model": "dim_bag:block/battery/top_push", "x": 90, "y": 90 } },
+    { "when": { "east": "pull" }, "apply": { "model": "dim_bag:block/battery/top_pull", "x": 90, "y": 90 } },
+    { "when": { "south": "push" }, "apply": { "model": "dim_bag:block/battery/top_push", "x": 90, "y": 180 } },
+    { "when": { "south": "pull" }, "apply": { "model": "dim_bag:block/battery/top_pull", "x": 90, "y": 180 } },
+    { "when": { "west": "push" }, "apply": { "model": "dim_bag:block/battery/top_push", "x": 90, "y": 270 } },
+    { "when": { "west": "pull" }, "apply": { "model": "dim_bag:block/battery/top_pull", "x": 90, "y": 270 } }
+  ]
+}

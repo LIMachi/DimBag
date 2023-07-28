@@ -1,6 +1,7 @@
 package com.limachi.dim_bag.bag_modes;
 
 import com.limachi.dim_bag.DimBag;
+import com.limachi.dim_bag.bag_data.BagInstance;
 import com.limachi.dim_bag.bag_modules.BaseModule;
 import com.limachi.dim_bag.blocks.WallBlock;
 import com.limachi.dim_bag.items.BagItem;
@@ -29,8 +30,14 @@ import net.minecraftforge.registries.ForgeRegistries;
 
 import java.util.Arrays;
 
-public class Settings extends BaseMode {
-    public Settings() { super("Settings", true); }
+public class SettingsMode extends BaseMode {
+
+    public static final String NAME = "Settings";
+
+    public SettingsMode() { super(NAME, null); }
+
+    @Override
+    public boolean canDisable() { return false; }
 
     @Override //open settings screen (bag screen index 1)
     public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
@@ -42,7 +49,7 @@ public class Settings extends BaseMode {
     public InteractionResult useOn(UseOnContext ctx) {
         BlockPos target = ctx.getClickedPos();
         if (ctx.getLevel().getBlockState(ctx.getClickedPos()).getBlock() instanceof BaseModule module)
-            if (BagsData.runOnBag(ctx.getLevel(), ctx.getClickedPos(), b->module.wrench(b, ctx.getPlayer(), ctx.getLevel(), ctx.getClickedPos(), ctx.getItemInHand()), false))
+            if (BagsData.runOnBag(ctx.getLevel(), ctx.getClickedPos(), b->module.wrench(b, ctx.getPlayer(), ctx.getLevel(), ctx.getClickedPos(), ctx.getItemInHand(), new BlockHitResult(ctx.getClickLocation(), ctx.getClickedFace(), ctx.getClickedPos(), ctx.isInside())), false))
                 return InteractionResult.SUCCESS;
         if (ctx.getPlayer() != null && BagsData.runOnBag(ctx.getLevel(), target, b->b.isWall(target), false)) {
             ItemStack offStack = ctx.getPlayer().getOffhandItem();

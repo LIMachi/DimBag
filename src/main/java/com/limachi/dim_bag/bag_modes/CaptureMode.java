@@ -1,5 +1,6 @@
 package com.limachi.dim_bag.bag_modes;
 
+import com.limachi.dim_bag.bag_data.BagInstance;
 import com.limachi.dim_bag.bag_modules.TeleportModule;
 import com.limachi.dim_bag.items.BagItem;
 import com.limachi.dim_bag.menus.BagMenu;
@@ -7,8 +8,6 @@ import com.limachi.dim_bag.save_datas.BagsData;
 import com.limachi.lim_lib.Configs;
 import com.limachi.lim_lib.Events;
 import com.limachi.lim_lib.KeyMapController;
-import com.limachi.lim_lib.World;
-import com.mojang.datafixers.util.Pair;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
@@ -25,12 +24,14 @@ import net.minecraftforge.registries.ForgeRegistries;
 
 import java.util.Arrays;
 
-public class Capture extends BaseMode {
+public class CaptureMode extends BaseMode {
+
+    public static final String NAME = "Capture";
 
     @Configs.Config(cmt = "list of mobs (ressource style, regex compatible), that should not be able to be captured, by default the Vanilla bosses are prevented (but feel free to enable them :P)")
     public static String[] BLACK_LIST_MOB_CAPTURE = {"minecraft:ender_dragon", "minecraft:wither"};
 
-    public Capture() { super("Capture", false); }
+    public CaptureMode() { super(NAME, TeleportModule.NAME); }
 
     @Override
     public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
@@ -58,24 +59,24 @@ public class Capture extends BaseMode {
 
     @Override
     public void scroll(Player player, int slot, int amount) {
-        BagsData.runOnBag(player.getInventory().getItem(slot), bag->
-            bag.getModeData("Capture").ifPresent(capture->{
-                long from = capture.getLong("selected");
-                CompoundTag raw = bag.unsafeRawAccess();
-                ListTag teleporters = raw.getCompound("modules").getList("teleport", Tag.TAG_COMPOUND);
-                if (teleporters.size() > 0) {
-                    int i = 0;
-                    for (; i < teleporters.size(); ++i)
-                        if (teleporters.getCompound(i).getLong("position") == from)
-                            break;
-                    i -= amount;
-                    while (i < 0)
-                        i += teleporters.size();
-                    while (i >= teleporters.size())
-                        i -= teleporters.size();
-                    capture.putLong("selected", teleporters.getCompound(i).getLong("position"));
-                }
-            }));
+        BagsData.runOnBag(player.getInventory().getItem(slot), bag-> {
+            CompoundTag captureMode = bag.getModeData(NAME);
+            long from = captureMode.getLong("selected");
+            CompoundTag raw = bag.unsafeRawAccess();
+            ListTag teleporters = raw.getCompound(BagInstance.MODULE_STORAGE).getList("teleport", Tag.TAG_COMPOUND);
+            if (teleporters.size() > 0) {
+                int i = 0;
+                for (; i < teleporters.size(); ++i)
+                    if (teleporters.getCompound(i).getLong(BagInstance.POSITION) == from)
+                        break;
+                i -= amount;
+                while (i < 0)
+                    i += teleporters.size();
+                while (i >= teleporters.size())
+                    i -= teleporters.size();
+                captureMode.putLong("selected", teleporters.getCompound(i).getLong(BagInstance.POSITION));
+            }
+        });
     }
 
     @Override

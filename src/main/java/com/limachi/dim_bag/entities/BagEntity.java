@@ -1,7 +1,9 @@
 package com.limachi.dim_bag.entities;
 
 import com.limachi.dim_bag.DimBag;
+import com.limachi.dim_bag.bag_data.BagInstance;
 import com.limachi.dim_bag.bag_modules.BaseModule;
+import com.limachi.dim_bag.bag_modules.ParasiteModule;
 import com.limachi.dim_bag.items.BagItem;
 import com.limachi.dim_bag.menus.BagMenu;
 import com.limachi.dim_bag.save_datas.BagsData;
@@ -24,6 +26,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.AABB;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.ForgeCapabilities;
 import net.minecraftforge.common.util.LazyOptional;
@@ -35,7 +38,7 @@ import java.util.List;
 
 public class BagEntity extends Mob {
 
-    @RegisterEntity(width = 0.5f)
+    @RegisterEntity(width = 0.4f, height = 0.8f)
     public static RegistryObject<EntityType<BagEntity>> R_TYPE;
 
     @EntityAttributeBuilder
@@ -70,24 +73,23 @@ public class BagEntity extends Mob {
 
     @Override
     public boolean hurt(DamageSource source, float amount) {
-        if (source.is(DamageTypes.CRAMMING) || source.is(DamageTypes.FALL) || source.is(DamageTypes.STALAGMITE)) {
-            //FIXME: auto equip to surrounding entity
-        }
+        if (source.is(DamageTypes.CRAMMING) || source.is(DamageTypes.FALL) || source.is(DamageTypes.STALAGMITE)) //easter egg, a bag that receive cramming, fall or stalagmite damage will be auto equiped to a nearby entity TODO: (should probably put a damage cap for activation)
+            level().getEntities(this, new AABB(blockPosition())).stream().findFirst().ifPresent(e->BagItem.equipBag(e, this));
         if (source.getEntity() != null || source.getDirectEntity() != null) {
 
             Entity sEntity = source.getEntity() != null ? source.getEntity() : source.getDirectEntity();
 
-            int id = getBagId();
-            if (sEntity instanceof Player player){
-                if (KeyMapController.SNEAK.getState(player))
-                    BagItem.equipBag(player, this);
-                else {
-                    PlayerUtils.giveOrDrop(player, BagItem.create(id));
-                    this.remove(RemovalReason.KILLED);
-                }
-            } else if (sEntity instanceof Mob mob) {
-                if (!mob.equipItemIfPossible(BagItem.create(id)).isEmpty())
-                    this.remove(RemovalReason.KILLED);
+            if (sEntity != null && !sEntity.isRemoved()) {
+                int id = getBagId();
+                if (sEntity instanceof Player player) {
+                    if (KeyMapController.SNEAK.getState(player))
+                        BagItem.equipBag(player, this);
+                    else {
+                        PlayerUtils.giveOrDrop(player, BagItem.create(id));
+                        this.remove(RemovalReason.KILLED);
+                    }
+                } else if (BagsData.runOnBag(id, b->b.isModulePresent(ParasiteModule.NAME), false))
+                    BagItem.equipBag(sEntity, this);
             }
         }
         return false;
@@ -110,9 +112,14 @@ public class BagEntity extends Mob {
     @Nonnull
     @Override
     public <T> LazyOptional<T> getCapability(@Nonnull Capability<T> cap) {
-        if (ForgeCapabilities.ITEM_HANDLER.equals(cap))
-            return LazyOptional.empty(); //FIXME: remap capability to the bag content (bag proxy cap)
-        return super.getCapability(cap);
+        if (ForgeCapabilities.FLUID_HANDLER.equals(cap))
+            return BagsData.runOnBag(this, BagInstance::tanksHandle, LazyOptional.empty()).cast();
+        else if (ForgeCapabilities.ITEM_HANDLER.equals(cap))
+            return BagsData.runOnBag(this, BagInstance::slotsHandle, LazyOptional.empty()).cast();
+        else if (ForgeCapabilities.ENERGY.equals(cap))
+            return BagsData.runOnBag(this, BagInstance::energyHandle, LazyOptional.empty()).cast();
+        else
+            return LazyOptional.empty();
     }
 
     @Override
@@ -128,11 +135,39 @@ public class BagEntity extends Mob {
             loadCoolDown = 200;
             lastPos = blockPosition();
             BagsData.runOnBag(getBagId(), b->{
-                b.setHolder(this);
+                if (getVehicle() != null)
+                    b.setHolder(getVehicle());
+                else
+                    b.setHolder(this);
                 b.temporaryChunkLoad();
             });
         }
         super.tick();
+    }
+
+    @Override
+    public void rideTick() {
+        super.rideTick();
+        //do corrections here
+        Entity vehicle = getVehicle();
+        if (vehicle instanceof Player player) {
+            double dx = player.getX();
+            double dy = player.getZ();
+            double x = dx + 0;
+            double y = dy + 0.45;
+            double ang = -player.yBodyRot / 180. * Math.PI;
+            double rx = (x - dx) * Math.cos(ang) - (y - dy) * Math.sin(ang) + dx;
+            double ry = (x - dx) * Math.sin(ang) - (y - dy) * Math.cos(ang) + dy;
+            setPos(rx, player.getY() + 0.8, ry);
+//            setYBodyRot(player.getVisualRotationYInDegrees());
+        }
+        if (vehicle != null) {
+//            setXRot(vehicle.getXRot());
+//            setYRot(vehicle.getYRot());
+        }
+        if (vehicle instanceof LivingEntity living) {
+            setYBodyRot(living.yBodyRot);
+        }
     }
 
     @Override
@@ -149,14 +184,16 @@ public class BagEntity extends Mob {
             ItemStack stack = player.getItemInHand(hand);
             if (id > 0 && World.getLevel(DimBag.BAG_DIM) instanceof ServerLevel level) {
                 BagsData.runOnBag(getBagId(), b->{
-                    BlockPos pos = BaseModule.getAnyInstallPosition(id);
-                    if (pos != null) {
-                        level.setBlockAndUpdate(pos, module.defaultBlockState());
-                        module.install(b, player, level, pos, stack);
-                    }
-                    if (!player.isCreative()) {
-                        stack.shrink(1);
-                        player.setItemInHand(hand, stack);
+                    if (module.canInstall(b)) {
+                        BlockPos pos = b.getAnyInstallPosition();
+                        if (pos != null) {
+                            level.setBlockAndUpdate(pos, module.defaultBlockState());
+                            module.install(b, player, level, pos, stack);
+                        }
+                        if (!player.isCreative()) {
+                            stack.shrink(1);
+                            player.setItemInHand(hand, stack);
+                        }
                     }
                 });
                 return InteractionResult.SUCCESS;

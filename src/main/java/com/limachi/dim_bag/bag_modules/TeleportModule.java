@@ -2,6 +2,7 @@ package com.limachi.dim_bag.bag_modules;
 
 import com.limachi.dim_bag.DimBag;
 import com.limachi.dim_bag.bag_data.BagInstance;
+import com.limachi.dim_bag.bag_modes.CaptureMode;
 import com.limachi.dim_bag.menus.TeleporterMenu;
 import com.limachi.dim_bag.save_datas.BagsData;
 import com.limachi.lim_lib.Configs;
@@ -12,7 +13,6 @@ import com.mojang.datafixers.util.Pair;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.StringTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
@@ -28,6 +28,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.BlockHitResult;
 import net.minecraftforge.registries.RegistryObject;
 
 import javax.annotation.Nonnull;
@@ -36,6 +37,8 @@ import java.util.Optional;
 
 @SuppressWarnings({"unused", "deprecation"})
 public class TeleportModule extends BaseModule {
+
+    public static final String NAME = "teleport";
 
     @Configs.Config(cmt = "If set to true, a teleporter will be considered disabled if an entity is already present. Set to false to stack infinite amount of entities on the same teleporter.")
     public static boolean NO_MORE_THAN_ONE_ENTITY_PER_TELEPORTER = true;
@@ -49,7 +52,7 @@ public class TeleportModule extends BaseModule {
 
     @Override
     public void neighborChanged(@Nonnull BlockState state, @Nonnull Level level, @Nonnull BlockPos pos, @Nonnull Block block, @Nonnull BlockPos pos2, boolean bool) {
-        BagsData.runOnBag(level, pos, b->b.getInstalledCompound("teleport", pos).putBoolean("active", level.getBestNeighborSignal(pos) == 0));
+        BagsData.runOnBag(level, pos, b->b.getModule(NAME, pos).putBoolean("active", level.getBestNeighborSignal(pos) == 0));
     }
 
     @Override
@@ -73,33 +76,24 @@ public class TeleportModule extends BaseModule {
             data.putBoolean("active", true);
         if (!data.contains("label", Tag.TAG_STRING))
             data.putString("label", Component.Serializer.toJson(DEFAULT_LABEL));
-        bag.compoundInstall("teleport", pos, data);
-        if (bag.getModeData("Capture").isEmpty())
-            bag.installMode("Capture");
-        bag.getModeData("Capture").ifPresent(c->{
-            if (c.getBoolean("disabled")) {
-                c.putBoolean("disabled", false);
-                c.putLong("selected", pos.asLong());
-            } else if (!c.contains("selected"))
-                c.putLong("selected", pos.asLong());
-        });
+        bag.installModule(NAME, pos, data);
+        CompoundTag captureMode = bag.getModeData(CaptureMode.NAME);
+        if (!captureMode.contains("selected"))
+            captureMode.putLong("selected", pos.asLong());
     }
 
     @Override
     public void uninstall(BagInstance bag, Player player, Level level, BlockPos pos, ItemStack stack) {
-        bag.getModeData("Capture").ifPresent(c->{
-            ListTag teleporters = bag.unsafeRawAccess().getCompound("modules").getList("teleport", Tag.TAG_COMPOUND);
-            if (teleporters.size() <= 1)
-                c.putBoolean("disabled", true);
-            else if (c.getLong("selected") == pos.asLong()) {
-                long p = teleporters.getCompound(0).getLong("position");
-                if (p != 0)
-                    c.putLong("selected", p);
-                else
-                    c.remove("selected");
-            }
-        });
-        stack.getOrCreateTag().merge(bag.compoundUninstall("teleport", pos));
+        CompoundTag captureMode = bag.getModeData(CaptureMode.NAME);
+        CompoundTag teleporters = bag.getAllModules(NAME);
+        if (captureMode.getLong("selected") == pos.asLong()) {
+            long p = teleporters.getCompound(teleporters.getAllKeys().stream().findFirst().orElse("")).getLong(BagInstance.POSITION);
+            if (p != 0)
+                captureMode.putLong("selected", p);
+            else
+                captureMode.remove("selected");
+        }
+        stack.getOrCreateTag().merge(bag.uninstallModule(NAME, pos));
     }
 
     @Override
@@ -109,33 +103,31 @@ public class TeleportModule extends BaseModule {
     }
 
     @Override
-    public boolean wrench(BagInstance bag, Player player, Level level, BlockPos pos, ItemStack stack) {
+    public boolean wrench(BagInstance bag, Player player, Level level, BlockPos pos, ItemStack stack, BlockHitResult hit) {
         BlockState bs = level.getBlockState(pos);
         level.setBlockAndUpdate(pos, bs.setValue(BlockStateProperties.FACING, Direction.values()[(bs.getValue(BlockStateProperties.FACING).ordinal() + 1) % Direction.values().length]));
         return true;
     }
 
     public static Optional<BlockPos> getDestination(BagInstance bag, Entity entity) {
-        return bag.getModeData("Capture").flatMap(c->{
-            BlockPos selected = BlockPos.of(c.getLong("selected"));
-            CompoundTag target = bag.getInstalledCompound("teleport", selected);
-            Level level = World.getLevel(DimBag.BAG_DIM);
-            if (!(level.getBlockState(selected).getBlock() instanceof TeleportModule))
-                return Optional.empty();
-            Direction offset = level.getBlockState(selected).getValue(BlockStateProperties.FACING); //FIXME: might have invalid state on desync
-            if (!target.getBoolean("active"))
-                return Optional.empty();
-            if (NO_MORE_THAN_ONE_ENTITY_PER_TELEPORTER && getTarget(level, selected, offset).isPresent())
-                return Optional.empty();
-            if (entity instanceof Player && !target.getBoolean("affect_players"))
-                return Optional.empty();
-            String name = entity.getDisplayName().getString();
-            boolean whitelist = target.getBoolean("white_list");
-            for (Tag t : target.getList("filters", Tag.TAG_STRING))
-                if (t instanceof StringTag s && (s.getAsString().equals(name) || name.matches(s.getAsString())))
-                    return whitelist ? Optional.of(selected.relative(offset)) : Optional.empty();
-            return whitelist ? Optional.empty() : Optional.of(selected.relative(offset));
-        });
+        BlockPos selected = BlockPos.of(bag.getModeData(CaptureMode.NAME).getLong("selected"));
+        CompoundTag target = bag.getModule(NAME, selected);
+        Level level = World.getLevel(DimBag.BAG_DIM);
+        if (!(level.getBlockState(selected).getBlock() instanceof TeleportModule))
+            return Optional.empty();
+        Direction offset = level.getBlockState(selected).getValue(BlockStateProperties.FACING); //FIXME: might have invalid state on desync
+        if (!target.getBoolean("active"))
+            return Optional.empty();
+        if (NO_MORE_THAN_ONE_ENTITY_PER_TELEPORTER && getTarget(level, selected, offset).isPresent())
+            return Optional.empty();
+        if (entity instanceof Player && !target.getBoolean("affect_players"))
+            return Optional.empty();
+        String name = entity.getDisplayName().getString();
+        boolean whitelist = target.getBoolean("white_list");
+        for (Tag t : target.getList("filters", Tag.TAG_STRING))
+            if (t instanceof StringTag s && (s.getAsString().equals(name) || name.matches(s.getAsString())))
+                return whitelist ? Optional.of(selected.relative(offset)) : Optional.empty();
+        return whitelist ? Optional.empty() : Optional.of(selected.relative(offset));
     }
 
     public static Optional<? extends Entity> getTarget(Level level, BlockPos pos, Direction offset) {
@@ -144,10 +136,11 @@ public class TeleportModule extends BaseModule {
     }
 
     public static Optional<Pair<Component, Optional<? extends Entity>>> getSelectedTeleporterAndTarget(int bag) {
-        return BagsData.runOnBag(bag, b->b.getModeData("Capture").flatMap(c->{
-            if (c.contains("selected") && !c.getBoolean("disabled")) {
-                BlockPos at = BlockPos.of(c.getLong("selected"));
-                CompoundTag teleporter = b.getInstalledCompound("teleport", at);
+        return BagsData.runOnBag(bag, b-> {
+            CompoundTag captureMode = b.getModeData(CaptureMode.NAME);
+            if (captureMode.contains("selected") && b.isModeEnabled(CaptureMode.NAME)) {
+                BlockPos at = BlockPos.of(captureMode.getLong("selected"));
+                CompoundTag teleporter = b.getModule(NAME, at);
                 Component label = Component.Serializer.fromJson(teleporter.getString("label"));
                 Level level = World.getLevel(DimBag.BAG_DIM);
                 if (level.getBlockState(at).getBlock() instanceof TeleportModule) {
@@ -156,14 +149,15 @@ public class TeleportModule extends BaseModule {
                 }
             }
             return Optional.empty();
-        }), Optional.empty());
+        }, Optional.empty());
     }
 
     public static boolean teleportTargetTo(int bag, ResourceKey<Level> level, BlockPos pos) {
-        return BagsData.runOnBag(bag, b->b.getModeData("Capture").map(c->{
-            if (c.contains("selected") && !c.getBoolean("disabled")) {
-                BlockPos at = BlockPos.of(c.getLong("selected"));
-                CompoundTag teleporter = b.getInstalledCompound("teleport", at);
+        return BagsData.runOnBag(bag, b->{
+            CompoundTag captureMode = b.getModeData(CaptureMode.NAME);
+            if (captureMode.contains("selected") && b.isModeEnabled(CaptureMode.NAME)) {
+                BlockPos at = BlockPos.of(captureMode.getLong("selected"));
+                CompoundTag teleporter = b.getModule(NAME, at);
                 Level lvl = World.getLevel(DimBag.BAG_DIM);
                 if (lvl.getBlockState(at).getBlock() instanceof TeleportModule) {
                     Direction offset = lvl.getBlockState(at).getValue(BlockStateProperties.FACING); //FIXME: might have invalid state on desync
@@ -171,6 +165,6 @@ public class TeleportModule extends BaseModule {
                 }
             }
             return false;
-        }).orElse(false), false);
+        }, false);
     }
 }

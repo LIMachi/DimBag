@@ -1,6 +1,10 @@
 package com.limachi.dim_bag.client.screens;
 
 import com.limachi.dim_bag.DimBag;
+import com.limachi.dim_bag.bag_data.BagInstance;
+import com.limachi.dim_bag.bag_modes.ModesRegistry;
+import com.limachi.dim_bag.bag_modes.SettingsMode;
+import com.limachi.dim_bag.bag_modes.TankMode;
 import com.limachi.dim_bag.client.widgets.BooleanTextButton;
 import com.limachi.dim_bag.client.widgets.ViewPortWidget;
 import com.limachi.dim_bag.client.widgets.TextEdit;
@@ -9,15 +13,16 @@ import com.limachi.dim_bag.menus.BagMenu;
 import com.limachi.dim_bag.client.widgets.VerticalSlider;
 import com.limachi.dim_bag.menus.slots.BagSlot;
 import com.limachi.dim_bag.menus.slots.TankSlot;
-import com.limachi.dim_bag.utils.Tags;
 import com.limachi.lim_lib.network.messages.ScreenNBTMsg;
 import com.limachi.lim_lib.registries.clientAnnotations.RegisterMenuScreen;
 import com.limachi.lim_lib.render.GuiUtils;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.Checkbox;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
@@ -36,6 +41,7 @@ public class BagScreen extends AbstractContainerScreen<BagMenu> {
     protected final ItemStack tanksIcon;
 
     public static final ResourceLocation BACKGROUND = new ResourceLocation(DimBag.MOD_ID, "textures/screen/bag_inventory.png");
+    public static final ResourceLocation ENERGY_BAR = new ResourceLocation(DimBag.MOD_ID, "textures/screen/slots/energy.png");
     public static final int BACKGROUND_WIDTH = 218;
     public static final int BACKGROUND_HEIGHT = 184;
 
@@ -55,9 +61,9 @@ public class BagScreen extends AbstractContainerScreen<BagMenu> {
         inventoryLabelY = 90;
         inventoryIcon = new ItemStack(BagItem.R_ITEM.get());
         settingsIcon = inventoryIcon.copy();
-        settingsIcon.getOrCreateTag().putString(BagItem.BAG_MODE_OVERRIDE, "Settings");
+        settingsIcon.getOrCreateTag().putString(BagItem.BAG_MODE_OVERRIDE, SettingsMode.NAME);
         tanksIcon = inventoryIcon.copy();
-        tanksIcon.getOrCreateTag().putString(BagItem.BAG_MODE_OVERRIDE, "Tank");
+        tanksIcon.getOrCreateTag().putString(BagItem.BAG_MODE_OVERRIDE, TankMode.NAME);
         name = menu.settingsData.contains("label") ? Component.Serializer.fromJson(menu.settingsData.getString("label")) : BagItem.create(0).getDisplayName();
     }
 
@@ -67,22 +73,36 @@ public class BagScreen extends AbstractContainerScreen<BagMenu> {
         slider = new VerticalSlider(195 + getGuiLeft(), 15 + getGuiTop(), 16, 105, localScroll, this::sliderUpdate);
         addRenderableWidget(slider);
         if (menu.page.get() >= 2) {
-            addRenderableWidget(new TextEdit(font, titleLabelX + getGuiLeft(), titleLabelY + getGuiTop(), imageWidth - titleLabelX * 2, 12, name.getString(), t->{
-                name = Component.literal(t.getValue());
-                ScreenNBTMsg.send(1, Tags.singleton("label", Component.Serializer.toJson(name)));
-            }));
+            addRenderableWidget(new TextEdit(font, titleLabelX + getGuiLeft(), titleLabelY + getGuiTop(), imageWidth - titleLabelX * 2, 12, name.getString(), t->name = Component.literal(t.getValue())));
             settingsWidgets = new ViewPortWidget(getGuiLeft() + 30, getGuiTop() + 20, imageWidth - 60, imageHeight - 50);
-            settingsWidgets.addWidget(new BooleanTextButton(getGuiLeft() + 30, getGuiTop() + 20, imageWidth - 60, 14, Component.translatable("screen.bag.button.quick_equip"), Component.translatable("screen.bag.button.normal_equip"), menu.settingsData.getBoolean("quick_equip"), b->{
-                menu.settingsData.putBoolean("quick_equip", b.getState());
-                ScreenNBTMsg.send(1, Tags.singleton("quick_equip", b.getState()));
-            }));
-            settingsWidgets.addWidget(new BooleanTextButton(getGuiLeft() + 30, getGuiTop() + 36, imageWidth - 60, 14, Component.translatable("screen.bag.button.quick_enter"), Component.translatable("screen.bag.button.normal_unequip"), menu.settingsData.getBoolean("quick_enter"), b->{
-                menu.settingsData.putBoolean("quick_enter", b.getState());
-                ScreenNBTMsg.send(1, Tags.singleton("quick_enter", b.getState()));
-            }));
-            settingsWidgets.applyDelta(0, (int)Math.round(settingsScrollFactor * localScroll));
+            settingsWidgets.addWidget(new BooleanTextButton(0, 0, imageWidth - 60, 14, Component.translatable("screen.bag.button.quick_equip"), Component.translatable("screen.bag.button.normal_equip"), menu.settingsData.getBoolean("quick_equip"), b->menu.settingsData.putBoolean("quick_equip", b.getState())));
+            settingsWidgets.addWidget(new BooleanTextButton(0, 16, imageWidth - 60, 14, Component.translatable("screen.bag.button.quick_enter"), Component.translatable("screen.bag.button.normal_unequip"), menu.settingsData.getBoolean("quick_enter"), b->menu.settingsData.putBoolean("quick_enter", b.getState())));
+            settingsWidgets.addWidget(new Checkbox(0, 32, imageWidth - 60, 14, Component.literal("replace_inv"), menu.settingsData.getBoolean("bag_instead_of_inventory")){
+                @Override
+                public void onPress() {
+                    super.onPress();
+                    menu.settingsData.putBoolean("bag_instead_of_inventory", selected());
+                }
+            });
+            int y = 32;
+            for (ModesRegistry.ModeEntry mode : ModesRegistry.modesList)
+                if (mode.mode().canDisable())
+                    settingsWidgets.addWidget(new Checkbox(0, y += 16, imageWidth - 60, 14, Component.literal(mode.name()), BagInstance.isModeEnabled(menu.settingsData, mode.name())){
+                        @Override
+                        public void onPress() {
+                            super.onPress();
+                            BagInstance.setEnabledMode(menu.settingsData, mode.name(), selected());
+                        }
+                    });
+            settingsWidgets.applyDelta(0, (int)Math.round(Math.max(0, settingsWidgets.getHeight() - settingsWidgets.getInnerHeight()) * localScroll));
             addRenderableWidget(settingsWidgets);
         }
+    }
+
+    @Override
+    public void onClose() {
+        ScreenNBTMsg.send(1, menu.settingsData);
+        super.onClose();
     }
 
     @Override
@@ -90,6 +110,15 @@ public class BagScreen extends AbstractContainerScreen<BagMenu> {
         if (menu.page.get() < 2) {
             gui.drawString(font, name, titleLabelX, titleLabelY, 4210752, false);
             gui.drawString(font, playerInventoryTitle, inventoryLabelX, inventoryLabelY, 4210752, false);
+            gui.blitNineSlicedSized(ENERGY_BAR, imageWidth / 2 - 20, inventoryLabelY - 1, imageWidth / 2 - 8, 11, 1, 1, 1, 1, 16, 16, 0, 0, 16, 16);
+            long energy = menu.energy.getLong();
+            long maxEnergy = menu.maxEnergy.getLong();
+            int empty = (int)Math.round(((double)imageWidth / 2. - 10.) * Mth.clamp(1. - (double)energy / (double)maxEnergy, 0., 1.));
+            if (empty > 0)
+                gui.fill(imageWidth - 29 - empty, inventoryLabelY, imageWidth - 29, inventoryLabelY + 9, 0xFF000000);
+            String er = energy < 1000 ? "" + energy : energy < 1000_000 ? energy / 1000 + "K" : energy < 1000_000_000 ? energy / 1000_000 + "M" : energy < 1000_000_000_000L ? energy / 1000_000_000 + "G" : energy / 1000_000_000_000L + "T";
+            String em = maxEnergy < 1000 ? "" + maxEnergy : maxEnergy < 1000_000 ? maxEnergy / 1000 + "K" : maxEnergy < 1000_000_000 ? maxEnergy / 1000_000 + "M" : maxEnergy < 1000_000_000_000L ? maxEnergy / 1000_000_000 + "G" : maxEnergy / 1000_000_000_000L + "T";
+            gui.drawString(font, Component.literal("FE: " + er + " / " + em), imageWidth / 2 - 18, inventoryLabelY + 1, -1);
         }
     }
 
@@ -114,7 +143,7 @@ public class BagScreen extends AbstractContainerScreen<BagMenu> {
         } else {
             localScroll = slider.getValue();
             if (settingsWidgets != null)
-                settingsWidgets.applyDelta(0, (int)Math.round(settingsScrollFactor * localScroll));
+                settingsWidgets.applyDelta(0, (int)Math.round(Math.max(0, settingsWidgets.getHeight() - settingsWidgets.getInnerHeight()) * localScroll));
         }
     }
 

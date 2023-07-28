@@ -1,7 +1,6 @@
 package com.limachi.dim_bag.bag_modules;
 
 import com.limachi.dim_bag.bag_data.BagInstance;
-import com.limachi.dim_bag.bag_modules.block_entity.ObserverModuleBlockEntity;
 import com.limachi.dim_bag.bag_modules.block_entity.SlotModuleBlockEntity;
 import com.limachi.dim_bag.menus.SlotMenu;
 import com.limachi.dim_bag.save_datas.BagsData;
@@ -11,7 +10,6 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.world.InteractionHand;
-import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
@@ -21,7 +19,6 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.phys.BlockHitResult;
 import net.minecraftforge.registries.RegistryObject;
 
 import javax.annotation.Nonnull;

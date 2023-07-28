@@ -15,12 +15,13 @@ public class ModesRegistry {
         return entry;
     }
 
-    public static final ModeEntry DEFAULT = registerMode(new BaseMode("Default", true){});
+    public static final ModeEntry DEFAULT = registerMode(new BaseMode("Default", null){});
 
     static  {
-        registerMode(new Tank());
-        registerMode(new Settings());
-        registerMode(new Capture());
+        registerMode(new TankMode());
+        registerMode(new SettingsMode());
+        registerMode(new CaptureMode());
+        registerMode(new ParasiteMode());
     }
 
     public static BaseMode getMode(int index) { return index >= 0 && index < modesList.size() ? modesList.get(index).mode : DEFAULT.mode; }

@@ -1,7 +1,7 @@
 package com.limachi.dim_bag.bag_modules;
 
 import com.limachi.dim_bag.bag_data.BagInstance;
-import com.limachi.dim_bag.bag_data.TankData;
+import com.limachi.dim_bag.bag_modes.TankMode;
 import com.limachi.dim_bag.bag_modules.block_entity.TankModuleBlockEntity;
 import com.limachi.dim_bag.menus.TankMenu;
 import com.limachi.dim_bag.save_datas.BagsData;
@@ -11,7 +11,6 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.world.InteractionHand;
-import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
@@ -21,7 +20,6 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.phys.BlockHitResult;
 import net.minecraftforge.common.capabilities.ForgeCapabilities;
 import net.minecraftforge.fluids.FluidUtil;
 import net.minecraftforge.registries.RegistryObject;
@@ -31,7 +29,7 @@ import javax.annotation.Nullable;
 
 @SuppressWarnings("unused")
 public class TankModule extends BaseModule implements EntityBlock {
-    public static final String TANK_KEY = "tanks";
+    public static final String NAME = "tanks";
 
     @RegisterBlock
     public static RegistryObject<TankModule> R_BLOCK;
@@ -45,31 +43,22 @@ public class TankModule extends BaseModule implements EntityBlock {
             data.putString("label", data.getCompound("display").getString("Name"));
             data.remove("display");
         }
-        if (bag.getModeData("Tank").isEmpty())
-            bag.installMode("Tank");
-        bag.getModeData("Tank").ifPresent(c->{
-            if (c.getBoolean("disabled")) {
-                c.putBoolean("disabled", false);
-                c.putLong("selected", pos.asLong());
-            } else if (!c.contains("selected"))
-                c.putLong("selected", pos.asLong());
-        });
+        CompoundTag tankMode = bag.getModeData(TankMode.NAME);
+        if (!tankMode.contains("selected"))
+            tankMode.putLong("selected", pos.asLong());
         bag.tanksHandle().ifPresent(s->s.installTank(pos, data));
     }
 
     @Override
     public void uninstall(BagInstance bag, Player player, Level level, BlockPos pos, ItemStack stack) {
-        bag.getModeData("Tank").ifPresent(c->{
-            if (bag.tanksHandle().map(TankData::getTanks).orElse(0) <= 1)
-                c.putBoolean("disabled", true);
-            else if (c.getLong("selected") == pos.asLong()) {
-                long p = bag.tanksHandle().map(d->d.getTank(0).asLong()).orElse(0L);
-                if (p != 0)
-                    c.putLong("selected", p);
-                else
-                    c.remove("selected");
-            }
-        });
+        CompoundTag tankMode = bag.getModeData(TankMode.NAME);
+        if (tankMode.getLong("selected") == pos.asLong()) {
+            long p = bag.tanksHandle().map(d->d.getTanks() > 0 ? d.getTank(0).asLong() : 0L).orElse(0L);
+            if (p != 0)
+                tankMode.putLong("selected", p);
+            else
+                tankMode.remove("selected");
+        }
         bag.tanksHandle().ifPresent(s->stack.getOrCreateTag().merge(s.uninstallTank(pos)));
     }
 

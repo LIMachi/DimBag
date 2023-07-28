@@ -7,7 +7,6 @@ import com.limachi.lim_lib.registries.annotations.RegisterBlock;
 import com.limachi.lim_lib.registries.annotations.RegisterBlockItem;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.nbt.Tag;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.BlockItem;
@@ -28,6 +27,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.annotation.Nonnull;
 
 public class ObserverModule extends BaseModule implements EntityBlock {
+
+    public static final String COMMAND_KEY = "command";
 
     @RegisterBlock
     public static RegistryObject<ObserverModule> R_BLOCK;
@@ -51,13 +52,13 @@ public class ObserverModule extends BaseModule implements EntityBlock {
     @Override
     public void install(BagInstance bag, Player player, Level level, BlockPos pos, ItemStack stack) {
         if (level.getBlockEntity(pos) instanceof ObserverModuleBlockEntity be)
-            be.install(bag, stack.getOrCreateTag().getList("commands", Tag.TAG_COMPOUND));
+            be.install(bag, stack.getOrCreateTag().getCompound(COMMAND_KEY));
     }
 
     @Override
     public void uninstall(BagInstance bag, Player player, Level level, BlockPos pos, ItemStack stack) {
         if (level.getBlockEntity(pos) instanceof ObserverModuleBlockEntity be)
-            stack.getOrCreateTag().put("commands", be.uninstall());
+            stack.getOrCreateTag().put(COMMAND_KEY, be.uninstall());
     }
 
     @Override
@@ -81,7 +82,5 @@ public class ObserverModule extends BaseModule implements EntityBlock {
     }
 
     @Override
-    public boolean isSignalSource(BlockState state) {
-        return state.getBlock() instanceof ObserverModule;
-    }
+    public boolean isSignalSource(BlockState state) { return state.getBlock() instanceof ObserverModule; }
 }
